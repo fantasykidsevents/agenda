@@ -1,7 +1,7 @@
 // Service worker : permet l'installation et l'ouverture hors connexion.
 // Stratégie « réseau d'abord » : on prend toujours la version la plus
 // récente, et on retombe sur le cache si pas de réseau.
-const CACHE = "fk-agenda-v51";
+const CACHE = "fk-agenda-v52";
 const FICHIERS = [
   "./", "./index.html", "./config.js", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./logo.png", "./nuit-magique.png",
@@ -39,6 +39,13 @@ self.addEventListener("fetch", (e) => {
 });
 
 // ---------- Notifications ----------
+// 🔴 Pastille sur l'icône de l'app = nombre de notifications pas encore lues (iPhone 16.4+, Android, ordinateur)
+async function majPastille() {
+  try {
+    const n = (await self.registration.getNotifications()).length;
+    if (self.navigator.setAppBadge) n ? await self.navigator.setAppBadge(n) : await self.navigator.clearAppBadge();
+  } catch (_) {}
+}
 self.addEventListener("push", (e) => {
   let d = {};
   try { d = e.data.json(); } catch (_) { d = { title: "Fantasy Kids Events", body: e.data ? e.data.text() : "" }; }
@@ -56,11 +63,13 @@ self.addEventListener("push", (e) => {
       vibrate: son === "message" ? [60, 40, 60] : [80, 50, 80, 50, 220],   // vibration « Fantasy » (Android)
       data: { url: d.url || "./" },
     });
+    await majPastille();
   })());
 });
 
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
+  majPastille();
   const url = new URL(e.notification.data?.url || "./", self.registration.scope);
   const ev = url.searchParams.get("ev");
   const signal = url.searchParams.get("signal") === "1";

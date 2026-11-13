@@ -2146,7 +2146,8 @@
   const demandesAttente = () => events.filter(e => e.statut === "en_attente" && e.date >= todayISO() && !(e.titre === "Ventes hors événement" && e.date === "2000-01-01")).sort((a, b) => a.date.localeCompare(b.date));
   function majCloche() {
     const b = $("clocheBtn"); if (!b) return;
-    const ok = typeof isGest === "function" && isGest(); b.classList.toggle("hidden", !ok); if (!ok) return;
+    const ok = typeof isGest === "function" && isGest(); b.classList.toggle("hidden", !ok);
+    if (!ok) { try { if ("clearAppBadge" in navigator) navigator.clearAppBadge(); } catch (_) {} return; }
     const n = demandesAttente().length + resaSite.length; $("clocheN").textContent = n ? (n > 99 ? "99+" : n) : "";
     b.classList.toggle("on", n > 0); b.title = n ? `${n} demande${n > 1 ? "s" : ""} à traiter` : "Aucune demande en attente";
     try { if ("setAppBadge" in navigator) n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } catch (_) {}
@@ -2162,6 +2163,9 @@
     $("clocheBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
   }
   const closeCloche = () => { $("clocheBg").classList.add("hidden"); document.body.style.overflow = ""; };
+  // App rouverte : la pastille de l'icône = demandes à traiter (👑/⭐), sinon effacée ; on range les notifications déjà vues
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { majCloche();
+    try { navigator.serviceWorker?.getRegistration().then(r => r && r.getNotifications().then(L => L.forEach(x => x.close()))); } catch (_) {} } });
   $("clocheBtn").onclick = openCloche; $("clocheClose").onclick = closeCloche;
   $("clocheBg").addEventListener("click", async (ev) => {
     if (ev.target.id === "clocheBg") return closeCloche();
