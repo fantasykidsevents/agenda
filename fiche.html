@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>✨ Préparons votre anniversaire magique · Fantasy Kids Events</title>
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#ffffff" />
+<link rel="icon" href="icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--grad:linear-gradient(110deg,#00b4ff 0%,#5b63f8 30%,#a020ff 60%,#d63fd0 80%,#ff7f7f 100%);--violet:#8a3cf7;--violet-d:#6a2ad6;
+    --txt:#1f1735;--muted:#6b6385;--line:#eadff9;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
+  *{box-sizing:border-box}
+  html,body{margin:0;color:var(--txt);font-family:"Fredoka",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px}
+  body{background:radial-gradient(1200px 600px at -10% -10%,rgba(0,180,255,.16),transparent 60%),
+    radial-gradient(900px 500px at 110% 10%,rgba(214,63,208,.16),transparent 60%),
+    radial-gradient(900px 700px at 50% 110%,rgba(160,32,255,.14),transparent 60%),#fbf9ff;background-attachment:fixed;min-height:100vh}
+  #sky{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  #sky i{position:absolute;font-style:normal;color:var(--c);opacity:0;text-shadow:0 0 8px var(--c);animation:tw var(--d) ease-in-out var(--w) infinite}
+  @keyframes tw{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:var(--o);transform:scale(1) rotate(25deg)}}
+  .wrap{position:relative;z-index:1;max-width:620px;margin:0 auto;padding:calc(var(--safe-t) + 18px) 16px calc(40px + var(--safe-b))}
+  .hero{text-align:center;margin-bottom:14px}
+  .hero img{width:min(260px,70vw);height:auto;filter:drop-shadow(0 4px 10px rgba(160,32,255,.25));animation:float 5s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  h1{font-size:26px;margin:6px 0 4px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);margin:0}
+  .recap{margin:14px 0;padding:14px 16px;border-radius:18px;color:#fff;background:var(--grad);box-shadow:0 10px 28px rgba(160,32,255,.3)}
+  .recap b{display:block;font-size:18px;margin-bottom:2px}
+  .card{background:rgba(255,255,255,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:20px;padding:18px;
+    box-shadow:0 6px 24px rgba(120,60,220,.10),0 0 0 1px rgba(160,32,255,.06);margin-bottom:14px}
+  .card h2{font-size:17px;margin:0 0 6px;color:var(--violet-d)}
+  label.q{display:block;font-weight:600;margin:16px 0 6px;line-height:1.3}
+  label.q:first-of-type{margin-top:6px}
+  .req{color:#d63fd0}
+  input[type=text],input[type=tel],input[type=date],input[type=number],textarea{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:14px;
+    background:#fdfcff;font:inherit;font-size:16px;color:inherit}
+  textarea{min-height:84px;resize:vertical}
+  input:focus,textarea:focus{outline:2px solid #c9b6f5;border-color:var(--violet)}
+  .opts{display:flex;flex-direction:column;gap:8px}
+  .opts.row{flex-direction:row;flex-wrap:wrap}
+  .opt{position:relative}
+  .opt input{position:absolute;opacity:0;width:1px;height:1px}
+  .opt span{display:block;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fdfcff;cursor:pointer;transition:.15s}
+  .opts.row .opt{flex:1;min-width:30%}
+  .opts.row .opt span{text-align:center}
+  .opt input:checked + span{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(160,32,255,.3)}
+  .opt input:focus-visible + span{outline:2px solid var(--violet)}
+  .hint{font-size:13px;color:var(--muted);margin:4px 0 0}
+  .mascotte-box{margin-top:14px;padding:14px;border-radius:16px;background:linear-gradient(165deg,#eefcf4,#eef6ff);border:1px solid #d1fae5;animation:pop .35s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .mb-title{font-weight:700;color:#047857;font-size:16px}
+  .mb-text{margin:6px 0 0;color:#065f46;font-size:15px;line-height:1.4}
+  .btn{display:block;width:100%;border:0;border-radius:16px;padding:16px;font:inherit;font-weight:700;font-size:18px;color:#fff;
+    background:linear-gradient(110deg,#00b4ff 0%,#5b63f8 14%,#a020ff 28%,#d63fd0 42%,#ff7f7f 50%,#d63fd0 58%,#a020ff 72%,#5b63f8 86%,#00b4ff 100%);background-size:300% 100%;animation:flow 8s ease-in-out infinite alternate;box-shadow:0 8px 24px rgba(160,32,255,.35);cursor:pointer}
+  @keyframes flow{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+  @keyframes sh{to{background-position:200% 0}}
+  .btn:disabled{opacity:.6}
+  .err{color:#b91c1c;font-size:14px;margin-top:10px;text-align:center}
+  .demo{background:#fff4d6;color:#7a5200;font-size:13px;padding:8px 12px;border-radius:12px;text-align:center;margin-bottom:12px}
+  .done{text-align:center;padding:40px 18px}
+  .done .big{font-size:64px;animation:float 3s ease-in-out infinite}
+  .done h2{font-size:26px;margin:10px 0;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .spark{position:fixed;z-index:200;pointer-events:none;font-size:var(--s);color:var(--c);text-shadow:0 0 10px var(--c);animation:sp 1s cubic-bezier(.15,.7,.3,1) forwards}
+  @keyframes sp{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}100%{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) scale(1) rotate(var(--r));opacity:0}}
+  .hidden{display:none!important}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div id="sky" aria-hidden="true"></div>
+<div class="wrap">
+  <div class="hero">
+    <img src="logo.png" alt="Fantasy Kids Events" />
+    <h1>✨ Préparons votre anniversaire magique !</h1>
+    <p class="sub">Quelques infos pour préparer notre venue. Cela prend environ 3 minutes.</p>
+  </div>
+
+  <div id="demoBar" class="demo hidden">Aperçu : cette fiche n'est pas reliée à une vraie réservation.</div>
+  <div id="loading" class="card" style="text-align:center">🪄 Chargement de votre fiche…</div>
+  <div id="invalid" class="card hidden" style="text-align:center">
+    <p style="font-size:40px;margin:0">🔒</p>
+    <p>Ce lien n'est pas valide ou a expiré.<br>Contactez-nous et nous vous renverrons votre lien ✨</p>
+  </div>
+
+  <div id="recap" class="recap hidden"></div>
+
+  <form id="fiche" class="hidden" novalidate>
+    <div class="card">
+      <h2>👤 Vos coordonnées</h2>
+      <label class="q" for="client_nom">Nom et prénom du client <span class="req">*</span></label>
+      <input id="client_nom" type="text" autocomplete="name" required />
+      <label class="q" for="telephone">Numéro de téléphone joignable le jour de l'animation <span class="req">*</span></label>
+      <input id="telephone" type="tel" autocomplete="tel" required />
+      <label class="q" for="date">Date de l'anniversaire réservé <span class="req">*</span></label>
+      <input id="date" type="date" required />
+    </div>
+
+    <div class="card">
+      <h2>🎂 La fête</h2>
+      <label class="q" for="enfant_prenom">Prénom de l'enfant qui fête son anniversaire <span class="req">*</span></label>
+      <input id="enfant_prenom" type="text" required />
+      <label class="q" for="enfant_age">Quel âge va-t-il ou va-t-elle fêter ? <span class="req">*</span></label>
+      <input id="enfant_age" type="number" min="1" max="18" inputmode="numeric" required />
+      <label class="q" for="nb_enfants">Combien d'enfants seront présents à l'animation, enfant fêté compris ? <span class="req">*</span></label>
+      <input id="nb_enfants" type="number" min="1" max="200" inputmode="numeric" required />
+      <label class="q">Quelle sera la tranche d'âge des enfants invités ? <small style="color:var(--muted);font-weight:500">(plusieurs réponses possibles)</small></label>
+      <div class="opts row" data-name="tranches" data-multi="1">
+        <label class="opt"><input type="checkbox" value="2 à 4 ans"><span>2 à 4 ans</span></label>
+        <label class="opt"><input type="checkbox" value="5 à 7 ans"><span>5 à 7 ans</span></label>
+        <label class="opt"><input type="checkbox" value="8 à 10 ans"><span>8 à 10 ans</span></label>
+        <label class="opt"><input type="checkbox" value="11 ans et plus"><span>11 ans et plus</span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🏠 Le lieu</h2>
+      <label class="q" for="adresse">Adresse complète du lieu de l'anniversaire <span class="req">*</span></label>
+      <input id="adresse" type="text" autocomplete="street-address" placeholder="Rue, numéro, code postal et localité" required />
+      <label class="q">Où se déroulera l'animation ? <span class="req">*</span></label>
+      <div class="opts" data-name="lieu" data-required="1">
+        <label class="opt"><input type="radio" name="lieu" value="À domicile, à l'intérieur"><span>🏡 À domicile, à l'intérieur</span></label>
+        <label class="opt"><input type="radio" name="lieu" value="Dans une salle des fêtes"><span>🎉 Dans une salle des fêtes</span></label>
+        <label class="opt"><input type="radio" name="lieu" value="Dans un jardin ou à l'extérieur"><span>🌳 Dans un jardin ou à l'extérieur</span></label>
+        <label class="opt"><input type="radio" name="lieu" value="Autre"><span>✏️ Autre</span></label>
+      </div>
+      <input id="lieu_autre" type="text" class="hidden" placeholder="Précisez…" style="margin-top:8px" />
+      <label class="q">Disposez-vous d'un espace suffisamment dégagé pour les jeux et les danses ? <span class="req">*</span></label>
+      <div class="opts row" data-name="espace" data-required="1">
+        <label class="opt"><input type="radio" name="espace" value="Oui"><span>Oui</span></label>
+        <label class="opt"><input type="radio" name="espace" value="Non"><span>Non</span></label>
+        <label class="opt"><input type="radio" name="espace" value="À discuter ensemble"><span>À discuter</span></label>
+      </div>
+      <label class="q" for="acces">Y a-t-il des indications particulières pour trouver le lieu ou se garer ?</label>
+      <textarea id="acces" placeholder="Entrée, étage, parking, ballons…"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>🧸 Pour finir</h2>
+      <label class="q">Votre animation comprend-elle une mascotte ? <small style="color:var(--muted);font-weight:500">(personnage non humain)</small> <span class="req">*</span></label>
+      <div class="opts row" data-name="mascotte" data-required="1">
+        <label class="opt"><input type="radio" name="mascotte" value="Oui"><span>Oui</span></label>
+        <label class="opt"><input type="radio" name="mascotte" value="Non"><span>Non</span></label>
+      </div>
+      <div id="mascotteBox" class="mascotte-box hidden">
+        <div class="mb-title">🧸 Accueil de notre mascotte</div>
+        <p class="mb-text">Afin de préserver la magie de la rencontre, notre mascotte doit pouvoir se préparer à l'abri des regards des enfants.</p>
+        <label class="q">Disposez-vous d'une pièce discrète dans laquelle notre mascotte pourra se changer et prendre ses pauses ? <span class="req">*</span></label>
+        <div class="opts row" data-name="piece_mascotte">
+          <label class="opt"><input type="radio" name="piece_mascotte" value="Oui"><span>Oui</span></label>
+          <label class="opt"><input type="radio" name="piece_mascotte" value="Non"><span>Non</span></label>
+          <label class="opt"><input type="radio" name="piece_mascotte" value="À discuter ensemble"><span>À discuter</span></label>
+        </div>
+      </div>
+      <label class="q" for="allergies">Allergies, peurs ou informations importantes sur les enfants ?</label>
+      <textarea id="allergies" placeholder="Facultatif"></textarea>
+      <label class="q">Acceptez-vous que nous prenions quelques photos pour vous les envoyer ?</label>
+      <div class="opts" data-name="photos">
+        <label class="opt"><input type="radio" name="photos" value="Oui"><span>📸 Oui, avec plaisir</span></label>
+        <label class="opt"><input type="radio" name="photos" value="Oui, mais pas pour vos réseaux sociaux"><span>🔒 Oui, mais pas pour vos réseaux sociaux</span></label>
+        <label class="opt"><input type="radio" name="photos" value="Non"><span>🙅 Non, merci</span></label>
+      </div>
+    </div>
+
+    <button class="btn" id="send" type="submit">🪄 Envoyer ma fiche</button>
+    <div id="err" class="err"></div>
+  </form>
+
+  <div id="done" class="card done hidden">
+    <div class="big">🎉</div>
+    <h2>Merci, c'est noté !</h2>
+    <p>Nous avons bien reçu toutes les infos.<br>L'équipe Fantasy Kids Events a hâte de faire briller cette fête ✨</p>
+    <p class="hint" style="margin-top:14px">Vous pouvez modifier vos réponses à tout moment en rouvrant ce lien.</p>
+  </div>
+</div>
+
+<script>
+(() => {
+  const CFG = window.APP_CONFIG || {};
+  const $ = (id) => document.getElementById(id);
+  const COLORS = ["#00b4ff","#5b63f8","#a020ff","#d63fd0","#ff7f7f","#ffd86b"];
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  (function sky(){ let h = ""; for (let i = 0; i < 28; i++) h += `<i style="left:${Math.random()*100}%;top:${Math.random()*100}%;font-size:${6+Math.random()*12}px;--c:${COLORS[i%6]};--o:${.35+Math.random()*.5};--d:${2.5+Math.random()*4}s;--w:${-Math.random()*6}s">${Math.random()<.7?"✦":"✧"}</i>`; $("sky").innerHTML = h; })();
+  function burst(x = innerWidth / 2, y = innerHeight / 2) {
+    if (reduce) return;
+    for (let i = 0; i < 26; i++) { const s = document.createElement("span"); s.className = "spark"; const a = Math.random()*Math.PI*2, r = 60+Math.random()*130;
+      s.textContent = ["✦","✧","★","✨"][i%4]; s.style.cssText = `left:${x}px;top:${y}px;--x:${Math.cos(a)*r}px;--y:${Math.sin(a)*r}px;--r:${Math.random()*360}deg;--s:${10+Math.random()*16}px;--c:${COLORS[i%6]}`;
+      document.body.appendChild(s); setTimeout(() => s.remove(), 1100); }
+  }
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const token = new URLSearchParams(location.search).get("t") || "";
+  const DEMO = !CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY || !window.supabase || !token;
+  const sb = DEMO ? null : window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+
+  const TEXT = ["client_nom","telephone","date","enfant_prenom","enfant_age","nb_enfants","adresse","acces","allergies","lieu_autre"];
+  function setChoice(name, val) {
+    document.querySelectorAll(`[data-name="${name}"] input`).forEach(i => i.checked = Array.isArray(val) ? val.includes(i.value) : i.value === val);
+  }
+  function getChoice(name) {
+    const box = document.querySelector(`[data-name="${name}"]`);
+    const sel = [...box.querySelectorAll("input:checked")].map(i => i.value);
+    return box.dataset.multi ? sel : (sel[0] || "");
+  }
+  const majAutre = () => $("lieu_autre").classList.toggle("hidden", getChoice("lieu") !== "Autre");
+  document.querySelector('[data-name="lieu"]').addEventListener("change", majAutre);
+  const majMascotte = () => $("mascotteBox").classList.toggle("hidden", getChoice("mascotte") !== "Oui");
+  document.querySelector('[data-name="mascotte"]').addEventListener("change", majMascotte);
+
+  function remplir(d) {
+    const r = d.reponses || {};
+    const v = {
+      client_nom: r.client_nom ?? (d.parent || "").replace(/\s*\(.*\)\s*$/, ""),
+      telephone: r.telephone ?? d.telephone ?? "",
+      date: r.date ?? d.date ?? "",
+      enfant_prenom: r.enfant_prenom ?? d.enfant ?? "",
+      enfant_age: r.enfant_age ?? d.age ?? "",
+      nb_enfants: r.nb_enfants ?? "",
+      adresse: r.adresse ?? d.adresse ?? "",
+      acces: r.acces ?? "", allergies: r.allergies ?? "", lieu_autre: r.lieu_autre ?? "",
+    };
+    TEXT.forEach(k => $(k).value = v[k] ?? "");
+    setChoice("tranches", r.tranches || []); setChoice("lieu", r.lieu); setChoice("espace", r.espace);
+    setChoice("mascotte", r.mascotte); setChoice("piece_mascotte", r.piece_mascotte); setChoice("photos", r.photos); majAutre(); majMascotte();
+    if (d.date) {
+      const jour = new Date(d.date + "T12:00:00").toLocaleDateString("fr-BE", { weekday: "long", day: "numeric", month: "long" });
+      $("recap").innerHTML = `<b>🎉 ${esc(jour.charAt(0).toUpperCase() + jour.slice(1))}${d.heure ? " à " + esc(d.heure.slice(0,5).replace(":", "h")) : ""}</b>${d.theme ? "✨ " + esc(d.theme) : ""}${d.adresse ? "<br>📍 " + esc(d.adresse) : ""}`;
+      $("recap").classList.remove("hidden");
+    }
+  }
+
+  async function charger() {
+    if (DEMO) {
+      $("demoBar").classList.remove("hidden");
+      remplir({ date: new Date(Date.now() + 9*864e5).toISOString().slice(0,10), heure: "15:00:00", theme: "Magic · 1 h – Elsa", adresse: "Rue de Hanneche 3, 5380 Bierwart", parent: "Marine Lambot", telephone: "0491 19 44 08", enfant: "Adeline", age: 5 });
+    } else {
+      const { data, error } = await sb.rpc("fiche_get", { p_token: token });
+      if (error || !data) { $("loading").classList.add("hidden"); $("invalid").classList.remove("hidden"); return; }
+      remplir(data);
+    }
+    $("loading").classList.add("hidden"); $("fiche").classList.remove("hidden");
+  }
+
+  $("fiche").addEventListener("submit", async (e) => {
+    e.preventDefault(); $("err").textContent = "";
+    const r = {};
+    TEXT.forEach(k => r[k] = $(k).value.trim());
+    ["tranches","lieu","espace","mascotte","piece_mascotte","photos"].forEach(n => r[n] = getChoice(n));
+    if (r.lieu !== "Autre") delete r.lieu_autre;
+    if (r.mascotte !== "Oui") delete r.piece_mascotte;
+    const manque = [];
+    [["client_nom","votre nom"],["telephone","le téléphone"],["date","la date"],["enfant_prenom","le prénom de l'enfant"],["enfant_age","l'âge"],["nb_enfants","le nombre d'enfants"],["adresse","l'adresse"],["lieu","le lieu"],["espace","l'espace disponible"],["mascotte","la mascotte"]].concat(r.mascotte === "Oui" ? [["piece_mascotte","la pièce discrète pour la mascotte"]] : [])
+      .forEach(([k, l]) => { if (!r[k] || (Array.isArray(r[k]) && !r[k].length)) manque.push(l); });
+    if (manque.length) {
+      $("err").textContent = "Il manque : " + manque.join(", ") + ".";
+      const first = TEXT.includes(manque[0]) ? null : null;
+      return;
+    }
+    $("send").disabled = true; $("send").textContent = "✨ Envoi…";
+    try {
+      if (!DEMO) {
+        const { data, error } = await sb.rpc("fiche_soumettre", { p_token: token, p_reponses: r });
+        if (error || data !== true) throw new Error(error?.message || "lien invalide");
+      }
+      $("fiche").classList.add("hidden"); $("recap").classList.add("hidden"); $("done").classList.remove("hidden");
+      scrollTo({ top: 0, behavior: "smooth" }); burst(); setTimeout(() => burst(innerWidth * .3, innerHeight * .4), 200); setTimeout(() => burst(innerWidth * .7, innerHeight * .45), 400);
+    } catch (err) {
+      $("err").textContent = "Oups, l'envoi n'a pas fonctionné. Réessayez dans un instant ou contactez-nous.";
+    } finally { $("send").disabled = false; $("send").textContent = "🪄 Envoyer ma fiche"; }
+  });
+  charger();
+})();
+</script>
+</body>
+</html>
