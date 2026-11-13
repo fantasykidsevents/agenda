@@ -466,6 +466,14 @@
   .sheet .seg input[type=radio]{max-width:none}
   .sheet .hor{flex-wrap:wrap}.sheet .hor input{width:auto;flex:1 1 80px}
   .sheet .chk,.sheet label{overflow-wrap:anywhere}
+  .icon-btn.cloche{position:relative;padding:8px 10px;font-size:18px;margin-right:6px}
+  .icon-btn.cloche.on{animation:clocheBal 2.4s ease-in-out infinite}
+  .icon-btn.cloche b{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#ff3b5c;color:#fff;font:800 12px/20px system-ui;box-shadow:0 0 0 2px #fff}
+  .icon-btn.cloche b:empty{display:none}
+  @keyframes clocheBal{0%,80%,100%{transform:rotate(0)}84%{transform:rotate(14deg)}88%{transform:rotate(-12deg)}92%{transform:rotate(8deg)}96%{transform:rotate(-4deg)}}
+  @media (max-width:380px){.icon-btn.cloche{padding:6px 7px;font-size:16px;margin-right:2px}}
+  .dem-row{background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .dem-row .actions{margin-top:8px}
   .ch .av,.chat-top .av,.ment-list .em{line-height:1;letter-spacing:0;text-indent:0;padding:0;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-weight:400}
   .ch.equipe .av{background:var(--grad);box-shadow:0 0 14px rgba(160,32,255,.45)}
   .ch .tx{flex:1;min-width:0}
@@ -925,6 +933,7 @@
     <div class="head-row">
       <img class="logo" src="logo.png" alt="Fantasy Kids Events" /><span id="appTitle" class="hidden"></span>
       <div class="who" id="who">Agenda</div>
+      <button class="icon-btn cloche hidden" id="clocheBtn" title="Demandes à confirmer">🔔<b id="clocheN"></b></button>
       <button class="icon-btn" id="teamBtn" title="Mon profil, notifications & équipe">👤 Profil</button>
     </div>
     <div class="tabs">
@@ -1242,6 +1251,8 @@
 </div>
 
 <!-- ============ 🎪 ÉVÉNEMENTS (accès rapide aux outils) ============ -->
+<div id="clocheBg" class="sheet-bg hidden"><div class="sheet"><div class="grab"></div><h2>🔔 Demandes à confirmer</h2><div id="clocheBody"></div>
+  <div class="actions"><button type="button" class="btn primary" id="clocheClose">Fermer</button></div></div></div>
 <div id="evtsBg" class="sheet-bg hidden"><div class="sheet"><div class="grab"></div><h2>🎪 Événements</h2><div id="evtsBody"></div>
   <div class="actions"><button type="button" class="btn primary" id="evtsClose">Fermer</button></div></div></div>
 
@@ -1761,11 +1772,13 @@
       const { id, paies, ...rest } = ev;
       const pub = Object.fromEntries(Object.entries(rest).filter(([k]) => !PRIV.includes(k)));
       let evId = id;
+      const priv = isResp() ? Object.fromEntries(PRIV.filter(k => k !== "checklist" || k in rest).map(k => [k, rest[k] ?? (k === "acompte_paye" ? false : null)])) : null;
+      // prix/acompte enregistrés AVANT la mise à jour : le mail de confirmation au client peut ainsi lire l'acompte
+      if (id && priv) { const { error: e0 } = await sb.from("evenements_prive").upsert({ id, ...priv }); if (e0) throw e0; }
       if (id) { const { error } = await sb.from("evenements").update(pub).eq("id", id); if (error) throw error; }
       else { const { data, error } = await sb.from("evenements").insert(pub).select("id").single(); if (error) throw error; evId = data.id; }
-      if (isResp()) {
-        const priv = Object.fromEntries(PRIV.filter(k => k !== "checklist" || k in rest).map(k => [k, rest[k] ?? (k === "acompte_paye" ? false : null)]));
-        const { error: e1 } = await sb.from("evenements_prive").upsert({ id: evId, ...priv }); if (e1) throw e1;
+      if (priv) {
+        if (!id) { const { error: e1 } = await sb.from("evenements_prive").upsert({ id: evId, ...priv }); if (e1) throw e1; }
         if (paies) {
           const { error: e2 } = await sb.from("paies").delete().eq("evenement_id", evId); if (e2) throw e2;
           if (paies.length) {
@@ -2123,7 +2136,38 @@
     w.innerHTML = `${persoImg(pp, "who-av")}<span class="who-t"><span class="who-l1">${new Date().getHours() >= 18 ? "Bonsoir" : "Bonjour"}${nom ? " " + esc(nom) : ""} ✨</span>${pp ? `<span class="alias">alias ${esc(pp)}</span>` : ""}</span>`;
     w.title = mail;
   }
-  function render() { majWho(); modeNuit(); renderNext(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
+  // 🔔 Cloche : demandes en attente (site Wix + ajoutées à la main), reste allumée tant qu'il en reste
+  const demandesAttente = () => events.filter(e => e.statut === "en_attente" && e.date >= todayISO() && !(e.titre === "Ventes hors événement" && e.date === "2000-01-01")).sort((a, b) => a.date.localeCompare(b.date));
+  function majCloche() {
+    const b = $("clocheBtn"); if (!b) return;
+    const ok = typeof isGest === "function" && isGest(); b.classList.toggle("hidden", !ok); if (!ok) return;
+    const n = demandesAttente().length; $("clocheN").textContent = n ? (n > 99 ? "99+" : n) : "";
+    b.classList.toggle("on", n > 0); b.title = n ? `${n} demande${n > 1 ? "s" : ""} à confirmer` : "Aucune demande en attente";
+    try { if ("setAppBadge" in navigator) n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } catch (_) {}
+  }
+  function openCloche() {
+    const l = demandesAttente();
+    $("clocheBody").innerHTML = l.length ? l.map(e => `<div class="dem-row"><b>${esc(e.titre || e.enfant || "Demande")}</b><br><small style="text-transform:capitalize">${esc(fmtLong(e.date))}${e.heure_debut ? " · " + hhmm(e.heure_debut) : ""}</small>${e.parent ? `<br><small>👤 ${esc(e.parent)}</small>` : ""}${e.theme ? `<br><small>✨ ${esc(e.theme)}</small>` : ""}
+      <div class="actions"><button type="button" class="btn" data-dem="voir" data-id="${esc(e.id)}">👀 Ouvrir</button>${isResp() ? `<button type="button" class="btn primary" data-dem="ok" data-id="${esc(e.id)}">✅ Confirmer</button>` : ""}</div></div>`).join("")
+      : `<p class="hint">🎉 Tout est à jour : aucune demande en attente.</p>`;
+    $("clocheBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
+  }
+  const closeCloche = () => { $("clocheBg").classList.add("hidden"); document.body.style.overflow = ""; };
+  $("clocheBtn").onclick = openCloche; $("clocheClose").onclick = closeCloche;
+  $("clocheBg").addEventListener("click", async (ev) => {
+    if (ev.target.id === "clocheBg") return closeCloche();
+    const b = ev.target.closest("[data-dem]"); if (!b) return;
+    const e = events.find(x => String(x.id) === b.dataset.id); if (!e) return;
+    if (b.dataset.dem === "voir") { closeCloche(); openForm(e); return; }
+    const pv = +e.acompte > 0 ? `\n\nLe client recevra le mail de confirmation avec la demande d'acompte (${euro(+e.acompte)}).` : (e.email ? "\n\n⚠️ Pas d'acompte indiqué : le client recevra le mail sans demande d'acompte. Ouvre la fiche pour l'ajouter." : "");
+    if (!confirm(`Confirmer « ${e.titre || e.enfant || "cette demande"} » ?${pv}`)) return;
+    b.disabled = true;
+    try { const { error } = await sb.from("evenements").update({ statut: "confirme" }).eq("id", e.id); if (error) throw error;
+      e.statut = "confirme"; toast("✅ Confirmée"); render(); openCloche();
+    } catch (err) { b.disabled = false; toast("Oups : " + (err.message || err)); }
+  });
+
+  function render() { majWho(); majCloche(); modeNuit(); renderNext(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
 
   // ================= Formulaire =================
   function openForm(ev, date) {
