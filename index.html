@@ -1903,11 +1903,15 @@
   window.addEventListener("online", () => { if (horsLigne) { toast("📶 Réseau retrouvé ✨"); reload(); chatReload(); } });
   window.addEventListener("offline", () => { if (!DEMO) barreHL(true, (lireHL() || {}).at); });
 
+  let resaSite = [];   // 🎟️ réservations arrivées du site, pas encore vues
   async function reload() {
     let ok = true;
     try { members = await team.list(); } catch (e) { console.error(e); ok = false; }
     try { events = await store.list(); }
     catch (e) { console.error(e); ok = false; }
+    try { resaSite = (!DEMO && isResp()) ? ((await sb.from("reservations").select("id,evenement_id,nom,places,bebes,notes,created_at").eq("source", "site").is("vue_le", null).order("created_at")).data || []) : []; }
+    catch (e) { resaSite = []; }
+    resaSite = resaSite.filter(r => { const e = events.find(x => String(x.id) === String(r.evenement_id)); return e && e.date >= todayISO(); });
     if (!ok && !DEMO) {
       const c = lireHL();
       if (c) { events = c.events || []; members = c.members || []; indispos = c.indispos || []; reglages = c.reglages || {}; costumes = c.costumes || [];
@@ -2143,21 +2147,32 @@
   function majCloche() {
     const b = $("clocheBtn"); if (!b) return;
     const ok = typeof isGest === "function" && isGest(); b.classList.toggle("hidden", !ok); if (!ok) return;
-    const n = demandesAttente().length; $("clocheN").textContent = n ? (n > 99 ? "99+" : n) : "";
-    b.classList.toggle("on", n > 0); b.title = n ? `${n} demande${n > 1 ? "s" : ""} à confirmer` : "Aucune demande en attente";
+    const n = demandesAttente().length + resaSite.length; $("clocheN").textContent = n ? (n > 99 ? "99+" : n) : "";
+    b.classList.toggle("on", n > 0); b.title = n ? `${n} demande${n > 1 ? "s" : ""} à traiter` : "Aucune demande en attente";
     try { if ("setAppBadge" in navigator) n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } catch (_) {}
   }
   function openCloche() {
     const l = demandesAttente();
-    $("clocheBody").innerHTML = l.length ? l.map(e => `<div class="dem-row"><b>${esc(e.titre || e.enfant || "Demande")}</b><br><small style="text-transform:capitalize">${esc(fmtLong(e.date))}${e.heure_debut ? " · " + hhmm(e.heure_debut) : ""}</small>${e.parent ? `<br><small>👤 ${esc(e.parent)}</small>` : ""}${e.theme ? `<br><small>✨ ${esc(e.theme)}</small>` : ""}
+    const R = resaSite.map(r => { const e = events.find(x => String(x.id) === String(r.evenement_id));
+      return `<div class="dem-row"><b>🎟️ ${esc(r.nom || "Réservation")}</b> · ${r.places} place${r.places > 1 ? "s" : ""}${r.bebes ? ` + ${r.bebes} bébé${r.bebes > 1 ? "s" : ""}` : ""}<br><small>${esc(e ? e.titre : "Événement")}${e ? " · " + esc(fmtLong(e.date)) : ""}</small>${r.notes ? `<br><small class="hint">${esc(String(r.notes).replace(/^🌐 Via le site[^:]*: /, "").slice(0, 160))}</small>` : ""}
+      <div class="actions"><button type="button" class="btn" data-resa-ouvrir="${esc(r.evenement_id)}" data-id="${esc(r.id)}">👀 Ouvrir les réservations</button><button type="button" class="btn primary" data-resa-vu="${esc(r.id)}">✅ Vu</button></div></div>`; }).join("");
+    $("clocheBody").innerHTML = (R ? `<div class="sec">🎟️ Réservations d'événements (site)</div>` + R + (l.length ? `<div class="sec">🎂 Demandes d'animation</div>` : "") : "") + (l.length || R ? "" : "") + (l.length ? l.map(e => `<div class="dem-row"><b>${esc(e.titre || e.enfant || "Demande")}</b><br><small style="text-transform:capitalize">${esc(fmtLong(e.date))}${e.heure_debut ? " · " + hhmm(e.heure_debut) : ""}</small>${e.parent ? `<br><small>👤 ${esc(e.parent)}</small>` : ""}${e.theme ? `<br><small>✨ ${esc(e.theme)}</small>` : ""}
       <div class="actions"><button type="button" class="btn" data-dem="voir" data-id="${esc(e.id)}">👀 Ouvrir</button>${isResp() ? `<button type="button" class="btn primary" data-dem="ok" data-id="${esc(e.id)}">✅ Confirmer</button>` : ""}</div></div>`).join("")
-      : `<p class="hint">🎉 Tout est à jour : aucune demande en attente.</p>`;
+      : (R ? "" : `<p class="hint">🎉 Tout est à jour : aucune demande en attente.</p>`));
     $("clocheBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
   }
   const closeCloche = () => { $("clocheBg").classList.add("hidden"); document.body.style.overflow = ""; };
   $("clocheBtn").onclick = openCloche; $("clocheClose").onclick = closeCloche;
   $("clocheBg").addEventListener("click", async (ev) => {
     if (ev.target.id === "clocheBg") return closeCloche();
+    const rv = ev.target.closest("[data-resa-vu],[data-resa-ouvrir]");
+    if (rv) {
+      const id = rv.dataset.resaVu || rv.dataset.id;
+      try { await sb.from("reservations").update({ vue_le: new Date().toISOString() }).eq("id", id); } catch (_) {}
+      resaSite = resaSite.filter(x => String(x.id) !== String(id)); majCloche();
+      if (rv.dataset.resaOuvrir) { closeCloche(); openResa(rv.dataset.resaOuvrir); } else openCloche();
+      return;
+    }
     const b = ev.target.closest("[data-dem]"); if (!b) return;
     const e = events.find(x => String(x.id) === b.dataset.id); if (!e) return;
     if (b.dataset.dem === "voir") { closeCloche(); openForm(e); return; }
