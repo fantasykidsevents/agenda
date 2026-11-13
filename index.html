@@ -23,7 +23,7 @@
     --grad:linear-gradient(110deg,#00b4ff 0%,#5b63f8 30%,#a020ff 60%,#d63fd0 80%,#ff7f7f 100%); --grad-loop:linear-gradient(110deg,#00b4ff 0%,#5b63f8 14%,#a020ff 28%,#d63fd0 42%,#ff7f7f 50%,#d63fd0 58%,#a020ff 72%,#5b63f8 86%,#00b4ff 100%); --bg:#f8f6ff; --card:#fff;
     --txt:#1f1735; --muted:#6b6385; --line:#ebe5f7;
     --attente:#f59e0b; --confirme:#10b981; --termine:#8b8aa3; --annule:#ef4444;
-    --r:16px; --badge:68px; /* place libre pour le badge « Powered by Netlify » (offre gratuite) */ --safe-b:calc(env(safe-area-inset-bottom,0px) + var(--badge)); --safe-t:env(safe-area-inset-top,0px);
+    --r:16px; --badge:0px; /* (plus de badge Netlify depuis GitHub Pages) */ --safe-b:calc(env(safe-area-inset-bottom,0px) + var(--badge)); --safe-t:env(safe-area-inset-top,0px);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:var(--bg);color:var(--txt);
@@ -61,19 +61,19 @@
     border-radius:12px;background:#fff}
 
   /* ---------- Calendrier ---------- */
-  .cal{background:var(--card);border-radius:var(--r);padding:12px;box-shadow:0 2px 10px rgba(80,40,160,.06)}
+  .cal{overflow:hidden;background:var(--card);border-radius:var(--r);padding:12px;box-shadow:0 2px 10px rgba(80,40,160,.06)}
   .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .cal-nav h2{margin:0;font-size:18px;text-transform:capitalize}
   .cal-nav button{border:0;background:#f1ecfc;color:var(--violet);width:38px;height:38px;border-radius:12px;font-size:18px;font-weight:700}
   .cal-nav .today-btn{width:auto;padding:0 12px;font-size:13px}
-  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
   .dow{text-align:center;font-size:11px;color:var(--muted);font-weight:700;padding:4px 0;text-transform:uppercase}
-  .day{aspect-ratio:1/1.05;border:0;background:#fbf9ff;border-radius:12px;padding:5px 2px;
+  .day{min-width:0;overflow:hidden;aspect-ratio:1/1.05;border:0;background:#fbf9ff;border-radius:12px;padding:5px 2px;
     display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
   .day.out{opacity:.35}
   .day.today .n{background:var(--violet);color:#fff}
   .day.sel{outline:2px solid var(--violet);background:#f1ecfc}
-  .day .n{font-size:14px;font-weight:650;width:26px;height:26px;line-height:26px;border-radius:50%;text-align:center}
+  .day .n{font-size:14px;font-weight:650;width:26px;max-width:100%;height:26px;line-height:26px;border-radius:50%;text-align:center}
   .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:100%}
   .dot{width:7px;height:7px;border-radius:50%}
   .count{font-size:10px;color:var(--muted);font-weight:700}
@@ -207,7 +207,7 @@
   .alert-bar.blue{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
   .alert-bar.gold{background:#fefce8;color:#854d0e;border-color:#fde68a}
   .ev-actions{gap:6px;flex-wrap:wrap;justify-content:flex-start!important;padding-right:0}
-  .paie-row{display:grid;grid-template-columns:1fr 84px 84px 64px;gap:6px;align-items:center;margin-bottom:6px}
+  .paie-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,84px) minmax(0,84px) minmax(0,64px);gap:6px;align-items:center;margin-bottom:6px}
   .paie-row input{padding:8px;font-size:16px;text-align:right}
   .paie-row b{font-weight:600}
   .paie-row span{text-align:right;font-weight:700;color:var(--violet-d);font-size:14px}
@@ -445,10 +445,27 @@
   .fold-t small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
   .mine-fold{background:#fff;padding:4px 12px 10px;box-shadow:0 2px 10px rgba(80,40,160,.08)}
   .evt-tools-t{font-weight:800;font-size:15px;color:#6d28d9;margin:10px 0 6px}
-  .evt-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+  .evt-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:6px}
+  .evt-tile{min-width:0;overflow-wrap:anywhere;hyphens:auto}
+  .actions{flex-wrap:wrap}.actions .btn{min-width:0}
+  @media (max-width:340px){.evt-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
   .evt-tile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;border-radius:16px;border:1.5px solid #e7dcfa;background:linear-gradient(180deg,#fff,#f6f0ff);font:inherit;font-size:13px;font-weight:700;color:#3b2470;line-height:1.15;text-align:center;cursor:pointer}
   .evt-tile span{font-size:26px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
   .evt-tile.hidden{display:none}
+  /* 📱 Petits écrans Android (Galaxy…) et texte agrandi : rien ne dépasse */
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  main,.filters,.cal,.mine-head,.ev{max-width:100%;min-width:0}
+  .filters{display:flex;flex-wrap:wrap;gap:8px}.filters > *{min-width:0;flex:1 1 140px}
+  @media (max-width:380px){.grid{gap:3px}.day{border-radius:10px;padding:4px 1px}.day .n{font-size:13px;width:24px;height:24px;line-height:24px}.dow{font-size:10px}.cal{padding:8px}.cal-nav h2{font-size:16px}}
+  /* 📱 Fiches : rien ne dépasse sur petits écrans / texte agrandi */
+  .sheet{overflow-x:hidden}
+  .sheet *{min-width:0;max-width:100%;box-sizing:border-box}
+  .sheet .row{flex-wrap:wrap}.sheet .row > *{flex:1 1 120px}
+  .sheet .seg{flex-wrap:wrap}.sheet .seg label{flex:1 1 auto;min-width:0}.sheet .seg span{white-space:normal}
+  .sheet input:not([type=radio]):not([type=checkbox]),.sheet select,.sheet textarea{width:100%}
+  .sheet .seg input[type=radio]{max-width:none}
+  .sheet .hor{flex-wrap:wrap}.sheet .hor input{width:auto;flex:1 1 80px}
+  .sheet .chk,.sheet label{overflow-wrap:anywhere}
   .ch .av,.chat-top .av,.ment-list .em{line-height:1;letter-spacing:0;text-indent:0;padding:0;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-weight:400}
   .ch.equipe .av{background:var(--grad);box-shadow:0 0 14px rgba(160,32,255,.45)}
   .ch .tx{flex:1;min-width:0}
