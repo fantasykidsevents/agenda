@@ -5957,12 +5957,15 @@
     if (!ev) return false; if (isResp()) return true;
     const p = normName(chatMe()); return anims(ev).some(a => normName(a) === p);
   }
+  const CHAT_JOURS_AVANT = 7;
   function chatCanaux() {
     const t = todayISO(), d0 = iso(new Date(Date.now() - 3 * 864e5)), d1 = iso(new Date(Date.now() + 14 * 864e5));
     const parCanal = new Map(); chatMsgs.forEach(m => parCanal.set(m.canal, m));
     const out = [{ canal: "equipe", nom: "Équipe Fantasy", sous: "Toute l'équipe", av: "✨", last: parCanal.get("equipe") }];
     const d30 = iso(new Date(Date.now() - 30 * 864e5));
-    events.filter(e => e.statut !== "annule" && jePeuxVoir(e) && e.date >= d30 && (parCanal.has("ev:" + e.id) || e.date >= d0))
+    // 💬 Chat d'une animation : apparaît 7 jours avant (ou dès qu'il y a un message ; toujours ouvrable depuis la fiche)
+    const dOuv = iso(new Date(Date.now() + CHAT_JOURS_AVANT * 864e5));
+    events.filter(e => e.statut !== "annule" && jePeuxVoir(e) && e.date >= d30 && (parCanal.has("ev:" + e.id) || (e.date >= d0 && e.date <= dOuv)))
       .forEach(e => { const U = universOf(e);
         out.push({ canal: "ev:" + e.id, ev: e, nom: e.titre || e.enfant || "Animation", av: U ? U[2] : "🎭",
           sous: `${fmtLong(e.date)}${e.heure_debut ? " · " + hhmm(e.heure_debut) : ""}${e.date < t ? " · terminée" : ""}`, last: parCanal.get("ev:" + e.id) }); });
