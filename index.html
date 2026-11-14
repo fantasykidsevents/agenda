@@ -2228,6 +2228,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const optTotal = (sel) => Object.entries(sel || {}).reduce((t, [k, n]) => { const o = OPTIONS_TOUTES[k]; return t + (optPrixDansTotal(o) ? o[2] * (+n || 0) : 0); }, 0);
   const optTexte = (sel) => Object.entries(sel || {}).filter(([, n]) => +n > 0).map(([k, n]) => { const o = OPTIONS_TOUTES[k]; return o ? `${o[1]}${+n > 1 ? " ×" + n : ""}` : ""; }).filter(Boolean).join(" · ");
   let optSel = {};
+  // 💶 Prix de base des formules (tarifs du site)
+  const PRIX_FORMULES = [["superstar", 350], ["celebration", 330], ["fantastic", 225], ["surprise", 225], ["idol party", 180], ["magic", 175], ["rising star", 125], ["flash", 110]];
+  const prixFormule = (t) => { const x = String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); const f = PRIX_FORMULES.find(([k]) => x.includes(k)); return f ? f[1] : 0; };
   function renderOptions() {
     const cat = optCatalogue(), resp = isResp();
     Object.keys(optSel).forEach(k => { if (!cat.some(o => o[0] === k) && OPTIONS_TOUTES[k]) cat.push(OPTIONS_TOUTES[k]); });
@@ -2242,8 +2245,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const k = b.dataset.opt, avant = optTotal(optSel);
     const n = Math.max(0, (+optSel[k] || 0) + +b.dataset.d); if (n) optSel[k] = n; else delete optSel[k];
     const diff = optTotal(optSel) - avant;   // 👑 le prix total suit les options
-    if (diff && isResp() && $("prix").value !== "") $("prix").value = Math.round((+$("prix").value + diff) * 100) / 100;
-    else if (diff && isResp() && $("prix").value === "" && diff > 0) $("prix").value = diff;
+    if (diff && isResp()) {
+      // prix vide : on part du prix de la formule (+ toutes les options), jamais des options seules
+      const base = $("prix").value !== "" ? +$("prix").value : prixFormule(`${$("theme").value} ${$("titre") ? $("titre").value : ""}`) + avant;
+      $("prix").value = Math.round((base + diff) * 100) / 100;
+    }
     renderOptions();
     if (diff) $("prix").dispatchEvent(new Event("input"));
   });
@@ -2257,7 +2263,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("delBtn").classList.toggle("hidden", !ev);
     $("evChatBtn").classList.toggle("hidden", !ev || !jePeuxVoir(ev));
     $("formErr").textContent = "";
-    setTimeout(renderOptions, 0);
+    setTimeout(() => {
+      renderOptions();
+      // demande sans prix : on propose le prix de la formule + options
+      if (ev && isResp() && ev.type_evenement !== "evenement" && $("prix").value === "") {
+        const b = prixFormule(`${ev.theme || ""} ${ev.titre || ""}`); if (b) { $("prix").value = b + optTotal(optSel); $("prix").dispatchEvent(new Event("input")); }
+      }
+    }, 0);
     CHAMPS.forEach(k => {
       const el = $(k); const v = ev ? ev[k] : null;
       if (el.type === "checkbox") el.checked = !!v;
