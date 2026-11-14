@@ -1128,7 +1128,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div><label for="age">Âge</label><input id="age" type="number" min="0" max="20" inputmode="numeric" /></div>
     </div>
     <div class="anniv-only"><label for="theme">Formule / thème</label>
-    <input id="theme" type="text" list="themesList" placeholder="Formule : Magic, Idol Party…" /></div>
+    <input id="theme" type="text" list="themesList" autocomplete="off" placeholder="Formule : Magic, Idol Party…" /></div>
     <datalist id="themesList"></datalist>
     <label for="adresse" id="adresseLbl">Adresse</label>
     <input id="adresse" type="text" />
@@ -1964,7 +1964,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const sel = $("fAnim"), cur = sel.value;
     sel.innerHTML = `<option value="">Tous les animateurs</option>` +
       [...set].sort((a,b)=>a.localeCompare(b,"fr")).map(n => `<option ${n===cur?"selected":""}>${esc(n)}</option>`).join("");
-    const th = new Set([...FORMULES, ...events.map(e => e.theme).filter(Boolean)]);
+    const th = new Set(FORMULES);   // seulement les formules du site (plus les anciens thèmes mélangés)
     $("themesList").innerHTML = [...th].map(t => `<option value="${esc(t)}">`).join("");
   }
 
