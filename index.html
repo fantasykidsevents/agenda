@@ -904,6 +904,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .pt-magic.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
   .pt-magic b{display:block;font-size:22px}
   .pt-magic small{display:block;margin-top:6px;font-size:14px;opacity:.95}
+
+  /* 🎯 Boutons : emoji et images toujours alignés avec le texte */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:.4em;line-height:1.2;text-align:center}
+  .btn img,button img,.chip img{vertical-align:middle;flex:none}
+  button,.btn{-webkit-tap-highlight-color:transparent}
 </style>
 </head>
 <body>
@@ -2854,7 +2859,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // ================= Équipe =================
   // ---------- Choix des animateurs ----------
   // Personnages du site fantasykidsevents.be (formulaire de réservation)
-  const PERSONNAGES = {"Contes de fées": ["Elsa", "Anna", "Raiponce", "Aurore", "Belle", "Cendrillon", "Blanche-Neige", "Ariel", "Jasmine", "Vaiana", "Tiana", "Alice", "Mérida", "Elena", "Esmeralda", "Asha", "Mirabel", "Pepa", "Aladdin", "Flynn Rider", "Kristoff", "Prince Philippe", "Merlin", "Peter Pan", "La Fée bleue"], "Super-héros": ["Spider-Man", "Wanda", "Captain America", "Captain Marvel", "Black Widow"], "Mascottes": ["Stitch", "Olaf", "Woody", "Buzz l’Éclair", "Jack Skellington"], "K-pop": ["Rumi", "Mira", "Zoey"]};
+  const PERSONNAGES = Object.fromEntries(Object.entries({"Contes de fées": ["Elsa", "Anna", "Raiponce", "Aurore", "Belle", "Cendrillon", "Blanche-Neige", "Ariel", "Jasmine", "Vaiana", "Tiana", "Alice", "Mérida", "Elena", "Esmeralda", "Asha", "Mirabel", "Pepa", "Aladdin", "Flynn Rider", "Kristoff", "Prince Philippe", "Merlin", "Peter Pan", "La Fée bleue"], "Super-héros": ["Spider-Man", "Wanda", "Captain America", "Captain Marvel", "Black Widow"], "Mascottes": ["Bourriquet", "Stitch", "Olaf", "Woody", "Buzz l’Éclair", "Jack Skellington"], "K-pop": ["Rumi", "Mira", "Zoey"]}).map(([g, l]) => [g, [...l].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }))]));  // ordre alphabétique
   const FORMULES = ["Flash · 30 min", "Magic · 1 h", "Fantastic · 1 h 30", "Célébration · 2 h", "Surprise · 1 h", "Rising Star (K-pop) · 30 min", "Idol Party (K-pop) · 1 h", "Superstar Experience (K-pop) · 2 h"];
   const ROLES_EVT = ["Responsable sur place", "Accueil / caisse", "Billetterie", "Technique / son", "Montage / démontage", "Bar", "Buffet", "Photo"];
   const ROLE_OPTS = `<option value="">— Rôle —</option><optgroup label="Équipe"><option value="acc">acc</option></optgroup><optgroup label="Événements">${ROLES_EVT.map(r => `<option>${r}</option>`).join("")}</optgroup>` +
@@ -6403,7 +6408,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     document.getElementById("tpkM").innerHTML = [0, 15, 30, 45].map(m => `<button type="button" data-m="${m}" ${hSel == null ? "disabled" : ""}>${hSel == null ? "" : pad2(hSel) + ":"}${pad2(m)}</button>`).join("");
   }
   function fixer(v) { cible.value = v; cible.dispatchEvent(new Event("input", { bubbles: true })); cible.dispatchEvent(new Event("change", { bubbles: true })); fermer(); }
-  function fermer() { bg.classList.add("hidden"); cible = null; }
+  function fermer() {
+    bg.classList.add("hidden"); cible = null;
+    // 🛡️ bouclier invisible 400 ms : le « clic fantôme » ne tombe plus sur le bouton (🚗…) qui était dessous
+    let s = document.getElementById("tpkShield");
+    if (!s) { s = document.createElement("div"); s.id = "tpkShield"; s.style.cssText = "position:fixed;inset:0;z-index:160;background:transparent"; document.body.appendChild(s); }
+    s.classList.remove("hidden"); s.style.display = "block";
+    clearTimeout(s._t); s._t = setTimeout(() => { s.style.display = "none"; }, 400);
+  }
   document.addEventListener("click", (e) => {
     const i = e.target.closest && e.target.closest("input.tpk"); if (!i) return;
     e.preventDefault(); cible = i; const v = (i.value || "").match(/^(\d{1,2}):/); hSel = v ? +v[1] : null;
@@ -6499,6 +6511,56 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   document.addEventListener("change", (e) => { if (e.target.name === "modeAff") { try { localStorage.setItem("fk_mode", e.target.value); } catch (err) {} appliquer(); } });
 })();
 
+
+/* ◀ Bouton retour du téléphone : ferme la fenêtre ouverte (ou revient à l'Agenda) au lieu de quitter l'app */
+(function () {
+  const SEL = ".sheet-bg:not(.hidden), #tpkBg:not(.hidden), #clapBig:not(.hidden), #resaTableBig:not(.hidden), .zoom";
+  let ordre = [], pousses = 0, ignorer = 0, planifie = false, tQuitter = 0;
+  try { history.replaceState({ fk: "base" }, ""); history.pushState({ fk: "app" }, ""); } catch (e) { return; }
+
+  function fermerEl(el) {
+    if (!el || !el.isConnected) return;
+    if (el.id === "tpkBg") { const x = document.getElementById("tpkX"); if (x) x.click(); else el.classList.add("hidden"); return; }
+    if (el.classList.contains("zoom")) { el.remove(); return; }
+    if (el.classList.contains("sheet-bg")) {
+      el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      setTimeout(() => { if (el.isConnected && !el.classList.contains("hidden")) { el.classList.add("hidden"); document.body.style.overflow = ""; } }, 60);
+      return;
+    }
+    el.classList.add("hidden");
+  }
+  function sync() {
+    planifie = false;
+    const vis = [...document.querySelectorAll(SEL)];
+    ordre = ordre.filter(e => vis.includes(e));
+    vis.forEach(e => { if (!ordre.includes(e)) ordre.push(e); });
+    while (pousses < ordre.length) { history.pushState({ fk: "fenetre" }, ""); pousses++; }
+    if (pousses > ordre.length) {            // fenêtre(s) fermée(s) autrement que par « retour » : on retire leurs entrées d'historique
+      const n = pousses - ordre.length; pousses = ordre.length;
+      ignorer = 1; setTimeout(() => { ignorer = 0; }, 600);
+      history.go(-n);
+    }
+  }
+  const planifier = () => { if (!planifie) { planifie = true; setTimeout(sync, 0); } };
+  new MutationObserver(planifier).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
+
+  window.addEventListener("popstate", () => {
+    if (ignorer) { ignorer = 0; return; }
+    if (pousses > 0) {                       // 1) retour = fermer la fenêtre du dessus
+      pousses--; fermerEl(ordre.pop());
+      setTimeout(planifier, 120);
+      return;
+    }
+    const on = document.querySelector(".tab.on");   // 2) pas de fenêtre : retour à l'Agenda
+    const cal = document.querySelector('.tab[data-view="cal"]');
+    if (on && cal && on.dataset.view !== "cal") { cal.click(); history.pushState({ fk: "app" }, ""); return; }
+    // 3) déjà sur l'Agenda : on prévient, et un 2e retour (dans les 2,5 s) quitte l'app
+    const t = document.getElementById("toast");
+    if (t) { t.textContent = "Appuie encore sur retour pour quitter"; t.classList.add("on"); setTimeout(() => t.classList.remove("on"), 2300); }
+    clearTimeout(tQuitter);
+    tQuitter = setTimeout(() => { if (history.state && history.state.fk === "base") history.pushState({ fk: "app" }, ""); }, 2500);
+  });
+})();
 </script>
 </body>
 </html>
