@@ -976,7 +976,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div class="head-row">
       <img class="logo" src="logo.png" alt="Fantasy Kids Events" /><span id="appTitle" class="hidden"></span>
       <div class="who" id="who">Agenda</div>
-      <button class="icon-btn cloche hidden" id="clocheBtn" title="Demandes à confirmer">🔔<b id="clocheN"></b></button>
+      <button class="icon-btn cloche hidden" id="clocheBtn" title="Mes notifications">🔔<b id="clocheN"></b></button>
       <button class="icon-btn" id="teamBtn" title="Mon profil, notifications & équipe">👤 Profil</button>
     </div>
     <div class="tabs">
@@ -1305,7 +1305,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 </div>
 
 <!-- ============ 🎪 ÉVÉNEMENTS (accès rapide aux outils) ============ -->
-<div id="clocheBg" class="sheet-bg hidden"><div class="sheet"><div class="grab"></div><h2>🔔 Demandes à confirmer</h2><div id="clocheBody"></div>
+<div id="clocheBg" class="sheet-bg hidden"><div class="sheet"><div class="grab"></div><h2>🔔 Mes notifications</h2><div id="clocheBody"></div>
   <div class="actions"><button type="button" class="btn primary" id="clocheClose">Fermer</button></div></div></div>
 <div id="evtsBg" class="sheet-bg hidden"><div class="sheet"><div class="grab"></div><h2>🎪 Événements</h2><div id="evtsBody"></div>
   <div class="actions"><button type="button" class="btn primary" id="evtsClose">Fermer</button></div></div></div>
@@ -1816,6 +1816,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         const { error } = await sb.from("paies").update({ paye, paye_le: le }).eq("evenement_id", r.evId).eq("prenom", r.prenom);
         if (error) throw error;
       }
+      if (paye && rows.length) {
+        try {
+          const { data, error } = await sb.functions.invoke("notifier", { body: { type: "PAIES_MAJ", rows } });
+          if (error || data?.ok === false) throw new Error(error?.message || data?.erreur || "envoi impossible");
+        } catch (err) {
+          console.error("Paie enregistrée, mais alerte à l'équipe non envoyée :", err);
+          return { notifError: err?.message || String(err) };
+        }
+      }
+      return { notifError: null };
     },
     async save(ev) {
       if (DEMO) {
@@ -1957,6 +1967,24 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   window.addEventListener("offline", () => { if (!DEMO) barreHL(true, (lireHL() || {}).at); });
 
   let resaSite = [];   // 🎟️ réservations arrivées du site, pas encore vues
+  let notificationsApp = []; // 🔔 Boîte personnelle : seules les lignes autorisées par RLS sont visibles
+  async function chargerNotifications() {
+    if (DEMO || !sb || !currentUser) { notificationsApp = []; majCloche(); return; }
+    const { data, error } = await sb.from("notifications_app")
+      .select("id,titre,message,type,evenement_id,cree_le,lue_le")
+      .order("cree_le", { ascending: false }).limit(100);
+    if (error) { console.warn("Notifications personnelles non disponibles :", error.message); return; }
+    notificationsApp = data || [];
+    majCloche();
+  }
+  async function marquerNotificationLue(ids) {
+    if (!ids.length || DEMO) return;
+    const { error } = await sb.from("notifications_app").update({ lue_le: new Date().toISOString() }).in("id", ids);
+    if (error) throw error;
+    const vus = new Set(ids.map(String));
+    notificationsApp.forEach(n => { if (vus.has(String(n.id))) n.lue_le = new Date().toISOString(); });
+    majCloche();
+  }
   async function reload() {
     let ok = true;
     try { members = await team.list(); } catch (e) { console.error(e); ok = false; }
@@ -1981,6 +2009,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     try { depenses = await depStore.list(); } catch (e) { depenses = []; }
     try { naissances = await naissStore.list(); } catch (e) { naissances = {}; }
     applyRole();
+    try { await chargerNotifications(); } catch (e) { console.warn("Boîte de notifications :", e); }
     try { detecterNouvelles(); } catch (e) {}
     openFromLink();
     refreshFilters(); render();
@@ -2196,33 +2225,73 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     w.innerHTML = `${persoImg(pp, "who-av")}<span class="who-t"><span class="who-l1">${new Date().getHours() >= 18 ? "Bonsoir" : "Bonjour"}${nom ? " " + esc(nom) : ""} ✨</span>${pp ? `<span class="alias">alias ${esc(pp)}</span>` : ""}</span>`;
     w.title = mail;
   }
-  // 🔔 Cloche : demandes en attente (site Wix + ajoutées à la main), reste allumée tant qu'il en reste
+  // 🔔 Cloche pour toute l'équipe : messages personnels + demandes à traiter pour 👑/⭐
   const demandesAttente = () => events.filter(e => e.statut === "en_attente" && e.date >= todayISO() && !(e.titre === "Ventes hors événement" && e.date === "2000-01-01")).sort((a, b) => a.date.localeCompare(b.date));
   function majCloche() {
     const b = $("clocheBtn"); if (!b) return;
-    const ok = typeof isGest === "function" && isGest(); b.classList.toggle("hidden", !ok);
-    if (!ok) { try { if ("clearAppBadge" in navigator) navigator.clearAppBadge(); } catch (_) {} return; }
-    const n = demandesAttente().length + resaSite.length; $("clocheN").textContent = n ? (n > 99 ? "99+" : n) : "";
-    b.classList.toggle("on", n > 0); b.title = n ? `${n} demande${n > 1 ? "s" : ""} à traiter` : "Aucune demande en attente";
+    b.classList.toggle("hidden", !DEMO && !currentUser);
+    const attente = isGest() ? demandesAttente().length + resaSite.length : 0;
+    const nonLues = notificationsApp.filter(n => !n.lue_le).length;
+    const n = attente + nonLues;
+    $("clocheN").textContent = n ? (n > 99 ? "99+" : n) : "";
+    b.classList.toggle("on", n > 0);
+    b.title = n ? `${n} notification${n > 1 ? "s" : ""} ou demande${n > 1 ? "s" : ""} en attente` : "Mes notifications";
     try { if ("setAppBadge" in navigator) n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } catch (_) {}
   }
   function openCloche() {
-    const l = demandesAttente();
-    const R = resaSite.map(r => { const e = events.find(x => String(x.id) === String(r.evenement_id));
+    const l = isGest() ? demandesAttente() : [];
+    const R = (isGest() ? resaSite : []).map(r => { const e = events.find(x => String(x.id) === String(r.evenement_id));
       return `<div class="dem-row"><b>🎟️ ${esc(r.nom || "Réservation")}</b> · ${r.places} place${r.places > 1 ? "s" : ""}${r.bebes ? ` + ${r.bebes} bébé${r.bebes > 1 ? "s" : ""}` : ""}<br><small>${esc(e ? e.titre : "Événement")}${e ? " · " + esc(fmtLong(e.date)) : ""}</small>${r.notes ? `<br><small class="hint">${esc(String(r.notes).replace(/^🌐 Via le site[^:]*: /, "").slice(0, 160))}</small>` : ""}
       <div class="actions"><button type="button" class="btn" data-resa-ouvrir="${esc(r.evenement_id)}" data-id="${esc(r.id)}">👀 Ouvrir les réservations</button><button type="button" class="btn primary" data-resa-vu="${esc(r.id)}">✅ Vu</button></div></div>`; }).join("");
-    $("clocheBody").innerHTML = (R ? `<div class="sec">🎟️ Réservations d'événements (site)</div>` + R + (l.length ? `<div class="sec">🎂 Demandes d'animation</div>` : "") : "") + (l.length || R ? "" : "") + (l.length ? l.map(e => `<div class="dem-row"><b>${esc(e.titre || e.enfant || "Demande")}</b><br><small style="text-transform:capitalize">${esc(fmtLong(e.date))}${e.heure_debut ? " · " + hhmm(e.heure_debut) : ""}</small>${e.parent ? `<br><small>👤 ${esc(e.parent)}</small>` : ""}${e.theme ? `<br><small>✨ ${esc(e.theme)}</small>` : ""}
+    const mesNotifs = notificationsApp.map(n => {
+      const ev = events.find(x => String(x.id) === String(n.evenement_id));
+      const ouvrir = ev && jeVoisEv(ev);
+      const date = new Date(n.cree_le).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+      return `<div class="dem-row" style="${n.lue_le ? "opacity:.7" : "border-left:4px solid #9a39ed;padding-left:10px"}">
+        <b>${esc(n.titre)}</b>${n.lue_le ? "" : " · <small>🔴 Nouveau</small>"}<br>
+        <small style="white-space:normal">${esc(n.message || "").replace(/\n/g, "<br>")}</small><br>
+        <small class="hint">${esc(date)}</small>
+        <div class="actions">
+          ${ouvrir ? `<button type="button" class="btn" data-notif-voir="${esc(n.id)}">👀 Voir la prestation</button>` : ""}
+          ${n.lue_le ? "" : `<button type="button" class="btn primary" data-notif-lu="${esc(n.id)}">✅ Lu</button>`}
+        </div></div>`;
+    }).join("");
+    const nbNonLues = notificationsApp.filter(n => !n.lue_le).length;
+    const notifSection = (mesNotifs ? `<div class="sec">✨ Mes notifications</div>` +
+      (nbNonLues ? `<div class="actions"><button type="button" class="btn ghost" data-notif-tout>✅ Tout marquer comme lu (${nbNonLues})</button></div>` : "") +
+      mesNotifs : "");
+    $("clocheBody").innerHTML = notifSection +
+      (R ? `<div class="sec">🎟️ Réservations d'événements (site)</div>` + R : "") +
+      (l.length ? `<div class="sec">🎂 Demandes d'animation</div>` : "") +
+      (l.length ? l.map(e => `<div class="dem-row"><b>${esc(e.titre || e.enfant || "Demande")}</b><br><small style="text-transform:capitalize">${esc(fmtLong(e.date))}${e.heure_debut ? " · " + hhmm(e.heure_debut) : ""}</small>${e.parent ? `<br><small>👤 ${esc(e.parent)}</small>` : ""}${e.theme ? `<br><small>✨ ${esc(e.theme)}</small>` : ""}
       <div class="actions"><button type="button" class="btn" data-dem="voir" data-id="${esc(e.id)}">👀 Ouvrir</button>${isResp() ? `<button type="button" class="btn primary" data-dem="ok" data-id="${esc(e.id)}">✅ Confirmer</button>` : ""}</div></div>`).join("")
-      : (R ? "" : `<p class="hint">🎉 Tout est à jour : aucune demande en attente.</p>`));
+      : (!mesNotifs && !R ? `<p class="hint">🎉 Aucune notification en attente pour le moment.</p>` : ""));
     $("clocheBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
   }
   const closeCloche = () => { $("clocheBg").classList.add("hidden"); document.body.style.overflow = ""; };
   // App rouverte : la pastille de l'icône = demandes à traiter (👑/⭐), sinon effacée ; on range les notifications déjà vues
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { majCloche();
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { chargerNotifications().catch(console.warn);
     try { navigator.serviceWorker?.getRegistration().then(r => r && r.getNotifications().then(L => L.forEach(x => x.close()))); } catch (_) {} } });
   $("clocheBtn").onclick = openCloche; $("clocheClose").onclick = closeCloche;
   $("clocheBg").addEventListener("click", async (ev) => {
     if (ev.target.id === "clocheBg") return closeCloche();
+    const nt = ev.target.closest("[data-notif-lu],[data-notif-voir],[data-notif-tout]");
+    if (nt) {
+      const voir = nt.dataset.notifVoir;
+      const ids = nt.hasAttribute("data-notif-tout") ? notificationsApp.filter(n => !n.lue_le).map(n => n.id) :
+        [voir || nt.dataset.notifLu];
+      try {
+        await marquerNotificationLue(ids);
+        if (voir) {
+          const n = notificationsApp.find(x => String(x.id) === String(voir));
+          const evenement = events.find(x => String(x.id) === String(n?.evenement_id));
+          closeCloche();
+          if (evenement && jeVoisEv(evenement)) openForm(evenement);
+          else toast("Cette prestation n'est plus disponible dans ton agenda.");
+        } else openCloche();
+      } catch (err) { toast("Impossible de marquer la notification comme lue : " + (err.message || err)); }
+      return;
+    }
     const rv = ev.target.closest("[data-resa-vu],[data-resa-ouvrir]");
     if (rv) {
       const id = rv.dataset.resaVu || rv.dataset.id;
@@ -3719,7 +3788,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("statsBody").addEventListener("click", async (e) => {
     const o = e.target.closest("[data-open-ev]"); if (o) { const ev = events.find(x => String(x.id) === o.dataset.openEv); if (ev) openForm(ev); return; }
     const b = e.target.closest("[data-paid]"); if (!b) return;
-    try { await store.setPaid(JSON.parse(b.dataset.paid), b.dataset.to === "1"); toast(b.dataset.to === "1" ? "✅ Paie marquée payée" : "Paie remise à payer"); await reload(); }
+    try {
+      const result = await store.setPaid(JSON.parse(b.dataset.paid), b.dataset.to === "1");
+      toast(result?.notifError ? "⚠️ Paie enregistrée, mais notification non envoyée : " + result.notifError :
+        (b.dataset.to === "1" ? "✅ Paie marquée payée · équipe prévenue" : "Paie remise à payer"));
+      await reload();
+    }
     catch (err) { toast("Erreur : " + (err.message || err)); }
   });
 
@@ -5666,7 +5740,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     });
   }
   // message du service worker (notification reçue pendant que l'app est ouverte)
-  if (navigator.serviceWorker) navigator.serviceWorker.addEventListener("message", (e) => { if (e.data && e.data.son) son(e.data.son); });
+  if (navigator.serviceWorker) navigator.serviceWorker.addEventListener("message", (e) => {
+    if (e.data && e.data.son) son(e.data.son);
+    if (e.data && e.data.notif) chargerNotifications().catch(console.warn);
+  });
+  // Sans notifications téléphone, la cloche se met tout de même à jour dans l'app.
+  setInterval(() => { if (currentUser && !document.hidden) chargerNotifications().catch(console.warn); }, 30000);
 
   // ================= 📋 Check-list de la veille (responsables) =================
   const CK_DEFAUT = "🔊 JBL chargée\n🫧 Machine à bulles chargée\n💄 Caisse maquillage complète\n🎨 Matériel d'animation (feutres, coloriages…)\n📸 Téléphone / appareil photo chargé";
@@ -6496,6 +6575,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   function showLogin() {
     $("app").classList.add("hidden"); $("loginScreen").classList.remove("hidden");
+    notificationsApp = [];
     if (channel) { sb.removeChannel(channel); channel = null; }
   }
 

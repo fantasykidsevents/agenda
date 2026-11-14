@@ -1,7 +1,7 @@
 // Service worker : permet l'installation et l'ouverture hors connexion.
 // Stratégie « réseau d'abord » : on prend toujours la version la plus
 // récente, et on retombe sur le cache si pas de réseau.
-const CACHE = "fk-agenda-v68";
+const CACHE = "fk-agenda-v69";
 const FICHIERS = [
   "./", "./index.html", "./config.js", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./logo.png", "./nuit-magique.png",
@@ -53,7 +53,7 @@ self.addEventListener("push", (e) => {
   e.waitUntil((async () => {
     // app ouverte et visible : on joue le son magique dedans
     const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    wins.forEach((w) => w.postMessage({ son }));
+    wins.forEach((w) => w.postMessage({ son, notif: true }));
     await self.registration.showNotification(d.title || "Fantasy Kids Events", {
       body: d.body || "",
       icon: "icon-192.png",
