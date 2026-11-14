@@ -546,7 +546,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .chat-in{display:flex;gap:8px;align-items:flex-end;padding:10px 12px calc(10px + var(--safe-b));border-top:1px solid #f0e8fb;background:#fff}
   .chat-in textarea{flex:1;resize:none;min-height:44px;max-height:120px;border-radius:22px;padding:11px 16px;font:inherit;font-size:16px;line-height:1.35;border:1.5px solid #e7dcfa;background:#fbf8ff}
   .chat-in textarea:focus{outline:none;border-color:#a020ff;box-shadow:0 0 0 3px rgba(160,32,255,.12)}
-  .chat-in .ph,.chat-in .go{flex:none;width:44px;height:44px;border-radius:50%;border:0;font-size:20px;cursor:pointer;display:grid;place-items:center}
+  .chat-in .ph,.chat-in .go{flex:none;width:44px;height:44px;border-radius:50%;border:0;font-size:20px;line-height:44px;padding:0;margin:0;text-align:center;cursor:pointer;display:block;overflow:hidden;-webkit-appearance:none;appearance:none}
   .chat-in .ph{background:#f3ecff}
   .chat-in .go{color:#fff;background:var(--grad-loop);background-size:300% 100%;animation:flow 8s ease-in-out infinite alternate;box-shadow:0 3px 12px rgba(160,32,255,.4)}
   .chat-in .go:disabled{opacity:.45;animation:none}
@@ -909,6 +909,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:.4em;line-height:1.2;text-align:center}
   .btn img,button img,.chip img{vertical-align:middle;flex:none}
   button,.btn{-webkit-tap-highlight-color:transparent}
+  /* 🎯 Onglets : toutes les icônes alignées en haut, même quand un nom passe sur 2 lignes (« Mon espace ») */
+  @media(max-width:560px){.tab{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;line-height:1.15}}
 </style>
 </head>
 <body>
@@ -2737,10 +2739,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const days = (parseISO(ev.date) - parseISO(todayISO())) / 864e5;
     if (ev.adresse && days >= 0 && days <= 14) meteo(ev).then(t => { if (t && $("jourBg").dataset.id === ev.id) { $("jourMeteo").querySelector("span").textContent = t; $("jourMeteo").classList.remove("hidden"); } });
   }
-  const closeJour = () => { $("jourBg").classList.add("hidden"); document.body.style.overflow = ""; };
-  $("jourClose").onclick = closeJour;
+  let jourDepuis = null;   // fiche d'événement d'où on est venu (pour y revenir en fermant)
+  const closeJour = () => { jourDepuis = null; $("jourBg").classList.add("hidden"); document.body.style.overflow = ""; };
+  const fermerJourEtRevenir = () => { const ev0 = jourDepuis; closeJour(); if (ev0) openForm(events.find(x => x.id === ev0.id) || ev0); };
+  $("jourClose").onclick = fermerJourEtRevenir;
   $("jourBg").addEventListener("click", async (e) => {
-    if (e.target.id === "jourBg") return closeJour();
+    if (e.target.id === "jourBg") return fermerJourEtRevenir();
     const b = e.target.closest("[data-jour]"); if (!b) return;
     const ev = events.find(x => String(x.id) === $("jourBg").dataset.id); if (!ev) return;
     closeJour();
@@ -2751,7 +2755,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const me = myMember(), par = me ? me.prenom : (demoMe || "Moi"); const sent = !ev.photos_envoyees;
       await store.patch(ev.id, { photos_envoyees: sent ? new Date().toISOString() : null, photos_envoyees_par: sent ? par : null }); toast(sent ? "📸 Noté !" : "Annulé"); reload(); })();
   });
-  $("openJour").addEventListener("click", () => { const ev = events.find(x => x.id === editingId); if (ev) { closeForm(); openJour(ev); } });
+  $("openJour").addEventListener("click", () => { const ev = events.find(x => x.id === editingId); if (ev) { closeForm(); openJour(ev); jourDepuis = ev; } });
 
   $("fPhotos").addEventListener("click", async () => {
     const ev = events.find(x => x.id === editingId); if (!ev) return;
@@ -2859,7 +2863,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // ================= Équipe =================
   // ---------- Choix des animateurs ----------
   // Personnages du site fantasykidsevents.be (formulaire de réservation)
-  const PERSONNAGES = Object.fromEntries(Object.entries({"Contes de fées": ["Elsa", "Anna", "Raiponce", "Aurore", "Belle", "Cendrillon", "Blanche-Neige", "Ariel", "Jasmine", "Vaiana", "Tiana", "Alice", "Mérida", "Elena", "Esmeralda", "Asha", "Mirabel", "Pepa", "Aladdin", "Flynn Rider", "Kristoff", "Prince Philippe", "Merlin", "Peter Pan", "La Fée bleue"], "Super-héros": ["Spider-Man", "Wanda", "Captain America", "Captain Marvel", "Black Widow"], "Mascottes": ["Bourriquet", "Stitch", "Olaf", "Woody", "Buzz l’Éclair", "Jack Skellington"], "K-pop": ["Rumi", "Mira", "Zoey"]}).map(([g, l]) => [g, [...l].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }))]));  // ordre alphabétique
+  const PERSONNAGES = Object.fromEntries(Object.entries({"Contes de fées": ["Elsa", "Anna", "Raiponce", "Aurore", "Belle", "Cendrillon", "Blanche-Neige", "Ariel", "Jasmine", "Vaiana", "Tiana", "Alice", "Mérida", "Elena", "Esmeralda", "Asha", "Mirabel", "Pepa", "Aladdin", "Flynn Rider", "Kristoff", "Prince Philippe", "Merlin", "Peter Pan", "La Fée bleue"], "Super-héros": ["Spider-Man", "Wanda", "Captain America", "Captain Marvel", "Black Widow"], "Mascottes": ["Stitch", "Olaf", "Woody", "Buzz l’Éclair", "Jack Skellington"], "K-pop": ["Rumi", "Mira", "Zoey"]}).map(([g, l]) => [g, [...l].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }))]));  // ordre alphabétique
   const FORMULES = ["Flash · 30 min", "Magic · 1 h", "Fantastic · 1 h 30", "Célébration · 2 h", "Surprise · 1 h", "Rising Star (K-pop) · 30 min", "Idol Party (K-pop) · 1 h", "Superstar Experience (K-pop) · 2 h"];
   const ROLES_EVT = ["Responsable sur place", "Accueil / caisse", "Billetterie", "Technique / son", "Montage / démontage", "Bar", "Buffet", "Photo"];
   const ROLE_OPTS = `<option value="">— Rôle —</option><optgroup label="Équipe"><option value="acc">acc</option></optgroup><optgroup label="Événements">${ROLES_EVT.map(r => `<option>${r}</option>`).join("")}</optgroup>` +
@@ -3216,7 +3220,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   function renderTeam() {
     const moi = myMember(); const visibles = isGest() ? members : members.filter(m => moi && m.id === moi.id); // 👑 et ⭐ voient toute l'équipe ; les autres seulement leur fiche
-    const persoOpts = (cur) => `<option value="">— aucun —</option>` + Object.entries(PERSONNAGES).map(([g, l]) => `<optgroup label="${esc(g)}">${l.map(x => `<option ${x === cur ? "selected" : ""}>${esc(x)}</option>`).join("")}</optgroup>`).join("");
+    const persoOpts = (cur) => `<option value="">— aucun —</option>` + Object.entries({ ...PERSONNAGES, "Autres": ["Bourriquet"] }).map(([g, l]) => `<optgroup label="${esc(g)}">${l.map(x => `<option ${x === cur ? "selected" : ""}>${esc(x)}</option>`).join("")}</optgroup>`).join("");
     const monPerso = moi ? `<div class="mine-head" style="margin:0 0 10px"><label style="margin:0 0 4px">🦸 Mon personnage préféré <small style="font-weight:400">(« Bonjour ${esc(moi.prenom)} alias … »)</small></label><select id="monPersoSel">${persoOpts(moi.perso_prefere || "")}</select></div>` : "";
     $("teamList").innerHTML = monPerso + (visibles.length ? visibles.map(m => `
       <div class="member">
