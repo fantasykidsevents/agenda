@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>📜 Votre devis · Fantasy Kids Events</title>
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#ffffff" />
+<link rel="icon" href="icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--grad:linear-gradient(110deg,#00b4ff 0%,#5b63f8 30%,#a020ff 60%,#d63fd0 80%,#ff7f7f 100%);--violet:#8a3cf7;--violet-d:#6a2ad6;
+    --txt:#1f1735;--muted:#6b6385;--line:#eadff9;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
+  *{box-sizing:border-box}
+  html,body{margin:0;color:var(--txt);font-family:"Fredoka",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px}
+  body{background:radial-gradient(1200px 600px at -10% -10%,rgba(0,180,255,.16),transparent 60%),
+    radial-gradient(900px 500px at 110% 10%,rgba(214,63,208,.16),transparent 60%),
+    radial-gradient(900px 700px at 50% 110%,rgba(160,32,255,.14),transparent 60%),#fbf9ff;background-attachment:fixed;min-height:100vh}
+  #sky{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  #sky i{position:absolute;font-style:normal;color:var(--c);opacity:0;text-shadow:0 0 8px var(--c);animation:tw var(--d) ease-in-out var(--w) infinite}
+  @keyframes tw{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:var(--o);transform:scale(1) rotate(25deg)}}
+  .wrap{position:relative;z-index:1;max-width:620px;margin:0 auto;padding:calc(var(--safe-t) + 18px) 16px calc(40px + var(--safe-b))}
+  .hero{text-align:center;margin-bottom:14px}
+  .hero img{width:min(260px,70vw);height:auto;filter:drop-shadow(0 4px 10px rgba(160,32,255,.25));animation:float 5s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  h1{font-size:26px;margin:6px 0 4px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);margin:0}
+  .recap{margin:14px 0;padding:14px 16px;border-radius:18px;color:#fff;background:var(--grad);box-shadow:0 10px 28px rgba(160,32,255,.3)}
+  .recap b{display:block;font-size:18px;margin-bottom:2px}
+  .card{background:rgba(255,255,255,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:20px;padding:18px;
+    box-shadow:0 6px 24px rgba(120,60,220,.10),0 0 0 1px rgba(160,32,255,.06);margin-bottom:14px}
+  .card h2{font-size:17px;margin:0 0 6px;color:var(--violet-d)}
+  label.q{display:block;font-weight:600;margin:16px 0 6px;line-height:1.3}
+  label.q:first-of-type{margin-top:6px}
+  .req{color:#d63fd0}
+  input[type=text],input[type=tel],input[type=date],input[type=number],textarea{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:14px;
+    background:#fdfcff;font:inherit;font-size:16px;color:inherit}
+  textarea{min-height:84px;resize:vertical}
+  input:focus,textarea:focus{outline:2px solid #c9b6f5;border-color:var(--violet)}
+  .opts{display:flex;flex-direction:column;gap:8px}
+  .opts.row{flex-direction:row;flex-wrap:wrap}
+  .opt{position:relative}
+  .opt input{position:absolute;opacity:0;width:1px;height:1px}
+  .opt span{display:block;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fdfcff;cursor:pointer;transition:.15s}
+  .opts.row .opt{flex:1;min-width:30%}
+  .opts.row .opt span{text-align:center}
+  .opt input:checked + span{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(160,32,255,.3)}
+  .opt input:focus-visible + span{outline:2px solid var(--violet)}
+  .hint{font-size:13px;color:var(--muted);margin:4px 0 0}
+  .mascotte-box{margin-top:14px;padding:14px;border-radius:16px;background:linear-gradient(165deg,#eefcf4,#eef6ff);border:1px solid #d1fae5;animation:pop .35s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .mb-title{font-weight:700;color:#047857;font-size:16px}
+  .mb-text{margin:6px 0 0;color:#065f46;font-size:15px;line-height:1.4}
+  .btn{display:block;width:100%;border:0;border-radius:16px;padding:16px;font:inherit;font-weight:700;font-size:18px;color:#fff;
+    background:linear-gradient(110deg,#00b4ff 0%,#5b63f8 14%,#a020ff 28%,#d63fd0 42%,#ff7f7f 50%,#d63fd0 58%,#a020ff 72%,#5b63f8 86%,#00b4ff 100%);background-size:300% 100%;animation:flow 8s ease-in-out infinite alternate;box-shadow:0 8px 24px rgba(160,32,255,.35);cursor:pointer}
+  @keyframes flow{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+  @keyframes sh{to{background-position:200% 0}}
+  .btn:disabled{opacity:.6}
+  .err{color:#b91c1c;font-size:14px;margin-top:10px;text-align:center}
+  .demo{background:#fff4d6;color:#7a5200;font-size:13px;padding:8px 12px;border-radius:12px;text-align:center;margin-bottom:12px}
+  .done{text-align:center;padding:40px 18px}
+  .done .big{font-size:64px;animation:float 3s ease-in-out infinite}
+  .done h2{font-size:26px;margin:10px 0;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .spark{position:fixed;z-index:200;pointer-events:none;font-size:var(--s);color:var(--c);text-shadow:0 0 10px var(--c);animation:sp 1s cubic-bezier(.15,.7,.3,1) forwards}
+  @keyframes sp{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}100%{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) scale(1) rotate(var(--r));opacity:0}}
+  .hidden{display:none!important}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important}}
+  .dv{width:100%;border-collapse:collapse;font-size:16px}
+  .dv td{padding:7px 0;border-bottom:1px dashed var(--line)}
+  .dv td:last-child{text-align:right;font-weight:600;white-space:nowrap;padding-left:10px}
+  .dv tr.tot td{border-bottom:0;border-top:2px solid #dcc6ff;font-size:19px;font-weight:700;padding-top:12px}
+  .dv tr.sub td{color:var(--muted);font-size:14px;border-bottom:0}
+  .ok-btn{display:block;width:100%;border:0;border-radius:16px;padding:16px;font:700 18px "Fredoka",sans-serif;color:#fff;cursor:pointer;
+    background:linear-gradient(110deg,#00b4ff,#a020ff,#d63fd0,#ff7f7f);background-size:200% 100%;animation:flow 4s linear infinite alternate;box-shadow:0 10px 26px rgba(160,32,255,.35)}
+  .note{color:var(--muted);font-size:14px;text-align:center;margin:10px 0 0}
+</style>
+</head>
+<body>
+<div id="sky" aria-hidden="true"></div>
+<div class="wrap">
+  <div class="hero">
+    <img src="logo.png" alt="Fantasy Kids Events" />
+    <h1>📜 Votre devis magique</h1>
+    <p class="sub">Tout est prêt pour faire briller la fête ✨</p>
+  </div>
+  <div class="demo hidden" id="demoBar">Aperçu (exemple) : rien n'est envoyé.</div>
+  <div class="card" id="loading">✨ Chargement de votre devis…</div>
+  <div class="card hidden" id="invalid"><h2>Oups 🙈</h2><p>Ce lien n'est plus valable. Contactez-nous et nous vous renvoyons votre devis avec plaisir 💜</p></div>
+  <div id="devis" class="hidden">
+    <div class="recap" id="recap"></div>
+    <div class="card">
+      <h2>💶 Le détail</h2>
+      <table class="dv" id="lignes"></table>
+    </div>
+    <div class="card" id="zoneOk">
+      <p style="margin:0 0 12px;font-size:16px">Tout vous convient ? Un petit clic et on s'occupe de la suite 💖</p>
+      <button type="button" class="ok-btn" id="okBtn">✅ J'accepte le devis</button>
+      <p class="note">Vous recevrez ensuite par e-mail les infos pour l'acompte, afin de bloquer la date rien que pour vous 🔒</p>
+      <p class="err" id="err"></p>
+    </div>
+  </div>
+  <div class="card done hidden" id="done">
+    <div class="big">🎉</div>
+    <h2>Merci, c'est validé !</h2>
+    <p>Youpi ! Vous allez recevoir dans quelques instants un e-mail avec les infos pour verser l'acompte.<br>Toute l'équipe a déjà hâte de vous retrouver ✨</p>
+  </div>
+</div>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const CFG = window.APP_CONFIG || {};
+  const COLORS = ["#00b4ff","#5b63f8","#a020ff","#d63fd0","#ff7f7f","#ffd166"];
+  const token = new URLSearchParams(location.search).get("t") || "";
+  const DEMO = !CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY || !window.supabase || !token;
+  const sb = DEMO ? null : window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  (function sky(){ let h = ""; for (let i = 0; i < 28; i++) h += `<i style="left:${Math.random()*100}%;top:${Math.random()*100}%;font-size:${6+Math.random()*12}px;--c:${COLORS[i%6]};--o:${.35+Math.random()*.5};--d:${2.5+Math.random()*4}s;--w:${-Math.random()*6}s">${Math.random()<.7?"✦":"✧"}</i>`; $("sky").innerHTML = h; })();
+  function burst(x = innerWidth / 2, y = innerHeight / 2) {
+    if (reduce) return;
+    for (let i = 0; i < 26; i++) { const s = document.createElement("span"); s.className = "spark"; const a = Math.random()*Math.PI*2, r = 60+Math.random()*130;
+      s.textContent = ["✦","✧","★","✨"][i%4]; s.style.cssText = `left:${x}px;top:${y}px;--x:${Math.cos(a)*r}px;--y:${Math.sin(a)*r}px;--r:${Math.random()*360}deg;--s:${10+Math.random()*16}px;--c:${COLORS[i%6]}`;
+      document.body.appendChild(s); setTimeout(() => s.remove(), 1100); }
+  }
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const eur = (n) => (Math.round(n * 100) / 100).toLocaleString("fr-BE", { minimumFractionDigits: Number.isInteger(+n) ? 0 : 2, maximumFractionDigits: 2 }) + " €";
+  const OPT = { enfant: ["👧 Enfant supplémentaire", 7], tatouage: ["🦋 Atelier tatouage paillettes", 2], perso_flash: ["🎭 Personnage supplémentaire · Flash (30 min)", 40],
+    perso_magic: ["🎭 Personnage supplémentaire · Magic (1 h)", 65], perso_fantastic: ["🎭 Personnage supplémentaire · Fantastic (1 h 30)", 80],
+    perso_celebration: ["🎭 Personnage supplémentaire · Célébration (2 h)", 90], mascotte: ["🐭 Mascotte surprise (30 min)", 100],
+    perso_30: ["🎤 Personnage supplémentaire · 30 min", 40], perso_1h: ["🎤 Personnage supplémentaire · 1 h", 45] };
+
+  function remplir(d) {
+    const jour = d.date ? new Date(d.date + "T12:00:00").toLocaleDateString("fr-BE", { weekday: "long", day: "numeric", month: "long" }) : "";
+    const h = (x) => x ? String(x).slice(0, 5).replace(":", "h") : "";
+    $("recap").innerHTML = `<b>🎂 ${d.enfant ? "L'anniversaire de " + esc(d.enfant) + (d.age ? ` (${esc(d.age)} ans)` : "") : "Votre animation"}</b>📅 ${esc(jour.charAt(0).toUpperCase() + jour.slice(1))}${d.heure ? " · " + h(d.heure) + (d.heure_fin ? " – " + h(d.heure_fin) : "") : ""}${d.adresse ? "<br>📍 " + esc(d.adresse) : ""}`;
+    const PF = [["superstar", 350], ["celebration", 330], ["fantastic", 225], ["surprise", 225], ["idol party", 180], ["magic", 175], ["rising star", 125], ["flash", 110]];
+    const th = String(d.theme || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""), pf = (PF.find(([k]) => th.includes(k)) || [0, 0])[1];
+    let L = d.theme ? `<tr><td>✨ Formule ${esc(d.theme)}</td><td>${pf ? eur(pf) : ""}</td></tr>` : "";
+    Object.entries(d.options || {}).filter(([, n]) => +n > 0).forEach(([k, n]) => { const o = OPT[k]; if (!o) return;
+      L += `<tr><td>${esc(o[0])}${+n > 1 ? ` × ${n}` : ""}${k === "tatouage" ? "<br><small style='color:#6b6385'>à régler le jour même, selon le nombre d'enfants tatoués</small>" : ""}</td><td>${k === "tatouage" ? eur(o[1]) + " / enfant" : eur(o[1] * n)}</td></tr>`; });
+    if (+d.prix) L += `<tr class="tot"><td>Total</td><td>${eur(+d.prix)}</td></tr>`;
+    if (+d.acompte) L += `<tr class="sub"><td>💳 Acompte pour réserver la date</td><td>${eur(+d.acompte)}</td></tr>`;
+    if (+d.prix && +d.acompte && +d.prix > +d.acompte) L += `<tr class="sub"><td>💰 Solde le jour de la fête</td><td>${eur(+d.prix - +d.acompte)}</td></tr>`;
+    $("lignes").innerHTML = L;
+    if (d.accepte_le || d.statut === "confirme" || d.statut === "termine") {
+      $("zoneOk").innerHTML = `<p style="margin:0;font-size:16px;text-align:center">✅ Ce devis est déjà accepté, merci ! 💖</p>`;
+    }
+  }
+  async function charger() {
+    if (DEMO) {
+      $("demoBar").classList.remove("hidden");
+      remplir({ date: new Date(Date.now() + 12*864e5).toISOString().slice(0,10), heure: "14:00:00", heure_fin: "15:00:00", enfant: "Lina", age: 6, adresse: "Rue des Fées 12, 5070 Fosses-la-Ville", theme: "Magic · 1 h", options: { mascotte: 1, tatouage: 12 }, prix: 275, acompte: 50 });
+    } else {
+      const { data, error } = await sb.rpc("devis_get", { p_token: token });
+      if (error || !data) { $("loading").classList.add("hidden"); $("invalid").classList.remove("hidden"); return; }
+      remplir(data);
+    }
+    $("loading").classList.add("hidden"); $("devis").classList.remove("hidden");
+  }
+  $("devis").addEventListener("click", async (e) => {
+    if (e.target.id !== "okBtn") return;
+    const b = e.target; b.disabled = true; b.textContent = "✨ Validation…"; $("err").textContent = "";
+    try {
+      if (!DEMO) { const { data, error } = await sb.rpc("devis_accepter", { p_token: token }); if (error || data !== true) throw new Error(error?.message || "lien invalide"); }
+      $("devis").classList.add("hidden"); $("done").classList.remove("hidden"); scrollTo({ top: 0, behavior: "smooth" });
+      burst(); setTimeout(() => burst(innerWidth * .3, innerHeight * .4), 200); setTimeout(() => burst(innerWidth * .7, innerHeight * .45), 400);
+    } catch (err) { $("err").textContent = "Oups, ça n'a pas fonctionné. Réessayez dans un instant ou répondez simplement à notre e-mail."; b.disabled = false; b.textContent = "✅ J'accepte le devis"; }
+  });
+  charger();
+})();
+</script>
+</body>
+</html>

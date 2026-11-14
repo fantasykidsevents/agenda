@@ -484,6 +484,9 @@
   .opt-row .qt b{min-width:22px;text-align:center}
 background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
   .dem-row .actions{margin-top:8px}
+  .lu-par{text-align:right;font-size:11.5px;color:#8a80a6;margin:2px 10px 6px}
+  .devis-box{background:#f6efff;border-radius:16px;padding:12px 14px;margin:12px 0}
+  body.dark .devis-box{background:#2c2540}
   .rx-who{font-size:11px;color:#8a80a6;margin:2px 6px 0;line-height:1.3}
   .m.me .rx-who{text-align:right}
   .chat-online{display:block;color:#17a35a;font-weight:700;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -695,6 +698,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .cost-row .em{font-size:24px;width:34px;text-align:center}
   .cost-row .tx{flex:1;min-width:150px}
   .cost-row .tx b{display:block}
+  .cost-row .tx b.cost-perso{font-size:17px;font-weight:900;line-height:1.15}
+  .cost-row .tx small.cost-nom{font-size:13px;color:#5b5276}.cost-row .tx small.cost-nom b{display:inline;font-weight:700}
   .cost-row .tx small{display:block;color:var(--muted);font-size:12px}
   .cost-row .tx small.nx{color:#7a3cff}
   .cost-row .ac{display:flex;gap:6px;align-items:center;margin-left:auto}
@@ -1233,6 +1238,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div id="kmBox" class="km-box hidden"></div>
       <div id="paieList"></div>
     </details></div>
+    <div id="devisBox" class="anniv-only devis-box hidden"></div>
     <div class="sec">Statut<span class="anniv-only" style="display:inline"> & solde</span></div>
     <div class="anniv-only"><label for="solde">💶 Solde à encaisser le jour J (€) <small class="hint" style="display:inline">— visible par l'équipe</small></label>
     <input id="solde" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Calculé : prix − acompte" /></div>
@@ -2300,7 +2306,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
 
   function openForm(ev, date) {
-    optSel = { ...((ev && ev.options) || {}) };
+    optSel = { ...((ev && ev.options) || {}) }; devisApres = false;
     $("optFold").open = false;
     editingId = ev ? ev.id : null;
     document.querySelectorAll("#evForm details.fold-auto").forEach(d => d.open = !ev);   // nouvelle fiche : tout ouvert ; fiche existante : replié
@@ -2313,6 +2319,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const th = $("theme"); [...th.querySelectorAll("option[data-ancien]")].forEach(o => o.remove());
       if (ev && ev.theme && th.value !== ev.theme) { const o = document.createElement("option"); o.value = o.textContent = ev.theme; o.dataset.ancien = "1"; th.appendChild(o); th.value = ev.theme; }
       formuleAvant = $("theme").value; renderOptions();
+      if (ev && isResp() && !soldeTouched && $("prix").value !== "") { const v = autoSolde(); if (v != null) $("solde").value = v; }
       // demande sans prix : on propose le prix de la formule + options
       if (ev && isResp() && ev.type_evenement !== "evenement" && $("prix").value === "") {
         const b = prixFormule(`${ev.theme || ""} ${ev.titre || ""}`); if (b) { $("prix").value = b + optTotal(optSel); $("prix").dispatchEvent(new Event("input")); }
@@ -2332,7 +2339,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     paieMap = new Map(((ev && ev.paies) || []).map(p => [normName(p.prenom), { ...p }]));
     kmCalc = null; $("kmBox").classList.add("hidden");
     if (ev && ev.km_detail && isResp() && ev.km_detail.mode !== "evt") showKm({ detail: ev.km_detail, client: ev.deplacement_client }, false);
-    soldeTouched = !!(ev && ev.solde != null);
+    // solde « à la main » seulement s'il ne correspond à aucun calcul automatique (prix, ou prix − acompte)
+    soldeTouched = !!(ev && ev.solde != null && !(isResp() && +ev.prix && [+ev.prix, +ev.prix - (+ev.acompte || 0)].some(v => Math.abs(v - +ev.solde) < 0.01)));
     $("type_evenement").value = ev && ev.type_evenement === "evenement" ? "evenement" : "animation";
     $("collerBox").classList.toggle("hidden", !!ev); $("collerBox").open = false; $("collerTxt").value = ""; $("collerRes").className = "lecture hidden";
     horaires = {}; voitures = {}; try { JSON.parse((ev && ev.equipe_detail) || "[]").forEach(x => { if (x.debut || x.fin) horaires[normName(x.prenom)] = { d: x.debut || "", f: x.fin || "" }; if (x.voiture) voitures[normName(x.prenom)] = x.voiture; }); } catch (e) {}
@@ -2355,7 +2363,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!resp) $("delBtn").classList.add("hidden");
     if (!gest) { $("delBtn").classList.add("hidden"); $("formTitle").textContent = estEvt() ? "Détails de l'événement" : "Détails de l'animation"; $("cancelBtn").textContent = "Fermer"; }
     else $("cancelBtn").textContent = "Annuler";
-    renderFiche(ev);
+    renderFiche(ev); renderDevis(ev);
     renderMonTrajet(ev);
     if (ev) $("bilanBox").innerHTML = bilanHtml(ev);
     $("jourBtnBox").classList.toggle("hidden", !ev || ev.statut === "annule");
@@ -2413,7 +2421,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const mesRoles = isResp() ? team : team.filter(p => normName(p.nom) === moi);
     const items = mesRoles.flatMap(p => costDe(p.role).filter(c => utilisable(c, p.nom)));
     $("sigCost").innerHTML = items.length ? `<div class="sec" style="margin-top:4px">👗 Costumes & perruques : dans quel état ?</div>` + items.map(c => `<div class="cost-row ${etatDe(c)}" style="padding:8px 0">
-        <span class="em">${TYPES[typeDe(c)][0]}</span><div class="tx"><b>${esc(nomDe(c))}</b></div>
+        <span class="em">${TYPES[typeDe(c)][0]}</span><div class="tx"><b class="cost-perso">${esc(c.personnage || nomDe(c))}</b><small class="cost-nom">${TYPES[typeDe(c)][1]}${c.nom && c.nom !== c.personnage ? ` · <b>${esc(c.nom)}</b>` : ""}</small></div>
         <div class="etat">${etatsPour(c).map(([k, [ic, t]]) => `<button type="button" class="${etatDe(c) === k ? "on " + k : ""}" data-etat="${k}" data-cid="${esc(c.id)}">${ic} ${t}</button>`).join("")}</div>
         ${etatDe(c) !== "ok" ? `<input class="pb" type="text" data-pb="${esc(c.id)}" value="${esc(c.probleme || "")}" placeholder="${etatDe(c) === "reparer" ? "Quel problème ?" : "Précision (facultatif)"}" />` : ""}</div>`).join("") : "";
   }
@@ -2452,6 +2460,32 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     ["acces","Accès / parking"],["mascotte","Mascotte"],["piece_mascotte","Pièce discrète mascotte"],["allergies","Allergies / infos"],["photos","Photos"]];
   const estClient = (e) => !!e && e.type_evenement !== "evenement" && !/nuit magique/i.test(e.theme || "") &&
     !!(e.parent || e.telephone || e.email || e.enfant || e.prix || /anniv|flash|magic|fantastic|c[ée]l[ée]bration|surprise|rising|idol|superstar|formule/i.test((e.theme || "") + " " + (e.titre || "")));
+  // 📨 Devis : le client reçoit le prix détaillé et l'accepte en ligne → l'animation passe en « confirmée » → mail d'acompte
+  let devisApres = false;
+  async function renderDevis(ev) {
+    const box = $("devisBox");
+    const ok = isResp() && ev && ev.id && ev.type_evenement !== "evenement" && ev.statut !== "confirme" && ev.statut !== "termine" && ev.statut !== "annule";
+    box.classList.toggle("hidden", !ok); if (!ok) return;
+    let d = null;
+    if (!DEMO) { try { ({ data: d } = await sb.from("devis").select("envoye_le,accepte_le").eq("evenement_id", ev.id).maybeSingle()); } catch (_) {} }
+    const f = (x) => new Date(x).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    box.innerHTML = `<div class="sec" style="margin-top:0">📨 Devis pour le client</div>
+      <p class="hint" style="margin:0 0 8px">${d && d.accepte_le ? `✅ Accepté par le client le ${f(d.accepte_le)}` : d && d.envoye_le ? `⏳ Envoyé le ${f(d.envoye_le)} · en attente de sa réponse` : "Le client reçoit le détail du prix (formule + options) et l'accepte en un clic. Il reçoit ensuite la demande d'acompte."}</p>
+      <button type="button" class="btn ${d && d.envoye_le ? "ghost" : "primary"}" id="devisBtn" style="width:100%">${d && d.envoye_le ? "🔁 Renvoyer le devis" : "📨 Enregistrer et envoyer le devis"}</button>`;
+    $("devisBtn").onclick = () => {
+      if (!$("email").value.trim()) { $("formErr").textContent = "📧 Ajoute d'abord l'e-mail du parent."; $("email").focus(); return; }
+      if (!(+$("prix").value > 0)) { $("formErr").textContent = "💶 Indique d'abord le prix total."; $("prix").focus(); return; }
+      if (!(+$("acompte").value > 0) && !confirm("Aucun acompte indiqué : le devis partira sans montant d'acompte. Continuer ?")) return;
+      devisApres = true; $("evForm").requestSubmit();
+    };
+  }
+  async function envoyerDevis(id) {
+    if (DEMO) { toast("📨 Dans la version en ligne, le devis part tout de suite"); return; }
+    try { const { data, error } = await sb.functions.invoke("notifier", { body: { type: "DEVIS", evId: id } });
+      if (error || !data?.ok) throw error || new Error(data?.erreur || "erreur");
+      toast("📨 Devis envoyé au client !"); magicBurst(); }
+    catch (err) { toast("Erreur devis : " + (err.message || err)); }
+  }
   function renderFiche(ev) {
     const box = $("ficheBox");
     if (!ev || !estClient(ev)) { box.classList.add("hidden"); return; }
@@ -2827,7 +2861,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       else ev[k] = el.value.trim() === "" ? null : el.value.trim();
     });
     if (!ev.date) { $("formErr").textContent = "La date est obligatoire."; return; }
-    if (ev.solde == null && !soldeTouched) ev.solde = autoSolde();
+    if (!soldeTouched && (ev.solde == null || isResp())) ev.solde = autoSolde();
     const orig = events.find(x => x.id === editingId) || {};
     ev.deplacement_client = kmCalc ? kmCalc.client : (orig.deplacement_client ?? null);
     ev.km_detail = kmCalc ? kmCalc.detail : (orig.km_detail ?? null);
@@ -2844,9 +2878,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("saveBtn").disabled = true;
     try {
       await store.save(ev);
+      if (devisApres && editingId) { devisApres = false; envoyerDevis(editingId); }
       selDay = ev.date; const d = parseISO(ev.date); curY = d.getFullYear(); curM = d.getMonth();
       closeForm(); toast(ev.type_evenement === "evenement" ? (editingId ? "✨ Événement modifié !" : "🎪 Événement ajouté !") : editingId ? "✨ Animation modifiée !" : "🪄 Animation ajoutée !"); poof(editingId ? "✨ Magique !" : "🪄 Abracadabra !");  await reload();
-    } catch (err) { $("formErr").textContent = "Erreur : " + (err.message || err); }
+    } catch (err) { $("formErr").textContent = "Erreur : " + (err.message || err); devisApres = false; }
     finally { $("saveBtn").disabled = false; }
   });
   $("delBtn").addEventListener("click", async () => {
@@ -2908,7 +2943,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // ================= Équipe =================
   // ---------- Choix des animateurs ----------
   // Personnages du site fantasykidsevents.be (formulaire de réservation)
-  const PERSONNAGES = Object.fromEntries(Object.entries({"Contes de fées": ["Elsa", "Anna", "Raiponce", "Aurore", "Belle", "Cendrillon", "Blanche-Neige", "Ariel", "Jasmine", "Vaiana", "Tiana", "Alice", "Mérida", "Elena", "Esmeralda", "Asha", "Mirabel", "Pepa", "Aladdin", "Flynn Rider", "Kristoff", "Prince Philippe", "Merlin", "Peter Pan", "La Fée bleue"], "Super-héros": ["Spider-Man", "Wanda", "Captain America", "Captain Marvel", "Black Widow"], "Mascottes": ["Stitch", "Olaf", "Woody", "Buzz l’Éclair", "Jack Skellington"], "K-pop": ["Rumi", "Mira", "Zoey"]}).map(([g, l]) => [g, [...l].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }))]));  // ordre alphabétique
+  const PERSONNAGES = Object.fromEntries(Object.entries({"Contes de fées": ["Elsa", "Anna", "Raiponce", "Aurore", "Belle", "Cendrillon", "Blanche-Neige", "Ariel", "Jasmine", "Vaiana", "Tiana", "Alice", "Mérida", "Elena", "Esmeralda", "Asha", "Mirabel", "Pepa", "Aladdin", "Le Génie", "Flynn Rider", "Kristoff", "Prince Philippe", "Merlin", "Peter Pan", "La Fée bleue"], "Super-héros": ["Spider-Man", "Wanda", "Captain America", "Captain Marvel", "Black Widow"], "Mascottes": ["Stitch", "Olaf", "Woody", "Buzz l’Éclair", "Jack Skellington", "Basile"], "K-pop": ["Rumi", "Mira", "Zoey"]}).map(([g, l]) => [g, [...l].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }))]));  // ordre alphabétique
   const FORMULES = ["Flash · 30 min", "Magic · 1 h", "Fantastic · 1 h 30", "Célébration · 2 h", "Surprise · 1 h", "Rising Star (K-pop) · 30 min", "Idol Party (K-pop) · 1 h", "Superstar Experience (K-pop) · 2 h"];
   const ROLES_EVT = ["Responsable sur place", "Accueil / caisse", "Billetterie", "Technique / son", "Montage / démontage", "Bar", "Buffet", "Photo"];
   const ROLE_OPTS = `<option value="">— Rôle —</option><optgroup label="Équipe"><option value="acc">acc</option></optgroup><optgroup label="Événements">${ROLES_EVT.map(r => `<option>${r}</option>`).join("")}</optgroup>` +
@@ -2997,8 +3032,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const r = paieMap.get(key) || { prenom: nom, deplacement: 0, prestation: 0 };
     r[e.target.dataset.k] = e.target.value === "" ? 0 : +e.target.value; paieMap.set(key, r); renderPaie();
   });
-  const autoSolde = () => { const p = +$("prix").value || 0, a = +$("acompte").value || 0; return p ? Math.max(0, p - ($("acompte_paye").checked ? a : 0)) : null; };
-  ["prix","acompte","acompte_paye"].forEach(id => $(id).addEventListener("input", () => { if (!soldeTouched) { const v = autoSolde(); $("solde").value = v ?? ""; } }));
+  const autoSolde = () => { const p = +$("prix").value || 0, a = +$("acompte").value || 0; return p ? Math.round(Math.max(0, p - ($("acompte_paye").checked ? a : 0)) * 100) / 100 : null; };
+  ["prix","acompte","acompte_paye"].forEach(id => $(id).addEventListener(id === "acompte_paye" ? "change" : "input", () => { if (!soldeTouched) { const v = autoSolde(); $("solde").value = v ?? ""; } }));
   $("solde").addEventListener("input", () => { soldeTouched = $("solde").value !== ""; });
 
   function renderDriver() {
@@ -3812,7 +3847,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       .map(([v, t]) => `<button type="button" class="chip${costType === v ? " on" : ""}" data-ctype="${v}">${t}</button>`).join("");
     $("costList").innerHTML = l.length ? l.map(c => `<div class="cost-row ${etatDe(c)}">
         <span class="em">${TYPES[typeDe(c)][0]}<i>${roleEmoji(c.personnage)}</i></span>
-        <div class="tx"><b>${esc(nomDe(c))}</b><small>${esc(c.personnage)} · ${persoDe(c) ? `👤 perso de ${esc(persoDe(c))}` : esc(ouEst(c))}${c.maj_par ? ` · maj ${esc(c.maj_par)}` : ""}</small><small class="nx">${prochaineUtil(c)}</small></div>
+        <div class="tx"><b class="cost-perso">${esc(c.personnage || nomDe(c))}</b><small class="cost-nom">${TYPES[typeDe(c)][1]}${c.nom && c.nom !== c.personnage ? ` · <b>${esc(c.nom)}</b>` : ""}</small><small>${persoDe(c) ? `👤 perso de ${esc(persoDe(c))}` : esc(ouEst(c))}${c.maj_par ? ` · maj ${esc(c.maj_par)}` : ""}</small><small class="nx">${prochaineUtil(c)}</small></div>
         <div class="etat">${etatsPour(c).map(([k, [ic, t]]) => `<button type="button" class="${etatDe(c) === k ? "on " + k : ""}" data-etat="${k}" data-cid="${esc(c.id)}">${ic} ${t}</button>`).join("")}</div>
         ${etatDe(c) !== "ok" ? `<input class="pb" type="text" data-pb="${esc(c.id)}" value="${esc(c.probleme || "")}" placeholder="${etatDe(c) === "reparer" ? "Quel problème ? (ex. fermeture cassée, ourlet décousu)" : "Précision (ex. tache de chocolat)"}" />` : ""}
         <div class="ac">
@@ -6157,10 +6192,27 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     return [out[0], ...out.slice(1).sort((a, b) => (b.last ? 1 : 0) - (a.last ? 1 : 0) || (a.last && b.last ? cle(b).localeCompare(cle(a)) : cle(a).localeCompare(cle(b))))];
   }
   const nonLus = (canal) => chatMsgs.filter(m => m.canal === canal && !isMine(m) && m.created_at > (chatLu[canal] || "")).length;
+  // 👀 Accusés de lecture : qui a lu jusqu'où (table chat_lu)
+  let luCanal = null, luMap = {}, luT = null, luEnvoi = {};
+  async function chargerLu(canal) {
+    if (DEMO || !sb || !canal) return;
+    try { const { data } = await sb.from("chat_lu").select("email,nom,lu_le").eq("canal", canal);
+      if (chatCanal !== canal) return; luCanal = canal; luMap = {}; (data || []).forEach(r => { luMap[String(r.email).toLowerCase()] = r; });
+      if (!$("chatBg").classList.contains("hidden")) renderMsgs(true); } catch (_) {}
+  }
+  function luPar(m) {
+    if (!m || luCanal !== m.canal) return [];
+    const moi = currentUser ? currentUser.email.toLowerCase() : "", auteur = String(m.auteur_email || "").toLowerCase();
+    return Object.entries(luMap).filter(([em, r]) => em !== moi && em !== auteur && r.lu_le && new Date(r.lu_le) >= new Date(m.created_at)).map(([, r]) => r.nom).filter(Boolean);
+  }
   function marquerLu(canal) {
     const last = chatMsgs.filter(m => m.canal === canal).pop();
     chatLu[canal] = last ? last.created_at : new Date().toISOString();
     try { localStorage.setItem(LS_LU, JSON.stringify(chatLu)); } catch (e) {}
+    if (!DEMO && sb && currentUser && last && luEnvoi[canal] !== last.created_at) {
+      luEnvoi[canal] = last.created_at;
+      sb.from("chat_lu").upsert({ email: currentUser.email.toLowerCase(), canal, nom: chatMe(), lu_le: last.created_at }).then(() => {}, () => {});
+    }
     chatBadges();
   }
   function chatBadges() {
@@ -6241,6 +6293,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       }
       prev = m;
     });
+    const dernier = list.length ? list[list.length - 1] : null, vus = luPar(dernier);
+    if (vus.length) html += `<div class="lu-par">👀 Vu par ${esc(vus.join(", "))}</div>`;
     box.innerHTML = html;
     // reste en bas quand on y était (même quand les images finissent de charger) ; sinon ne bouge pas
     if (!garderPos || enBas) {
@@ -6298,7 +6352,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("chatAv").textContent = ev ? (universOf(ev) || [0, 0, "🎭"])[2] : "✨";
     $("chatInfo").classList.toggle("hidden", !ev);
     $("chatBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
-    renderMsgs(); marquerLu(canal); rtRejoindre(canal);
+    luCanal = null; luMap = {}; renderMsgs(); marquerLu(canal); rtRejoindre(canal); chargerLu(canal);
+    clearInterval(luT); luT = setInterval(() => { if (chatCanal && !$("chatBg").classList.contains("hidden") && !document.hidden) chargerLu(chatCanal); else clearInterval(luT); }, 15000);
     if (!chatLoaded) chatReload().then(() => { if (chatCanal === canal) { renderMsgs(); marquerLu(canal); } });
     if (matchMedia("(min-width:700px)").matches) setTimeout(() => $("chatTxt").focus(), 100);
   }
