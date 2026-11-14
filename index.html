@@ -484,6 +484,27 @@
   .opt-row .qt b{min-width:22px;text-align:center}
 background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
   .dem-row .actions{margin-top:8px}
+  .rx-who{font-size:11px;color:#8a80a6;margin:2px 6px 0;line-height:1.3}
+  .m.me .rx-who{text-align:right}
+  .chat-online{display:block;color:#17a35a;font-weight:700;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chat-online:empty{display:none}
+  .chat-typing{display:flex;align-items:center;gap:8px;padding:4px 14px 2px;font-size:13px;color:#7a6f96;font-style:italic}
+  .chat-typing .dots{display:inline-flex;gap:3px}.chat-typing .dots i{width:6px;height:6px;border-radius:50%;background:#a020ff;opacity:.35;animation:tdot 1.2s infinite}
+  .chat-typing .dots i:nth-child(2){animation-delay:.2s}.chat-typing .dots i:nth-child(3){animation-delay:.4s}
+  @keyframes tdot{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+  body.dark .chat-online{color:#5fe39a}
+  .resa-conf{background:#f6f2ff;border-radius:12px;padding:10px 12px;margin:10px 0}.resa-conf.ok{background:#e9f9f0;color:#17714f;font-weight:700}
+  body.dark .resa-conf{background:#2c2540}body.dark .resa-conf.ok{background:#173b2b;color:#9be3bd}
+  .emo-btn{font-size:26px;width:52px;height:46px;border-radius:12px;border:2px dashed #c79bff;background:#fff;cursor:pointer;line-height:1;padding:0}
+  .stk-row .em.emo-btn{width:44px;height:40px;font-size:22px;flex:0 0 auto}
+  .emo-bg{position:fixed;inset:0;z-index:9999;background:rgba(20,10,40,.45);display:flex;align-items:flex-end;justify-content:center}
+  .emo-box{background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom));max-height:80vh;overflow:auto}
+  .emo-tit{font-weight:800;font-size:17px;margin-bottom:10px;text-align:center}
+  .emo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px}
+  .emo-grid button{font-size:26px;height:48px;border:0;border-radius:12px;background:#f6f2ff;cursor:pointer}
+  .emo-grid button.on{box-shadow:inset 0 0 0 3px #a020ff}
+  .emo-autre{display:flex;gap:8px;margin:12px 0 8px}.emo-autre input{flex:1}
+  body.dark .emo-box{background:#1f1a2e;color:#f3eefc}body.dark .emo-grid button,body.dark .emo-btn{background:#2c2540}
   .ch .av,.chat-top .av,.ment-list .em{line-height:1;letter-spacing:0;text-indent:0;padding:0;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-weight:400}
   .ch.equipe .av{background:var(--grad);box-shadow:0 0 14px rgba(160,32,255,.45)}
   .ch .tx{flex:1;min-width:0}
@@ -1134,8 +1155,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div style="flex:2"><label for="enfant">Prénom de l'enfant</label><input id="enfant" type="text" /></div>
       <div><label for="age">Âge</label><input id="age" type="number" min="0" max="20" inputmode="numeric" /></div>
     </div>
-    <div class="anniv-only"><label for="theme">Formule / thème</label>
-    <input id="theme" type="text" list="themesList" autocomplete="off" placeholder="Formule : Magic, Idol Party…" /></div>
+    <div class="anniv-only"><label for="theme">Formule</label>
+    <select id="theme"><option value="">— Choisir la formule —</option>
+      <optgroup label="✨ Féerique"><option>Flash · 30 min</option><option>Magic · 1 h</option><option>Fantastic · 1 h 30</option><option>Célébration · 2 h</option><option>Surprise · 1 h</option></optgroup>
+      <optgroup label="🎤 K-pop"><option>Rising Star (K-pop) · 30 min</option><option>Idol Party (K-pop) · 1 h</option><option>Superstar Experience (K-pop) · 2 h</option></optgroup>
+    </select></div>
     <datalist id="themesList"></datalist>
     <label for="adresse" id="adresseLbl">Adresse</label>
     <input id="adresse" type="text" />
@@ -1180,11 +1204,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div id="ficheAnswers"></div>
     </div>
 
-    <div id="optSec" class="anniv-only">
-      <div class="sec">✨ Options choisies par le client</div>
+    <div id="optSec" class="anniv-only"><details class="fold" id="optFold">
+      <summary>✨ Options <span id="optResume" class="hint" style="font-weight:600"></span></summary>
       <div id="optList" class="opt-list"></div>
       <p class="hint" id="optTot"></p>
-    </div>
+    </details></div>
 
     <div id="privSec"><details class="fold fold-auto">
       <summary class="sec">💰 Argent : prix, acompte & paie <small class="lock">🔒 responsables</small></summary>
@@ -1618,12 +1642,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div class="chat-top">
       <button type="button" class="back" id="chatBack" aria-label="Retour">‹</button>
       <span class="av" id="chatAv">✨</span>
-      <div class="tt"><b id="chatTitle"></b><small id="chatSub"></small></div>
+      <div class="tt"><b id="chatTitle"></b><small id="chatSub"></small><small id="chatOnline" class="chat-online"></small></div>
       <button type="button" class="info hidden" id="chatInfo" title="Voir l'animation">ℹ️</button>
     </div>
     <div class="msgs" id="msgs"></div>
     <div class="chat-prev hidden" id="chatPrev"><img id="chatPrevImg" alt="" /><span class="hint" style="margin:0">Photo prête à envoyer</span><button type="button" id="chatPrevX" aria-label="Retirer la photo">✕</button></div>
     <div class="ment-list hidden" id="mentList"></div>
+    <div class="chat-typing hidden" id="chatTyping"><span class="dots"><i></i><i></i><i></i></span><span id="chatTypingTxt"></span></div>
     <form class="chat-in" id="chatForm">
       <button type="button" class="ph" id="chatPhoto" aria-label="Envoyer une photo">📷</button>
       <input type="file" id="chatFile" accept="image/*" class="hidden" />
@@ -2244,6 +2269,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("optList").innerHTML = cat.map(([k, nom, prix, note]) => { const n = +optSel[k] || 0;
       return `<div class="opt-row${n ? " on" : ""}"><span class="ol">${esc(nom)}${note || resp ? `<small>${resp ? euro(prix) + (note ? " · " : "") : ""}${esc(note)}</small>` : ""}</span>
         <span class="qt"><button type="button" data-opt="${k}" data-d="-1" aria-label="Moins">−</button><b>${n}</b><button type="button" data-opt="${k}" data-d="1" aria-label="Plus">+</button></span></div>`; }).join("");
+    const nbOpt = Object.values(optSel).filter(n => +n > 0).length;
+    $("optResume").textContent = nbOpt ? `· ${optTexte(optSel)}` : "· aucune (toucher pour ajouter)";
     const t = optTotal(optSel), tat = +optSel.tatouage || 0;
     $("optTot").textContent = resp && (t || tat) ? `Options : ${euro(t)} ajoutés au prix total${tat ? ` · tatouages (${tat} × ${euro(TAT)}) à encaisser le jour même` : ""}` : "";
   }
@@ -2260,10 +2287,21 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     renderOptions();
     if (diff) $("prix").dispatchEvent(new Event("input"));
   });
-  $("theme").addEventListener("change", renderOptions);
+  let formuleAvant = "";
+  $("theme").addEventListener("focus", () => { formuleAvant = $("theme").value; });
+  $("theme").addEventListener("change", () => {
+    // 👑 changer de formule change le prix d'autant (ex. Magic → Fantastic = +50 €)
+    const diff = prixFormule($("theme").value) - prixFormule(formuleAvant);
+    if (isResp() && diff && prixFormule($("theme").value)) {
+      $("prix").value = $("prix").value !== "" && prixFormule(formuleAvant) ? Math.round((+$("prix").value + diff) * 100) / 100 : prixFormule($("theme").value) + optTotal(optSel);
+      $("prix").dispatchEvent(new Event("input"));
+    }
+    formuleAvant = $("theme").value; renderOptions();
+  });
 
   function openForm(ev, date) {
     optSel = { ...((ev && ev.options) || {}) };
+    $("optFold").open = false;
     editingId = ev ? ev.id : null;
     document.querySelectorAll("#evForm details.fold-auto").forEach(d => d.open = !ev);   // nouvelle fiche : tout ouvert ; fiche existante : replié
     $("formTitle").textContent = ev ? (ev.type_evenement === "evenement" ? "Modifier l'événement" : "Modifier l'animation") : "Nouvelle animation";
@@ -2271,7 +2309,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("evChatBtn").classList.toggle("hidden", !ev || !jePeuxVoir(ev));
     $("formErr").textContent = "";
     setTimeout(() => {
-      renderOptions();
+      // ancienne fiche avec un thème libre (ex. « Olaf ») : on le garde dans la liste pour ne rien perdre
+      const th = $("theme"); [...th.querySelectorAll("option[data-ancien]")].forEach(o => o.remove());
+      if (ev && ev.theme && th.value !== ev.theme) { const o = document.createElement("option"); o.value = o.textContent = ev.theme; o.dataset.ancien = "1"; th.appendChild(o); th.value = ev.theme; }
+      formuleAvant = $("theme").value; renderOptions();
       // demande sans prix : on propose le prix de la formule + options
       if (ev && isResp() && ev.type_evenement !== "evenement" && $("prix").value === "") {
         const b = prixFormule(`${ev.theme || ""} ${ev.titre || ""}`); if (b) { $("prix").value = b + optTotal(optSel); $("prix").dispatchEvent(new Event("input")); }
@@ -2795,6 +2836,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       .map(p => ({ ...p, prenom: picked.find(x => normName(x.nom) === normName(p.prenom))?.nom || p.prenom }))
       .filter(p => (+p.deplacement || 0) + (+p.prestation || 0) > 0);
     ev.options = ev.type_evenement === "evenement" || !Object.keys(optSel).length ? null : { ...optSel };
+    // 💳 Confirmation d'une animation avec e-mail client : sans acompte, aucune demande d'acompte ne part
+    const avantStatut = editingId ? (events.find(x => x.id === editingId) || {}).statut : null;
+    if (isResp() && ev.type_evenement !== "evenement" && ev.statut === "confirme" && avantStatut !== "confirme" && ev.email && !(+ev.acompte > 0) && !ev.acompte_paye
+        && !confirm("Aucun acompte n'est indiqué : le client recevra directement la fiche anniversaire, sans demande d'acompte.\n\nOK = envoyer quand même · Annuler = je mets l'acompte d'abord")) { $("acompte")?.focus(); return; }
     if (editingId) ev.id = editingId;
     $("saveBtn").disabled = true;
     try {
@@ -4116,12 +4161,19 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("resaForm").innerHTML = `<h2>${nv ? "➕ Nouvelle réservation" : "✏️ " + esc(r.nom)}</h2>
       ${coller ? `<label for="rfColle">📋 Collez le SMS ou le message Facebook</label><textarea id="rfColle" style="min-height:80px" placeholder="Bonjour, je voudrais réserver 4 places (2 adultes et 2 enfants) + 1 bébé pour le bal…"></textarea><button type="button" class="btn ghost" id="rfLire" style="width:100%;margin:6px 0">✨ Remplir automatiquement</button>` : ""}
       <div class="row"><div><label for="rfNom">Nom</label><input id="rfNom" type="text" value="${esc(r.nom || "")}" /></div><div><label for="rfTel">Téléphone</label><input id="rfTel" type="tel" value="${esc(r.telephone || "")}" /></div></div>
-      <div class="row"><div><label for="rfPlaces">Places (3 ans et +)</label><input id="rfPlaces" type="number" min="1" value="${+r.places || 1}" /></div><div><label for="rfBebes">Bébés (- 3 ans, gratuits)</label><input id="rfBebes" type="number" min="0" value="${+r.bebes || 0}" /></div></div>
+      <label for="rfMail">E-mail (pour les mails de confirmation et d'acompte)</label><input id="rfMail" type="email" value="${esc(r.email || "")}" placeholder="client@exemple.be" />
+      <div class="row"><div><label for="rfAd">👨 Adultes</label><input id="rfAd" type="number" min="0" inputmode="numeric" value="${r.adultes != null ? +r.adultes : (r.enfants != null ? 0 : +r.places || 1)}" /></div>
+        <div><label for="rfEnf">🧒 Enfants (3 ans et +)</label><input id="rfEnf" type="number" min="0" inputmode="numeric" value="${r.enfants != null ? +r.enfants : 0}" /></div>
+        <div><label for="rfBebes">👶 Moins de 3 ans (gratuit)</label><input id="rfBebes" type="number" min="0" inputmode="numeric" value="${+r.bebes || 0}" /></div></div>
+      <input id="rfPlaces" type="hidden" value="${+r.places || 1}" /><p class="hint" id="rfPlTxt" style="margin-top:2px"></p>
       <div class="row"><div><label for="rfSource">Reçue par</label><select id="rfSource">${[["sms", "💬 SMS"], ["facebook", "📘 Facebook"], ["site", "🌐 Site"], ["manuel", "✍️ Autre"]].map(([k, t]) => `<option value="${k}" ${r.source === k ? "selected" : ""}>${t}</option>`).join("")}</select></div>
         <div><label for="rfAcompte">Acompte reçu (€)</label><input id="rfAcompte" type="text" inputmode="decimal" value="${+r.acompte_recu ? String(r.acompte_recu).replace(".", ",") : ""}" placeholder="0,00" /></div></div>
       <button type="button" class="btn ghost" id="rfAc50" style="width:100%">💶 Acompte 50 % reçu (${euro((+r.places || 1) * prixPlace(resaEv) / 2)})</button>
       ${avoir ? `<div class="alert-bar gold" style="margin-top:8px">🎟️ Avoir disponible pour ce client : <b>${euro(avoir)}</b> <button type="button" class="tag ok" id="rfAvoir" style="border:0;cursor:pointer">Utiliser</button></div>` : ""}
       ${+r.avoir_utilise ? `<p class="hint">🎟️ Avoir déduit : ${euro(+r.avoir_utilise)} <button type="button" class="tag ko" id="rfAvoirX" style="border:0;cursor:pointer">retirer</button></p>` : ""}
+      <div class="resa-conf ${r.confirmee_le ? "ok" : ""}">${r.confirmee_le
+        ? `✅ Réservation confirmée le ${new Date(r.confirmee_le).toLocaleDateString("fr-BE")}${r.email ? " · mail envoyé au client" : ""}`
+        : `<label class="chk" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="rfConf" /> <span><b>✅ Confirmer la réservation</b><br><small>Le client reçoit un mail : réservation OK + acompte de 50 % à verser (IBAN). Quand tu notes l'acompte reçu, il reçoit un 2e mail avec le solde à payer en liquide sur place.</small></span></label>`}</div>
       <label>👨‍👩‍👧‍👦 Ensemble avec (à la même table)</label>
       <div class="chips" id="rfEns">${autres.filter(x => calcResa(x, resaEv).actives).map(x => `<label class="chk" style="display:inline-flex;gap:4px;margin:2px 8px 2px 0"><input type="checkbox" value="${esc(x.id)}" ${r.groupe && x.groupe === r.groupe ? "checked" : ""} />${esc(x.nom)}</label>`).join("") || `<span class="hint">Pas d'autre réservation.</span>`}</div>
       <label for="rfNotes">Notes</label><input id="rfNotes" type="text" value="${esc(r.notes || "")}" />
@@ -4134,12 +4186,19 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div id="rfErr" class="err"></div>
       <div class="actions">${!nv ? `<button type="button" class="btn danger" id="rfDel">Supprimer</button>` : ""}<button type="button" class="btn ghost" id="rfCancel">Annuler</button><button type="button" class="btn primary" id="rfSave">Enregistrer</button></div>`;
     $("resaFormBg").classList.remove("hidden");
-    const lire = () => { const o = { ...r, nom: $("rfNom").value.trim(), telephone: $("rfTel").value.trim() || null, places: Math.max(1, +$("rfPlaces").value || 1), bebes: Math.max(0, +$("rfBebes").value || 0),
-      source: $("rfSource").value, acompte_recu: num($("rfAcompte").value), notes: $("rfNotes").value.trim() || null };
+    const lire = () => { const o = { ...r, nom: $("rfNom").value.trim(), telephone: $("rfTel").value.trim() || null, places: Math.max(1, +$("rfPlaces").value || 1), adultes: Math.max(0, +$("rfAd").value || 0), enfants: Math.max(0, +$("rfEnf").value || 0), bebes: Math.max(0, +$("rfBebes").value || 0),
+      source: $("rfSource").value, acompte_recu: num($("rfAcompte").value), notes: $("rfNotes").value.trim() || null,
+      email: ($("rfMail").value.trim() || null) };
+      if ($("rfConf") && $("rfConf").checked) o.confirmee_le = new Date().toISOString();
       const ens = [...document.querySelectorAll("#rfEns input:checked")].map(x => x.value); o._ens = ens; return o; };
     if ($("rfLire")) $("rfLire").onclick = () => { const o = lireMessageResa($("rfColle").value);
-      if (o.nom) $("rfNom").value = o.nom; if (o.telephone) $("rfTel").value = o.telephone; if (o.places) $("rfPlaces").value = o.places; if (o.bebes != null) $("rfBebes").value = o.bebes; if (o.source) $("rfSource").value = o.source;
+      if (o.nom) $("rfNom").value = o.nom; if (o.telephone) $("rfTel").value = o.telephone; if (o.places) { $("rfAd").value = o.adultes != null ? o.adultes : o.places; $("rfEnf").value = o.enfants != null ? o.enfants : 0; majPl(); } if (o.bebes != null) $("rfBebes").value = o.bebes; if (o.source) $("rfSource").value = o.source;
       toast(Object.keys(o).length ? "✨ Pré-rempli : vérifiez" : "Je n'ai rien trouvé, remplissez à la main"); };
+    // places payantes = adultes + enfants de 3 ans et plus (même prix) ; les moins de 3 ans sont gratuits
+    function majPl() { const n = (+$("rfAd").value || 0) + (+$("rfEnf").value || 0); $("rfPlaces").value = Math.max(1, n);
+      $("rfPlTxt").textContent = `🎟️ ${n} place${n > 1 ? "s" : ""} payante${n > 1 ? "s" : ""}${prixPlace(resaEv) ? ` · ${euro(n * prixPlace(resaEv))}` : ""}${+$("rfBebes").value ? ` + ${$("rfBebes").value} gratuit(s)` : ""}`;
+      $("rfAc50").textContent = `💶 Acompte 50 % reçu (${euro(Math.max(1, n) * prixPlace(resaEv) / 2)})`; }
+    ["rfAd", "rfEnf", "rfBebes"].forEach(id => $(id).addEventListener("input", majPl)); majPl();
     $("rfAc50").onclick = () => { $("rfAcompte").value = String(r2((+$("rfPlaces").value || 1) * prixPlace(resaEv) / 2)).replace(".", ","); };
     if ($("rfAvoir")) $("rfAvoir").onclick = () => { const o = lire(); o.avoir_utilise = r2((+r.avoir_utilise || 0) + Math.min(avoir, calcResa(o, resaEv).reste || avoir)); openResaForm(o); };
     if ($("rfAvoirX")) $("rfAvoirX").onclick = () => { const o = lire(); o.avoir_utilise = 0; openResaForm(o); };
@@ -4155,7 +4214,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       for (const x of resas) { if (x.id === o.id) continue; const dedans = ens.includes(String(x.id)); if (dedans && x.groupe !== g) await resaStore.save({ ...x, groupe: g }); else if (!dedans && g && x.groupe === g) await resaStore.save({ ...x, groupe: null }); }
       return true;
     };
-    $("rfSave").onclick = async () => { try { if (await sauver(lire())) { $("resaFormBg").classList.add("hidden"); await resaReload(); renderResa(); toast("🎟️ Réservation enregistrée"); } } catch (err) { $("rfErr").textContent = "Erreur : " + (err.message || err); } };
+    $("rfSave").onclick = async () => {
+      if ($("rfConf") && $("rfConf").checked && !$("rfMail").value.trim() && !confirm("Pas d'e-mail : la réservation sera confirmée mais le client ne recevra pas de mail. Continuer ?")) return;
+      if ($("rfConf") && $("rfConf").checked && !prixPlace(resaEv)) { $("rfErr").textContent = "Indique d'abord le prix par place de l'événement (pour calculer l'acompte)."; return; }
+      try { if (await sauver(lire())) { $("resaFormBg").classList.add("hidden"); await resaReload(); renderResa(); toast("🎟️ Réservation enregistrée"); } } catch (err) { $("rfErr").textContent = "Erreur : " + (err.message || err); } };
     if (!nv) {
       $("rfAnOk").onclick = async () => { const n = Math.min(c.actives, Math.max(1, +$("rfAnN").value || 0)); if (!n) return; const o = lire(); o.annulations = [...(o.annulations || []), { n, le: $("rfAnLe").value || todayISO(), excuse: false }];
         try { await sauver(o); await resaReload(); openResaForm(resas.find(x => x.id === o.id) || o); renderResa(); toast("❌ Annulation enregistrée"); } catch (err) { $("rfErr").textContent = "Erreur : " + (err.message || err); } };
@@ -4327,14 +4389,30 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function renderProduits() {
     const c = cfgCaisse(cxEv);
     $("caisseBody").innerHTML = `<p class="hint" style="margin-top:0">Cochez les produits vendus à <b>cet événement</b> et changez un prix si besoin (vide = prix de base). <b>🍾 Stock</b> : la quantité emportée (ex. 48 Coca) ; la caisse la décompte et prévient quand ça baisse. « Modifier » change le produit pour tous les événements.</p>
-      ${produits.filter(p => p.actif !== false).map(p => { const o = c[p.id] || {}; return `<div class="stk-row"><span class="em">${esc(p.emoji || "🛒")}</span><span class="tx"><label class="chk" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-pon="${esc(p.id)}" ${o.off ? "" : "checked"} /> <b>${esc(p.nom)}</b></label><small>base : ${p.prix == null ? "prix libre" : euro(p.prix)}${p.note ? " · " + esc(p.note) : ""}${CASES(p.categorie) ? " · cases à barrer" : ""}</small></span>
+      ${produits.filter(p => p.actif !== false).map(p => { const o = c[p.id] || {}; return `<div class="stk-row"><button type="button" class="em emo-btn" data-pemo="${esc(p.id)}" title="Changer l'emoji">${esc(p.emoji || "🛒")}</button><span class="tx"><label class="chk" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-pon="${esc(p.id)}" ${o.off ? "" : "checked"} /> <b>${esc(p.nom)}</b></label><small>base : ${p.prix == null ? "prix libre" : euro(p.prix)}${p.note ? " · " + esc(p.note) : ""}${CASES(p.categorie) ? " · cases à barrer" : ""}</small></span>
         ${p.prix == null ? "" : `<input type="text" inputmode="decimal" data-ppx="${esc(p.id)}" value="${o.prix != null ? String(o.prix).replace(".", ",") : ""}" placeholder="${String(p.prix).replace(".", ",")}" style="width:70px" />`}
         ${CASES(p.categorie) ? `<input type="number" min="0" data-pstk="${esc(p.id)}" value="${o.stock != null ? o.stock : ""}" placeholder="stock" title="Quantité emportée" style="width:66px" />` : ""}
         <button type="button" class="tag" data-pedit="${esc(p.id)}" style="border:0;cursor:pointer">Modifier</button></div>`; }).join("")}
       <div class="sec">➕ Nouveau produit</div>
-      <div class="row"><div style="flex:0 0 60px"><input id="npEm" type="text" placeholder="🍿" maxlength="4" /></div><div><input id="npNom" type="text" placeholder="Nom" /></div><div style="flex:0 0 80px"><input id="npPx" type="text" inputmode="decimal" placeholder="€" /></div></div>
+      <div class="row"><div style="flex:0 0 60px"><button type="button" id="npEmBtn" class="emo-btn" title="Choisir l'emoji">🛒</button><input id="npEm" type="hidden" value="🛒" /></div><div><input id="npNom" type="text" placeholder="Nom" /></div><div style="flex:0 0 80px"><input id="npPx" type="text" inputmode="decimal" placeholder="€" /></div></div>
       <select id="npCat"><option value="boisson">Boisson (cases à barrer)</option><option value="nourriture">Nourriture (cases à barrer)</option><option value="photo">Photo</option><option value="tombola">Tombola</option><option value="boutique">Boutique / autre</option></select>
       <button type="button" class="btn ghost" id="npAdd" style="width:100%;margin-top:6px">➕ Ajouter</button>`;
+  }
+  // 😀 Choix d'un emoji (produits de la caisse)
+  const EMOJIS_CAISSE = ["🥤","🧃","🧋","💧","🫧","☕","🍫","🍵","🍺","🍷","🥂","🍾","🍹","🍭","🍬","🍿","🍩","🍪","🧁","🍰","🎂","🍦","🍧","🧇","🥞","🍕","🌭","🍔","🍟","🥪","🌮","🍓","🍎","🍌","🍉","🥨","🧀","📸","🖼️","🎟️","🎫","🎁","🛍️","🧸","🪄","👑","💎","💍","🎀","🦄","🌟","⭐","✨","🎈","🎉","🎊","🎄","🎅","❄️","☃️","🎃","👻","🦇","🐰","🥚","🌸","🦋","💄","💅","🎨","🖍️","🎵","🎤","🎧","🕯️","🧦","🧢","👕","📚","🛒"];
+  function choisirEmoji(cur) {
+    return new Promise((ok) => {
+      const bg = document.createElement("div"); bg.className = "emo-bg";
+      bg.innerHTML = `<div class="emo-box"><div class="emo-tit">Choisis un emoji</div><div class="emo-grid">${EMOJIS_CAISSE.map(x => `<button type="button" class="${x === cur ? "on" : ""}">${x}</button>`).join("")}</div>
+        <div class="emo-autre"><input type="text" maxlength="4" placeholder="ou tape le tien 🙂" /><button type="button" class="btn primary">OK</button></div><button type="button" class="btn ghost emo-ann" style="width:100%">Annuler</button></div>`;
+      const fin = (v) => { bg.remove(); ok(v); };
+      bg.addEventListener("click", (e) => {
+        if (e.target === bg || e.target.closest(".emo-ann")) return fin(null);
+        const b = e.target.closest(".emo-grid button"); if (b) return fin(b.textContent);
+        if (e.target.closest(".emo-autre .btn")) { const v = bg.querySelector(".emo-autre input").value.trim(); if (v) fin(v); }
+      });
+      document.body.appendChild(bg);
+    });
   }
   async function saveCfg(c) { try { await store.patch(cxEv.id, { caisse_config: c }); cxEv.caisse_config = c; } catch (err) { toast(erreurReseau(err) ? "📶 Pas de réseau : réessayez avec le réseau" : "Erreur : " + (err.message || err)); } }
   $("caisseBody").addEventListener("change", async (e) => {
@@ -4345,6 +4423,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
   $("caisseBody").addEventListener("click", async (e) => {
     if (!cxEv || caisseTab !== "produits") return;
+    if (e.target.id === "npEmBtn") { const em = await choisirEmoji($("npEm").value); if (em) { $("npEm").value = em; $("npEmBtn").textContent = em; } return; }
+    const pe = e.target.closest("[data-pemo]");
+    if (pe) { const p = produits.find(x => String(x.id) === pe.dataset.pemo); if (!p) return;
+      const em = await choisirEmoji(p.emoji); if (!em || em === p.emoji) return;
+      await caisseStore.saveProduit({ ...p, emoji: em }); produits = await caisseStore.produits(); renderCaisse(); toast("✨ Emoji changé"); return; }
     const ed = e.target.closest("[data-pedit]");
     if (ed) { const p = produits.find(x => String(x.id) === ed.dataset.pedit); if (!p) return;
       const nom = prompt("Nom du produit (vide = retirer le produit)", p.nom); if (nom === null) return;
@@ -6151,7 +6234,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           ${m.photo_url ? `<img src="${esc(m.photo_url)}" alt="Photo" loading="lazy" data-zoom />` : ""}
           ${m.texte ? `<span class="t">${lier(m.texte)}</span>` : ""}
           <span class="h">${pad(d.getHours())}h${pad(d.getMinutes())}</span></div>
-          ${rxHtml}</div>${moi ? `<span class="who">${first ? emojiAuteur(m.auteur, ev) : ""}</span>` : ""}</div>`;
+          ${rxHtml}${rx.length ? `<div class="rx-who">${rx.map(([e, l]) => `${e} ${esc(l.join(", "))}`).join(" · ")}</div>` : ""}</div>${moi ? `<span class="who">${first ? emojiAuteur(m.auteur, ev) : ""}</span>` : ""}</div>`;
       if (chatPick === m.id) {
         html += `<div class="picker${moi ? " me" : ""}">${CHAT_RX.map(e => `<button type="button" data-rx="${e}" data-id="${esc(m.id)}">${e}</button>`).join("")}
           ${moi || isResp() ? `<button type="button" class="del" data-del="${esc(m.id)}" title="Supprimer">🗑️</button>` : ""}</div>`;
@@ -6215,11 +6298,51 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("chatAv").textContent = ev ? (universOf(ev) || [0, 0, "🎭"])[2] : "✨";
     $("chatInfo").classList.toggle("hidden", !ev);
     $("chatBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
-    renderMsgs(); marquerLu(canal);
+    renderMsgs(); marquerLu(canal); rtRejoindre(canal);
     if (!chatLoaded) chatReload().then(() => { if (chatCanal === canal) { renderMsgs(); marquerLu(canal); } });
     if (matchMedia("(min-width:700px)").matches) setTimeout(() => $("chatTxt").focus(), 100);
   }
+  // 🟢 Qui est en ligne dans la conversation + ✍️ qui écrit (Supabase Realtime Presence, rien n'est enregistré)
+  let rtChat = null, rtCanal = null, typingT = null, jeTape = false;
+  const prenomMoi = () => String(chatMe() || "").trim();
+  function majEnLigne() {
+    if (!rtChat) { $("chatOnline").textContent = ""; $("chatTyping").classList.add("hidden"); return; }
+    const st = rtChat.presenceState(), moi = currentUser ? currentUser.email.toLowerCase() : "";
+    const autres = Object.entries(st).filter(([k]) => k !== moi).map(([, l]) => l[l.length - 1] || {});
+    const noms = [...new Set(autres.map(x => x.nom).filter(Boolean))];
+    $("chatOnline").textContent = noms.length ? `🟢 En ligne : ${noms.join(", ")}` : "";
+    const tapent = [...new Set(autres.filter(x => x.tape && Date.now() - (x.t || 0) < 8000).map(x => x.nom).filter(Boolean))];
+    $("chatTyping").classList.toggle("hidden", !tapent.length);
+    $("chatTypingTxt").textContent = tapent.length === 1 ? `${tapent[0]} écrit…` : tapent.length ? `${tapent.slice(0, -1).join(", ")} et ${tapent[tapent.length - 1]} écrivent…` : "";
+  }
+  async function rtRejoindre(canal) {
+    if (DEMO || !sb || !currentUser) return;
+    if (rtChat && rtCanal === canal) return;
+    await rtQuitter(); rtCanal = canal;
+    rtChat = sb.channel("chat-presence:" + canal, { config: { presence: { key: currentUser.email.toLowerCase() } } });
+    rtChat.on("presence", { event: "sync" }, majEnLigne).on("presence", { event: "join" }, majEnLigne).on("presence", { event: "leave" }, majEnLigne)
+      .subscribe(async (st) => { if (st === "SUBSCRIBED") { try { await rtChat.track({ nom: prenomMoi(), tape: false, t: Date.now() }); } catch (_) {} } });
+  }
+  async function rtQuitter() {
+    clearTimeout(typingT); jeTape = false;
+    if (rtChat) { const c = rtChat; rtChat = null; rtCanal = null; try { await c.untrack(); } catch (_) {} try { await sb.removeChannel(c); } catch (_) {} }
+    majEnLigne();
+  }
+  function jeTapeMaintenant(oui) {
+    if (!rtChat || jeTape === oui) return; jeTape = oui;
+    try { rtChat.track({ nom: prenomMoi(), tape: oui, t: Date.now() }); } catch (_) {}
+  }
+  $("chatTxt").addEventListener("input", () => {
+    if (!$("chatTxt").value.trim()) { jeTapeMaintenant(false); return; }
+    jeTapeMaintenant(true); clearTimeout(typingT); typingT = setTimeout(() => jeTapeMaintenant(false), 4000);
+  });
+  $("chatForm").addEventListener("submit", () => { clearTimeout(typingT); jeTapeMaintenant(false); });
+  setInterval(() => { if (rtChat) majEnLigne(); }, 3000);
+  new MutationObserver(() => { if ($("chatBg").classList.contains("hidden") && rtChat) rtQuitter(); }).observe($("chatBg"), { attributes: true, attributeFilter: ["class"] });   // efface « écrit… » si la personne s'est arrêtée
+  document.addEventListener("visibilitychange", () => { if (document.hidden) rtQuitter(); else if (chatCanal && !$("chatBg").classList.contains("hidden")) rtRejoindre(chatCanal); });
+
   function closeChat() {
+    rtQuitter();
     $("chatBg").classList.add("hidden"); document.body.style.overflow = ""; chatCanal = null; chatPick = null; clearPhoto();
     if (view === "chat") renderChatList(); else chatBadges();
   }
