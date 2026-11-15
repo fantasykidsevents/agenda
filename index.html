@@ -44,6 +44,21 @@
   .who-t{min-width:0}
   .who-l1{white-space:nowrap;font-size:clamp(13px,4vw,16px)}
   .who-av{clip-path:circle(50%);width:44px;height:44px;border-radius:50%;flex:none;object-fit:cover;background:linear-gradient(135deg,#e0f2fe,#f3e8ff);border:2px solid #fff;box-shadow:0 2px 8px rgba(80,40,160,.25)}
+  /* Sur téléphone, garder la place pour « Bonsoir Jordan » et le personnage. */
+  @media(max-width:520px){
+    header{padding-left:10px;padding-right:10px}
+    .head-row{gap:6px}
+    .head-row .logo{height:40px;max-width:94px;object-fit:contain}
+    #who{text-align:left;justify-content:flex-start;min-width:0}
+    #who .who-t{overflow:hidden}
+    #who .who-l1{display:block;overflow:hidden;text-overflow:ellipsis;font-size:clamp(12px,3.5vw,15px)}
+    #who .alias{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+    #who .who-av{display:none}
+    #clocheBtn{padding:8px 7px}
+    #teamBtn{font-size:0;min-width:38px;padding:7px}
+    #teamBtn::before{content:"👤";font-size:19px}
+  }
+  @media(max-width:360px){#who .who-l1{white-space:normal;line-height:1.12}}
   .icon-btn{background:#f3eefe;border:0;color:var(--violet-d);border-radius:12px;
     padding:8px 11px;font-size:14px;font-weight:600}
   .tabs{display:flex;gap:4px;max-width:900px;margin:12px auto 0}
@@ -2407,7 +2422,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const me = myMember(), mail = currentUser && currentUser.email ? currentUser.email : "";
     const nom = me ? me.prenom : (mail ? mail.split("@")[0] : "");
     const pp = me && me.perso_prefere;
-    w.innerHTML = `${persoImg(pp, "who-av")}<span class="who-t"><span class="who-l1">${new Date().getHours() >= 18 ? "Bonsoir" : "Bonjour"}${nom ? " " + esc(nom) : ""} ✨</span>${pp ? `<span class="alias">alias ${esc(pp)}</span>` : ""}</span>`;
+    w.innerHTML = `${persoImg(pp, "who-av")}<span class="who-t"><span class="who-l1">${new Date().getHours() >= 18 ? "Bonsoir" : "Bonjour"}${nom ? " " + esc(nom) : ""}</span>${pp ? `<span class="alias" aria-label="Personnage : ${esc(pp)}">${esc(pp)}</span>` : ""}</span>`;
     w.title = mail;
   }
   // 🔔 Cloche pour toute l'équipe : messages personnels + demandes à traiter pour 👑/⭐
