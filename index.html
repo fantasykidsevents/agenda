@@ -1804,6 +1804,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const peutGererTatouages = (e) => isResp() || parseTeam(e.animateurs).some(p => normName(p.nom) === normName(chatMe()) && /^(acc|accompagn)/i.test(p.role || ""));
   const tatouagesACompleter = (e) => tatouagesDemandes(e) && e.date >= "2026-11-15" &&
     (e.tatouages_nb == null || (+e.tatouages_nb > 0 && !e.tatouages_paiement));
+  // Bilan et encaissements sont communs à toute l'équipe : une seule personne
+  // les valide pour l'animation. « Non payé » est une réponse, pas un oubli.
+  function actionsPostRestantes(e) {
+    return { bilanManquant: !bilanAnimation(e.id),
+      soldeManquant: totalSolde(e) > 0 && !e.solde_encaisse,
+      tatManquant: peutGererTatouages(e) && tatouagesACompleter(e) };
+  }
   const animsFull = (e) => (e.animateurs || "").split(",").map(s => s.trim()).filter(Boolean);
   const anims = (e) => animsFull(e).map(s => s.replace(/\s*\(.*\)\s*$/, "").trim()).filter(Boolean);
   let toastT;
@@ -2049,6 +2056,26 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   let resaSite = [];   // 🎟️ réservations arrivées du site, pas encore vues
   let notificationsApp = []; // 🔔 Boîte personnelle : seules les lignes autorisées par RLS sont visibles
+  async function rafraichirActionsPartagees(ids) {
+    if (!ids.length || DEMO) return true;
+    // Les autres membres peuvent avoir déjà envoyé le bilan / encaissé le
+    // solde depuis leur téléphone. On interroge l'état partagé, pas le cache.
+    const [rEv, rBilans] = await Promise.all([
+      sb.from("evenements").select("id,solde,supplement,solde_encaisse,tatouages_nb,tatouages_paiement,options")
+        .in("id", ids),
+      sb.from("bilans").select("id,evenement_id,auteur,humeur,incident,texte,created_at")
+        .in("evenement_id", ids),
+    ]);
+    if (rEv.error || rBilans.error) {
+      console.warn("Actualisation des bilans communs :", rEv.error?.message || rBilans.error?.message);
+      return false;
+    }
+    const parId = new Map((rEv.data || []).map(e => [String(e.id), e]));
+    for (const e of events) { const recent = parId.get(String(e.id)); if (recent) Object.assign(e, recent); }
+    const enCours = new Set(ids.map(String));
+    bilans = bilans.filter(b => !enCours.has(String(b.evenement_id))).concat(rBilans.data || []);
+    return true;
+  }
   async function chargerNotifications() {
     if (DEMO || !sb || !currentUser) { notificationsApp = []; majCloche(); return; }
     const { data, error } = await sb.from("notifications_app")
@@ -2056,10 +2083,44 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       // Les messages de conversation restent dans Chat (pastilles de non-lus),
       // jamais dans la cloche, y compris ceux enregistrés avant la correction.
       .or("type.is.null,type.neq.chat")
+      // La cloche est une liste de choses à voir, pas un historique : une
+      // notification marquée comme lue doit disparaître au prochain chargement.
+      .is("lue_le", null)
       .order("cree_le", { ascending: false }).limit(100);
     if (error) { console.warn("Notifications personnelles non disponibles :", error.message); return; }
-    notificationsApp = (data || []).filter(n => n.type !== "chat");
+    const notifs = (data || []).filter(n => n.type !== "chat" && !n.lue_le);
+    const depuis = iso(new Date(Date.now() - 45 * 864e5));
+    const moi = normName(myMember()?.prenom || "");
+    const ids = [...new Set([
+      ...notifs.filter(n => n.type === "fin" && n.evenement_id).map(n => String(n.evenement_id)),
+      ...events.filter(e => moi && e.date >= depuis && e.statut !== "annule" && e.type_evenement !== "evenement"
+        && animationTerminee(e) && anims(e).some(a => normName(a) === moi)
+        && Object.values(actionsPostRestantes(e)).some(Boolean)).map(e => String(e.id)),
+    ])];
+    const actualise = await rafraichirActionsPartagees(ids);
+    const terminees = [];
+    notificationsApp = notifs.flatMap(n => {
+      if (n.type !== "fin" || !n.evenement_id) return [n];
+      if (!actualise) return [n]; // Ne pas effacer une tâche sur des données périmées.
+      const e = events.find(ev => String(ev.id) === String(n.evenement_id));
+      if (!e) return [n];
+      const a = actionsPostRestantes(e);
+      const manquants = [a.bilanManquant ? "remplir le bilan" : "",
+        a.soldeManquant ? "confirmer le solde reçu ou signaler qu'il n'a pas été payé" : "",
+        a.tatManquant ? "compter et encaisser les tatouages pailletés" : ""].filter(Boolean);
+      if (!manquants.length) { terminees.push(n.id); return []; }
+      // Si Jordan a envoyé le bilan, Océane ne verra plus « remplir le bilan ».
+      return [{ ...n, message: `${e.titre || e.enfant || "Animation"}\nÀ faire : ${manquants.join(" ; ")}.\nOuvrez la fiche du jour pour terminer.` }];
+    });
+    if (terminees.length) {
+      // Les rappels terminés disparaissent aussi durablement de la cloche.
+      const { error: errLues } = await sb.from("notifications_app")
+        .update({ lue_le: new Date().toISOString() }).in("id", terminees);
+      if (errLues) console.warn("Rangement des rappels terminés :", errLues.message);
+    }
     majCloche();
+    if (view === "mine" && !$('app').classList.contains('hidden')) renderMine0();
+    if (!$('clocheBg').classList.contains('hidden')) openCloche();
   }
   async function marquerNotificationLue(ids) {
     if (!ids.length || DEMO) return;
@@ -2290,8 +2351,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const n = normName(prenom), depuis = iso(new Date(Date.now() - 45 * 864e5));
     const aFaire = events.filter(e => e.statut !== "annule" && e.type_evenement !== "evenement" && e.date >= depuis && animationTerminee(e)
       && anims(e).some(a => normName(a) === n))
-      .map(e => ({ e, bilanManquant: !bilanAnimation(e.id), soldeManquant: (e.solde || extras(e)) && !e.solde_encaisse,
-        tatManquant: peutGererTatouages(e) && tatouagesACompleter(e) }))
+      .map(e => ({ e, ...actionsPostRestantes(e) }))
       .filter(x => x.bilanManquant || x.soldeManquant || x.tatManquant)
       .sort((a, c) => (c.e.date + (c.e.heure_debut || "")).localeCompare(a.e.date + (a.e.heure_debut || "")));
     b.classList.toggle("hidden", !aFaire.length);
@@ -2368,7 +2428,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const R = (isGest() ? resaSite : []).map(r => { const e = events.find(x => String(x.id) === String(r.evenement_id));
       return `<div class="dem-row"><b>🎟️ ${esc(r.nom || "Réservation")}</b> · ${r.places} place${r.places > 1 ? "s" : ""}${r.bebes ? ` + ${r.bebes} bébé${r.bebes > 1 ? "s" : ""}` : ""}<br><small>${esc(e ? e.titre : "Événement")}${e ? " · " + esc(fmtLong(e.date)) : ""}</small>${r.notes ? `<br><small class="hint">${esc(String(r.notes).replace(/^🌐 Via le site[^:]*: /, "").slice(0, 160))}</small>` : ""}
       <div class="actions"><button type="button" class="btn" data-resa-ouvrir="${esc(r.evenement_id)}" data-id="${esc(r.id)}">👀 Ouvrir les réservations</button><button type="button" class="btn primary" data-resa-vu="${esc(r.id)}">✅ Vu</button></div></div>`; }).join("");
-    const mesNotifs = notificationsApp.map(n => {
+    const mesNotifs = notificationsApp.filter(n => !n.lue_le && n.type !== "chat").map(n => {
       const ev = events.find(x => String(x.id) === String(n.evenement_id));
       const ouvrir = (ev && jeVoisEv(ev)) || !!n.lien;
       const date = new Date(n.cree_le).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -5471,6 +5531,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!bilanHumeur && !texte && !incident) return false;
     await bilanStore.add({ evenement_id: sigEv.id, auteur: chatMe(), humeur: bilanHumeur || null, incident, texte: texte || null });
     bilans = await bilanStore.list();
+    await chargerNotifications(); // Notre propre cloche est mise à jour sans attendre le prochain rappel.
     return true;
   }
   function bilanHtml(ev) {
@@ -6907,6 +6968,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (sb && !channel) {
       channel = sb.channel("ev").on("postgres_changes", { event: "*", schema: "public", table: "evenements" }, () => reload())
         .on("postgres_changes", { event: "*", schema: "public", table: "equipe" }, () => reload())
+        .on("postgres_changes", { event: "*", schema: "public", table: "bilans" }, () => reload())
         .on("postgres_changes", { event: "*", schema: "public", table: "costumes" }, async () => { await costReload(); if (!$("costBg").classList.contains("hidden")) renderCost(); render(); })
         .on("postgres_changes", { event: "*", schema: "public", table: "pointages" }, () => ptReload())
         .on("postgres_changes", { event: "*", schema: "public", table: "reservations" }, async () => { if (resaEv) { await resaReload(); renderResa(); } })
