@@ -1096,7 +1096,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </section>
     <section id="viewChat" class="hidden">
       <div id="chList" class="ch-list"></div>
-      <p class="hint" style="text-align:center;margin-top:14px">💬 Le chat « Équipe Fantasy » est ouvert à toute l'équipe.<br>Chaque prestation possède aussi son chat, accessible dès son attribution aux animateurs concernés et aux responsables 👑.<br>Les échanges sont supprimés environ un mois après la prestation.</p>
+      <p class="hint" style="text-align:center;margin-top:14px">💬 Le chat « Équipe Fantasy » est ouvert à toute l'équipe.<br>Le chat d'une prestation apparaît ici 15 jours avant sa date, pour les animateurs concernés et les responsables 👑.<br>Il reste visible environ un mois après la prestation.</p>
     </section>
 
     <!-- Vue Chiffres (responsables) -->
@@ -6355,14 +6355,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!ev) return false; if (isResp()) return true;
     const p = normName(chatMe()); return anims(ev).some(a => normName(a) === p);
   }
+  const CHAT_JOURS_AVANT = 15;
   function chatCanaux() {
     const t = todayISO();
     const parCanal = new Map(); chatMsgs.forEach(m => parCanal.set(m.canal, m));
     const out = [{ canal: "equipe", nom: "Équipe Fantasy", sous: "Toute l'équipe", av: "✨", last: parCanal.get("equipe") }];
     const d30 = iso(new Date(Date.now() - 30 * 864e5));
-    // 💬 Chat visible dès l'attribution, sans attendre les 7 derniers jours.
+    // 💬 Chat affiché à partir de 15 jours avant la prestation (et un mois après).
     // L'accès reste limité à l'équipe affectée et aux responsables.
-    events.filter(e => e.statut !== "annule" && jePeuxVoir(e) && e.date >= d30)
+    const dOuv = iso(new Date(Date.now() + CHAT_JOURS_AVANT * 864e5));
+    events.filter(e => e.statut !== "annule" && jePeuxVoir(e) && e.date >= d30 && e.date <= dOuv)
       .forEach(e => { const U = universOf(e);
         out.push({ canal: "ev:" + e.id, ev: e, nom: e.titre || e.enfant || "Animation", av: U ? U[2] : "🎭",
           sous: `${fmtLong(e.date)}${e.heure_debut ? " · " + hhmm(e.heure_debut) : ""}${e.date < t ? " · terminée" : ""}`, last: parCanal.get("ev:" + e.id) }); });
