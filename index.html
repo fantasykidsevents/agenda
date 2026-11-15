@@ -1560,25 +1560,19 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   </div>
 </div>
 
-<!-- ============ 🦋 TATOUAGES PAILLETÉS : COMPTAGE ET PAIEMENT SÉPARÉS ============ -->
+<!-- ============ 🦋 TATOUAGES PAILLETÉS : COMPTAGE AJOUTÉ AU SOLDE ============ -->
 <div id="tatBg" class="sheet-bg hidden">
   <div class="sheet">
     <div class="grab"></div>
     <h2>🦋 Atelier tatouages pailletés</h2>
     <p class="hint" id="tatFor"></p>
-    <p class="hint" style="margin-top:4px">Indiquez le nombre d'enfants réellement tatoués. Le montant est de <b>2 € par enfant</b>, à réclamer au parent avant de partir, séparément du solde de l'anniversaire.</p>
+    <p class="hint" style="margin-top:4px">Indiquez le nombre d'enfants réellement tatoués. Le montant est de <b>2 € par enfant</b> et s'ajoute automatiquement au solde à réclamer au parent avant le départ.</p>
     <label for="tatNb">Combien d'enfants ont reçu un tatouage ?</label>
     <input class="tat-count" id="tatNb" type="number" min="0" step="1" inputmode="numeric" placeholder="Nombre réel" />
     <div class="big-amount" id="tatAmount">—</div>
     <p id="tatEtat" class="tat-status"></p>
     <div class="actions"><button type="button" class="btn ghost" id="tatSaveCount" style="width:100%">💾 Enregistrer le nombre de tatouages</button></div>
-    <p class="hint" style="margin-bottom:8px">Une fois le paiement reçu, sélectionnez son mode :</p>
-    <div class="actions" style="flex-wrap:wrap" id="tatModes">
-      <button type="button" class="btn primary" data-tat-mode="cash">💵 Liquide</button>
-      <button type="button" class="btn primary" data-tat-mode="virement">🏦 Virement</button>
-      <button type="button" class="btn primary" data-tat-mode="payconiq">📱 Payconiq</button>
-      <button type="button" class="btn danger" data-tat-mode="non">❌ Non payé</button>
-    </div>
+    <p class="hint" style="margin-bottom:8px">Pour le paiement, ouvrez ensuite « Après → Confirmer le solde » : le total comprend les tatouages.</p>
     <div class="actions" style="margin-top:8px"><button type="button" class="btn ghost" id="tatClose">Fermer</button></div>
     <div id="tatErr" class="err"></div>
   </div>
@@ -1839,24 +1833,33 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const roleEmoji = (r) => (ROLE_EMOJI.find(([re]) => re.test(r || "")) || [null, "🎭"])[1];
   const totalTatouages = (e) => (+e.tatouages_nb || 0) * TAT;
   const totalSolde = (e) => (+e.solde || 0) + (+e.supplement || 0);
-  const totalJour = (e) => totalSolde(e) + totalTatouages(e); // revenu total, deux règlements distincts
+  const totalJour = (e) => totalSolde(e) + totalTatouages(e); // revenu total, sans compter deux fois les tatouages
   const extras = (e) => (+e.supplement || 0); // autres suppléments du solde, hors tatouages
-  const tatouagesDemandes = (e) => { const n = e?.options?.tatouage; return n === true || +n > 0 || /^(oui|yes|true)$/i.test(String(n || "")); };
+  const tatouagesDemandes = (e) => {
+    const n = e?.options?.tatouage;
+    // Les anciennes fiches (ex. Falisolle) annonçaient cette option uniquement dans les notes.
+    return n === true || +n > 0 || /^(oui|yes|true)$/i.test(String(n || "")) ||
+      /tatouages?\s+paillet[ée]s?\s*[:\-]?\s*\+?\s*2\s*€/i.test(String(e?.notes || ""));
+  };
+  // Le solde affiché au parent inclut les tatouages ; totalSolde reste la partie
+  // hors tatouages pour les statistiques, exports et remises (sans doublon).
+  const totalSoldeAvecTat = (e) => totalSolde(e) + (tatouagesDemandes(e) ? totalTatouages(e) : 0);
   const montantSoldeEncaisse = (e) => e.solde_encaisse && e.solde_encaisse !== "non" ? totalSolde(e) : 0;
   const montantTatouagesEncaisses = (e) => {
     if (e.tatouages_paiement && e.tatouages_paiement !== "non") return totalTatouages(e);
+    // Un solde global confirmé depuis la nouvelle version inclut ces tatouages.
+    if (tatouagesDemandes(e) && e.tatouages_nb != null && e.solde_encaisse && e.solde_encaisse !== "non" && !e.tatouages_paiement) return totalTatouages(e);
     // Anciennes prestations : les tatouages étaient comptabilisés avec le solde.
     return e.date < "2026-11-15" && !e.tatouages_paiement && montantSoldeEncaisse(e) ? totalTatouages(e) : 0;
   };
   const chiffreEvenement = (e) => (+e.prix || 0) + extras(e) + totalTatouages(e);
   const peutGererTatouages = (e) => isResp() || parseTeam(e.animateurs).some(p => normName(p.nom) === normName(chatMe()) && /^(acc|accompagn)/i.test(p.role || ""));
-  const tatouagesACompleter = (e) => tatouagesDemandes(e) && e.date >= "2026-11-15" &&
-    (e.tatouages_nb == null || (+e.tatouages_nb > 0 && !e.tatouages_paiement));
+  const tatouagesACompleter = (e) => tatouagesDemandes(e) && e.date >= "2026-11-15" && e.tatouages_nb == null;
   // Bilan et encaissements sont communs à toute l'équipe : une seule personne
   // les valide pour l'animation. « Non payé » est une réponse, pas un oubli.
   function actionsPostRestantes(e) {
     return { bilanManquant: !bilanAnimation(e.id),
-      soldeManquant: totalSolde(e) > 0 && !e.solde_encaisse,
+      soldeManquant: totalSoldeAvecTat(e) > 0 && !e.solde_encaisse,
       tatManquant: peutGererTatouages(e) && tatouagesACompleter(e) };
   }
   // Clôture commune à l'équipe : même les tatouages suivis par l'ACC doivent
@@ -1864,7 +1867,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function clotureManquante(e) {
     const manque = [];
     if (!bilanAnimation(e.id)) manque.push("📝 bilan");
-    if (totalSolde(e) > 0 && !e.solde_encaisse) manque.push("💶 solde");
+    if (totalSoldeAvecTat(e) > 0 && !e.solde_encaisse) manque.push("💶 solde");
     if (tatouagesACompleter(e)) manque.push("🦋 tatouages");
     return manque;
   }
@@ -2283,14 +2286,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (ENCEINTES[e.enceinte]) pay = `<span class="badge ${e.enceinte}">🔊 ${ENCEINTES[e.enceinte]}</span>` + pay;
     const MODES = { cash: "liquide", virement: "virement", payconiq: "Payconiq" };
     const extraTxt = extras(e) ? " (avec autre supplément)" : "";
-    if (e.solde || extras(e)) pay += e.solde_encaisse === "non" ? `<span class="badge solde-ko">⚠️ Solde ${euro(totalSolde(e))} non payé</span>`
-      : e.solde_encaisse ? `<span class="badge solde-ok">✅ Solde ${euro(totalSolde(e))} encaissé${extraTxt} (${MODES[e.solde_encaisse]}${e.solde_encaisse_par ? " · " + esc(e.solde_encaisse_par) : ""})</span>`
-      : `<span class="badge solde">💶 Solde à encaisser : ${euro(totalSolde(e))}</span>`;
+    if (e.solde || extras(e) || totalTatouages(e)) pay += e.solde_encaisse === "non" ? `<span class="badge solde-ko">⚠️ Solde ${euro(totalSoldeAvecTat(e))} non payé</span>`
+      : e.solde_encaisse ? `<span class="badge solde-ok">✅ Solde ${euro(totalSoldeAvecTat(e))} encaissé${extraTxt} (${MODES[e.solde_encaisse]}${e.solde_encaisse_par ? " · " + esc(e.solde_encaisse_par) : ""})</span>`
+      : `<span class="badge solde">💶 Solde à encaisser : ${euro(totalSoldeAvecTat(e))}</span>`;
     if (tatouagesDemandes(e)) pay += e.tatouages_nb == null ? `<span class="badge solde">🦋 Tatouages à compter (2 €/enfant)</span>`
       : +e.tatouages_nb === 0 ? `<span class="badge solde-ok">🦋 Aucun tatouage réalisé</span>`
-      : e.tatouages_paiement === "non" ? `<span class="badge solde-ko">⚠️ Tatouages ${euro(totalTatouages(e))} non payés</span>`
-      : montantTatouagesEncaisses(e) ? `<span class="badge solde-ok">🦋 ${e.tatouages_nb} tatouages · ${euro(totalTatouages(e))} reçus (${MODES[e.tatouages_paiement] || "ancien solde"})</span>`
-      : `<span class="badge solde">🦋 ${e.tatouages_nb} tatouages · ${euro(totalTatouages(e))} à encaisser</span>`;
+      : `<span class="badge ${e.solde_encaisse && e.solde_encaisse !== "non" ? "solde-ok" : "solde"}">🦋 ${e.tatouages_nb} tatouages · ${euro(totalTatouages(e))} inclus dans le solde</span>`;
     const past = e.date <= todayISO() && e.statut !== "annule";
     const client = estClient(e);
     if (client && e.fiche && e.fiche.recue_le) pay += `<span class="badge fiche-ok">📝 Fiche anniversaire reçue</span>`;
@@ -2328,7 +2329,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       ${canMode || canSignal || canEnc || canTat || canPhotos ? `<div class="ev-actions">
         ${canMode ? `<button type="button" class="sig mode-inline" data-mode-open="${esc(e.id)}">✨ Mode prestation</button>` : `
           ${canPhotos ? `<button type="button" class="sig photo" data-photos="${esc(e.id)}">${e.photos_envoyees ? "↩️ Photos pas encore envoyées" : "📸 Photos envoyées au client ?"}</button>` : ""}
-          ${canTat ? `<button type="button" class="sig tat" data-tat-open="${esc(e.id)}">🦋 ${tatouagesACompleter(e) ? "Compter / encaisser les tatouages" : "Voir les tatouages"}</button>` : ""}
+          ${canTat ? `<button type="button" class="sig tat" data-tat-open="${esc(e.id)}">🦋 ${tatouagesACompleter(e) ? "Compter les tatouages" : "Voir les tatouages"}</button>` : ""}
           ${canEnc ? `<button type="button" class="sig enc" data-enc-open="${esc(e.id)}">${e.solde_encaisse === "non" ? "💶 Le solde a finalement été reçu ?" : e.solde_encaisse ? "💶 Modifier l'encaissement" : "💶 Confirmer la réception du solde"}</button>` : ""}
           ${canSignal ? `<button type="button" class="sig" data-signal="${esc(e.id)}">${e.materiel_manquant ? "🏁 Ajouter du matériel manquant" : "🏁 Fin d'anim : bilan & matériel"}</button>` : ""}
         `}
@@ -2431,21 +2432,30 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       : e.heure_debut ? new Date(new Date(`${e.date}T${e.heure_debut.slice(0, 5)}:00`).getTime() + 90 * 6e4) : null;
     return !!fin && new Date() >= fin;
   }
-  // Deux caisses distinctes : le solde client et les tatouages de l'ACC.
-  // On ne demande une remise que pour les espèces encaissées par quelqu'un
-  // d'autre que Jordan, jamais pour les virements ni Payconiq.
+  // Le client règle un seul solde, tatouages inclus. Pour les anciennes
+  // données, les deux montants peuvent encore exister dans des colonnes
+  // distinctes ; les regrouper lors d'une remise de liquide commune.
+  // Aucune remise à suivre pour les virements ou Payconiq.
   function mouvementsEspecesEquipe() {
     const lignes = [];
     events.forEach(e => {
       if (e.statut === "annule") return;
       const commun = { id: e.id, titre: e.titre || e.enfant || "Animation", date: e.date };
       const solde = totalSolde(e), parSolde = (e.solde_encaisse_par || "Non précisé").trim();
-      if (e.solde_encaisse === "cash" && solde > 0 && normName(parSolde) !== "jordan") {
+      const tatouages = totalTatouages(e), parTat = (e.tatouages_paiement_par || "Non précisé").trim();
+      const cashSolde = e.solde_encaisse === "cash" && solde > 0 && normName(parSolde) !== "jordan";
+      const cashTat = e.tatouages_paiement === "cash" && tatouages > 0 && normName(parTat) !== "jordan";
+      if (cashSolde && cashTat && normName(parSolde) === normName(parTat) &&
+          !!e.solde_remis_jordan_le === !!e.tatouages_remis_jordan_le) {
+        lignes.push({ ...commun, type: "ensemble", libelle: "Solde + tatouages", montant: solde + tatouages,
+          par: parSolde, remis: e.solde_remis_jordan_le || null });
+        return;
+      }
+      if (cashSolde) {
         lignes.push({ ...commun, type: "solde", libelle: "Solde", montant: solde, par: parSolde,
           remis: e.solde_remis_jordan_le || null });
       }
-      const tatouages = totalTatouages(e), parTat = (e.tatouages_paiement_par || "Non précisé").trim();
-      if (e.tatouages_paiement === "cash" && tatouages > 0 && normName(parTat) !== "jordan") {
+      if (cashTat) {
         lignes.push({ ...commun, type: "tatouages", libelle: "Tatouages", montant: tatouages, par: parTat,
           remis: e.tatouages_remis_jordan_le || null });
       }
@@ -2489,11 +2499,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (remiseEnCours || !peutConfirmerRemise()) return;
     const ev = events.find(x => String(x.id) === btn.dataset.remiseJordan);
     const type = btn.dataset.remiseType, annuler = btn.dataset.remiseAnnuler === "1";
-    if (!ev || (type !== "solde" && type !== "tatouages")) return;
+    if (!ev || !["solde", "tatouages", "ensemble"].includes(type)) return;
     const ligne = mouvementsEspecesEquipe().find(x => String(x.id) === String(ev.id) && x.type === type);
     if (!ligne || (!!ligne.remis) !== annuler) return;
     if (!confirm(annuler ? `Annuler la remise de ${euro(ligne.montant)} par ${ligne.par} ?` : `Confirmes-tu avoir réellement reçu ${euro(ligne.montant)} en espèces de ${ligne.par} ?`)) return;
-    const champs = type === "solde"
+    const champs = type === "ensemble"
+      ? { solde_remis_jordan_le: annuler ? null : new Date().toISOString(), solde_remis_jordan_par: annuler ? null : "Jordan",
+          tatouages_remis_jordan_le: annuler ? null : new Date().toISOString(), tatouages_remis_jordan_par: annuler ? null : "Jordan" }
+      : type === "solde"
       ? { solde_remis_jordan_le: annuler ? null : new Date().toISOString(), solde_remis_jordan_par: annuler ? null : "Jordan" }
       : { tatouages_remis_jordan_le: annuler ? null : new Date().toISOString(), tatouages_remis_jordan_par: annuler ? null : "Jordan" };
     remiseEnCours = true; btn.disabled = true;
@@ -2740,7 +2753,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const nbOpt = Object.entries(optSel).filter(([k, n]) => k === "tatouage" ? tatouagesDemandes({ options: optSel }) : +n > 0).length;
     $("optResume").textContent = nbOpt ? `· ${optTexte(optSel)}` : "· aucune (toucher pour ajouter)";
     const t = optTotal(optSel), tat = tatouagesDemandes({ options: optSel });
-    $("optTot").textContent = resp && (t || tat) ? `Options : ${euro(t)} ajoutés au prix total${tat ? ` · tatouages : ${euro(TAT)} par enfant réellement tatoué, à encaisser séparément le jour même` : ""}` : "";
+    $("optTot").textContent = resp && (t || tat) ? `Options : ${euro(t)} ajoutés au prix total${tat ? ` · tatouages : ${euro(TAT)} par enfant réellement tatoué, ajoutés au solde du jour` : ""}` : "";
   }
   $("optList").addEventListener("click", (e) => {
     const b = e.target.closest("[data-opt]"); if (!b) return;
@@ -3271,7 +3284,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       r.espace ? `💃 Espace dégagé : ${esc(r.espace)}` : "",
       r.mascotte === "Oui" ? `🧸 Mascotte · pièce discrète : ${esc(r.piece_mascotte || "?")}` : "",
       r.photos ? `📸 Photos : ${esc(r.photos)}` : ""].filter(Boolean).join("<br>");
-    const solde = ev.solde || extras(ev);
+    const solde = ev.solde || extras(ev) || totalTatouages(ev);
     $("jourBody").innerHTML = `
       <div class="jh"><span class="em">${U ? U[2] : "🪄"}</span><h2>${esc(ev.titre || ev.enfant || "Animation")}</h2>
         <div class="time">${ev.heure_debut ? hhmm(ev.heure_debut) + (ev.heure_fin ? " – " + hhmm(ev.heure_fin) : "") : "Toute la journée"}</div>
@@ -3293,16 +3306,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       ${fiche ? `<div class="blk"><h4>📝 La fête</h4>${fiche}</div>` : ""}
       ${team ? `<div class="blk"><h4>👥 L'équipe</h4>${team}</div>` : ""}
       ${tatouagesDemandes(ev) && ev.type_evenement !== "evenement" ? `<div class="tat-box"><h4>🦋 Atelier tatouages pailletés</h4>
-        <p><b>2 € par enfant réellement tatoué</b> · à réclamer au parent avant le départ, en supplément du solde.</p>
+        <p><b>2 € par enfant réellement tatoué</b> · ajouté automatiquement au solde à régler avant le départ.</p>
         ${ev.tatouages_nb == null ? `<p>📝 Nombre réalisé : à compter par l'ACC.</p>` : `<p>👧 ${ev.tatouages_nb} enfant${+ev.tatouages_nb > 1 ? "s" : ""} tatoué${+ev.tatouages_nb > 1 ? "s" : ""} · <b>${euro(totalTatouages(ev))}</b></p>`}
-        ${ev.tatouages_nb == null ? "" : +ev.tatouages_nb === 0 ? `<p>✅ Aucun tatouage réalisé.</p>` : ev.tatouages_paiement === "non" ? `<p>⚠️ Paiement signalé non reçu.</p>` : ev.tatouages_paiement ? `<p>✅ Paiement reçu en ${esc(MODES_TAT[ev.tatouages_paiement] || ev.tatouages_paiement)}.</p>` : `<p>💶 Montant encore à encaisser.</p>`}
-        ${peutGererTatouages(ev) ? `<button type="button" class="btn primary" data-jour="tat">🦋 ${tatouagesACompleter(ev) ? "Compter les tatouages et encaisser" : "Voir / corriger le comptage"}</button>` : `<p>La personne chargée de l'accompagnement gère le comptage et le paiement.</p>`}
+        ${ev.tatouages_nb == null ? "" : +ev.tatouages_nb === 0 ? `<p>✅ Aucun tatouage réalisé.</p>` : `<p>💶 Total à régler, tatouages inclus : <b>${euro(totalSoldeAvecTat(ev))}</b>.</p>`}
+        ${peutGererTatouages(ev) ? `<button type="button" class="btn primary" data-jour="tat">🦋 ${tatouagesACompleter(ev) ? "Compter les tatouages" : "Voir / corriger le comptage"}</button>` : `<p>Le comptage est effectué par l'accompagnateur ; l'encaissement du solde est commun.</p>`}
       </div>` : ""}
       ${ev.type_evenement === "evenement" && !estNM(ev) && isResp() ? `<button type="button" class="btn primary" data-resa-accueil="${esc(ev.id)}" style="width:100%;margin:6px 0">🎟️ Accueil des réservations</button><button type="button" class="btn primary" data-caisse="${esc(ev.id)}" style="width:100%;margin:6px 0">🛒 Caisse</button><button type="button" class="btn primary" data-tourn="${esc(ev.id)}" style="width:100%;margin:6px 0">🔄 Tournante</button>` : ""}
       ${ev.notes ? `<div class="blk"><h4>📝 Notes</h4>${esc(ev.notes).replace(/\n/g, "<br>")}</div>` : ""}
       ${ev.type_evenement !== "evenement" ? `<h3 class="etape">✅ Après la prestation</h3>
-      <p class="hint">Le solde se confirme le jour J, avant le départ. Le bilan et l'envoi des photos deviennent accessibles après la fin de l'animation. Les tatouages éventuels sont encaissés séparément par l'ACC.</p>
-      ${solde ? `<div class="blk"><h4>💶 Solde (hors tatouages)</h4><b style="font-size:20px">${euro(totalSolde(ev))}</b> ${ev.solde_encaisse === "non" ? "⚠️ Non payé, signalé" : ev.solde_encaisse ? `✅ Reçu par ${esc(({cash:"liquide",virement:"virement",payconiq:"Payconiq"})[ev.solde_encaisse] || ev.solde_encaisse)}` : "💶 Réception à confirmer"}</div>` : ""}
+      <p class="hint">Le solde, tatouages éventuels inclus, se confirme en un seul paiement le jour J, avant le départ. Le bilan et l'envoi des photos deviennent accessibles après la fin de l'animation.</p>
+      ${solde ? `<div class="blk"><h4>💶 Solde total (tatouages inclus)</h4><b style="font-size:20px">${euro(totalSoldeAvecTat(ev))}</b> ${ev.solde_encaisse === "non" ? "⚠️ Non payé, signalé" : ev.solde_encaisse ? `✅ Reçu par ${esc(({cash:"liquide",virement:"virement",payconiq:"Payconiq"})[ev.solde_encaisse] || ev.solde_encaisse)}` : "💶 Réception à confirmer"}${tatouagesDemandes(ev) && ev.tatouages_nb == null ? `<p class="hint" style="margin:6px 0 0">🦋 Comptez les tatouages avant de confirmer le paiement.</p>` : ""}</div>` : ""}
       <div class="blk ${bilanAnimation(ev.id) ? "" : "warn"}"><h4>📝 Bilan de l'animation</h4>${bilanAnimation(ev.id) ? `✅ Bilan envoyé par ${esc(bilanAnimation(ev.id).auteur || "un membre de l'équipe")}, merci !` : "À compléter une seule fois par l'équipe, même si tout s'est bien passé."}</div>
       ${peutEnvoyerPhotos() ? `<div class="blk"><h4>📸 Envoi des photos au client</h4>${ev.photos_envoyees ? `✅ Photos déjà envoyées${ev.photos_envoyees_par ? " par " + esc(ev.photos_envoyees_par) : ""}.` : ev.email && ev.email.includes("@") ? `Vous pourrez envoyer le lien des photos à ${esc(ev.email)} depuis cette fiche.` : "Aucune adresse e-mail client : vous pourrez signaler leur remise manuelle."}</div>` : ""}
       <p class="hint ${prestationFinie ? "hidden" : ""}" data-jour-attente>🔒 Le bilan et l'envoi des photos seront disponibles après la fin de cette animation${ev.heure_fin ? ` (${esc(hhmm(ev.heure_fin))})` : ""}.</p>
@@ -4187,8 +4200,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   function majEnc() {
     const sp = +$("encSup").value || 0, base = +encEv.solde || 0;
-    $("encAmount").textContent = euro(base + sp);
-    $("encDetail").textContent = sp ? `solde ${euro(base)} + ${euro(sp)} autre supplément` : "Tatouages pailletés encaissés séparément par l'ACC.";
+    const tatouagesPrevus = tatouagesDemandes(encEv);
+    const tat = tatouagesPrevus ? totalTatouages(encEv) : 0;
+    $("encAmount").textContent = euro(base + sp + tat);
+    const details = [`solde ${euro(base)}`];
+    if (sp) details.push(`${euro(sp)} autre supplément`);
+    if (tat) details.push(`${encEv.tatouages_nb} tatouages × ${euro(TAT)} = ${euro(tat)}`);
+    $("encDetail").textContent = details.join(" + ") + (tatouagesPrevus && encEv.tatouages_nb == null ? " · ⚠️ Tatouages à compter d'abord" : "");
   }
   $("encSup").addEventListener("input", majEnc);
   const closeEnc = () => { $("encBg").classList.add("hidden"); document.body.style.overflow = ""; };
@@ -4197,6 +4215,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (e.target.id === "encBg") return closeEnc();
     const b = e.target.closest("[data-enc]"); if (!b) return;
     const mode = b.dataset.enc || null, me = myMember();
+    if (mode && mode !== "non" && tatouagesDemandes(encEv) && encEv.tatouages_nb == null) {
+      $("encErr").textContent = "🦋 Comptez d'abord les enfants tatoués dans « Pendant → Tatouages », puis confirmez ici le solde total.";
+      return;
+    }
     const saisissant = me ? me.prenom : (currentUser ? currentUser.email.split("@")[0] : (demoMe || "Moi"));
     // Une correction du montant par Jordan ne doit pas effacer l'identité
     // de l'accompagnateur qui détient réellement les espèces.
@@ -4204,17 +4226,26 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const nouveauSupplement = +$("encSup").value || 0;
     const remiseAReverifier = mode !== encEv.solde_encaisse || par !== encEv.solde_encaisse_par ||
       nouveauSupplement !== (+encEv.supplement || 0);
+    const tatouagesComptes = tatouagesDemandes(encEv) && encEv.tatouages_nb != null && +encEv.tatouages_nb > 0;
+    const horodatage = new Date().toISOString();
     try {
-      await store.patch(encEv.id, { solde_encaisse: mode, solde_encaisse_par: mode ? par : null, solde_encaisse_le: mode ? new Date().toISOString() : null,
+      await store.patch(encEv.id, { solde_encaisse: mode, solde_encaisse_par: mode ? par : null, solde_encaisse_le: mode ? horodatage : null,
         supplement: nouveauSupplement || null, supplement_note: $("encSupNote").value.trim() || null,
-        ...(remiseAReverifier ? { solde_remis_jordan_le: null, solde_remis_jordan_par: null } : {}) });
+        ...(remiseAReverifier ? { solde_remis_jordan_le: null, solde_remis_jordan_par: null } : {}),
+        ...(tatouagesDemandes(encEv) && encEv.tatouages_nb != null ? {
+          // Partie tatouages du MÊME encaissement (utile aux stats, pas de second paiement).
+          tatouages_paiement: tatouagesComptes ? mode : null,
+          tatouages_paiement_par: tatouagesComptes && mode && mode !== "non" ? par : null,
+          tatouages_paiement_le: tatouagesComptes && mode && mode !== "non" ? horodatage : null,
+          ...(remiseAReverifier ? { tatouages_remis_jordan_le: null, tatouages_remis_jordan_par: null } : {}),
+        } : {}) });
       closeEnc(); toast(mode === "non" ? "⚠️ Noté : solde non payé" : mode ? "💶 Merci ! Le responsable est prévenu" : "Remis « à encaisser »");
       if (mode && mode !== "non") magicBurst();
       await reload();
     } catch (err) { $("encErr").textContent = "Erreur : " + (err.message || err); }
   });
 
-  // ================= 🦋 Tatouages pailletés : comptage de l'ACC et règlement distinct =================
+  // ================= 🦋 Tatouages pailletés : comptage puis solde unique =================
   const MODES_TAT = { cash: "liquide", virement: "virement", payconiq: "Payconiq", non: "non payé" };
   let tatEv = null;
   function openTat(ev) {
@@ -4240,47 +4271,41 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("tatAmount").textContent = n == null ? "—" : euro(n * TAT);
     const ancienNb = tatEv?.tatouages_nb;
     const change = ancienNb == null || +ancienNb !== n;
-    const mode = change ? null : tatEv?.tatouages_paiement;
-    $("tatEtat").classList.toggle("ok", mode && mode !== "non" || n === 0);
+    $("tatEtat").classList.toggle("ok", n === 0 || (!change && !!tatEv?.solde_encaisse && tatEv.solde_encaisse !== "non"));
     $("tatEtat").textContent = n == null ? "📝 Comptez d'abord les enfants qui ont réellement reçu un tatouage."
-      : n === 0 ? "✅ Aucun tatouage réalisé : enregistrez 0, aucun paiement à réclamer."
-      : mode === "non" ? "⚠️ Le montant a été signalé comme non payé."
-      : mode ? `✅ Paiement déclaré reçu par ${MODES_TAT[mode] || mode}${tatEv.tatouages_paiement_par ? " · " + tatEv.tatouages_paiement_par : ""}`
-      : change && ancienNb != null ? `⚠️ Le nombre a changé : pensez à reconfirmer le paiement de ${euro(n * TAT)}.`
-      : `💶 À demander au parent avant de partir : ${euro(n * TAT)}.`;
-    $("tatModes").querySelectorAll("[data-tat-mode]").forEach(b => { b.disabled = n == null || n === 0; });
+      : n === 0 ? "✅ Aucun tatouage réalisé : enregistrez 0, rien à ajouter au solde."
+      : `💶 ${euro(n * TAT)} seront inclus dans le solde total de ${euro((+tatEv.solde || 0) + (+tatEv.supplement || 0) + n * TAT)}. ${change && tatEv.solde_encaisse && tatEv.solde_encaisse !== "non" ? "⚠️ L'ancien paiement devra être reconfirmé." : "Validez ensuite le paiement une seule fois dans « Après »."}`;
   }
   $("tatNb").addEventListener("input", majTat);
-  async function enregistrerTat(mode) {
+  async function enregistrerTat() {
     if (!tatEv) return;
     const n = nbTatSaisi();
     if (n == null) { $("tatErr").textContent = "Indiquez un nombre entier, même 0 si aucun enfant n'a été tatoué."; return; }
-    if (n === 0 && mode) { $("tatErr").textContent = "Aucun paiement à déclarer si aucun tatouage n'a été réalisé."; return; }
     const membre = myMember()?.prenom || chatMe(), ancien = tatEv.tatouages_nb;
     const change = ancien == null || Number(ancien) !== n;
-    const par = mode && mode === tatEv.tatouages_paiement && tatEv.tatouages_paiement_par && !change
-      ? tatEv.tatouages_paiement_par : membre;
+    if (change && tatEv.solde_encaisse && tatEv.solde_encaisse !== "non" &&
+        !confirm(`Le solde était déjà marqué reçu. Modifier le nombre de tatouages changera son total à ${euro(totalSolde(tatEv) + n * TAT)} et remettra le paiement à confirmer. Continuer ?`)) return;
     const champs = {
       tatouages_nb: n,
       ...(change ? { tatouages_compte_par: membre, tatouages_compte_le: new Date().toISOString() } : {}),
-      ...(change || (mode && (mode !== tatEv.tatouages_paiement || par !== tatEv.tatouages_paiement_par))
-        ? { tatouages_remis_jordan_le: null, tatouages_remis_jordan_par: null } : {}),
+      ...(change ? {
+        // Nouveau total : l'ancien paiement (et une éventuelle remise) n'est plus fiable.
+        solde_encaisse: null, solde_encaisse_par: null, solde_encaisse_le: null,
+        solde_remis_jordan_le: null, solde_remis_jordan_par: null,
+        tatouages_paiement: null, tatouages_paiement_par: null, tatouages_paiement_le: null,
+        tatouages_remis_jordan_le: null, tatouages_remis_jordan_par: null,
+      } : {}),
     };
-    if (mode) Object.assign(champs, { tatouages_paiement: mode, tatouages_paiement_par: par, tatouages_paiement_le: new Date().toISOString() });
-    else if (change) Object.assign(champs, { tatouages_paiement: null, tatouages_paiement_par: null, tatouages_paiement_le: null });
     $("tatSaveCount").disabled = true;
-    $("tatModes").querySelectorAll("button").forEach(b => b.disabled = true);
     try {
       await store.patch(tatEv.id, champs);
       closeTat();
-      toast(mode === "non" ? "⚠️ Tatouages notés non payés" : mode ? `✅ ${euro(n * TAT)} de tatouages reçus (${MODES_TAT[mode]})` : `🦋 ${n} tatouage${n > 1 ? "s" : ""} noté${n > 1 ? "s" : ""}`);
-      if (mode && mode !== "non") magicBurst();
+      toast(`🦋 ${n} tatouage${n > 1 ? "s" : ""} noté${n > 1 ? "s" : ""} · ${euro(n * TAT)} ajoutés au solde`);
       await reload();
     } catch (err) { $("tatErr").textContent = "Erreur : " + (err.message || err); }
     finally { $("tatSaveCount").disabled = false; if (tatEv) majTat(); }
   }
-  $("tatSaveCount").onclick = () => enregistrerTat(null);
-  $("tatModes").addEventListener("click", e => { const b = e.target.closest("[data-tat-mode]"); if (b) enregistrerTat(b.dataset.tatMode); });
+  $("tatSaveCount").onclick = enregistrerTat;
 
   // ================= 🚫 Indisponibilités =================
   function mePrenom() { const me = myMember(); return me ? me.prenom : (DEMO ? demoMe : ""); }
