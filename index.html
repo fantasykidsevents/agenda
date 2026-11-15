@@ -237,6 +237,11 @@
   .post-actions .post-state{margin:6px 0;font-size:13px;color:#7c5d31}
   .post-actions .post-btns{display:flex;flex-wrap:wrap;gap:7px}
   .post-actions .post-btns button{flex:1;min-width:150px;font-size:13px}
+  .photos-jordan{background:linear-gradient(145deg,#eff7ff,#faf0ff);border:1px solid #d9c6fc}
+  .photos-jordan .group-title{color:#6d28d9}
+  .photos-jordan .post-item{border-color:#e6d8fc}
+  .photos-jordan .post-state{color:#6b6285;line-height:1.5}
+  .photos-jordan .post-btns button{width:100%}
   .fiche-status{padding:12px 14px;border-radius:14px;background:#f6f2ff;font-size:14px;margin-bottom:8px;line-height:1.4}
   .fiche-status.ok{background:#dcfce7;color:#166534}
   .fiche-status.wait{background:#fff7ed;color:#9a3412}
@@ -1102,6 +1107,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <section id="viewMine" class="hidden">
       <div class="mine-head" id="mineHead"></div>
       <div class="mine-head post-actions hidden" id="postActions"></div>
+      <div class="mine-head post-actions photos-jordan hidden" id="photosJordan"></div>
       <div class="mine-head mine-calendar">
         <div class="group-title">📆 Mes prestations sur mon téléphone</div>
         <p class="hint" style="margin:0 0 10px">Retrouvez automatiquement vos animations dans Google Agenda ou le calendrier de l'iPhone.</p>
@@ -2076,6 +2082,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const me = myMember();
     return !members.some(m => m.responsable) || !!(me && me.responsable);
   }
+  // L'envoi des photos aux clients est réservé à Jordan personnellement,
+  // même si d'autres membres ont le rôle de responsable / gestionnaire.
+  function peutEnvoyerPhotos() {
+    if (DEMO) return isResp() && normName(demoMe || "Jordan") === "jordan";
+    const me = myMember();
+    return !!(me && normName(me.prenom) === "jordan" && isResp());
+  }
   let events = [];
   let view = "cal";
   const now = new Date();
@@ -2272,7 +2285,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     pay += badgeBilan(e);
     if (e.options && optTexte(e.options)) pay += `<span class="badge">✨ ${esc(optTexte(e.options))}</span>`;
     if (e.photos_envoyees) pay += `<span class="badge solde-ok">📸 Photos envoyées${e.photos_envoyees_par ? " · " + esc(e.photos_envoyees_par) : ""} · ${new Date(e.photos_envoyees).toLocaleDateString("fr-BE", { day: "numeric", month: "short" })}</span>`;
-    const canPhotos = past && isResp() && !interne; // photos : responsables uniquement
+    const canPhotos = past && peutEnvoyerPhotos() && !interne; // photos : Jordan uniquement
     const canEnc = past && !interne && e.type_evenement !== "evenement" && (e.solde || extras(e) || isResp()) && (!e.solde_encaisse || e.solde_encaisse === "non" || isResp());
     const canTat = !interne && e.type_evenement !== "evenement" && e.date <= todayISO() && tatouagesDemandes(e) && peutGererTatouages(e);
     const missing = e.materiel_manquant ? `<div class="missing">⚠️ Matériel manquant : ${esc(e.materiel_manquant)}</div>` : "";
@@ -2378,7 +2391,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!currentUser) return null;
     return members.find(m => (m.email || "").toLowerCase() === (currentUser.email || "").toLowerCase()) || null;
   }
-  function renderMine() { renderMine0(); renderInd(); renderMesCostumes(); renderMesGains(); boutonRecapEquipe();
+  function renderMine() { renderMine0(); renderPhotosJordan(); renderInd(); renderMesCostumes(); renderMesGains(); boutonRecapEquipe();
     const me = myMember() || (DEMO && members.find(m => normName(m.prenom) === normName(demoMe)));
     if (document.activeElement !== $("myAddr")) $("myAddr").value = (me && me.adresse) || ""; }
   function renderMine0() {
@@ -2405,6 +2418,39 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       : e.heure_debut ? new Date(new Date(`${e.date}T${e.heure_debut.slice(0, 5)}:00`).getTime() + 90 * 6e4) : null;
     return !!fin && new Date() >= fin;
   }
+  // Suivi personnel de Jordan : les photos des prestations client terminées
+  // doivent être accessibles même quand il n'était pas dans l'équipe.
+  function renderPhotosJordan() {
+    const box = $("photosJordan");
+    if (!box) return;
+    if (!peutEnvoyerPhotos()) { box.innerHTML = ""; box.classList.add("hidden"); return; }
+    const aEnvoyer = events.filter(e => (e.statut === "confirme" || e.statut === "termine") &&
+      estClient(e) && !estEvenementInterne(e) && animationTerminee(e) && !e.photos_envoyees)
+      .sort((a,b) => (b.date + (b.heure_debut || "")).localeCompare(a.date + (a.heure_debut || "")));
+    box.classList.toggle("hidden", !aEnvoyer.length);
+    box.innerHTML = aEnvoyer.length ? `<div class="group-title">📸 Photos à envoyer (${aEnvoyer.length})</div>
+      <p class="hint" style="margin:0 0 8px">Toutes les animations terminées, même celles où tu n'étais pas prévu. L'envoi au client est réservé à Jordan.</p>
+      ${aEnvoyer.map(e => `<div class="post-item">
+        <b>${esc(e.titre || e.enfant || "Animation")}</b>
+        <div class="post-state"><span style="text-transform:capitalize">${esc(fmtLong(e.date))}</span>${e.heure_debut ? ` · ${esc(hhmm(e.heure_debut))}` : ""}${e.parent ? `<br>👤 ${esc(e.parent)}` : ""}<br>${e.email && e.email.includes("@") ? `📧 ${esc(e.email)}` : "📸 Remise des photos à confirmer manuellement"}</div>
+        <div class="post-btns"><button type="button" class="btn primary" data-photos-jordan="${esc(e.id)}">${e.email && e.email.includes("@") ? "📨 Envoyer les photos" : "✅ Confirmer la remise"}</button></div>
+      </div>`).join("")}` : "";
+  }
+  $("photosJordan").addEventListener("click", e => {
+    const btn = e.target.closest("[data-photos-jordan]");
+    if (!btn) return;
+    e.preventDefault(); e.stopPropagation();
+    if (!peutEnvoyerPhotos()) { toast("📸 Seul Jordan peut confirmer l'envoi des photos."); return; }
+    const ev = events.find(x => String(x.id) === btn.dataset.photosJordan);
+    if (!ev || ev.photos_envoyees || !animationTerminee(ev)) return;
+    openForm(ev);
+    setTimeout(() => {
+      const lien = $("fPhotosLien");
+      const cible = lien && !lien.classList.contains("hidden") ? lien : $("fPhotos");
+      cible?.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (cible === lien) cible.focus();
+    }, 200);
+  });
   function renderMineFor(prenom) {
     // Une seule présentation : les prestations à clôturer rejoignent les cartes
     // de « Mes animations » au lieu d'être répétées dans un encadré séparé.
@@ -2707,9 +2753,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const mailCli = !!(ev.email && ev.email.includes("@"));
       $("fPhotos").textContent = ev.photos_envoyees ? `✅ Photos envoyées${ev.photos_envoyees_par ? " par " + ev.photos_envoyees_par : ""} – toucher pour annuler` : mailCli ? "📨 Envoyer les photos au client" : "📸 Valider : photos envoyées au client";
       $("fPhotosLien").value = ev.photos_lien || "";
-      $("fPhotosLien").classList.toggle("hidden", !resp || !!ev.photos_envoyees || !mailCli);
+      $("fPhotosLien").classList.toggle("hidden", !peutEnvoyerPhotos() || !!ev.photos_envoyees || !mailCli);
       $("fPhotos").classList.toggle("done", !!ev.photos_envoyees);
-      $("fPhotos").classList.toggle("hidden", !resp);
+      $("fPhotos").classList.toggle("hidden", !peutEnvoyerPhotos());
       $("fEnc").classList.toggle("hidden", !(ev.solde || resp) || (ev.solde_encaisse && !resp));
       $("fEnc").textContent = ev.solde_encaisse ? "💶 Modifier l'encaissement" : "💶 Valider le solde du jour";
     }
@@ -3175,13 +3221,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <p class="hint">Le solde se confirme le jour J, avant le départ. Le bilan et l'envoi des photos deviennent accessibles après la fin de l'animation. Les tatouages éventuels sont encaissés séparément par l'ACC.</p>
       ${solde ? `<div class="blk"><h4>💶 Solde (hors tatouages)</h4><b style="font-size:20px">${euro(totalSolde(ev))}</b> ${ev.solde_encaisse === "non" ? "⚠️ Non payé, signalé" : ev.solde_encaisse ? `✅ Reçu par ${esc(({cash:"liquide",virement:"virement",payconiq:"Payconiq"})[ev.solde_encaisse] || ev.solde_encaisse)}` : "💶 Réception à confirmer"}</div>` : ""}
       <div class="blk ${bilanAnimation(ev.id) ? "" : "warn"}"><h4>📝 Bilan de l'animation</h4>${bilanAnimation(ev.id) ? `✅ Bilan envoyé par ${esc(bilanAnimation(ev.id).auteur || "un membre de l'équipe")}, merci !` : "À compléter une seule fois par l'équipe, même si tout s'est bien passé."}</div>
-      ${isResp() ? `<div class="blk"><h4>📸 Envoi des photos au client</h4>${ev.photos_envoyees ? `✅ Photos déjà envoyées${ev.photos_envoyees_par ? " par " + esc(ev.photos_envoyees_par) : ""}.` : ev.email && ev.email.includes("@") ? `Vous pourrez envoyer le lien des photos à ${esc(ev.email)} depuis cette fiche.` : "Aucune adresse e-mail client : vous pourrez signaler leur remise manuelle."}</div>` : ""}
+      ${peutEnvoyerPhotos() ? `<div class="blk"><h4>📸 Envoi des photos au client</h4>${ev.photos_envoyees ? `✅ Photos déjà envoyées${ev.photos_envoyees_par ? " par " + esc(ev.photos_envoyees_par) : ""}.` : ev.email && ev.email.includes("@") ? `Vous pourrez envoyer le lien des photos à ${esc(ev.email)} depuis cette fiche.` : "Aucune adresse e-mail client : vous pourrez signaler leur remise manuelle."}</div>` : ""}
       <p class="hint ${prestationFinie ? "hidden" : ""}" data-jour-attente>🔒 Le bilan et l'envoi des photos seront disponibles après la fin de cette animation${ev.heure_fin ? ` (${esc(hhmm(ev.heure_fin))})` : ""}.</p>
       <div class="after-btns">
         ${solde && (!ev.solde_encaisse || ev.solde_encaisse === "non" || isResp()) ? `<button type="button" class="sig enc" data-jour="enc" data-jour-unlock="date" ${jourAtteint ? "" : "disabled"}>${ev.solde_encaisse === "non" ? "💶 Solde finalement reçu ?" : ev.solde_encaisse ? "💶 Modifier l'encaissement" : "💶 Confirmer le solde reçu (liquide, virement, Payconiq)"}</button>` : ""}
-        ${isResp() ? `<button type="button" class="sig photo ${ev.photos_envoyees ? "done" : ""}" data-jour="photos" data-jour-unlock="fin" ${prestationFinie ? "" : "disabled"}>${ev.photos_envoyees ? "✅ Photos envoyées · voir / corriger" : "📨 Envoyer les photos au client"}</button>` : ""}
+        ${peutEnvoyerPhotos() ? `<button type="button" class="sig photo ${ev.photos_envoyees ? "done" : ""}" data-jour="photos" data-jour-unlock="fin" ${prestationFinie ? "" : "disabled"}>${ev.photos_envoyees ? "✅ Photos envoyées · voir / corriger" : "📨 Envoyer les photos au client"}</button>` : ""}
         <button type="button" class="sig ${bilanAnimation(ev.id) ? "done" : ""}" data-jour="sig" data-jour-unlock="fin" ${prestationFinie ? "" : "disabled"}>${bilanAnimation(ev.id) ? "✅ Bilan de l'équipe envoyé · Matériel" : "📝 Remplir le bilan + vérifier le matériel"}</button>
-      </div>` : isResp() && ev.date <= todayISO() ? `<h3 class="etape">📸 Suivi de l'événement</h3><div class="after-btns"><button type="button" class="sig photo" data-jour="photos">${ev.photos_envoyees ? "✅ Photos envoyées" : "📸 Photos envoyées au client"}</button></div>` : ""}`;
+      </div>` : peutEnvoyerPhotos() && ev.date <= todayISO() ? `<h3 class="etape">📸 Suivi de l'événement</h3><div class="after-btns"><button type="button" class="sig photo" data-jour="photos">${ev.photos_envoyees ? "✅ Photos envoyées" : "📸 Photos envoyées au client"}</button></div>` : ""}`;
     $("jourBg").dataset.id = ev.id;
     $("jourBg").dataset.prepKey = prepKey;
     $("jourBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
@@ -3254,6 +3300,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (e.target.id === "jourBg") return fermerJourEtRevenir();
     const b = e.target.closest("[data-jour]"); if (!b) return;
     const ev = events.find(x => String(x.id) === $("jourBg").dataset.id); if (!ev) return;
+    if (b.dataset.jour === "photos" && !peutEnvoyerPhotos()) { toast("Seul Jordan envoie les photos aux clients."); return; }
     if (b.dataset.jourUnlock === "fin" && !animationTerminee(ev)) { toast("Cette action s'ouvre à la fin de l'animation."); return; }
     if (b.dataset.jourUnlock === "date" && ev.date > todayISO()) { toast("La réception du solde se confirme le jour J."); return; }
     closeJour();
@@ -3268,6 +3315,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("openJour").addEventListener("click", () => { const ev = events.find(x => x.id === editingId); if (ev) { closeForm(); openJour(ev); jourDepuis = ev; } });
 
   $("fPhotos").addEventListener("click", async () => {
+    if (!peutEnvoyerPhotos()) { toast("Seul Jordan envoie les photos aux clients."); return; }
     const ev = events.find(x => x.id === editingId); if (!ev) return;
     const me = myMember(), par = me ? me.prenom : (currentUser ? currentUser.email.split("@")[0] : (demoMe || "Moi"));
     const sent = !ev.photos_envoyees, mailCli = !!(ev.email && ev.email.includes("@"));
@@ -3362,6 +3410,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (e.target.id === "addHere") { openForm(null, selDay); return; }
     const ph = e.target.closest("[data-photos]");
     if (ph) {
+      if (!peutEnvoyerPhotos()) { toast("Seul Jordan envoie les photos aux clients."); return; }
       const ev = events.find(x => String(x.id) === ph.dataset.photos); if (!ev) return;
       if (!ev.photos_envoyees && ev.email && ev.email.includes("@")) { openForm(ev); setTimeout(() => { $("fPhotosLien").scrollIntoView({ block: "center" }); $("fPhotosLien").focus(); }, 300); return; }
       const me = myMember(), par = me ? me.prenom : (currentUser ? currentUser.email.split("@")[0] : (demoMe || "Moi"));
