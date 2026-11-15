@@ -242,6 +242,16 @@
   .photos-jordan .post-item{border-color:#e6d8fc}
   .photos-jordan .post-state{color:#6b6285;line-height:1.5}
   .photos-jordan .post-btns button{width:100%}
+  .remises-jordan{background:linear-gradient(145deg,#fffaf0,#f0fff8);border:1px solid #e9d6a4}
+  .remises-jordan .group-title{margin:0 0 7px;color:#956007}
+  .remises-jordan .remise-total{font-size:27px;font-weight:850;color:#a04e00;margin:6px 0}
+  .remises-jordan .remise-group{border:1px solid #ebdcb6;border-radius:14px;background:#fff;margin:10px 0;overflow:hidden}
+  .remises-jordan .remise-group>summary{padding:11px 13px;cursor:pointer;font-weight:750;color:#6d4a17}
+  .remises-jordan .remise-line{border-top:1px solid #f5ebd6;padding:12px 13px}
+  .remises-jordan .remise-line b{display:block;font-size:14px}
+  .remises-jordan .remise-line small{display:block;color:#6d6171;margin:5px 0 8px;line-height:1.4}
+  .remises-jordan .remise-line button{width:100%;font-size:13px}
+  .remises-jordan .remise-history{margin-top:12px}
   .fiche-status{padding:12px 14px;border-radius:14px;background:#f6f2ff;font-size:14px;margin-bottom:8px;line-height:1.4}
   .fiche-status.ok{background:#dcfce7;color:#166534}
   .fiche-status.wait{background:#fff7ed;color:#9a3412}
@@ -1107,6 +1117,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <section id="viewMine" class="hidden">
       <div class="mine-head" id="mineHead"></div>
       <div class="mine-head post-actions hidden" id="postActions"></div>
+      <div class="mine-head remises-jordan hidden" id="remisesJordan"></div>
       <div class="mine-head post-actions photos-jordan hidden" id="photosJordan"></div>
       <div class="mine-head mine-calendar">
         <div class="group-title">📆 Mes prestations sur mon téléphone</div>
@@ -2089,6 +2100,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const me = myMember();
     return !!(me && normName(me.prenom) === "jordan" && isResp());
   }
+  // Jordan confirme lui-même la remise physique des espèces de l'équipe.
+  function peutConfirmerRemise() { return peutEnvoyerPhotos(); }
   let events = [];
   let view = "cal";
   const now = new Date();
@@ -2391,7 +2404,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!currentUser) return null;
     return members.find(m => (m.email || "").toLowerCase() === (currentUser.email || "").toLowerCase()) || null;
   }
-  function renderMine() { renderMine0(); renderPhotosJordan(); renderInd(); renderMesCostumes(); renderMesGains(); boutonRecapEquipe();
+  function renderMine() { renderMine0(); renderRemisesJordan(); renderPhotosJordan(); renderInd(); renderMesCostumes(); renderMesGains(); boutonRecapEquipe();
     const me = myMember() || (DEMO && members.find(m => normName(m.prenom) === normName(demoMe)));
     if (document.activeElement !== $("myAddr")) $("myAddr").value = (me && me.adresse) || ""; }
   function renderMine0() {
@@ -2418,6 +2431,76 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       : e.heure_debut ? new Date(new Date(`${e.date}T${e.heure_debut.slice(0, 5)}:00`).getTime() + 90 * 6e4) : null;
     return !!fin && new Date() >= fin;
   }
+  // Deux caisses distinctes : le solde client et les tatouages de l'ACC.
+  // On ne demande une remise que pour les espèces encaissées par quelqu'un
+  // d'autre que Jordan, jamais pour les virements ni Payconiq.
+  function mouvementsEspecesEquipe() {
+    const lignes = [];
+    events.forEach(e => {
+      if (e.statut === "annule") return;
+      const commun = { id: e.id, titre: e.titre || e.enfant || "Animation", date: e.date };
+      const solde = totalSolde(e), parSolde = (e.solde_encaisse_par || "Non précisé").trim();
+      if (e.solde_encaisse === "cash" && solde > 0 && normName(parSolde) !== "jordan") {
+        lignes.push({ ...commun, type: "solde", libelle: "Solde", montant: solde, par: parSolde,
+          remis: e.solde_remis_jordan_le || null });
+      }
+      const tatouages = totalTatouages(e), parTat = (e.tatouages_paiement_par || "Non précisé").trim();
+      if (e.tatouages_paiement === "cash" && tatouages > 0 && normName(parTat) !== "jordan") {
+        lignes.push({ ...commun, type: "tatouages", libelle: "Tatouages", montant: tatouages, par: parTat,
+          remis: e.tatouages_remis_jordan_le || null });
+      }
+    });
+    return lignes;
+  }
+  function renderRemisesJordan() {
+    const box = $("remisesJordan");
+    if (!box) return;
+    if (!peutConfirmerRemise()) { box.innerHTML = ""; box.classList.add("hidden"); return; }
+    const toutes = mouvementsEspecesEquipe();
+    const attente = toutes.filter(x => !x.remis), finies = toutes.filter(x => x.remis)
+      .sort((a,b) => String(b.remis).localeCompare(String(a.remis)));
+    const total = attente.reduce((s,x) => s + x.montant, 0);
+    const groupes = new Map();
+    attente.forEach(x => {
+      const cle = normName(x.par);
+      if (!groupes.has(cle)) groupes.set(cle, { nom: x.par, lignes: [] });
+      groupes.get(cle).lignes.push(x);
+    });
+    const ligneHtml = (x, annuler = false) => `<div class="remise-line">
+      <b>${esc(x.titre)} · ${esc(x.libelle)} · ${euro(x.montant)}</b>
+      <small><span style="text-transform:capitalize">${esc(fmtLong(x.date))}</span> · Encaissé par ${esc(x.par)}${annuler ? `<br>✅ Reçu le ${esc(new Date(x.remis).toLocaleDateString("fr-BE"))}` : ""}</small>
+      <button type="button" class="btn ${annuler ? "ghost" : "primary"}" data-remise-jordan="${esc(x.id)}" data-remise-type="${esc(x.type)}" data-remise-annuler="${annuler ? "1" : "0"}">${annuler ? "↩️ Corriger : non récupéré" : "✅ J'ai récupéré cet argent"}</button>
+    </div>`;
+    box.classList.remove("hidden");
+    box.innerHTML = `<div class="group-title">💶 Argent à récupérer auprès de l'équipe</div>
+      <div class="remise-total">${euro(total)}</div>
+      <p class="hint" style="margin:0 0 8px">${attente.length ? `${attente.length} encaissement${attente.length > 1 ? "s" : ""} en espèces à vérifier.` : "✅ Tous les encaissements en espèces sont marqués récupérés."} Seul Jordan confirme leur remise. Les virements et Payconiq ne sont pas concernés.</p>
+      ${[...groupes.values()].sort((a,b) => a.nom.localeCompare(b.nom, "fr")).map(g => `<details class="remise-group">
+        <summary>👤 ${esc(g.nom)} · ${euro(g.lignes.reduce((s,x) => s + x.montant, 0))} (${g.lignes.length})</summary>
+        ${g.lignes.sort((a,b) => b.date.localeCompare(a.date)).map(x => ligneHtml(x)).join("")}
+      </details>`).join("")}
+      ${finies.length ? `<details class="remise-group remise-history"><summary>✅ Remises déjà confirmées (${finies.length})</summary>${finies.slice(0, 25).map(x => ligneHtml(x, true)).join("")}${finies.length > 25 ? `<p class="hint" style="padding:0 12px">Les 25 confirmations les plus récentes sont affichées.</p>` : ""}</details>` : ""}`;
+  }
+  let remiseEnCours = false;
+  $("remisesJordan").addEventListener("click", async e => {
+    const btn = e.target.closest("[data-remise-jordan]");
+    if (!btn) return;
+    e.preventDefault(); e.stopPropagation();
+    if (remiseEnCours || !peutConfirmerRemise()) return;
+    const ev = events.find(x => String(x.id) === btn.dataset.remiseJordan);
+    const type = btn.dataset.remiseType, annuler = btn.dataset.remiseAnnuler === "1";
+    if (!ev || (type !== "solde" && type !== "tatouages")) return;
+    const ligne = mouvementsEspecesEquipe().find(x => String(x.id) === String(ev.id) && x.type === type);
+    if (!ligne || (!!ligne.remis) !== annuler) return;
+    if (!confirm(annuler ? `Annuler la remise de ${euro(ligne.montant)} par ${ligne.par} ?` : `Confirmes-tu avoir réellement reçu ${euro(ligne.montant)} en espèces de ${ligne.par} ?`)) return;
+    const champs = type === "solde"
+      ? { solde_remis_jordan_le: annuler ? null : new Date().toISOString(), solde_remis_jordan_par: annuler ? null : "Jordan" }
+      : { tatouages_remis_jordan_le: annuler ? null : new Date().toISOString(), tatouages_remis_jordan_par: annuler ? null : "Jordan" };
+    remiseEnCours = true; btn.disabled = true;
+    try { await store.patch(ev.id, champs); toast(annuler ? "Remise remise en attente" : "💶 Argent récupéré !"); await reload(); }
+    catch (err) { toast("Erreur d'enregistrement : " + (err.message || err)); btn.disabled = false; }
+    finally { remiseEnCours = false; }
+  });
   // Suivi personnel de Jordan : les photos des prestations client terminées
   // doivent être accessibles même quand il n'était pas dans l'équipe.
   function renderPhotosJordan() {
@@ -4114,10 +4197,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (e.target.id === "encBg") return closeEnc();
     const b = e.target.closest("[data-enc]"); if (!b) return;
     const mode = b.dataset.enc || null, me = myMember();
-    const par = me ? me.prenom : (currentUser ? currentUser.email.split("@")[0] : (demoMe || "Moi"));
+    const saisissant = me ? me.prenom : (currentUser ? currentUser.email.split("@")[0] : (demoMe || "Moi"));
+    // Une correction du montant par Jordan ne doit pas effacer l'identité
+    // de l'accompagnateur qui détient réellement les espèces.
+    const par = mode && mode === encEv.solde_encaisse && encEv.solde_encaisse_par ? encEv.solde_encaisse_par : saisissant;
+    const nouveauSupplement = +$("encSup").value || 0;
+    const remiseAReverifier = mode !== encEv.solde_encaisse || par !== encEv.solde_encaisse_par ||
+      nouveauSupplement !== (+encEv.supplement || 0);
     try {
       await store.patch(encEv.id, { solde_encaisse: mode, solde_encaisse_par: mode ? par : null, solde_encaisse_le: mode ? new Date().toISOString() : null,
-        supplement: +$("encSup").value || null, supplement_note: $("encSupNote").value.trim() || null });
+        supplement: nouveauSupplement || null, supplement_note: $("encSupNote").value.trim() || null,
+        ...(remiseAReverifier ? { solde_remis_jordan_le: null, solde_remis_jordan_par: null } : {}) });
       closeEnc(); toast(mode === "non" ? "⚠️ Noté : solde non payé" : mode ? "💶 Merci ! Le responsable est prévenu" : "Remis « à encaisser »");
       if (mode && mode !== "non") magicBurst();
       await reload();
@@ -4168,11 +4258,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (n === 0 && mode) { $("tatErr").textContent = "Aucun paiement à déclarer si aucun tatouage n'a été réalisé."; return; }
     const membre = myMember()?.prenom || chatMe(), ancien = tatEv.tatouages_nb;
     const change = ancien == null || Number(ancien) !== n;
+    const par = mode && mode === tatEv.tatouages_paiement && tatEv.tatouages_paiement_par && !change
+      ? tatEv.tatouages_paiement_par : membre;
     const champs = {
       tatouages_nb: n,
       ...(change ? { tatouages_compte_par: membre, tatouages_compte_le: new Date().toISOString() } : {}),
+      ...(change || (mode && (mode !== tatEv.tatouages_paiement || par !== tatEv.tatouages_paiement_par))
+        ? { tatouages_remis_jordan_le: null, tatouages_remis_jordan_par: null } : {}),
     };
-    if (mode) Object.assign(champs, { tatouages_paiement: mode, tatouages_paiement_par: membre, tatouages_paiement_le: new Date().toISOString() });
+    if (mode) Object.assign(champs, { tatouages_paiement: mode, tatouages_paiement_par: par, tatouages_paiement_le: new Date().toISOString() });
     else if (change) Object.assign(champs, { tatouages_paiement: null, tatouages_paiement_par: null, tatouages_paiement_le: null });
     $("tatSaveCount").disabled = true;
     $("tatModes").querySelectorAll("button").forEach(b => b.disabled = true);
