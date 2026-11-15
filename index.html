@@ -193,6 +193,27 @@
   .jour .blk.warn{background:#fff1f2;color:#9f1239}
   .jour .blk.meteo{background:linear-gradient(160deg,#eff6ff,#f5f3ff)}
   .jour .row2{display:flex;gap:8px;flex-wrap:wrap}
+  .jour .mission{background:linear-gradient(135deg,#f2e8ff,#eaf7ff);border:1px solid #dfd2ff;border-radius:18px;padding:14px;margin:8px 0 12px}
+  .jour .mission strong{display:block;font-size:18px;color:var(--violet-d)}
+  .jour .mission p{margin:4px 0 0;font-size:14px;color:#51446e}
+  .jour .etape{margin:18px 0 9px;font-size:16px;color:var(--violet-d);font-weight:750}
+  .jour .prep-list{display:grid;gap:7px}
+  .jour .prep-item{display:flex;align-items:center;gap:10px;padding:10px 11px;background:#fff;border:1px solid #e9dffa;border-radius:11px;cursor:pointer;font-size:14px}
+  .jour .prep-item input{width:21px;height:21px;accent-color:#8438ed;flex:none}
+  .jour .prep-item:has(input:checked){background:#ecfdf5;border-color:#bbf7d0;color:#166534}
+  .jour .prep-hint{font-size:12px;color:var(--muted);margin:8px 0 0}
+  .mine-calendar{background:linear-gradient(135deg,#f2e8ff,#edf8ff);border:1px solid #d8c5fc}
+  .mine-calendar .group-title{margin:0 0 7px;color:var(--violet-d)}
+  .mine-calendar .cal-btns{margin-top:10px}
+  .mine-ind{margin:10px 0 18px;border:1px solid #f9cfda;background:#fff7fb}
+  .mine-ind .fold-t{color:#9d174d;font-weight:750}
+  .post-actions{background:#fff9ec;border:1px solid #f6d99b}
+  .post-actions .group-title{margin:0 0 7px;color:#92400e}
+  .post-actions .post-item{background:#fff;border:1px solid #f5e4c3;border-radius:14px;padding:12px;margin-top:10px}
+  .post-actions .post-item b{display:block;font-size:14px}
+  .post-actions .post-state{margin:6px 0;font-size:13px;color:#7c5d31}
+  .post-actions .post-btns{display:flex;flex-wrap:wrap;gap:7px}
+  .post-actions .post-btns button{flex:1;min-width:150px;font-size:13px}
   .fiche-status{padding:12px 14px;border-radius:14px;background:#f6f2ff;font-size:14px;margin-bottom:8px;line-height:1.4}
   .fiche-status.ok{background:#dcfce7;color:#166534}
   .fiche-status.wait{background:#fff7ed;color:#9a3412}
@@ -1041,28 +1062,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <!-- Vue Mes animations -->
     <section id="viewMine" class="hidden">
       <div class="mine-head" id="mineHead"></div>
-      <div id="mineList"></div>
-      <div class="group-title">💶 Mes gains</div>
-      <div class="mine-head"><div id="mesGains"></div></div>
-      <div class="evt-tiles">
-        <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
-        <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button>
-        <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
-        <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
+      <div class="mine-head post-actions hidden" id="postActions"></div>
+      <div class="mine-head mine-calendar">
+        <div class="group-title">📆 Mes prestations sur mon téléphone</div>
+        <p class="hint" style="margin:0 0 10px">Retrouvez automatiquement vos animations dans Google Agenda ou le calendrier de l'iPhone.</p>
+        <div id="calBox"><button type="button" class="btn primary" id="calBtn" style="width:100%">📆 Ajouter mes prestations à mon calendrier</button></div>
       </div>
-      <div class="group-title">👗 Mes costumes & perruques</div>
-      <div class="mine-head"><div id="myCost"></div></div>
-      <details class="fold mine-fold">
-        <summary class="fold-t">⚙️ Mes infos <small>adresse · indisponibilités · agenda du téléphone</small></summary>
-        <div class="group-title">📍 Mon adresse</div>
-        <div class="mine-head">
-          <p class="hint" style="margin-top:0">Pour calculer vos km de déplacement (payés au km).</p>
-          <div class="row" style="align-items:flex-end">
-            <div style="flex:3"><input id="myAddr" type="text" placeholder="Rue, numéro, code postal, ville" /></div>
-            <div style="flex:1"><button type="button" class="btn ghost" id="myAddrSave" style="width:100%;padding:12px 6px">💾</button></div>
-          </div>
-        </div>
-        <div class="group-title">🚫 Mes indisponibilités</div>
+      <details class="fold mine-fold mine-ind" id="indFold">
+        <summary class="fold-t">🚫 Mes indisponibilités <small>Signaler une absence en un clic</small></summary>
         <div class="mine-head">
           <p class="hint" style="margin-top:0">Indiquez les jours où vous n'êtes pas disponible : l'équipe le verra en planifiant.</p>
           <div id="indList"></div>
@@ -1077,10 +1084,27 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
             <div class="actions" style="margin-top:10px"><button class="btn ghost" type="submit">🚫 Ajouter une indisponibilité</button></div>
           </form>
         </div>
-        <div class="group-title">📆 Dans l'agenda de mon téléphone</div>
+      </details>
+      <div id="mineList"></div>
+      <div class="group-title">💶 Mes gains</div>
+      <div class="mine-head"><div id="mesGains"></div></div>
+      <div class="evt-tiles">
+        <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
+        <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button>
+        <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
+        <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
+      </div>
+      <div class="group-title">👗 Mes costumes & perruques</div>
+      <div class="mine-head"><div id="myCost"></div></div>
+      <details class="fold mine-fold">
+        <summary class="fold-t">📍 Mon adresse <small>pour calculer mes déplacements</small></summary>
+        <div class="group-title">📍 Mon adresse</div>
         <div class="mine-head">
-          <p class="hint" style="margin-top:0">Vos animations apparaissent dans l'agenda de votre téléphone (iPhone, Google Agenda), à côté de vos rendez-vous perso.</p>
-          <div id="calBox"><button type="button" class="btn ghost" id="calBtn" style="width:100%">📆 Ajouter mes animations à mon agenda</button></div>
+          <p class="hint" style="margin-top:0">Pour calculer vos km de déplacement (payés au km).</p>
+          <div class="row" style="align-items:flex-end">
+            <div style="flex:3"><input id="myAddr" type="text" placeholder="Rue, numéro, code postal, ville" /></div>
+            <div style="flex:1"><button type="button" class="btn ghost" id="myAddrSave" style="width:100%;padding:12px 6px">💾</button></div>
+          </div>
         </div>
       </details>
     </section>
@@ -1441,14 +1465,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div id="sigList"></div>
     <div id="sigBilan"></div>
     <div id="sigCost"></div>
-    <label for="sigText">Avant de partir : quel matériel d'animation manque ou est épuisé ?</label>
+    <label for="sigText">Après l'animation : quel matériel manque ou est épuisé ?</label>
     <textarea id="sigText" required placeholder="Ex. Plus de marqueurs, il reste 5 coloriages, ballons épuisés…"></textarea>
     <p class="hint">Le responsable 👑 est prévenu tout de suite (notification + e-mail).</p>
     <div id="sigErr" class="err"></div>
     <div class="actions">
       <button type="button" class="btn ghost hidden" id="sigClear">✅ Tout est réglé</button>
-      <button type="button" class="btn ghost" id="sigCancel">👍 Rien ne manque</button>
-      <button type="submit" class="btn primary" id="sigSend">Envoyer</button>
+      <button type="button" class="btn ghost" id="sigCancel">👍 Rien ne manque · Envoyer mon bilan</button>
+      <button type="submit" class="btn primary" id="sigSend">Signaler le matériel et envoyer mon bilan</button>
     </div>
   </form>
 </div>
@@ -1466,13 +1490,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <input id="encSupNote" type="text" placeholder="Supplément pour… (facultatif)" style="margin-top:6px" />
     <div class="big-amount" id="encAmount"></div>
     <p class="hint" id="encDetail" style="text-align:center;margin-top:-6px"></p>
-    <p class="hint">Comment le parent a-t-il payé ? Le responsable 👑 est prévenu.</p>
+    <p class="hint">Confirmez si vous avez reçu le solde et par quel moyen. Le responsable 👑 est prévenu.</p>
     <div class="actions" style="flex-wrap:wrap">
-      <button type="button" class="btn primary" data-enc="cash">💵 Cash</button>
-      <button type="button" class="btn primary" data-enc="virement">🏦 Virement</button>
+      <button type="button" class="btn primary" data-enc="cash">💵 Reçu en liquide</button>
+      <button type="button" class="btn primary" data-enc="virement">🏦 Reçu par virement</button>
+      <button type="button" class="btn primary" data-enc="payconiq">📱 Reçu par Payconiq</button>
     </div>
     <div class="actions" style="margin-top:8px">
-      <button type="button" class="btn danger" data-enc="non" style="flex:1">❌ Pas payé</button>
+      <button type="button" class="btn danger" data-enc="non" style="flex:1">❌ Solde non reçu</button>
       <button type="button" class="btn ghost" id="encCancel">Annuler</button>
     </div>
     <div class="actions hidden" id="encUndoRow" style="margin-top:8px">
@@ -2068,7 +2093,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (isResp() && e.prix) pay += `<span class="badge">${euro(e.prix)}</span>`;
     if (isResp() && (e.acompte || e.acompte_paye)) pay += `<span class="badge ${e.acompte_paye?"ok":"ko"}">Acompte ${e.acompte?euro(e.acompte)+" ":""}${e.acompte_paye?"payé ✓":"à recevoir"}</span>`;
     if (ENCEINTES[e.enceinte]) pay = `<span class="badge ${e.enceinte}">🔊 ${ENCEINTES[e.enceinte]}</span>` + pay;
-    const MODES = { cash: "cash", virement: "virement" };
+    const MODES = { cash: "liquide", virement: "virement", payconiq: "Payconiq" };
     const extraTxt = extras(e) ? ` (dont ${[e.tatouages_nb ? e.tatouages_nb + " tatouages" : "", e.supplement ? "suppl." : ""].filter(Boolean).join(" + ")})` : "";
     if (e.solde || extras(e)) pay += e.solde_encaisse === "non" ? `<span class="badge solde-ko">⚠️ Solde ${euro(totalJour(e))} non payé</span>`
       : e.solde_encaisse ? `<span class="badge solde-ok">✅ ${euro(totalJour(e))} encaissé${extraTxt} (${MODES[e.solde_encaisse]}${e.solde_encaisse_par ? " · " + esc(e.solde_encaisse_par) : ""})</span>`
@@ -2081,11 +2106,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (e.options && optTexte(e.options)) pay += `<span class="badge">✨ ${esc(optTexte(e.options))}</span>`;
     if (e.photos_envoyees) pay += `<span class="badge solde-ok">📸 Photos envoyées${e.photos_envoyees_par ? " · " + esc(e.photos_envoyees_par) : ""} · ${new Date(e.photos_envoyees).toLocaleDateString("fr-BE", { day: "numeric", month: "short" })}</span>`;
     const canPhotos = past && isResp(); // photos : responsables uniquement
-    const canEnc = past && (e.solde || isResp()) && (!e.solde_encaisse || isResp());
+    const canEnc = past && e.type_evenement !== "evenement" && (e.solde || extras(e) || isResp()) && (!e.solde_encaisse || e.solde_encaisse === "non" || isResp());
     const missing = e.materiel_manquant ? `<div class="missing">⚠️ Matériel manquant : ${esc(e.materiel_manquant)}</div>` : "";
     const mat = e.materiel ? `<span style="white-space:pre-line">🎒 ${esc(e.materiel)}</span>` : "";
     const weekAgo = iso(new Date(Date.now() - 7*864e5));
-    const canSignal = e.date <= todayISO() && e.date >= weekAgo && e.statut !== "annule";
+    const canSignal = e.type_evenement !== "evenement" && e.date <= todayISO() && e.date >= weekAgo && e.statut !== "annule";
     const U = universOf(e);
     const parts = U && !reduceMotion ? [0,1,2,3].map(i => `<i class="pt" style="left:${12 + i * 24 + Math.random() * 8}%;color:${U[4]};font-size:${9 + Math.random() * 8}px;animation-duration:${5 + Math.random() * 4}s;animation-delay:${-Math.random() * 8}s">${U[3]}</i>`).join("") : "";
     return `<div class="ev ${U ? "u-" + U[0] : ""}${themeDe(e) ? " spectacle th-c-" + themeDe(e) : ""}" style="--c:${st.color}${themeDe(e) ? `;--th-carte:${THEMES[themeDe(e)].carte};--th-bord:${THEMES[themeDe(e)].bord}` : ""}" data-id="${esc(e.id)}" role="button" tabindex="0">${parts}${U ? `<span class="univ">${U[2]}</span>` : ""}<span class="sheen"></span>
@@ -2107,7 +2132,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       ${missing}
       ${canSignal || canEnc || canPhotos ? `<div class="ev-actions">
         ${canPhotos ? `<button type="button" class="sig photo" data-photos="${esc(e.id)}">${e.photos_envoyees ? "↩️ Photos pas encore envoyées" : "📸 Photos envoyées au client ?"}</button>` : ""}
-        ${canEnc ? `<button type="button" class="sig enc" data-enc-open="${esc(e.id)}">${e.solde_encaisse ? "💶 Modifier l'encaissement" : "💶 Solde encaissé ?"}</button>` : ""}
+        ${canEnc ? `<button type="button" class="sig enc" data-enc-open="${esc(e.id)}">${e.solde_encaisse === "non" ? "💶 Le solde a finalement été reçu ?" : e.solde_encaisse ? "💶 Modifier l'encaissement" : "💶 Confirmer la réception du solde"}</button>` : ""}
         ${canSignal ? `<button type="button" class="sig" data-signal="${esc(e.id)}">${e.materiel_manquant ? "🏁 Ajouter du matériel manquant" : "🏁 Fin d'anim : bilan & matériel"}</button>` : ""}
       </div>` : ""}
     </div>`;
@@ -2187,6 +2212,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function renderMine0() {
     const me = myMember();
     if (!me) {
+      $("postActions").classList.add("hidden");
       $("mineHead").innerHTML = DEMO
         ? `<b>Mes animations</b><p class="hint">Dans la vraie version, chacun voit ici ses propres animations. Pour essayer : ajoutez-vous dans <b>👥 Équipe</b>, puis choisissez votre prénom.</p>
            <select id="demoMe" style="margin-top:4px"><option value="">— Choisir un prénom —</option>${members.map(m => `<option>${esc(m.prenom)}</option>`).join("")}</select>`
@@ -2199,7 +2225,38 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     renderMineFor(me.prenom);
   }
   let demoMe = "";
+  function animationTerminee(e) {
+    const t = todayISO();
+    if (e.date < t) return true;
+    if (e.date > t) return false;
+    const fin = e.heure_fin ? new Date(`${e.date}T${e.heure_fin.slice(0, 5)}:00`)
+      : e.heure_debut ? new Date(new Date(`${e.date}T${e.heure_debut.slice(0, 5)}:00`).getTime() + 90 * 6e4) : null;
+    return !!fin && new Date() >= fin;
+  }
+  function renderPostActions(prenom) {
+    const b = $("postActions");
+    const n = normName(prenom), depuis = iso(new Date(Date.now() - 45 * 864e5));
+    const aFaire = events.filter(e => e.statut !== "annule" && e.type_evenement !== "evenement" && e.date >= depuis && animationTerminee(e)
+      && anims(e).some(a => normName(a) === n))
+      .map(e => ({ e, bilanManquant: !bilanAnimation(e.id), soldeManquant: (e.solde || extras(e)) && !e.solde_encaisse }))
+      .filter(x => x.bilanManquant || x.soldeManquant)
+      .sort((a, c) => (c.e.date + (c.e.heure_debut || "")).localeCompare(a.e.date + (a.e.heure_debut || "")));
+    b.classList.toggle("hidden", !aFaire.length);
+    if (!aFaire.length) { b.innerHTML = ""; return; }
+    b.innerHTML = `<div class="group-title">🏁 À terminer après mes prestations</div><p class="hint" style="margin:0">Pensez à envoyer votre petit bilan et à confirmer le solde reçu (ou à signaler qu'il n'a pas été payé).</p>`
+      + aFaire.map(({ e, bilanManquant, soldeManquant }) => `<div class="post-item"><b>${esc(e.titre || e.enfant || "Animation")} · ${esc(fmtLong(e.date))}</b>
+        <div class="post-state">${bilanManquant ? "📝 Bilan à remplir" : "✅ Bilan envoyé"}${(e.solde || extras(e)) ? ` · ${soldeManquant ? "💶 Solde à confirmer" : e.solde_encaisse === "non" ? "⚠️ Non payé signalé" : "✅ Solde reçu"}` : ""}</div>
+        <div class="post-btns">${bilanManquant ? `<button class="btn primary" type="button" data-post-bilan="${esc(e.id)}">📝 Remplir mon bilan</button>` : ""}
+          ${soldeManquant ? `<button class="btn primary" type="button" data-post-solde="${esc(e.id)}">💶 Confirmer le solde</button>` : ""}</div></div>`).join("");
+  }
+  $("postActions").addEventListener("click", e => {
+    const bilan = e.target.closest("[data-post-bilan]"), solde = e.target.closest("[data-post-solde]");
+    const id = bilan?.dataset.postBilan || solde?.dataset.postSolde;
+    const ev = id && events.find(x => String(x.id) === String(id));
+    if (ev) bilan ? openSignal(ev) : openEnc(ev);
+  });
   function renderMineFor(prenom) {
+    renderPostActions(prenom);
     const t = todayISO(), n = normName(prenom);
     const list = events.filter(e => e.date >= t && e.statut !== "annule" && anims(e).some(a => normName(a) === n))
       .sort((x,y) => (x.date + (x.heure_debut||"")).localeCompare(y.date + (y.heure_debut||"")));
@@ -2526,7 +2583,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         ${etatDe(c) !== "ok" ? `<input class="pb" type="text" data-pb="${esc(c.id)}" value="${esc(c.probleme || "")}" placeholder="${etatDe(c) === "reparer" ? "Quel problème ?" : "Précision (facultatif)"}" />` : ""}</div>`).join("") : "";
   }
   $("sigCancel").onclick = async () => {
-    try { const b = await enregistrerBilan(); closeSignal(); toast(b ? "📝 Merci pour le bilan ! Bonne fin de journée ✨" : "👍 Merci, bonne fin de journée ✨"); if (b) render(); }
+    try {
+      const deja = sigEv && bilanAnimation(sigEv.id);
+      const b = await enregistrerBilan();
+      if (!deja && !b) { $("sigErr").textContent = "📝 Pour valider votre bilan, choisissez l'humeur du parent ou écrivez un commentaire."; return; }
+      closeSignal(); toast(b ? "📝 Bilan envoyé ! Merci ✨" : "👍 Merci, bonne fin de journée ✨"); render();
+    }
     catch (err) { $("sigErr").textContent = "Erreur : " + (err.message || err); }
   };
   $("sigBg").addEventListener("click", (e) => { if (e.target.id === "sigBg") closeSignal(); });
@@ -2536,6 +2598,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     e.preventDefault();
     const txt = $("sigText").value.trim();
     if (!txt) { $("sigErr").textContent = "Écrivez ce qui manque, ou touchez « 👍 Rien ne manque »."; return; }
+    if (!bilanAnimation(sigEv.id) && !bilanHumeur && !$("bilanTxt")?.value.trim() && !$("bilanInc")?.checked) {
+      $("sigErr").textContent = "📝 Complétez aussi votre petit bilan (humeur du parent ou commentaire)."; return;
+    }
     try { await enregistrerBilan(); } catch (err) { $("sigErr").textContent = "Erreur : " + (err.message || err); return; }
     const me = myMember();
     const qui = me ? me.prenom : (currentUser ? currentUser.email.split("@")[0] : (demoMe || "Moi"));
@@ -2803,7 +2868,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const evs = events.filter(e => e.date.startsWith(pre) && e.statut !== "annule").sort((a, b) => (a.date + (a.heure_debut || "")).localeCompare(b.date + (b.heure_debut || "")));
     const n = (x) => (x == null || x === "" ? "" : String(Math.round(+x * 100) / 100).replace(".", ","));
     const q = (x) => `"${String(x ?? "").replace(/"/g, '""').replace(/\n/g, " ")}"`;
-    const MODES = { cash: "Cash", virement: "Virement", non: "Non payé" };
+    const MODES = { cash: "Liquide", virement: "Virement", payconiq: "Payconiq", non: "Non payé" };
     const L = [];
     L.push(["ANIMATIONS"].map(q).join(";"));
     L.push(["Date","Heure","Animation","Client","Téléphone","Formule","Statut","Prix","Acompte","Acompte payé","Solde","Suppléments","Total encaissé jour J","Mode","Encaissé par","Paie équipe","Reste (prix + suppl. − paie)"].map(q).join(";"));
@@ -2878,6 +2943,19 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const tel = (ev.telephone || "").replace(/[^\d+]/g, "");
     const team = parseTeam(ev.animateurs).map(p => ({ p, h: horaireDe(ev, p.nom) })).sort((a, b) => (a.h || "00").localeCompare(b.h || "00"))
       .map(({ p, h }) => `${p.role ? roleEmoji(p.role) : "🎭"} <b>${esc(p.nom)}</b>${p.role ? " – " + esc(p.role) : ""}${p.role && ficheDe(p.role) ? `<button type="button" class="g-lien" data-guide="${esc(ficheDe(p.role).nom)}">📖</button>` : ""}${h ? ` <small>🕐 ${h}</small>` : ""}${voitureTxt(ev, p.nom) ? ` <small>${esc(voitureTxt(ev, p.nom))}</small>` : ""}`).join("<br>");
+    const maMission = parseTeam(ev.animateurs).find(p => normName(p.nom) === normName(chatMe()));
+    const monHoraire = maMission ? horaireDe(ev, maMission.nom) : "";
+    const monTrajet = maMission ? voitureTxt(ev, maMission.nom) : "";
+    const missionHtml = maMission ? `<div class="mission"><strong>${roleEmoji(maMission.role) || "🎭"} Ma mission : ${esc(maMission.role || "Animation")}</strong>
+      <p>${monHoraire ? `🕐 Mon horaire : <b>${esc(monHoraire)}</b>` : `🕐 Début de l'animation : <b>${esc(hhmm(ev.heure_debut) || "à préciser")}</b> (mon horaire individuel n'est pas renseigné)`}</p>
+      ${monTrajet ? `<p>${esc(monTrajet)}</p>` : ""}</div>` : "";
+    const estAcc = maMission && normName(maMission.role) === "acc";
+    const preparations = maMission && !estAcc
+      ? ["Costume prêt", "Perruque (si nécessaire) et accessoires vérifiés", "Matériel d'animation préparé", "Trajet et horaires vérifiés"]
+      : ["Matériel d'animation préparé", "Consignes et horaires vérifiés", "Trajet et adresse vérifiés"];
+    const prepKey = `fk_jour_prep:${ev.id}:${String(currentUser?.email || chatMe()).toLowerCase()}`;
+    let prepCoches = []; try { prepCoches = JSON.parse(localStorage.getItem(prepKey) || "[]"); if (!Array.isArray(prepCoches)) prepCoches = []; } catch (_) {}
+    const preparationHtml = preparations.map((p, i) => `<label class="prep-item"><input type="checkbox" data-jour-prep="${i}" ${prepCoches[i] ? "checked" : ""} />${esc(p)}</label>`).join("");
     const fiche = [r.enfant_prenom || ev.enfant ? `🎂 <b>${esc(r.enfant_prenom || ev.enfant)}</b>${(r.enfant_age || ev.age) ? `, ${esc(r.enfant_age || ev.age)} ans` : ""}` : "",
       r.nb_enfants ? `👧 ${esc(r.nb_enfants)} enfants${(r.tranches || []).length ? " (" + esc(r.tranches.join(", ")) + ")" : ""}` : "",
       r.lieu ? `🏠 ${esc(r.lieu)}${r.lieu_autre ? " – " + esc(r.lieu_autre) : ""}` : "",
@@ -2889,27 +2967,35 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="jh"><span class="em">${U ? U[2] : "🪄"}</span><h2>${esc(ev.titre || ev.enfant || "Animation")}</h2>
         <div class="time">${ev.heure_debut ? hhmm(ev.heure_debut) + (ev.heure_fin ? " – " + hhmm(ev.heure_fin) : "") : "Toute la journée"}</div>
         <div class="hint" style="text-transform:capitalize;margin:0">${esc(fmtLong(ev.date))}</div>${cd ? `<span class="cd">${cd}</span>` : ""}</div>
+      ${missionHtml}
       <div class="go">
         <a href="https://waze.com/ul?q=${adr}&navigate=yes" target="_blank" rel="noopener"><span>🧭</span>Waze</a>
         <a href="https://www.google.com/maps/dir/?api=1&destination=${adr}" target="_blank" rel="noopener"><span>🗺️</span>Maps</a>
         <a href="${tel ? "tel:" + esc(tel) : "#"}"><span>📞</span>${tel ? "Parent" : "Pas de n°"}</a>
       </div>
+      <h3 class="etape">🎒 Avant de partir</h3>
       ${ev.adresse ? `<div class="blk"><h4>📍 Adresse</h4>${esc(ev.adresse)}${r.acces ? `<br><b>Accès :</b> ${esc(r.acces)}` : ""}</div>` : ""}
+      <div class="blk"><h4>✅ Ma préparation</h4><div class="prep-list">${preparationHtml}</div><p class="prep-hint">Cases mémorisées sur cet appareil uniquement.</p></div>
+      ${ev.enceinte || ev.materiel ? `<div class="blk"><h4>🎒 Matériel à emporter</h4>${ev.enceinte ? `🔊 ${ENCEINTES[ev.enceinte]}<br>` : ""}${esc(ev.materiel || "").replace(/\n/g, "<br>")}</div>` : ""}
+      ${ev.materiel_manquant ? `<div class="blk warn"><h4>⚠️ Matériel manquant</h4>${esc(ev.materiel_manquant).replace(/\n/g, "<br>")}</div>` : ""}
       <div class="blk meteo hidden" id="jourMeteo"><h4>Météo</h4><span></span></div>
+      <h3 class="etape">🎭 Pendant la prestation</h3>
       ${r.allergies ? `<div class="blk warn"><h4>⚠️ Allergies / infos importantes</h4>${esc(r.allergies)}</div>` : ""}
       ${fiche ? `<div class="blk"><h4>📝 La fête</h4>${fiche}</div>` : ""}
       ${team ? `<div class="blk"><h4>👥 L'équipe</h4>${team}</div>` : ""}
       ${ev.type_evenement === "evenement" && !estNM(ev) && isResp() ? `<button type="button" class="btn primary" data-resa-accueil="${esc(ev.id)}" style="width:100%;margin:6px 0">🎟️ Accueil des réservations</button><button type="button" class="btn primary" data-caisse="${esc(ev.id)}" style="width:100%;margin:6px 0">🛒 Caisse</button><button type="button" class="btn primary" data-tourn="${esc(ev.id)}" style="width:100%;margin:6px 0">🔄 Tournante</button>` : ""}
-      ${ev.enceinte || ev.materiel ? `<div class="blk"><h4>🎒 Matériel</h4>${ev.enceinte ? `🔊 ${ENCEINTES[ev.enceinte]}<br>` : ""}${esc(ev.materiel || "").replace(/\n/g, "<br>")}</div>` : ""}
-      ${ev.materiel_manquant ? `<div class="blk warn"><h4>⚠️ Matériel manquant</h4>${esc(ev.materiel_manquant).replace(/\n/g, "<br>")}</div>` : ""}
       ${ev.notes ? `<div class="blk"><h4>📝 Notes</h4>${esc(ev.notes).replace(/\n/g, "<br>")}</div>` : ""}
-      ${solde ? `<div class="blk"><h4>💶 Solde</h4><b style="font-size:20px">${euro(totalJour(ev))}</b> ${ev.solde_encaisse && ev.solde_encaisse !== "non" ? "✅ encaissé" : "à encaisser (cash ou virement)"}</div>` : ""}
+      ${ev.type_evenement !== "evenement" ? `<h3 class="etape">✅ Après la prestation</h3>
+      <p class="hint">Deux vérifications à faire dès la fin de votre animation.</p>
+      ${solde ? `<div class="blk"><h4>💶 Solde</h4><b style="font-size:20px">${euro(totalJour(ev))}</b> ${ev.solde_encaisse === "non" ? "⚠️ Non payé, signalé" : ev.solde_encaisse ? `✅ Reçu par ${esc(({cash:"liquide",virement:"virement",payconiq:"Payconiq"})[ev.solde_encaisse] || ev.solde_encaisse)}` : "💶 Réception à confirmer"}</div>` : ""}
+      <div class="blk ${bilanAnimation(ev.id) ? "" : "warn"}"><h4>📝 Bilan de l'animation</h4>${bilanAnimation(ev.id) ? `✅ Bilan envoyé par ${esc(bilanAnimation(ev.id).auteur || "un membre de l'équipe")}, merci !` : "À compléter une seule fois par l'équipe, même si tout s'est bien passé."}</div>
       <div class="after-btns">
-        ${solde && ev.date <= todayISO() ? `<button type="button" class="sig enc" data-jour="enc">💶 Valider le solde du jour</button>` : ""}
+        ${solde && ev.date <= todayISO() && (!ev.solde_encaisse || ev.solde_encaisse === "non" || isResp()) ? `<button type="button" class="sig enc" data-jour="enc">${ev.solde_encaisse === "non" ? "💶 Solde finalement reçu ?" : "💶 Confirmer le solde reçu (liquide, virement, Payconiq)"}</button>` : ""}
         ${ev.date <= todayISO() ? `${isResp() ? `<button type="button" class="sig photo" data-jour="photos">${ev.photos_envoyees ? "✅ Photos envoyées" : "📸 Photos envoyées au client"}</button>` : ""}
-        <button type="button" class="sig" data-jour="sig">🏁 Fin d'anim : matériel manquant ?</button>` : ""}
-      </div>`;
+        <button type="button" class="sig ${bilanAnimation(ev.id) ? "done" : ""}" data-jour="sig">${bilanAnimation(ev.id) ? "✅ Bilan de l'équipe envoyé · Matériel" : "📝 Remplir le bilan + vérifier le matériel"}</button>` : ""}
+      </div>` : isResp() && ev.date <= todayISO() ? `<h3 class="etape">📸 Suivi de l'événement</h3><div class="after-btns"><button type="button" class="sig photo" data-jour="photos">${ev.photos_envoyees ? "✅ Photos envoyées" : "📸 Photos envoyées au client"}</button></div>` : ""}`;
     $("jourBg").dataset.id = ev.id;
+    $("jourBg").dataset.prepKey = prepKey;
     $("jourBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
     const days = (parseISO(ev.date) - parseISO(todayISO())) / 864e5;
     if (ev.adresse && days >= 0 && days <= 14) meteo(ev).then(t => { if (t && $("jourBg").dataset.id === ev.id) { $("jourMeteo").querySelector("span").textContent = t; $("jourMeteo").classList.remove("hidden"); } });
@@ -2918,6 +3004,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const closeJour = () => { jourDepuis = null; $("jourBg").classList.add("hidden"); document.body.style.overflow = ""; };
   const fermerJourEtRevenir = () => { const ev0 = jourDepuis; closeJour(); if (ev0) openForm(events.find(x => x.id === ev0.id) || ev0); };
   $("jourClose").onclick = fermerJourEtRevenir;
+  $("jourBg").addEventListener("change", (e) => {
+    const b = e.target.closest("[data-jour-prep]"); if (!b) return;
+    const cle = $("jourBg").dataset.prepKey; if (!cle) return;
+    try {
+      const valeurs = [...$("jourBody").querySelectorAll("[data-jour-prep]")].map(x => x.checked);
+      localStorage.setItem(cle, JSON.stringify(valeurs));
+    } catch (_) { toast("Impossible de mémoriser les cases sur cet appareil"); }
+  });
   $("jourBg").addEventListener("click", async (e) => {
     if (e.target.id === "jourBg") return fermerJourEtRevenir();
     const b = e.target.closest("[data-jour]"); if (!b) return;
@@ -3669,14 +3763,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const ev = events.find(x => String(x.id) === id); if (!ev) return;
     linkHandled = true; history.replaceState(null, "", location.pathname);
     selDay = ev.date; const d = parseISO(ev.date); curY = d.getFullYear(); curM = d.getMonth();
-    setTimeout(() => wantSignal ? openSignal(ev) : openForm(ev), 50);
+    // Une notification de fin ouvre la fiche du jour : bilan et solde au même endroit.
+    setTimeout(() => wantSignal ? openJour(ev) : openForm(ev), 50);
   }
   if (navigator.serviceWorker) navigator.serviceWorker.addEventListener("message", (e) => {
     if (e.data && e.data.costumes) { openCost(); return; }
     if (e.data && e.data.checklist) { openCK(); return; }
     if (e.data && e.data.vue) { const tb = document.querySelector(`.tab[data-view="${e.data.vue}"]`); if (tb) tb.click(); return; }
     if (e.data && e.data.chat) { closeForm(); openChat(e.data.chat); return; }
-    if (e.data && e.data.ev) { const ev = events.find(x => String(x.id) === e.data.ev); if (ev) (e.data.signal ? openSignal(ev) : openForm(ev)); }
+    if (e.data && e.data.ev) { const ev = events.find(x => String(x.id) === e.data.ev); if (ev) (e.data.signal ? openJour(ev) : openForm(ev)); }
   });
 
   // ================= Rôle (responsable / animateur) =================
@@ -3793,7 +3888,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const nbPrix = month.filter(e => +e.prix).length;
     const encaisse = month.filter(e => e.solde_encaisse && e.solde_encaisse !== "non").reduce((t, e) => t + totalJour(e), 0);
     const aEncaisser = month.filter(e => e.solde && (!e.solde_encaisse || e.solde_encaisse === "non")).reduce((t, e) => t + +e.solde, 0);
+    const acomptesRecus = month.filter(e => e.acompte_paye).reduce((t, e) => t + (+e.acompte || 0), 0);
+    const acomptesAttendus = month.filter(e => e.statut === "confirme" && !e.acompte_paye).reduce((t, e) => t + (+e.acompte || 0), 0);
+    const caNonConfirme = month.filter(e => e.statut === "en_attente").reduce((t, e) => t + (+e.prix || 0) + extras(e), 0);
     const paieTot = month.reduce((t, e) => t + (e.paies || []).reduce((a, p) => a + totPaie(p), 0), 0);
+    const paieRestant = month.reduce((t, e) => t + (e.paies || []).filter(p => !p.paye).reduce((a, p) => a + totPaie(p), 0), 0);
     const attente = month.filter(e => e.statut === "en_attente").length;
 
     // paie par personne
@@ -3824,17 +3923,22 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       caMois.push([d.toLocaleDateString("fr-BE", { month: "short", year: "2-digit" }), ok.filter(e => e.date.startsWith(k)).reduce((t, e) => t + (+e.prix || 0) + extras(e), 0)]);
     }
     $("statsBody").innerHTML = `
+      <p class="hint" style="margin:0 0 12px">📌 Le chiffre d'affaires et le résultat sont des <b>estimations</b> calculées sur les prestations saisies${caNonConfirme ? `, dont ${euro(caNonConfirme)} de demandes encore en attente` : ""}. Les montants encaissés correspondent aux paiements marqués reçus dans l'app.</p>
       <div class="kpis">
-        <div class="kpi"><b>${euro(ca)}</b><span>${NMv ? "🌙 recettes" : "chiffre d'affaires"}${an ? " de l'année" : ""}${nbPrix < month.length ? ` (${month.length - nbPrix} sans prix)` : ""}</span></div>
+        <div class="kpi"><b>${euro(ca)}</b><span>chiffre d'affaires prévu${an ? " sur l'année" : ""}${nbPrix < month.length ? ` (${month.length - nbPrix} sans prix)` : ""}</span></div>
+        <div class="kpi"><b>${euro(acomptesRecus + encaisse)}</b><span>💶 total encaissé déclaré (acomptes + soldes)</span></div>
+        <div class="kpi"><b>${euro(acomptesAttendus)}</b><span>💳 acomptes à recevoir (prestations confirmées)</span></div>
+        <div class="kpi"><b>${euro(aEncaisser)}</b><span>💰 soldes non encore encaissés</span></div>
+        <div class="kpi"><b>${euro(paieRestant)}</b><span>👥 rémunérations non encore marquées payées</span></div>
         ${evol !== null ? `<div class="kpi"><b style="color:${evol >= 0 ? "#17714f" : "#b4123c"}">${evol >= 0 ? "▲ +" : "▼ "}${evol} %</b><span>vs ${sY - 1}${enCours ? " à la même date" : ""} (${euro(caAvant)})</span></div>` : ""}
         <div class="kpi"><b>${month.length}</b><span>${NMv ? "jours (spectacles, répét…)" : "animations"}${attente ? ` · ${attente} en attente` : ""}</span></div>
         ${month.some(e => extras(e)) ? `<div class="kpi"><b>${euro(month.reduce((t, e) => t + extras(e), 0))}</b><span>suppléments (tatouages…)</span></div>
         <div class="kpi"><b>${month.filter(e => e.date < todayISO() && !e.photos_envoyees).length}</b><span>photos à envoyer</span></div>` : ""}
         <div class="kpi"><b>${euro(paieTot)}</b><span>paie de l'équipe</span></div>
         <div class="kpi"><b>${euro(depTot)}</b><span>dépenses (achats)</span></div>
-        <div class="kpi"><b style="color:${ca - paieTot - depTot >= 0 ? "#17714f" : "#b4123c"}">${euro(ca - paieTot - depTot)}</b><span>${NMv ? "résultat Nuit Magique" : "bénéfice"} (${NMv ? "recettes" : "CA"} − paie − dépenses)</span></div>
-        <div class="kpi"><b>${euro(encaisse)}</b><span>soldes encaissés</span></div>
-        <div class="kpi"><b>${euro(aEncaisser)}</b><span>soldes à encaisser</span></div>
+        <div class="kpi"><b style="color:${ca - paieTot - depTot >= 0 ? "#17714f" : "#b4123c"}">${euro(ca - paieTot - depTot)}</b><span>résultat estimé (CA prévu − paie − dépenses)</span></div>
+        <div class="kpi"><b>${euro(acomptesRecus)}</b><span>dont acomptes reçus</span></div>
+        <div class="kpi"><b>${euro(encaisse)}</b><span>dont soldes encaissés</span></div>
       </div>
       ${aValiderTrajets()}
       ${panelPointages(an ? `${sY}-01-01` : `${sY}-${pad(sM + 1)}-01`, an ? `${sY}-12-31` : iso(new Date(sY, sM + 1, 0)), an)}
@@ -5206,14 +5310,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     },
   };
   const bilansDe = (id) => bilans.filter(b => String(b.evenement_id) === String(id));
-  const monBilan = (id) => bilansDe(id).find(b => DEMO || !currentUser ? normName(b.auteur) === normName(chatMe()) : (b.auteur_email || "").toLowerCase() === currentUser.email.toLowerCase());
+  // Un bilan suffit pour toute l'équipe d'une même animation.
+  const bilanAnimation = (id) => bilansDe(id)[0];
   let bilanHumeur = "";
   function renderSigBilan() {
     if (!sigEv) return;
-    const deja = monBilan(sigEv.id);
+    const deja = bilanAnimation(sigEv.id);
     bilanHumeur = "";
     $("sigBilan").innerHTML = deja
-      ? `<div class="sec" style="margin-top:4px">📝 Petit bilan</div><p class="hint" style="margin-top:0">✓ Vous avez déjà envoyé votre bilan${deja.humeur ? ` (${HUMEURS[deja.humeur][0]})` : ""}. Merci !</p>`
+      ? `<div class="sec" style="margin-top:4px">📝 Petit bilan</div><p class="hint" style="margin-top:0">✅ Le bilan a déjà été envoyé par ${esc(deja.auteur || "un membre de l'équipe")}${deja.humeur && HUMEURS[deja.humeur] ? ` (${HUMEURS[deja.humeur][0]})` : ""}. Il n'est pas nécessaire de le refaire.</p>`
       : `<div class="sec" style="margin-top:4px">📝 Petit bilan <small style="text-transform:none;letter-spacing:0;font-weight:500">(vu seulement par les responsables 👑)</small></div>
         <div class="hum">${Object.entries(HUMEURS).map(([k, [e, t]]) => `<button type="button" data-hum="${k}"><span>${e}</span>${t}</button>`).join("")}</div>
         <p class="hint" style="margin:2px 0 6px;text-align:center">Le parent était…</p>
@@ -5226,7 +5331,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     document.querySelectorAll("#sigBilan [data-hum]").forEach(x => x.classList.toggle("on", x.dataset.hum === bilanHumeur));
   });
   async function enregistrerBilan() {
-    if (!sigEv || !$("bilanTxt")) return false;
+    if (!sigEv || !$("bilanTxt") || bilanAnimation(sigEv.id)) return false;
     const texte = $("bilanTxt").value.trim(), incident = $("bilanInc").checked;
     if (!bilanHumeur && !texte && !incident) return false;
     await bilanStore.add({ evenement_id: sigEv.id, auteur: chatMe(), humeur: bilanHumeur || null, incident, texte: texte || null });
