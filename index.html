@@ -248,6 +248,7 @@
   .badge.fiche-wait{background:#fff7ed;color:#9a3412}
   .after-btns .sig{padding:12px 14px;font-size:15px;text-align:left;border-radius:14px}
   .after-btns .sig.done{background:#dcfce7;color:#166534}
+  .after-btns .sig:disabled{opacity:.52;filter:saturate(.65);cursor:not-allowed}
   /* ✨ Mode prestation : accès rapide le jour J + étapes dans la fiche réelle. */
   .mode-accueil{margin:0 0 12px;display:grid;gap:10px}
   .mode-accueil .mode-invite{background:linear-gradient(120deg,#eef6ff,#f3edff 65%,#fce7fb);border:1px solid #e4d4ff;border-radius:18px;padding:13px;box-shadow:0 5px 18px rgba(106,42,214,.09)}
@@ -3112,6 +3113,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("jourBg").classList.remove("mode-active");
     $("jourChat").dataset.id = ev.id; $("jourChat").classList.toggle("hidden", !jePeuxVoir(ev));
     const U = universOf(ev), r = (ev.fiche && ev.fiche.reponses) || {};
+    const jourAtteint = ev.date <= todayISO(), prestationFinie = animationTerminee(ev);
     const now = new Date(), deb = ev.heure_debut ? new Date(`${ev.date}T${ev.heure_debut.slice(0,5)}:00`) : null;
     const fin = ev.heure_fin ? new Date(`${ev.date}T${ev.heure_fin.slice(0,5)}:00`) : (deb ? new Date(deb.getTime() + 90 * 6e4) : null);
     let cd = "";
@@ -3170,13 +3172,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       ${ev.type_evenement === "evenement" && !estNM(ev) && isResp() ? `<button type="button" class="btn primary" data-resa-accueil="${esc(ev.id)}" style="width:100%;margin:6px 0">🎟️ Accueil des réservations</button><button type="button" class="btn primary" data-caisse="${esc(ev.id)}" style="width:100%;margin:6px 0">🛒 Caisse</button><button type="button" class="btn primary" data-tourn="${esc(ev.id)}" style="width:100%;margin:6px 0">🔄 Tournante</button>` : ""}
       ${ev.notes ? `<div class="blk"><h4>📝 Notes</h4>${esc(ev.notes).replace(/\n/g, "<br>")}</div>` : ""}
       ${ev.type_evenement !== "evenement" ? `<h3 class="etape">✅ Après la prestation</h3>
-      <p class="hint">Complétez le bilan et confirmez le solde. Les tatouages éventuels sont encaissés séparément par l'ACC.</p>
+      <p class="hint">Le solde se confirme le jour J, avant le départ. Le bilan et l'envoi des photos deviennent accessibles après la fin de l'animation. Les tatouages éventuels sont encaissés séparément par l'ACC.</p>
       ${solde ? `<div class="blk"><h4>💶 Solde (hors tatouages)</h4><b style="font-size:20px">${euro(totalSolde(ev))}</b> ${ev.solde_encaisse === "non" ? "⚠️ Non payé, signalé" : ev.solde_encaisse ? `✅ Reçu par ${esc(({cash:"liquide",virement:"virement",payconiq:"Payconiq"})[ev.solde_encaisse] || ev.solde_encaisse)}` : "💶 Réception à confirmer"}</div>` : ""}
       <div class="blk ${bilanAnimation(ev.id) ? "" : "warn"}"><h4>📝 Bilan de l'animation</h4>${bilanAnimation(ev.id) ? `✅ Bilan envoyé par ${esc(bilanAnimation(ev.id).auteur || "un membre de l'équipe")}, merci !` : "À compléter une seule fois par l'équipe, même si tout s'est bien passé."}</div>
+      ${isResp() ? `<div class="blk"><h4>📸 Envoi des photos au client</h4>${ev.photos_envoyees ? `✅ Photos déjà envoyées${ev.photos_envoyees_par ? " par " + esc(ev.photos_envoyees_par) : ""}.` : ev.email && ev.email.includes("@") ? `Vous pourrez envoyer le lien des photos à ${esc(ev.email)} depuis cette fiche.` : "Aucune adresse e-mail client : vous pourrez signaler leur remise manuelle."}</div>` : ""}
+      <p class="hint ${prestationFinie ? "hidden" : ""}" data-jour-attente>🔒 Le bilan et l'envoi des photos seront disponibles après la fin de cette animation${ev.heure_fin ? ` (${esc(hhmm(ev.heure_fin))})` : ""}.</p>
       <div class="after-btns">
-        ${solde && ev.date <= todayISO() && (!ev.solde_encaisse || ev.solde_encaisse === "non" || isResp()) ? `<button type="button" class="sig enc" data-jour="enc">${ev.solde_encaisse === "non" ? "💶 Solde finalement reçu ?" : "💶 Confirmer le solde reçu (liquide, virement, Payconiq)"}</button>` : ""}
-        ${ev.date <= todayISO() ? `${isResp() ? `<button type="button" class="sig photo" data-jour="photos">${ev.photos_envoyees ? "✅ Photos envoyées" : "📸 Photos envoyées au client"}</button>` : ""}
-        <button type="button" class="sig ${bilanAnimation(ev.id) ? "done" : ""}" data-jour="sig">${bilanAnimation(ev.id) ? "✅ Bilan de l'équipe envoyé · Matériel" : "📝 Remplir le bilan + vérifier le matériel"}</button>` : ""}
+        ${solde && (!ev.solde_encaisse || ev.solde_encaisse === "non" || isResp()) ? `<button type="button" class="sig enc" data-jour="enc" data-jour-unlock="date" ${jourAtteint ? "" : "disabled"}>${ev.solde_encaisse === "non" ? "💶 Solde finalement reçu ?" : ev.solde_encaisse ? "💶 Modifier l'encaissement" : "💶 Confirmer le solde reçu (liquide, virement, Payconiq)"}</button>` : ""}
+        ${isResp() ? `<button type="button" class="sig photo ${ev.photos_envoyees ? "done" : ""}" data-jour="photos" data-jour-unlock="fin" ${prestationFinie ? "" : "disabled"}>${ev.photos_envoyees ? "✅ Photos envoyées · voir / corriger" : "📨 Envoyer les photos au client"}</button>` : ""}
+        <button type="button" class="sig ${bilanAnimation(ev.id) ? "done" : ""}" data-jour="sig" data-jour-unlock="fin" ${prestationFinie ? "" : "disabled"}>${bilanAnimation(ev.id) ? "✅ Bilan de l'équipe envoyé · Matériel" : "📝 Remplir le bilan + vérifier le matériel"}</button>
       </div>` : isResp() && ev.date <= todayISO() ? `<h3 class="etape">📸 Suivi de l'événement</h3><div class="after-btns"><button type="button" class="sig photo" data-jour="photos">${ev.photos_envoyees ? "✅ Photos envoyées" : "📸 Photos envoyées au client"}</button></div>` : ""}`;
     $("jourBg").dataset.id = ev.id;
     $("jourBg").dataset.prepKey = prepKey;
@@ -3224,6 +3228,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   let jourDepuis = null;   // fiche d'événement d'où on est venu (pour y revenir en fermant)
   const closeJour = () => { jourDepuis = null; $("jourBg").classList.add("hidden"); $("jourBg").classList.remove("mode-active"); document.body.style.overflow = ""; };
+  // Si la fiche reste ouverte à l'heure de fin, les actions se déverrouillent
+  // automatiquement sans obliger l'animateur à fermer puis rouvrir l'écran.
+  function actualiserVerrousJour() {
+    const bg = $("jourBg"); if (bg.classList.contains("hidden")) return;
+    const ev = events.find(x => String(x.id) === String(bg.dataset.id)); if (!ev) return;
+    const fini = animationTerminee(ev);
+    bg.querySelectorAll("[data-jour-unlock]").forEach(b => {
+      b.disabled = b.dataset.jourUnlock === "fin" ? !fini : ev.date > todayISO();
+    });
+    bg.querySelector("[data-jour-attente]")?.classList.toggle("hidden", fini);
+  }
+  setInterval(actualiserVerrousJour, 30000);
   const fermerJourEtRevenir = () => { const ev0 = jourDepuis; closeJour(); if (ev0) openForm(events.find(x => x.id === ev0.id) || ev0); };
   $("jourClose").onclick = fermerJourEtRevenir;
   $("jourBg").addEventListener("change", (e) => {
@@ -3238,6 +3254,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (e.target.id === "jourBg") return fermerJourEtRevenir();
     const b = e.target.closest("[data-jour]"); if (!b) return;
     const ev = events.find(x => String(x.id) === $("jourBg").dataset.id); if (!ev) return;
+    if (b.dataset.jourUnlock === "fin" && !animationTerminee(ev)) { toast("Cette action s'ouvre à la fin de l'animation."); return; }
+    if (b.dataset.jourUnlock === "date" && ev.date > todayISO()) { toast("La réception du solde se confirme le jour J."); return; }
     closeJour();
     if (b.dataset.jour === "enc") openEnc(ev);
     if (b.dataset.jour === "tat") openTat(ev);
