@@ -472,6 +472,15 @@
   .icon-btn.cloche b:empty{display:none}
   @keyframes clocheBal{0%,80%,100%{transform:rotate(0)}84%{transform:rotate(14deg)}88%{transform:rotate(-12deg)}92%{transform:rotate(8deg)}96%{transform:rotate(-4deg)}}
   @media (max-width:380px){.icon-btn.cloche{padding:6px 7px;font-size:16px;margin-right:2px}}
+  .np-table{display:grid;gap:8px;margin:10px 0}
+  .np-head,.np-row{display:grid;grid-template-columns:minmax(0,1fr) 62px 86px;align-items:center;gap:8px}
+  .np-head{color:var(--muted);font-size:12px;text-align:center}
+  .np-row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 8px}
+  .np-row b{display:block;font-size:13px;line-height:1.25}
+  .np-row small{display:block;color:var(--muted);font-size:11px;margin-top:3px;line-height:1.3}
+  .np-row label{display:flex;justify-content:center;align-items:center;padding:8px 0;cursor:pointer}
+  .np-row input[type=checkbox]{width:20px;height:20px;accent-color:#8a3cf7}
+  .np-row .np-no{font-size:12px;color:var(--muted);text-align:center}
   .sheet .actions .btn{flex:1 1 auto;min-width:min(max-content,100%);white-space:normal;padding-left:12px;padding-right:12px}
   .opt-list{display:flex;flex-direction:column;gap:6px}
   .opt-row{display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:8px 10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
@@ -1387,6 +1396,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div class="actions" style="margin-top:8px">
       <button type="button" class="btn ghost" id="testBtn">Envoyer un test</button>
     </div>
+    <div class="sec">⚙️ Mes préférences de notifications</div>
+    <p class="hint">Choisis les e-mails et les alertes sur ton téléphone. <b>La cloche 🔔 restera toujours active</b> pour que tu ne manques aucune information.</p>
+    <div id="prefNotifBox"></div>
+    <div class="actions"><button type="button" class="btn primary" id="prefNotifSave">💾 Enregistrer mes choix</button></div>
+    <p class="hint" id="prefNotifStatus" aria-live="polite"></p>
     <div class="actions" style="margin-top:8px">
       <button type="button" class="btn ghost" id="instBtn">📲 Comment installer l'app</button>
     </div>
@@ -1971,7 +1985,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   async function chargerNotifications() {
     if (DEMO || !sb || !currentUser) { notificationsApp = []; majCloche(); return; }
     const { data, error } = await sb.from("notifications_app")
-      .select("id,titre,message,type,evenement_id,cree_le,lue_le")
+      .select("id,titre,message,type,evenement_id,lien,cree_le,lue_le")
       .order("cree_le", { ascending: false }).limit(100);
     if (error) { console.warn("Notifications personnelles non disponibles :", error.message); return; }
     notificationsApp = data || [];
@@ -2245,14 +2259,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="actions"><button type="button" class="btn" data-resa-ouvrir="${esc(r.evenement_id)}" data-id="${esc(r.id)}">👀 Ouvrir les réservations</button><button type="button" class="btn primary" data-resa-vu="${esc(r.id)}">✅ Vu</button></div></div>`; }).join("");
     const mesNotifs = notificationsApp.map(n => {
       const ev = events.find(x => String(x.id) === String(n.evenement_id));
-      const ouvrir = ev && jeVoisEv(ev);
+      const ouvrir = (ev && jeVoisEv(ev)) || !!n.lien;
       const date = new Date(n.cree_le).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
       return `<div class="dem-row" style="${n.lue_le ? "opacity:.7" : "border-left:4px solid #9a39ed;padding-left:10px"}">
         <b>${esc(n.titre)}</b>${n.lue_le ? "" : " · <small>🔴 Nouveau</small>"}<br>
         <small style="white-space:normal">${esc(n.message || "").replace(/\n/g, "<br>")}</small><br>
         <small class="hint">${esc(date)}</small>
         <div class="actions">
-          ${ouvrir ? `<button type="button" class="btn" data-notif-voir="${esc(n.id)}">👀 Voir la prestation</button>` : ""}
+          ${ouvrir ? `<button type="button" class="btn" data-notif-voir="${esc(n.id)}">👀 Ouvrir</button>` : ""}
           ${n.lue_le ? "" : `<button type="button" class="btn primary" data-notif-lu="${esc(n.id)}">✅ Lu</button>`}
         </div></div>`;
     }).join("");
@@ -2287,7 +2301,24 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           const evenement = events.find(x => String(x.id) === String(n?.evenement_id));
           closeCloche();
           if (evenement && jeVoisEv(evenement)) openForm(evenement);
-          else toast("Cette prestation n'est plus disponible dans ton agenda.");
+          else if (n?.lien) {
+            const lien = new URL(n.lien, location.href);
+            if (lien.origin !== location.origin) throw new Error("Lien de notification non autorisé");
+            const qs = lien.searchParams, canal = qs.get("chat");
+            if (canal) {
+              if (canal === "equipe" || evOfCanal(canal)) openChat(canal);
+              else toast("Cette conversation n'est plus disponible.");
+            } else if (qs.get("costumes")) openCost();
+            else if (qs.get("checklist")) openCK();
+            else if (qs.get("vue")) {
+              const tb = document.querySelector(`.tab[data-view="${qs.get("vue")}"]:not(.hidden)`);
+              if (tb) tb.click(); else toast("Cette rubrique n'est pas accessible.");
+            } else {
+              const evLien = events.find(x => String(x.id) === String(qs.get("ev")));
+              if (evLien && jeVoisEv(evLien)) openForm(evLien);
+              else document.querySelector('.tab[data-view="cal"]').click();
+            }
+          } else toast("Cette prestation n'est plus disponible dans ton agenda.");
         } else openCloche();
       } catch (err) { toast("Impossible de marquer la notification comme lue : " + (err.message || err)); }
       return;
@@ -3436,8 +3467,77 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       renderTeam(); render(); toast(prenom + " ajouté(e) à l'équipe ✓");
     } catch (err) { $("teamErr").textContent = "Erreur : " + (err.message || err); }
   });
+  // 🔔 Préférences individuelles, indépendantes sur chaque compte.
+  // La cloche reste active : les cases ne changent que les e-mails et les pushs.
+  const TYPES_PREF_NOTIF = [
+    ["prestation", "🎭 Prestations", "Nouvelle affectation, changement, retrait ou annulation", true],
+    ["rappels", "⏰ Rappels", "La veille, avant la prestation et en fin d'animation", true],
+    ["paiements", "💶 Paiements", "Quand Jordan marque une prestation payée", true],
+    ["materiel", "🎒 Matériel et costumes", "Signalements, oublis et préparation", true],
+    ["chat", "💬 Messages du chat", "Alertes pour les nouvelles discussions et mentions", true],
+    ["meteo", "🌧️ Météo", "Alertes pour les animations à l'extérieur", true],
+    ["administration", "📋 Gestion des réservations", "Demandes clients, devis, fiches, acomptes et récapitulatifs", true, true],
+    ["autres", "✨ Autres alertes", "Informations diverses de l'application", false],
+  ];
+  let mesChoixNotif = {};
+  function rendreChoixNotif() {
+    $("prefNotifBox").innerHTML = `<div class="np-table">
+      <div class="np-head"><span>Type d'alerte</span><span>📧<br>E-mail</span><span>📱<br>Téléphone</span></div>
+      ${TYPES_PREF_NOTIF.filter(x => !x[5] || isResp()).map(([key, titre, detail, mailPossible]) => {
+        const ch = mesChoixNotif[key] || {};
+        const caseChoix = (canal) => `<label title="${canal === "email" ? "Recevoir par e-mail" : "Recevoir une notification téléphone"}">
+          <input type="checkbox" data-pref-type="${key}" data-pref-canal="${canal}"
+            ${ch[canal] === undefined ? ((key !== "chat" || canal !== "email") ? "checked" : "") : (ch[canal] ? "checked" : "")}
+            aria-label="${esc(titre)} : ${canal === "email" ? "e-mail" : "téléphone"}"></label>`;
+        return `<div class="np-row"><div><b>${titre}</b><small>${detail}</small></div>
+          ${mailPossible ? caseChoix("email") : '<span class="np-no">—</span>'}
+          ${caseChoix("push")}</div>`;
+      }).join("")}</div>`;
+  }
+  async function chargerMesChoixNotif() {
+    $("prefNotifStatus").textContent = "";
+    if (DEMO) {
+      try { mesChoixNotif = JSON.parse(localStorage.getItem("fk_notif_pref_demo") || "{}"); }
+      catch (_) { mesChoixNotif = {}; }
+      rendreChoixNotif(); return;
+    }
+    if (!currentUser?.email) { $("prefNotifStatus").textContent = "Connecte-toi pour régler les notifications."; return; }
+    const { data, error } = await sb.from("preferences_notifications").select("choix")
+      .eq("email", currentUser.email.trim().toLowerCase()).maybeSingle();
+    if (error) {
+      $("prefNotifStatus").textContent = "⚠️ Préférences indisponibles : " + error.message;
+      $("prefNotifSave").disabled = true; return;
+    }
+    $("prefNotifSave").disabled = false;
+    mesChoixNotif = data?.choix || {};
+    rendreChoixNotif();
+  }
+  $("prefNotifSave").onclick = async () => {
+    const bouton = $("prefNotifSave"); bouton.disabled = true;
+    $("prefNotifStatus").textContent = "Enregistrement…";
+    const choix = { ...mesChoixNotif };
+    $("prefNotifBox").querySelectorAll("[data-pref-type]").forEach(el => {
+      const k = el.dataset.prefType, canal = el.dataset.prefCanal;
+      choix[k] = { ...(choix[k] || {}), [canal]: el.checked };
+    });
+    try {
+      if (DEMO) localStorage.setItem("fk_notif_pref_demo", JSON.stringify(choix));
+      else {
+        const { error } = await sb.from("preferences_notifications").upsert({
+          email: currentUser.email.trim().toLowerCase(), choix,
+          modifie_le: new Date().toISOString(),
+        }, { onConflict: "email" });
+        if (error) throw error;
+      }
+      mesChoixNotif = choix;
+      $("prefNotifStatus").textContent = "✅ Préférences enregistrées. Ta cloche reste toujours active !";
+      toast("✅ Préférences de notifications enregistrées");
+    } catch (err) {
+      $("prefNotifStatus").textContent = "❌ Enregistrement impossible : " + (err?.message || err);
+    } finally { bouton.disabled = false; }
+  };
   $("teamBtn").onclick = async () => {
-    renderTeam(); fillReglages(); await refreshNotifBox();
+    renderTeam(); fillReglages(); await refreshNotifBox(); await chargerMesChoixNotif();
     $("teamBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
   };
   const closeTeam = () => { $("teamBg").classList.add("hidden"); document.body.style.overflow = ""; };
@@ -6761,7 +6861,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   body.dark .msgs{background:#140e26 !important}
   body.dark .hint,body.dark small{color:#b3aad3}
   body.dark .logo,body.dark .caisse-logo{content:url(logo-sombre.png)}
-  body.dark .logo{height:60px}`;
+  body.dark .logo{height:60px}
+  body.dark .np-row{background:#211a3a !important;border-color:#3a3159 !important}`;
   const st = document.createElement("style"); st.id = "darkCss"; st.textContent = css; document.head.appendChild(st);
   const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
   const pref = () => { try { return localStorage.getItem("fk_mode") || "clair"; } catch (e) { return "clair"; } };
