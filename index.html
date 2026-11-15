@@ -2053,9 +2053,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (DEMO || !sb || !currentUser) { notificationsApp = []; majCloche(); return; }
     const { data, error } = await sb.from("notifications_app")
       .select("id,titre,message,type,evenement_id,lien,cree_le,lue_le")
+      // Les messages de conversation restent dans Chat (pastilles de non-lus),
+      // jamais dans la cloche, y compris ceux enregistrés avant la correction.
+      .or("type.is.null,type.neq.chat")
       .order("cree_le", { ascending: false }).limit(100);
     if (error) { console.warn("Notifications personnelles non disponibles :", error.message); return; }
-    notificationsApp = data || [];
+    notificationsApp = (data || []).filter(n => n.type !== "chat");
     majCloche();
   }
   async function marquerNotificationLue(ids) {
