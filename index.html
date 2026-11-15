@@ -1841,16 +1841,29 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       soldeManquant: totalSolde(e) > 0 && !e.solde_encaisse,
       tatManquant: peutGererTatouages(e) && tatouagesACompleter(e) };
   }
+  // Clôture commune à l'équipe : même les tatouages suivis par l'ACC doivent
+  // être terminés avant de retirer la prestation de l'accueil des collègues.
+  function clotureManquante(e) {
+    const manque = [];
+    if (!bilanAnimation(e.id)) manque.push("📝 bilan");
+    if (totalSolde(e) > 0 && !e.solde_encaisse) manque.push("💶 solde");
+    if (tatouagesACompleter(e)) manque.push("🦋 tatouages");
+    return manque;
+  }
+  function prestationACloturer(e) { return clotureManquante(e).length > 0; }
+  const estEvenementInterne = (e) => /^(casting|r[ée]p[ée]tition|r[ée]union)\b/i.test((e?.titre || "").trim());
   function modeDisponible(e) {
     if (!e || e.type_evenement === "evenement" || e.statut === "annule" ||
       (e.statut !== "confirme" && e.statut !== "termine")) return false;
+    // Un casting, une répétition ou une réunion n'est pas une prestation client,
+    // même si le type de l'ancienne fiche a été laissé sur « animation ».
+    if (!estClient(e) || estEvenementInterne(e)) return false;
     const me = myMember() || (DEMO && demoMe ? { prenom: demoMe } : null);
     if (!me || !anims(e).some(a => normName(a) === normName(me.prenom))) return false;
-    const aujourd = todayISO();
-    // La préparation est accessible dès la confirmation, même avant le jour J.
-    if (e.date >= aujourd) return true;
-    const depuis = iso(new Date(Date.now() - 45 * 864e5));
-    return e.date < aujourd && e.date >= depuis && Object.values(actionsPostRestantes(e)).some(Boolean);
+    // Dans « Mes animations », la préparation reste possible avant le jour J.
+    // Les anciennes fiches peuvent encore être consultées pendant 20 jours.
+    const limite = parseISO(todayISO()); limite.setDate(limite.getDate() - 20);
+    return e.date >= iso(limite);
   }
   const animsFull = (e) => (e.animateurs || "").split(",").map(s => s.trim()).filter(Boolean);
   const anims = (e) => animsFull(e).map(s => s.replace(/\s*\(.*\)\s*$/, "").trim()).filter(Boolean);
@@ -2231,6 +2244,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   function card(e, showDate) {
     const st = STATUTS[e.statut] || STATUTS.en_attente;
+    const interne = estEvenementInterne(e);
     const h = e.heure_debut ? hhmm(e.heure_debut) + (e.heure_fin ? " – " + hhmm(e.heure_fin) : "") : "Toute la journée";
     const kid = e.enfant ? `${esc(e.enfant)}${e.age ? `, ${esc(e.age)} ans` : ""}` : "";
     const title = e.titre ? esc(e.titre) : (kid || "Événement");
@@ -2257,13 +2271,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     pay += badgeBilan(e);
     if (e.options && optTexte(e.options)) pay += `<span class="badge">✨ ${esc(optTexte(e.options))}</span>`;
     if (e.photos_envoyees) pay += `<span class="badge solde-ok">📸 Photos envoyées${e.photos_envoyees_par ? " · " + esc(e.photos_envoyees_par) : ""} · ${new Date(e.photos_envoyees).toLocaleDateString("fr-BE", { day: "numeric", month: "short" })}</span>`;
-    const canPhotos = past && isResp(); // photos : responsables uniquement
-    const canEnc = past && e.type_evenement !== "evenement" && (e.solde || extras(e) || isResp()) && (!e.solde_encaisse || e.solde_encaisse === "non" || isResp());
-    const canTat = e.type_evenement !== "evenement" && e.date <= todayISO() && tatouagesDemandes(e) && peutGererTatouages(e);
+    const canPhotos = past && isResp() && !interne; // photos : responsables uniquement
+    const canEnc = past && !interne && e.type_evenement !== "evenement" && (e.solde || extras(e) || isResp()) && (!e.solde_encaisse || e.solde_encaisse === "non" || isResp());
+    const canTat = !interne && e.type_evenement !== "evenement" && e.date <= todayISO() && tatouagesDemandes(e) && peutGererTatouages(e);
     const missing = e.materiel_manquant ? `<div class="missing">⚠️ Matériel manquant : ${esc(e.materiel_manquant)}</div>` : "";
     const mat = e.materiel ? `<span style="white-space:pre-line">🎒 ${esc(e.materiel)}</span>` : "";
     const weekAgo = iso(new Date(Date.now() - 7*864e5));
-    const canSignal = e.type_evenement !== "evenement" && e.date <= todayISO() && e.date >= weekAgo && e.statut !== "annule";
+    const canSignal = !interne && e.type_evenement !== "evenement" && e.date <= todayISO() && e.date >= weekAgo && e.statut !== "annule";
     const canMode = modeDisponible(e);
     const U = universOf(e);
     const parts = U && !reduceMotion ? [0,1,2,3].map(i => `<i class="pt" style="left:${12 + i * 24 + Math.random() * 8}%;color:${U[4]};font-size:${9 + Math.random() * 8}px;animation-duration:${5 + Math.random() * 4}s;animation-delay:${-Math.random() * 8}s">${U[3]}</i>`).join("") : "";
@@ -2285,11 +2299,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       ${pay ? `<div class="badges">${pay}</div>` : ""}
       ${missing}
       ${canMode || canSignal || canEnc || canTat || canPhotos ? `<div class="ev-actions">
-        ${canMode ? `<button type="button" class="sig mode-inline" data-mode-open="${esc(e.id)}">✨ Mode prestation</button>` : ""}
-        ${canPhotos ? `<button type="button" class="sig photo" data-photos="${esc(e.id)}">${e.photos_envoyees ? "↩️ Photos pas encore envoyées" : "📸 Photos envoyées au client ?"}</button>` : ""}
-        ${canTat ? `<button type="button" class="sig tat" data-tat-open="${esc(e.id)}">🦋 ${tatouagesACompleter(e) ? "Compter / encaisser les tatouages" : "Voir les tatouages"}</button>` : ""}
-        ${canEnc ? `<button type="button" class="sig enc" data-enc-open="${esc(e.id)}">${e.solde_encaisse === "non" ? "💶 Le solde a finalement été reçu ?" : e.solde_encaisse ? "💶 Modifier l'encaissement" : "💶 Confirmer la réception du solde"}</button>` : ""}
-        ${canSignal ? `<button type="button" class="sig" data-signal="${esc(e.id)}">${e.materiel_manquant ? "🏁 Ajouter du matériel manquant" : "🏁 Fin d'anim : bilan & matériel"}</button>` : ""}
+        ${canMode ? `<button type="button" class="sig mode-inline" data-mode-open="${esc(e.id)}">✨ Mode prestation</button>` : `
+          ${canPhotos ? `<button type="button" class="sig photo" data-photos="${esc(e.id)}">${e.photos_envoyees ? "↩️ Photos pas encore envoyées" : "📸 Photos envoyées au client ?"}</button>` : ""}
+          ${canTat ? `<button type="button" class="sig tat" data-tat-open="${esc(e.id)}">🦋 ${tatouagesACompleter(e) ? "Compter / encaisser les tatouages" : "Voir les tatouages"}</button>` : ""}
+          ${canEnc ? `<button type="button" class="sig enc" data-enc-open="${esc(e.id)}">${e.solde_encaisse === "non" ? "💶 Le solde a finalement été reçu ?" : e.solde_encaisse ? "💶 Modifier l'encaissement" : "💶 Confirmer la réception du solde"}</button>` : ""}
+          ${canSignal ? `<button type="button" class="sig" data-signal="${esc(e.id)}">${e.materiel_manquant ? "🏁 Ajouter du matériel manquant" : "🏁 Fin d'anim : bilan & matériel"}</button>` : ""}
+        `}
       </div>` : ""}
     </div>`;
   }
@@ -2389,55 +2404,40 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       : e.heure_debut ? new Date(new Date(`${e.date}T${e.heure_debut.slice(0, 5)}:00`).getTime() + 90 * 6e4) : null;
     return !!fin && new Date() >= fin;
   }
-  function renderPostActions(prenom) {
-    const b = $("postActions");
-    const n = normName(prenom), depuis = iso(new Date(Date.now() - 45 * 864e5));
-    const aFaire = events.filter(e => e.statut !== "annule" && e.type_evenement !== "evenement" && e.date >= depuis && animationTerminee(e)
-      && anims(e).some(a => normName(a) === n))
-      .map(e => ({ e, ...actionsPostRestantes(e) }))
-      .filter(x => x.bilanManquant || x.soldeManquant || x.tatManquant)
-      .sort((a, c) => (c.e.date + (c.e.heure_debut || "")).localeCompare(a.e.date + (a.e.heure_debut || "")));
-    b.classList.toggle("hidden", !aFaire.length);
-    if (!aFaire.length) { b.innerHTML = ""; return; }
-    b.innerHTML = `<div class="group-title">🏁 À terminer après mes prestations</div><p class="hint" style="margin:0">Vérifiez le bilan, le solde et, pour l'ACC, le comptage et le paiement des tatouages pailletés.</p>`
-      + aFaire.map(({ e, bilanManquant, soldeManquant, tatManquant }) => `<div class="post-item"><b>${esc(e.titre || e.enfant || "Animation")} · ${esc(fmtLong(e.date))}</b>
-        <div class="post-state">${bilanManquant ? "📝 Bilan à remplir" : "✅ Bilan envoyé"}${(e.solde || extras(e)) ? ` · ${soldeManquant ? "💶 Solde à confirmer" : e.solde_encaisse === "non" ? "⚠️ Non payé signalé" : "✅ Solde reçu"}` : ""}${tatouagesDemandes(e) ? ` · ${tatManquant ? "🦋 Tatouages à compter / encaisser" : "✅ Tatouages suivis"}` : ""}</div>
-        <div class="post-btns"><button class="btn primary" type="button" data-mode-open="${esc(e.id)}">✨ Mode prestation</button>
-          ${bilanManquant ? `<button class="btn primary" type="button" data-post-bilan="${esc(e.id)}">📝 Remplir mon bilan</button>` : ""}
-          ${soldeManquant ? `<button class="btn primary" type="button" data-post-solde="${esc(e.id)}">💶 Confirmer le solde</button>` : ""}
-          ${tatManquant ? `<button class="btn primary" type="button" data-post-tat="${esc(e.id)}">🦋 Compter / encaisser</button>` : ""}</div></div>`).join("");
-  }
-  $("postActions").addEventListener("click", e => {
-    const bilan = e.target.closest("[data-post-bilan]"), solde = e.target.closest("[data-post-solde]"), tat = e.target.closest("[data-post-tat]");
-    const id = bilan?.dataset.postBilan || solde?.dataset.postSolde || tat?.dataset.postTat;
-    const ev = id && events.find(x => String(x.id) === String(id));
-    if (ev) bilan ? openSignal(ev) : solde ? openEnc(ev) : openTat(ev);
-  });
   function renderMineFor(prenom) {
-    renderPostActions(prenom);
+    // Une seule présentation : les prestations à clôturer rejoignent les cartes
+    // de « Mes animations » au lieu d'être répétées dans un encadré séparé.
+    $("postActions").classList.add("hidden");
+    $("postActions").innerHTML = "";
     const t = todayISO(), n = normName(prenom);
     const list = events.filter(e => e.date >= t && e.statut !== "annule" && anims(e).some(a => normName(a) === n))
       .sort((x,y) => (x.date + (x.heure_debut||"")).localeCompare(y.date + (y.heure_debut||"")));
-    const since = iso(new Date(Date.now() - 3*864e5));
+    const recentDate = parseISO(t); recentDate.setDate(recentDate.getDate() - 3);
+    const since = iso(recentDate);
     const recent = events.filter(e => e.date < t && e.date >= since && e.statut !== "annule" && anims(e).some(a => normName(a) === n))
       .sort((x,y) => (y.date + (y.heure_debut||"")).localeCompare(x.date + (x.heure_debut||"")));
+    const limiteDate = parseISO(t); limiteDate.setDate(limiteDate.getDate() - 20);
+    const limite = iso(limiteDate);
+    const aCloturer = events.filter(e => e.date < since && e.date >= limite && modeDisponible(e) &&
+      animationTerminee(e) && prestationACloturer(e))
+      .sort((x,y) => (y.date + (y.heure_debut||"")).localeCompare(x.date + (x.heure_debut||"")));
     $("mineList").innerHTML = (list.length ? list.map(e => card(e, true)).join("") : `<div class="empty">Aucune animation prévue pour ${esc(prenom)}.</div>`)
-      + (recent.length ? `<div class="group-title">Récemment terminées</div>` + recent.map(e => card(e, true)).join("") : "");
+      + (recent.length ? `<div class="group-title">Récemment terminées</div>` + recent.map(e => card(e, true)).join("") : "")
+      + (aCloturer.length ? `<div class="group-title">🏁 Prestations à clôturer</div>` + aCloturer.map(e => card(e, true)).join("") : "");
   }
   function renderModeAccueil() {
     const box = $("modeAccueil"); if (!box) return;
-    const accessibles = view === "cal" ? events.filter(modeDisponible) : [];
     const aujourd = todayISO();
-    const proches = accessibles.filter(e => e.date <= aujourd);
-    const prochaine = accessibles.filter(e => e.date > aujourd)
-      .sort((a,b) => (a.date + (a.heure_debut || "")).localeCompare(b.date + (b.heure_debut || "")))[0];
-    const disponibles = [...proches, ...(prochaine ? [prochaine] : [])]
-      .sort((a,b) => (a.date + (a.heure_debut || "")).localeCompare(b.date + (b.heure_debut || "")));
+    // Accueil : jamais de prestation future, et retrait immédiat dès clôture.
+    const disponibles = view === "cal" ? events.filter(e =>
+      e.date <= aujourd && modeDisponible(e) && prestationACloturer(e))
+      .sort((a,b) => (b.date + (b.heure_debut || "")).localeCompare(a.date + (a.heure_debut || ""))) : [];
     box.classList.toggle("hidden", !disponibles.length);
     box.innerHTML = disponibles.map(e => `<div class="mode-invite">
-      <small>✨ ${e.date === aujourd ? "VOTRE PRESTATION DU JOUR" : e.date > aujourd ? "VOTRE PROCHAINE PRESTATION" : "PRESTATION À CLÔTURER"}</small>
+      <small>✨ ${e.date === aujourd ? "VOTRE PRESTATION DU JOUR" : "PRESTATION À CLÔTURER"}</small>
       <b>${esc(e.titre || e.enfant || "Animation")}</b>
       <p>🕒 ${esc(e.heure_debut ? hhmm(e.heure_debut) + (e.heure_fin ? " – " + hhmm(e.heure_fin) : "") : "Horaire à préciser")}${e.adresse ? ` · 📍 ${esc(e.adresse)}` : ""}</p>
+      <p>À terminer : ${clotureManquante(e).map(esc).join(" · ")}</p>
       <button type="button" class="mode-launch" data-mode-open="${esc(e.id)}">✨ Ouvrir le Mode prestation</button>
     </div>`).join("");
   }
