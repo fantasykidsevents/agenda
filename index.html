@@ -248,6 +248,20 @@
   .badge.fiche-wait{background:#fff7ed;color:#9a3412}
   .after-btns .sig{padding:12px 14px;font-size:15px;text-align:left;border-radius:14px}
   .after-btns .sig.done{background:#dcfce7;color:#166534}
+  /* ✨ Mode prestation : accès rapide le jour J + étapes dans la fiche réelle. */
+  .mode-accueil{margin:0 0 12px;display:grid;gap:10px}
+  .mode-accueil .mode-invite{background:linear-gradient(120deg,#eef6ff,#f3edff 65%,#fce7fb);border:1px solid #e4d4ff;border-radius:18px;padding:13px;box-shadow:0 5px 18px rgba(106,42,214,.09)}
+  .mode-invite small{display:block;font-size:12px;color:#6a2ad6;font-weight:750;margin-bottom:3px}
+  .mode-invite b{display:block;font-size:16px;color:#301b59;margin-bottom:5px}
+  .mode-invite p{font-size:13px;color:#615177;margin:0 0 10px}
+  .mode-launch{border:0;background:var(--grad);color:#fff;font-size:15px;font-weight:750;border-radius:13px;padding:12px 15px;width:100%;min-height:44px;box-shadow:0 5px 13px rgba(106,42,214,.19)}
+  .ev-actions .sig.mode-inline{background:linear-gradient(110deg,#5978ed,#9c43ef);color:#fff;border-radius:12px;font-size:13px}
+  #jourBg.mode-active .jour{max-width:580px}
+  .mode-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;background:#f5effe;border-radius:14px;padding:6px;margin:10px 0 15px}
+  .mode-tabs button{border:0;border-radius:10px;background:transparent;color:#6b6385;padding:11px 4px;font-size:14px;font-weight:750;min-height:43px}
+  .mode-tabs button[aria-selected="true"]{background:var(--grad);color:#fff;box-shadow:0 3px 9px rgba(106,42,214,.18)}
+  .mode-page>.etape:first-child{margin-top:4px}
+  .mode-page[hidden]{display:none!important}
   .alert-bar.blue{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
   .alert-bar.gold{background:#fefce8;color:#854d0e;border-color:#fde68a}
   .ev-actions{gap:6px;flex-wrap:wrap;justify-content:flex-start!important;padding-right:0}
@@ -1059,6 +1073,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue calendrier -->
     <section id="viewCal">
+      <div id="modeAccueil" class="mode-accueil hidden" aria-label="Mes prestations du jour"></div>
       <div class="seg vue-seg"><label><input type="radio" name="vueAg" value="cal"><span>📅 Calendrier</span></label><label><input type="radio" name="vueAg" value="list"><span>📋 Liste</span></label></div>
       <div class="cal">
         <div class="cal-nav">
@@ -1826,6 +1841,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       soldeManquant: totalSolde(e) > 0 && !e.solde_encaisse,
       tatManquant: peutGererTatouages(e) && tatouagesACompleter(e) };
   }
+  function modeDisponible(e) {
+    if (!e || e.type_evenement === "evenement" || e.statut === "annule" ||
+      (e.statut !== "confirme" && e.statut !== "termine")) return false;
+    const me = myMember() || (DEMO && demoMe ? { prenom: demoMe } : null);
+    if (!me || !anims(e).some(a => normName(a) === normName(me.prenom))) return false;
+    const aujourd = todayISO();
+    // La préparation est accessible dès la confirmation, même avant le jour J.
+    if (e.date >= aujourd) return true;
+    const depuis = iso(new Date(Date.now() - 45 * 864e5));
+    return e.date < aujourd && e.date >= depuis && Object.values(actionsPostRestantes(e)).some(Boolean);
+  }
   const animsFull = (e) => (e.animateurs || "").split(",").map(s => s.trim()).filter(Boolean);
   const anims = (e) => animsFull(e).map(s => s.replace(/\s*\(.*\)\s*$/, "").trim()).filter(Boolean);
   let toastT;
@@ -2238,6 +2264,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const mat = e.materiel ? `<span style="white-space:pre-line">🎒 ${esc(e.materiel)}</span>` : "";
     const weekAgo = iso(new Date(Date.now() - 7*864e5));
     const canSignal = e.type_evenement !== "evenement" && e.date <= todayISO() && e.date >= weekAgo && e.statut !== "annule";
+    const canMode = modeDisponible(e);
     const U = universOf(e);
     const parts = U && !reduceMotion ? [0,1,2,3].map(i => `<i class="pt" style="left:${12 + i * 24 + Math.random() * 8}%;color:${U[4]};font-size:${9 + Math.random() * 8}px;animation-duration:${5 + Math.random() * 4}s;animation-delay:${-Math.random() * 8}s">${U[3]}</i>`).join("") : "";
     return `<div class="ev ${U ? "u-" + U[0] : ""}${themeDe(e) ? " spectacle th-c-" + themeDe(e) : ""}" style="--c:${st.color}${themeDe(e) ? `;--th-carte:${THEMES[themeDe(e)].carte};--th-bord:${THEMES[themeDe(e)].bord}` : ""}" data-id="${esc(e.id)}" role="button" tabindex="0">${parts}${U ? `<span class="univ">${U[2]}</span>` : ""}<span class="sheen"></span>
@@ -2257,7 +2284,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       </div>
       ${pay ? `<div class="badges">${pay}</div>` : ""}
       ${missing}
-      ${canSignal || canEnc || canTat || canPhotos ? `<div class="ev-actions">
+      ${canMode || canSignal || canEnc || canTat || canPhotos ? `<div class="ev-actions">
+        ${canMode ? `<button type="button" class="sig mode-inline" data-mode-open="${esc(e.id)}">✨ Mode prestation</button>` : ""}
         ${canPhotos ? `<button type="button" class="sig photo" data-photos="${esc(e.id)}">${e.photos_envoyees ? "↩️ Photos pas encore envoyées" : "📸 Photos envoyées au client ?"}</button>` : ""}
         ${canTat ? `<button type="button" class="sig tat" data-tat-open="${esc(e.id)}">🦋 ${tatouagesACompleter(e) ? "Compter / encaisser les tatouages" : "Voir les tatouages"}</button>` : ""}
         ${canEnc ? `<button type="button" class="sig enc" data-enc-open="${esc(e.id)}">${e.solde_encaisse === "non" ? "💶 Le solde a finalement été reçu ?" : e.solde_encaisse ? "💶 Modifier l'encaissement" : "💶 Confirmer la réception du solde"}</button>` : ""}
@@ -2374,7 +2402,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     b.innerHTML = `<div class="group-title">🏁 À terminer après mes prestations</div><p class="hint" style="margin:0">Vérifiez le bilan, le solde et, pour l'ACC, le comptage et le paiement des tatouages pailletés.</p>`
       + aFaire.map(({ e, bilanManquant, soldeManquant, tatManquant }) => `<div class="post-item"><b>${esc(e.titre || e.enfant || "Animation")} · ${esc(fmtLong(e.date))}</b>
         <div class="post-state">${bilanManquant ? "📝 Bilan à remplir" : "✅ Bilan envoyé"}${(e.solde || extras(e)) ? ` · ${soldeManquant ? "💶 Solde à confirmer" : e.solde_encaisse === "non" ? "⚠️ Non payé signalé" : "✅ Solde reçu"}` : ""}${tatouagesDemandes(e) ? ` · ${tatManquant ? "🦋 Tatouages à compter / encaisser" : "✅ Tatouages suivis"}` : ""}</div>
-        <div class="post-btns">${bilanManquant ? `<button class="btn primary" type="button" data-post-bilan="${esc(e.id)}">📝 Remplir mon bilan</button>` : ""}
+        <div class="post-btns"><button class="btn primary" type="button" data-mode-open="${esc(e.id)}">✨ Mode prestation</button>
+          ${bilanManquant ? `<button class="btn primary" type="button" data-post-bilan="${esc(e.id)}">📝 Remplir mon bilan</button>` : ""}
           ${soldeManquant ? `<button class="btn primary" type="button" data-post-solde="${esc(e.id)}">💶 Confirmer le solde</button>` : ""}
           ${tatManquant ? `<button class="btn primary" type="button" data-post-tat="${esc(e.id)}">🦋 Compter / encaisser</button>` : ""}</div></div>`).join("");
   }
@@ -2394,6 +2423,23 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       .sort((x,y) => (y.date + (y.heure_debut||"")).localeCompare(x.date + (x.heure_debut||"")));
     $("mineList").innerHTML = (list.length ? list.map(e => card(e, true)).join("") : `<div class="empty">Aucune animation prévue pour ${esc(prenom)}.</div>`)
       + (recent.length ? `<div class="group-title">Récemment terminées</div>` + recent.map(e => card(e, true)).join("") : "");
+  }
+  function renderModeAccueil() {
+    const box = $("modeAccueil"); if (!box) return;
+    const accessibles = view === "cal" ? events.filter(modeDisponible) : [];
+    const aujourd = todayISO();
+    const proches = accessibles.filter(e => e.date <= aujourd);
+    const prochaine = accessibles.filter(e => e.date > aujourd)
+      .sort((a,b) => (a.date + (a.heure_debut || "")).localeCompare(b.date + (b.heure_debut || "")))[0];
+    const disponibles = [...proches, ...(prochaine ? [prochaine] : [])]
+      .sort((a,b) => (a.date + (a.heure_debut || "")).localeCompare(b.date + (b.heure_debut || "")));
+    box.classList.toggle("hidden", !disponibles.length);
+    box.innerHTML = disponibles.map(e => `<div class="mode-invite">
+      <small>✨ ${e.date === aujourd ? "VOTRE PRESTATION DU JOUR" : e.date > aujourd ? "VOTRE PROCHAINE PRESTATION" : "PRESTATION À CLÔTURER"}</small>
+      <b>${esc(e.titre || e.enfant || "Animation")}</b>
+      <p>🕒 ${esc(e.heure_debut ? hhmm(e.heure_debut) + (e.heure_fin ? " – " + hhmm(e.heure_fin) : "") : "Horaire à préciser")}${e.adresse ? ` · 📍 ${esc(e.adresse)}` : ""}</p>
+      <button type="button" class="mode-launch" data-mode-open="${esc(e.id)}">✨ Ouvrir le Mode prestation</button>
+    </div>`).join("");
   }
   function renderNext() {
     const b = $("nextMagic"); if (!b) return;
@@ -2528,7 +2574,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     } catch (err) { b.disabled = false; toast("Oups : " + (err.message || err)); }
   });
 
-  function render() { majWho(); majCloche(); modeNuit(); renderNext(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
+  function render() { majWho(); majCloche(); modeNuit(); renderNext(); renderModeAccueil(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
 
   // ================= Formulaire =================
   // ✨ Options (tarifs du site) — quantité par option ; les tatouages se paient le jour même (pas ajoutés au prix)
@@ -3063,6 +3109,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     } catch (e) { return null; }
   }
   function openJour(ev) {
+    $("jourBg").classList.remove("mode-active");
     $("jourChat").dataset.id = ev.id; $("jourChat").classList.toggle("hidden", !jePeuxVoir(ev));
     const U = universOf(ev), r = (ev.fiche && ev.fiche.reponses) || {};
     const now = new Date(), deb = ev.heure_debut ? new Date(`${ev.date}T${ev.heure_debut.slice(0,5)}:00`) : null;
@@ -3137,8 +3184,46 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const days = (parseISO(ev.date) - parseISO(todayISO())) / 864e5;
     if (ev.adresse && days >= 0 && days <= 14) meteo(ev).then(t => { if (t && $("jourBg").dataset.id === ev.id) { $("jourMeteo").querySelector("span").textContent = t; $("jourMeteo").classList.remove("hidden"); } });
   }
+  function openModePrestation(ev) {
+    if (!modeDisponible(ev)) { toast("Le Mode prestation est réservé à l'équipe de cette animation, le jour J ou jusqu'à sa clôture."); return; }
+    openJour(ev); // On réutilise la vraie fiche et ses validations, sans doublons.
+    const contenu = $("jourBody");
+    const etapes = [...contenu.children].filter(el => el.matches("h3.etape"));
+    if (etapes.length !== 3) return; // La fiche classique reste utilisable en secours.
+    const onglets = document.createElement("div");
+    onglets.className = "mode-tabs";
+    onglets.setAttribute("role", "tablist");
+    onglets.setAttribute("aria-label", "Étapes de ma prestation");
+    const noms = [["avant", "🧳 Avant"], ["pendant", "✨ Pendant"], ["apres", "🏁 Après"]];
+    onglets.innerHTML = noms.map(([id, label]) => `<button type="button" role="tab" data-mode-etape="${id}" aria-controls="mode-page-${id}" aria-selected="false">${label}</button>`).join("");
+    contenu.insertBefore(onglets, etapes[0]);
+    const enfants = [...contenu.children].slice([...contenu.children].indexOf(etapes[0]));
+    const sections = [[], [], []];
+    let groupe = -1;
+    for (const el of enfants) {
+      if (el.matches("h3.etape")) groupe++;
+      if (groupe >= 0 && groupe < 3) sections[groupe].push(el);
+    }
+    sections.forEach((els, i) => {
+      const panel = document.createElement("section");
+      panel.className = "mode-page"; panel.id = `mode-page-${noms[i][0]}`;
+      panel.setAttribute("role", "tabpanel");
+      for (const el of els) panel.appendChild(el);
+      contenu.appendChild(panel);
+    });
+    const changer = (id) => {
+      for (const b of onglets.querySelectorAll("[data-mode-etape]")) b.setAttribute("aria-selected", String(b.dataset.modeEtape === id));
+      for (const p of contenu.querySelectorAll(".mode-page")) p.hidden = p.id !== `mode-page-${id}`;
+      $("jourBg").querySelector(".sheet")?.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    onglets.addEventListener("click", e => { const b = e.target.closest("[data-mode-etape]"); if (b) changer(b.dataset.modeEtape); });
+    const debut = ev.heure_debut ? new Date(`${ev.date}T${ev.heure_debut.slice(0, 5)}:00`) : null;
+    const etape = animationTerminee(ev) ? "apres" : debut && Date.now() >= debut.getTime() ? "pendant" : "avant";
+    $("jourBg").classList.add("mode-active");
+    changer(etape);
+  }
   let jourDepuis = null;   // fiche d'événement d'où on est venu (pour y revenir en fermant)
-  const closeJour = () => { jourDepuis = null; $("jourBg").classList.add("hidden"); document.body.style.overflow = ""; };
+  const closeJour = () => { jourDepuis = null; $("jourBg").classList.add("hidden"); $("jourBg").classList.remove("mode-active"); document.body.style.overflow = ""; };
   const fermerJourEtRevenir = () => { const ev0 = jourDepuis; closeJour(); if (ev0) openForm(events.find(x => x.id === ev0.id) || ev0); };
   $("jourClose").onclick = fermerJourEtRevenir;
   $("jourBg").addEventListener("change", (e) => {
@@ -3249,6 +3334,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     render();
   });
   document.addEventListener("click", (e) => {
+    const mode = e.target.closest("[data-mode-open]");
+    if (mode) {
+      e.preventDefault(); e.stopPropagation();
+      const ev = events.find(x => String(x.id) === String(mode.dataset.modeOpen));
+      if (ev) openModePrestation(ev);
+      return;
+    }
     if (e.target.id === "addHere") { openForm(null, selDay); return; }
     const ph = e.target.closest("[data-photos]");
     if (ph) {
@@ -7178,6 +7270,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   body.dark .m:not(.me) .bub{background:#2a2147 !important;color:#ece8ff !important}
   body.dark .msgs{background:#140e26 !important}
   body.dark .hint,body.dark small{color:#b3aad3}
+  body.dark .mode-invite{background:linear-gradient(120deg,#282044,#34244d 65%,#3c2149);border-color:#4c3970}
+  body.dark .mode-invite b{color:#f0e9ff}
+  body.dark .mode-invite p,body.dark .mode-invite small{color:#cbb7ed}
+  body.dark .mode-tabs{background:#261d40}
+  body.dark .mode-tabs button[aria-selected="false"]{color:#c3b7e4}
   body.dark .logo,body.dark .caisse-logo{content:url(logo-sombre.png)}
   body.dark .logo{height:60px}
   body.dark .np-row{background:#211a3a !important;border-color:#3a3159 !important}`;
