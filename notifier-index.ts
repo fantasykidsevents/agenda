@@ -1367,6 +1367,37 @@ Deno.serve(async (req) => {
       return json({ ok: true, pushs: n });
     }
 
+    // 👗 Souhait Fantasy ou problème de tenue : la fonction SQL a déjà créé
+    // la notification dans la cloche. Ce webhook ajoute le push téléphone,
+    // sans produire un deuxième avis dans la cloche.
+    if (p.table === "costume_demandes") {
+      const d = p.record, avant = p.old_record || {};
+      if (!d || (p.type !== "INSERT" && p.type !== "UPDATE")) return json({ ok: true, ignore: true });
+      const changement = p.type === "INSERT" || ["choix", "costume_id", "motif", "detail", "photo_path"]
+        .some((k) => d[k] !== avant[k]);
+      const suivi = p.type === "UPDATE" && d.statut !== avant.statut && !changement;
+      const { data: equipe } = await sb.from("equipe").select("prenom,email,responsable");
+      const dest = (equipe || []).filter(x => x.email);
+      let n = 0;
+      if (changement && (d.choix === "fantasy" || d.motif || (d.statut === "a_traiter" && d.choix === "personnel"))) {
+        const titre = d.motif ? "⚠️ Problème de tenue" : "👗 Demande de tenue Fantasy";
+        const corps = `${d.membre} (${d.personnage}) · ${d.type}\n${d.choix === "fantasy" ? "Souhaite utiliser le matériel Fantasy" : "Choix personnel à vérifier"}${d.detail ? "\n" + d.detail.slice(0, 180) : ""}`;
+        for (const m of dest.filter(m => m.responsable && norm(m.prenom) !== norm(d.modifie_par)))
+          n += await envoyerPush(m.email, { title: titre, body: corps, url: `./index.html?tenue=${encodeURIComponent(d.evenement_id)}`,
+            tag: `costume-demande-${d.evenement_id}-${d.membre}-${d.type}` }, { sansCloche: true, categorie: "materiel" });
+      }
+      if (suivi) {
+        const membre = dest.find(m => norm(m.prenom) === norm(d.membre));
+        if (membre) n += await envoyerPush(membre.email, {
+          title: "👗 Mise à jour de ta tenue",
+          body: `${d.personnage} · ${d.type} : ${d.statut === "resolue" ? "demande résolue" : d.statut === "en_cours" ? "en cours" : "à traiter"}`,
+          url: `./index.html?tenue=${encodeURIComponent(d.evenement_id)}`,
+          tag: `costume-suivi-${d.evenement_id}-${d.membre}-${d.type}`,
+        }, { sansCloche: true, categorie: "materiel" });
+      }
+      return json({ ok: true, pushs: n });
+    }
+
     // 🪡 Costume / perruque marqué « à réparer » → responsables
     if (p.table === "costumes") {
       const c = p.record, avant = p.old_record || {};
