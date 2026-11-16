@@ -5004,7 +5004,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   // Une ligne = UNE pièce physique choisie pour UN membre, UN rôle et UNE prestation.
   // Les costumes personnels ne peuvent être utilisés que par leur propriétaire.
-  const persoDe = (c) => c.proprietaire || "";
+  const persoDe = (c) => (c.proprietaire || "").trim();
   const utilisable = (c, nom) => !persoDe(c) || normName(persoDe(c)) === normName(nom);
   const attributionPour = (ev, p, type) => costAttributions.find(a => String(a.evenement_id) === String(ev.id) && normName(a.membre) === normName(p.nom)
     && normName(a.personnage) === normName(p.role) && a.type === type);

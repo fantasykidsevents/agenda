@@ -76,8 +76,7 @@ begin
   -- Le membre doit réellement avoir CE personnage sur CET événement.
   select exists (
     select 1 from unnest(string_to_array(coalesce(prestation.animateurs, ''), ',')) as x(texte)
-    where lower(btrim(split_part(x.texte, ' (', 1))) = lower(btrim(p_membre))
-      and lower(btrim(split_part(split_part(x.texte, ' (', 2), ')', 1))) = lower(btrim(p_personnage))
+    where lower(btrim(x.texte)) = lower(btrim(p_membre) || ' (' || btrim(p_personnage) || ')')
   ) into personnage_present;
   if not personnage_present then raise exception 'Ce membre ne joue pas ce personnage sur la prestation.'; end if;
 
@@ -200,7 +199,7 @@ begin
       end if;
       return new;
     end if;
-    if old.proprietaire is null and exists (
+    if nullif(btrim(old.proprietaire), '') is null and exists (
       select 1 from public.costume_attributions ca
       where ca.costume_id = old.id::text and lower(ca.membre) = lower(acteur.prenom)
     ) and new.id is not distinct from old.id
