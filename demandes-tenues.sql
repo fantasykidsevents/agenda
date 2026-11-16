@@ -1,5 +1,5 @@
 -- Fantasy Kids Events — choix de tenue et signalements (costume / perruque)
--- À exécuter une seule fois dans Supabase > SQL Editor.
+-- À exécuter dans Supabase > SQL Editor ; réexécutable pour installer les correctifs.
 -- Non destructif : préserve les pièces et attributions déjà enregistrées.
 
 begin;
