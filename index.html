@@ -1097,6 +1097,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .g-makeup-item span{display:block;margin-top:7px;font-size:13px;font-weight:700}
   .g-makeup-quick{border:1px solid #ecd6f4;background:#fcf7ff;border-radius:14px;padding:11px 12px;margin:12px 0}
   .g-makeup-quick summary{font-weight:700;color:#673d9a;cursor:pointer}
+  .info-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .info-card-header h3{margin:0;min-width:0;flex:1;overflow-wrap:anywhere}
+  .info-card-delete{flex:none;padding:9px 11px;border:1px solid #f3c4d2;border-radius:11px;background:#fff0f4;color:#a32252;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
   .g-makeup-viewer{position:fixed;inset:0;margin:auto;box-sizing:border-box;padding:14px;border:0;border-radius:18px;background:#fff;color:#35215b;box-shadow:0 18px 60px #170d3080;max-width:94vw;max-height:94dvh;overflow:auto}
   .g-makeup-viewer::backdrop{background:rgba(18,10,38,.82)}
   .g-makeup-viewer-head{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:10px;font-weight:800}
@@ -4539,7 +4542,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const mine=lectures.find(l=>l.email===email);
       const date=new Date(info.cree_le).toLocaleDateString("fr-BE",{day:"numeric",month:"long",year:"numeric"});
       return '<div class="poll-card" data-info-card="'+esc(info.id)+'">'
-        +'<h3>'+esc(info.titre)+'</h3>'
+        +'<div class="info-card-header"><h3>'+esc(info.titre)+'</h3>'
+        +(admin?'<button type="button" class="info-card-delete" data-info-delete="'+esc(info.id)+'" title="Retirer cette information" aria-label="Retirer l’information '+esc(info.titre)+'">🗑️ Retirer</button>':'')
+        +'</div>'
         +'<p class="hint" style="margin:4px 0 12px">'+esc(date)+'</p>'
         +'<p style="margin:8px 0 14px;white-space:pre-wrap;overflow-wrap:anywhere">'+esc(info.contenu)+'</p>'
         +(mine?'<p class="hint" style="color:#208156">✅ Lecture confirmée</p>'
@@ -4552,7 +4557,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           +esc(missing.map(pollName).join(", ")||"—")+'</p></div></details>'
           +'<div class="actions" style="margin-top:11px">'
           +(missing.length?'<button type="button" class="btn ghost" data-info-remind="'+esc(info.id)+'">🔔 Relancer</button>':"")
-          +'<button type="button" class="btn ghost" data-info-delete="'+esc(info.id)+'" style="color:#a32252">🗑️ Supprimer</button></div>'
+          +'</div>'
           :"")
         +'</div>';
     }).join(""):'<p class="hint">Aucune information pour le moment.</p>';
