@@ -61,10 +61,10 @@ declare
   statut_final text;
   modifie boolean;
   verrou boolean;
-  responsable record;
+  contact_responsable record;
 begin
-  select prenom, responsable into acteur from public.equipe
-  where lower(btrim(email)) = lower(auth.jwt()->>'email') limit 1;
+  select e.prenom, e.responsable into acteur from public.equipe e
+  where lower(btrim(e.email)) = lower(auth.jwt()->>'email') limit 1;
   if acteur.prenom is null then raise exception 'Compte non lié à l’équipe Fantasy.'; end if;
   if not coalesce(acteur.responsable, false) and lower(btrim(acteur.prenom)) <> lower(btrim(p_membre)) then
     raise exception 'Vous pouvez seulement choisir votre propre tenue.';
@@ -157,13 +157,13 @@ begin
     traite_le = case when not modifie then public.costume_demandes.traite_le else null end;
 
   if modifie and (p_choix = 'fantasy' or p_motif is not null or verrou) then
-    for responsable in select email from public.equipe where responsable = true
-      and nullif(btrim(email), '') is not null
-      and lower(btrim(email)) <> lower(auth.jwt()->>'email') loop
+    for contact_responsable in select e.email from public.equipe e where e.responsable = true
+      and nullif(btrim(e.email), '') is not null
+      and lower(btrim(e.email)) <> lower(auth.jwt()->>'email') loop
       insert into public.notifications_app
         (destinataire_email, titre, message, type, evenement_id, lien)
       values
-        (responsable.email,
+        (contact_responsable.email,
          case when p_motif is not null then '⚠️ Problème de tenue signalé' else '👗 Demande de tenue Fantasy' end,
          p_membre || ' (' || p_personnage || ') : ' || p_type || ' · ' ||
          case when p_choix = 'fantasy' then 'souhaite utiliser celui de Fantasy' else 'choix personnel à vérifier' end ||
