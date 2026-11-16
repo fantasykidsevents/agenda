@@ -1306,12 +1306,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <label for="addAnim" id="teamLabel">Animateur(s)</label>
     <div id="evtResume" class="evt-resume hidden"></div>
     <div id="teamPresetBox" class="team-preset-box hidden">
-      <label for="teamPresetSel">👥 Ajouter une team à cet événement</label>
+      <label for="teamPresetSel">👥 Team affectée à cet événement</label>
       <div class="team-preset-row">
         <select id="teamPresetSel"><option value="">— Choisir une team —</option></select>
-        <button type="button" class="btn" id="teamPresetApply">Ajouter l'équipe</button>
       </div>
-      <p class="hint" style="margin:5px 0 0">Pour créer une team ou modifier ses membres : ouvrez l'onglet <b>Équipe</b>. Les rôles peuvent être définis pour chaque date.</p>
+      <div id="teamPresetSelected" class="hint" style="margin:8px 0 0"></div>
+      <p class="hint" style="margin:5px 0 0">Le choix ajoute directement les membres ci-dessous. Ils seront affectés à l'enregistrement de l'événement. Vous pourrez modifier leurs rôles pour cette date.</p>
     </div>
     <input id="animateurs" type="hidden" />
     <div id="pickList"></div>
@@ -3148,7 +3148,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     horaires = {}; voitures = {}; try { JSON.parse((ev && ev.equipe_detail) || "[]").forEach(x => { if (x.debut || x.fin) horaires[normName(x.prenom)] = { d: x.debut || "", f: x.fin || "" }; if (x.voiture) voitures[normName(x.prenom)] = x.voiture; }); } catch (e) {}
     parkings = ((ev && ev.km_detail && ev.km_detail.parkings) || []).map(x => ({ ...x }));
     repetJour = ev && ev.km_detail && ev.km_detail.repet != null ? !!ev.km_detail.repet : null;
-    // Chaque nouvelle fiche commence sans équipe type présélectionnée.
+    // Conserver la team rattachée à l'événement, même après fermeture.
+    eventTeamIds = ev && Array.isArray(ev.km_detail?.team_ids) ? ev.km_detail.team_ids.filter(id => typeof id === "string") : [];
     $("teamPresetSel").value = "";
     appliquerType();
     renderChips(); checkJbl();
@@ -3786,11 +3787,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const orig = events.find(x => x.id === editingId) || {};
     ev.deplacement_client = kmCalc ? kmCalc.client : (orig.deplacement_client ?? null);
     ev.km_detail = kmCalc ? kmCalc.detail : (orig.km_detail ?? null);
-    if (ev.type_evenement === "evenement") ev.km_detail = { ...(ev.km_detail || { mode: "evt" }), parkings: parkings.filter(x => +x.montant > 0).map(x => ({ ...x, vu: true })), repet: estRepet() };
+    if (ev.type_evenement === "evenement") ev.km_detail = { ...(ev.km_detail || { mode: "evt" }), parkings: parkings.filter(x => +x.montant > 0).map(x => ({ ...x, vu: true })), repet: estRepet(), team_ids: eventTeamIds.slice() };
     ev.paies = picked.map(p => paieMap.get(normName(p.nom)) || { prenom: p.nom, deplacement: 0, prestation: 0 })
       .map(p => ({ ...p, prenom: picked.find(x => normName(x.nom) === normName(p.prenom))?.nom || p.prenom }))
       .filter(p => (+p.deplacement || 0) + (+p.prestation || 0) > 0);
     ev.options = ev.type_evenement === "evenement" || !Object.keys(optSel).length ? null : { ...optSel };
+    // Sans membres effectivement ajoutés, personne ne recevra d'affectation.
+    if (ev.type_evenement === "evenement" && eventTeamIds.length && !picked.length) {
+      $("formErr").textContent = "Cette team ne contient aucun membre affecté. Vérifiez sa composition dans l'onglet Équipe.";
+      return;
+    }
     // 💳 Confirmation d'une animation avec e-mail client : sans acompte, aucune demande d'acompte ne part
     const avantStatut = editingId ? (events.find(x => x.id === editingId) || {}).statut : null;
     if (isResp() && ev.type_evenement !== "evenement" && ev.statut === "confirme" && avantStatut !== "confirme" && ev.email && !(+ev.acompte > 0) && !ev.acompte_paye
@@ -3897,6 +3903,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   // 🎭 Teams partagées : on les crée dans l'onglet Équipe et on peut attribuer
   // plusieurs teams à une même personne. L'événement ne fait que les importer.
+  let eventTeamIds=[];
   function equipesTypes(){
     try {
       const list=JSON.parse(reglages.equipes_types || "[]");
@@ -3911,14 +3918,19 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const list=equipesTypes().sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
     select.innerHTML='<option value="">— Choisir une team —</option>'+list.map(x=>
       `<option value="${esc(x.id)}">${esc(x.nom)} (${x.membres.length})</option>`).join("");
-    if(list.some(x=>x.id===ancien))select.value=ancien;
-    $("teamPresetApply").disabled=!isGest()||!list.some(t=>t.id===select.value&&t.membres.length);
+    const selection=eventTeamIds.at(-1)||ancien;
+    if(list.some(x=>String(x.id)===String(selection)))select.value=selection;
+    const noms=eventTeamIds.map(id=>list.find(t=>String(t.id)===String(id))?.nom).filter(Boolean);
+    const sansEmail=[...new Set(eventTeamIds.flatMap(id=>list.find(t=>String(t.id)===String(id))?.membres||[])
+      .map(p=>members.find(m=>(p.id&&String(p.id)===String(m.id))||(!p.id&&normName(m.prenom)===normName(p.nom))))
+      .filter(m=>m&&!m.email).map(m=>m.prenom))];
+    $("teamPresetSelected").textContent=noms.length?`✅ Team${noms.length>1?"s":""} liée${noms.length>1?"s":""} à l'événement : ${noms.join(" · ")}${sansEmail.length?` · ⚠️ Pas d'e-mail : ${sansEmail.join(", ")}`:""}`:"Choisissez une team pour affecter ses membres.";
   }
-  $("teamPresetSel").addEventListener("change",renderEquipesTypes);
-  $("teamPresetApply").addEventListener("click",()=>{
+  $("teamPresetSel").addEventListener("change",()=>{
     if(!isGest()||!estEvt())return;
     const preset=equipesTypes().find(x=>x.id===$("teamPresetSel").value);
-    if(!preset){toast("Choisissez d'abord une team dans l'onglet Équipe");return;}
+    if(!preset){renderEquipesTypes();return;}
+    if(!preset.membres.length){toast("⚠️ Cette team est vide : ajoutez ses membres dans Équipe.");return;}
     const deja=new Set(picked.map(p=>normName(p.nom)));
     let ajoutes=0,absents=0;
     for(const p of preset.membres){
@@ -3927,8 +3939,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if(deja.has(normName(membre.prenom)))continue;
       picked.push({nom:membre.prenom,role:p.role||""});deja.add(normName(membre.prenom));ajoutes++;
     }
-    syncAnim();renderPicked();
-    toast(`👥 ${ajoutes} membre${ajoutes>1?"s":""} ajouté${ajoutes>1?"s":""}${absents?` · ${absents} hors équipe ignoré(s)`:""}`);
+    if(!eventTeamIds.includes(preset.id))eventTeamIds.push(preset.id);
+    syncAnim();renderPicked();renderEquipesTypes();
+    const sansMail=preset.membres.map(p=>members.find(m=>(p.id&&String(p.id)===String(m.id))||(!p.id&&normName(m.prenom)===normName(p.nom)))).filter(m=>m&&!m.email).map(m=>m.prenom);
+    toast(sansMail.length?`⚠️ ${sansMail.join(", ")} : pas d'e-mail, notification impossible`:`👥 ${preset.nom} sélectionnée · ${ajoutes} membre${ajoutes>1?"s":""} ajouté${ajoutes>1?"s":""}${absents?` · ${absents} introuvable(s)`:""}`);
   });
   // Onglet Équipe : sélection par menu déroulant, création/renommage au crayon,
   // affectation de chaque membre par cases à cocher (multi-teams autorisé).
@@ -4054,7 +4068,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const d = parseISO(ev.date); d.setDate(d.getDate() + 1); const nd = iso(d);
     if (events.some(x => x.date === nd && x.titre === ev.titre)) { toast("Ce jour existe déjà pour cet événement"); return; }
     const copie = {}; CHAMPS.forEach(k => copie[k] = ev[k] ?? null);
-    Object.assign(copie, { date: nd, materiel_manquant: null, solde: null, conducteur: null, prix: ev.prix ?? null, acompte: null, acompte_paye: false, notes_privees: ev.notes_privees ?? null, deplacement_client: null, km_detail: null, paies: [] });
+    Object.assign(copie, { date: nd, materiel_manquant: null, solde: null, conducteur: null, prix: ev.prix ?? null, acompte: null, acompte_paye: false, notes_privees: ev.notes_privees ?? null, deplacement_client: null,
+      km_detail: ev.type_evenement === "evenement" ? { mode: "evt", team_ids: (ev.km_detail?.team_ids || []).slice() } : null, paies: [] });
     try { await store.save(copie); await reload(); const n = events.find(x => x.date === nd && x.titre === ev.titre); closeForm(); toast("📅 Jour suivant créé avec la même équipe"); if (n) setTimeout(() => openForm(n), 200); }
     catch (err) { $("formErr").textContent = "Erreur : " + (err.message || err); }
   };

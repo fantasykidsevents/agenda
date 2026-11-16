@@ -9,7 +9,7 @@ const end = html.indexOf('  // ---------- 🎪 Événement', start);
 assert(start !== -1 && end > start, 'Code des teams introuvable');
 
 const listeners = {};
-const ids = ['teamPresetSel','teamPresetApply','teamsEditor','teamsEditorSelect','teamsEditorDetails',
+const ids = ['teamPresetSel','teamPresetSelected','teamsEditor','teamsEditorSelect','teamsEditorDetails',
   'teamsEditorMembers','teamsEditorCount','teamsEditorNew','teamsEditorEdit','teamsEditorDelete',
   'teamsEditorName','teamsEditorRename','teamsEditorNameSave','teamsEditorNameCancel','teamsEditorError',
   'teamsEditorSummary','teamsEditorSummaryText','teamsEditorToggle','teamsEditorDone'];
@@ -38,7 +38,7 @@ const notices = [];
 const context = vm.createContext({
   $: id => elements[id],
   reglages: { equipes_types: store },
-  members: [{ id:'1',prenom:'Emma' },{ id:'2',prenom:'Loïc' },{ id:'3',prenom:'Jordan' }],
+  members: [{ id:'1',prenom:'Emma',email:'emma@example.test' },{ id:'2',prenom:'Loïc',email:'loic@example.test' },{ id:'3',prenom:'Jordan',email:'jordan@example.test' }],
   picked,
   normName: s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(),
   esc: s => String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;'),
@@ -63,12 +63,35 @@ vm.runInContext(html.slice(start, end), context);
   assert.equal(elements.teamsEditorSummary.classList.hidden,false,'Le résumé reste visible');
   vm.runInContext('renderEquipesTypes()', context);
   elements.teamPresetSel.value = 'night';
-  listeners['teamPresetApply:click']();
+  listeners['teamPresetSel:change']();
   assert.equal(picked.length, 2, 'Ne duplique pas un membre déjà choisi');
   assert.equal(picked[1].nom, 'Loïc');
   assert.equal(picked[1].role, 'Peter Pan', 'Conserve les anciens rôles');
   assert.equal(syncs, 1);
-  assert.match(notices.at(-1), /1 hors équipe/);
+  assert.match(notices.at(-1), /1 introuvable/);
+  assert.match(elements.teamPresetSelected.textContent, /Team Nuit Magique/,'La team choisie reste visible');
+  assert.equal(vm.runInContext('eventTeamIds[0]',context),'night','La team est associée à l’événement');
+  assert.match(html, /team_ids: eventTeamIds\.slice\(\)/, 'Les IDs des teams sont sauvegardés dans les métadonnées de l’événement');
+  assert.match(html, /ev && Array\.isArray\(ev\.km_detail\?\.team_ids\)/, 'La sélection est restaurée à la réouverture');
+  assert.match(html, /km_detail: ev\.type_evenement === "evenement" \? \{ mode: "evt", team_ids:/, 'La duplication conserve la team');
+
+  // Le notifier existant déduit les destinataires des prénoms affectés dans
+  // animateurs. L'import automatique doit donc donner une nouvelle mission.
+  const notifier = fs.readFileSync('notifier-index.ts','utf8');
+  const nStart = notifier.indexOf('function quiPrevenir(');
+  const nEnd = notifier.indexOf('\nDeno.serve(',nStart);
+  assert(nStart>0 && nEnd>nStart,'Logique de notification retrouvée');
+  const notifCtx=vm.createContext({
+    equipeDe:ev => String(ev?.animateurs||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>{const m=s.match(/^(.*?)\s*\((.*)\)\s*$/);return m?{nom:m[1],role:m[2]}:{nom:s,role:''};}),
+    norm:s=>String(s||'').toLowerCase(),
+    CHAMPS_IMPORTANTS:['date','heure_debut','heure_fin','adresse','enceinte'],
+  });
+  vm.runInContext(notifier.slice(nStart,nEnd),notifCtx);
+  const ajouts=vm.runInContext('quiPrevenir("UPDATE", actuel, ancien)',Object.assign(notifCtx,{
+    actuel:{animateurs:picked.map(p=>`${p.nom}${p.role?` (${p.role})`:''}`).join(', '),statut:'confirme',date:'2027-03-13'},
+    ancien:{animateurs:'Emma (Ariel)',statut:'confirme',date:'2027-03-13'},
+  }));
+  assert.equal(ajouts.some(a=>a.nom==='Loïc'&&a.type==='nouvelle'),true,'Notifier reconnaît le nouveau membre importé');
 
   elements.teamsEditorSelect.value = 'night';
   elements.teamsEditorNew.onclick();
