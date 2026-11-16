@@ -1095,7 +1095,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <img class="logo" src="logo.png" alt="Fantasy Kids Events" /><span id="appTitle" class="hidden"></span>
       <div class="who" id="who">Agenda</div>
       <button class="icon-btn cloche hidden" id="clocheBtn" title="Mes notifications">🔔<b id="clocheN"></b></button>
-      <button class="icon-btn" id="teamBtn" title="Mon profil, notifications & équipe">👤 Profil</button>
+      <button class="icon-btn" id="teamBtn" title="Mon profil et mes notifications">👤 Profil</button>
     </div>
     <div class="tabs">
       <button class="tab on" data-view="cal"><i>📅</i> Agenda</button>
@@ -1516,8 +1516,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 <div id="teamBg" class="sheet-bg hidden">
   <div class="sheet">
     <div class="grab"></div>
-    <h2>👤 Mon profil</h2>
-    
+    <h2 id="teamSheetTitle">👤 Mon profil</h2>
+    <div id="profileSelf"></div>
+    <div id="profilePrefs">
 
     <div class="sec">Mes notifications</div>
     <div id="notifBox" class="notif-box"></div>
@@ -1551,6 +1552,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <label><input type="radio" name="demoRole" value="anim"><span>🎭 Vue animateur</span></label>
       </div>
     </div>
+    </div>
+    <div id="teamManage" class="hidden">
     <div class="sec">👥 Membres de l'équipe</div>
     <p class="hint">Écrivez le prénom <b>comme dans le champ Animateur(s)</b> des animations, et l'e-mail avec lequel la personne se connecte. C'est à cet e-mail qu'elle reçoit les notifications.<br>👑 = responsable (toi) : tout, y compris prix, paie et Gestion.<br>⭐ = gestionnaire : voit tout l'agenda, ajoute et modifie les animations et événements, sans voir les prix ni la paie.<br>🎭 les autres : voient tous les événements dans l'Agenda, mais uniquement leurs animations et événements assignés dans « Mon espace ».</p>
     <div id="teamList"></div>
@@ -1562,6 +1565,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div id="teamErr" class="err"></div>
       <div class="actions" style="margin-top:10px"><button class="btn ghost" type="submit">+ Ajouter à l'équipe</button></div>
     </form>
+    </div>
 
     <div class="actions">
       <button type="button" class="btn danger" id="logoutBtn">Se déconnecter</button>
@@ -4247,8 +4251,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const owner=reserved.get(normName(x));
       return `<option value="${esc(x)}" ${x === cur ? "selected" : ""} ${owner ? "disabled" : ""}>${esc(x)}${owner ? ` — réservé par ${esc(owner)}` : ""}</option>`;
     }).join("")}</optgroup>`).join("");
-    const monPerso = moi ? `<div class="mine-head" style="margin:0 0 10px"><label style="margin:0 0 4px">🦸 Mon personnage préféré <small style="font-weight:400">(un personnage par membre, les personnages réservés sont grisés)</small></label><select id="monPersoSel">${persoOpts(moi.perso_prefere || "")}</select></div>` : "";
-    $("teamList").innerHTML = monPerso + (visibles.length ? visibles.map(m => `
+    const monPerso = moi ? `<div class="mine-head" style="margin:0 0 10px">
+      <div class="member" style="margin-bottom:10px">
+        ${moi.perso_prefere ? persoImg(moi.perso_prefere, "av mem-av", `<div class="av">${esc((moi.prenom || "?")[0].toUpperCase())}</div>`) : `<div class="av">${esc((moi.prenom || "?")[0].toUpperCase())}</div>`}
+        <div class="info"><b>${esc(moi.prenom)}</b>${moi.perso_prefere ? `<small class="mem-alias">alias ${esc(moi.perso_prefere)}</small>` : ""}<span>${esc(moi.email || currentUser?.email || "")}</span></div>
+      </div>
+      <label style="margin:0 0 4px">🦸 Mon personnage préféré <small style="font-weight:400">(un personnage par membre, les personnages réservés sont grisés)</small></label>
+      <select id="monPersoSel">${persoOpts(moi.perso_prefere || "")}</select>
+    </div>` : `<p class="hint">Ton profil apparaîtra ici une fois ton compte associé à l'équipe.</p>`;
+    $("profileSelf").innerHTML = monPerso;
+    $("teamList").innerHTML = (visibles.length ? visibles.map(m => `
       <div class="member">
         ${m.perso_prefere ? persoImg(m.perso_prefere, "av mem-av", `<div class="av">${esc((m.prenom || "?")[0].toUpperCase())}</div>`) : `<div class="av">${esc((m.prenom || "?")[0].toUpperCase())}</div>`}
         <div class="info"><b>${esc(m.prenom)}</b>${m.perso_prefere ? `<small class="mem-alias">alias ${esc(m.perso_prefere)}</small>` : ""}<span>${m.email ? esc(m.email) : (isResp() ? "✉️ e-mail à compléter" : "")}</span><span class="addr">${m.adresse ? "📍 " + esc(m.adresse) : (isResp() ? "📍 adresse à compléter" : "")}</span>${isResp() && naissDe(m.prenom) ? `<span class="addr">🎂 ${esc(jourMois(naissDe(m.prenom)))}</span>` : ""}</div>
@@ -4383,10 +4395,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       $("prefNotifStatus").textContent = "❌ Enregistrement impossible : " + (err?.message || err);
     } finally { bouton.disabled = false; }
   };
-  $("teamBtn").onclick = async () => {
-    renderTeam(); fillReglages(); await refreshNotifBox(); await chargerMesChoixNotif();
+  const openTeamSheet = async (section = "profil") => {
+    const equipe = section === "equipe";
+    $("teamSheetTitle").textContent = equipe ? "👥 Équipe" : "👤 Mon profil";
+    $("profileSelf").classList.toggle("hidden", equipe);
+    $("profilePrefs").classList.toggle("hidden", equipe);
+    $("teamManage").classList.toggle("hidden", !equipe);
+    renderTeam();
     $("teamBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
+    $("teamBg").querySelector(".sheet").scrollTop = 0;
+    if (!equipe) { fillReglages(); await refreshNotifBox(); await chargerMesChoixNotif(); }
   };
+  $("teamBtn").onclick = () => openTeamSheet("profil");
   const closeTeam = () => { $("teamBg").classList.add("hidden"); document.body.style.overflow = ""; };
   $("teamClose").onclick = closeTeam;
   $("teamBg").addEventListener("click", (e) => { if (e.target.id === "teamBg") closeTeam(); });
@@ -4403,7 +4423,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("gCaissePresta").onclick = ouvrirCaissePresta;
   $("gExport").onclick = () => $("expMonth").scrollIntoView({ behavior: "smooth", block: "center" });
   $("gStock").onclick = () => openStock();
-  $("gEquipe").onclick = async () => { await $("teamBtn").onclick(); setTimeout(() => { const t = $("teamList"); if (t) t.scrollIntoView({ block: "start" }); }, 150); };
+  $("gEquipe").onclick = () => openTeamSheet("equipe");
   $("gRecap").onclick = () => openRecap(new Date().getMonth() < 2 ? new Date().getFullYear() - 1 : new Date().getFullYear());
   $("gHeures").onclick = () => document.querySelector('.tab[data-view="pt"]').click();
 
