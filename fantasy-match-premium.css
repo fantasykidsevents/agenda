@@ -45,7 +45,18 @@ body{
   height:auto;min-height:115px;display:grid;grid-template-columns:45% 55%;
   align-items:center;gap:0;position:relative;margin:0 0 2px;
 }
-.fm-brand{display:flex;align-items:center;justify-content:center;height:100%;min-width:0;text-decoration:none;padding:0}
+.fm-exit{
+  position:absolute;left:-4px;top:8px;z-index:8;
+  width:46px;height:46px;display:flex;align-items:center;justify-content:center;
+  border:2px solid #fff;border-radius:16px;text-decoration:none;
+  color:#a528da;background:linear-gradient(150deg,#fff,#fff2fa 65%,#e9c8ff);
+  box-shadow:0 5px 12px #9235ad35,inset 0 2px 4px #fff;
+  font:1000 30px/1 system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+.fm-exit:active{transform:scale(.95)}
+.fm-exit:focus-visible{outline:3px solid #04ccf7;outline-offset:3px}
+.fm-brand{display:flex;align-items:center;justify-content:center;height:100%;min-width:0;text-decoration:none;padding:0 0 0 28px}
 .fm-brand img{display:block;width:min(96%,195px);height:auto;max-height:112px;object-fit:contain;filter:drop-shadow(0 4px 4px #fff9)}
 .fm-game-logo{
   position:relative;display:block;align-self:center;
