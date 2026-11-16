@@ -1563,12 +1563,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           <button type="button" class="btn ghost" id="teamsEditorNameCancel">Annuler</button>
         </div>
       </div>
+      <div id="teamsEditorError" class="err hidden" role="alert" style="margin:10px 0"></div>
       <div id="teamsEditorDetails" class="hidden">
         <div class="actions" style="justify-content:flex-start;gap:8px;margin-top:8px">
           <button type="button" class="btn ghost" id="teamsEditorEdit">✏️ Renommer</button>
           <button type="button" class="btn danger" id="teamsEditorDelete">🗑️ Supprimer la team</button>
         </div>
-        <p class="hint" style="margin:7px 0">Membres de cette team <b id="teamsEditorCount"></b></p>
+        <p class="hint" style="margin:7px 0">Membres de cette team <b id="teamsEditorCount"></b> · les changements sont enregistrés automatiquement.</p>
         <div id="teamsEditorMembers" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;max-height:300px;overflow:auto"></div>
       </div>
     </div>
@@ -3928,13 +3929,31 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // affectation de chaque membre par cases à cocher (multi-teams autorisé).
   let teamNomMode = "nouvelle";
   const teamSelection = () => equipesTypes().find(t=>String(t.id)===String($("teamsEditorSelect").value));
+  let teamSaving=false;
+  function teamsErreur(err) {
+    const code=String(err?.code||""),details=String(err?.message||err||""),rls=/row.level.security|permission denied|42501/i.test(code+" "+details);
+    const message=rls
+      ? "Supabase refuse l'enregistrement des teams (autorisations de la base). Il faut appliquer le correctif SQL « reparation-enregistrement-teams.sql » dans Supabase > SQL Editor."
+      : "Enregistrement impossible : "+details;
+    const box=$("teamsEditorError");box.textContent="⚠️ "+message;box.classList.remove("hidden");
+    toast("⚠️ Enregistrement impossible — voir le message rouge");
+  }
   async function enregistrerTeams(next,selection) {
+    if(teamSaving)throw new Error("Un enregistrement est déjà en cours. Réessaie dans un instant.");
+    teamSaving=true;
     const json=JSON.stringify(next);
-    await regStore.set({equipes_types:json});
-    reglages.equipes_types=json;
-    renderTeamsEditor(selection);
-    renderEquipesTypes();
-    renderTeam();
+    $("teamsEditorError").classList.add("hidden");
+    try {
+      await regStore.set({equipes_types:json});
+      // Un upsert peut être accepté sans que la ligne soit ensuite accessible :
+      // ne jamais annoncer une réussite qui disparaîtra au prochain chargement.
+      const distant=await regStore.get();
+      if(distant.equipes_types!==json)throw new Error("La team n'a pas été retrouvée après l'enregistrement dans Supabase. Vérifie les autorisations de la table reglages.");
+      reglages.equipes_types=json;
+      renderTeamsEditor(selection);
+      renderEquipesTypes();
+      renderTeam();
+    } finally {teamSaving=false;}
   }
   function renderTeamsEditor(selection) {
     const autorise=isGest(), box=$("teamsEditor");
@@ -3958,6 +3977,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("teamsEditorSelect").addEventListener("change",()=>{ $("teamsEditorRename").classList.add("hidden");renderTeamsEditor(); });
   function editerNomTeam(mode) {
     teamNomMode=mode;
+    $("teamsEditorError").classList.add("hidden");
     const chosen=teamSelection();
     if(mode==="renommer"&&!chosen)return;
     $("teamsEditorName").value=mode==="renommer"?chosen.nom:"";
@@ -3969,20 +3989,23 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("teamsEditorNameCancel").onclick=()=>$("teamsEditorRename").classList.add("hidden");
   $("teamsEditorNameSave").onclick=async()=>{
     if(!isGest())return;
+    if(teamSaving)return;
     const nom=$("teamsEditorName").value.trim(),list=equipesTypes(),chosen=teamSelection();
     if(!nom){toast("Donnez un nom à la team.");return;}
     if(list.some(t=>normName(t.nom)===normName(nom)&&(teamNomMode==="nouvelle"||t.id!==chosen?.id))){toast("Cette team existe déjà.");return;}
     if(teamNomMode==="renommer"&&!chosen)return;
     const id=teamNomMode==="nouvelle"?(globalThis.crypto?.randomUUID?.()||String(Date.now())):chosen.id;
     const next=teamNomMode==="nouvelle"?[...list,{id,nom,membres:[]}]:list.map(t=>t.id===id?{...t,nom}:t);
+    const bouton=$("teamsEditorNameSave");bouton.disabled=true; bouton.textContent="⏳ Enregistrement…";
     try{await enregistrerTeams(next,id);$("teamsEditorRename").classList.add("hidden");toast(`🎭 Team « ${nom} » enregistrée`);}
-    catch(e){toast("Erreur : "+(e.message||e));}
+    catch(e){teamsErreur(e);}
+    finally{bouton.disabled=false; bouton.textContent="💾 Enregistrer";}
   };
   $("teamsEditorDelete").onclick=async()=>{
     if(!isGest())return;
     const chosen=teamSelection();if(!chosen||!confirm(`Supprimer « ${chosen.nom} » ? Les événements déjà enregistrés resteront inchangés.`))return;
     try{await enregistrerTeams(equipesTypes().filter(t=>t.id!==chosen.id),"");toast("Team supprimée");}
-    catch(e){toast("Erreur : "+(e.message||e));}
+    catch(e){teamsErreur(e);}
   };
   $("teamsEditorMembers").addEventListener("change",async e=>{
     const input=e.target.closest("[data-team-member]");if(!input||!isGest())return;
@@ -3995,7 +4018,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     });
     input.disabled=true;
     try{await enregistrerTeams(prochain,chosen.id);toast(input.checked?`✅ ${m.prenom} ajouté(e) à ${chosen.nom}`:`${m.prenom} retiré(e) de ${chosen.nom}`);}
-    catch(err){input.checked=!input.checked;input.disabled=false;toast("Erreur : "+(err.message||err));}
+    catch(err){input.checked=!input.checked;input.disabled=false;teamsErreur(err);}
   });
   // ---------- 🎪 Événement (beaucoup de personnel) ----------
   function appliquerType() {

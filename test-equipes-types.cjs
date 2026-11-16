@@ -11,7 +11,7 @@ assert(start !== -1 && end > start, 'Code des teams introuvable');
 const listeners = {};
 const ids = ['teamPresetSel','teamPresetApply','teamsEditor','teamsEditorSelect','teamsEditorDetails',
   'teamsEditorMembers','teamsEditorCount','teamsEditorNew','teamsEditorEdit','teamsEditorDelete',
-  'teamsEditorName','teamsEditorRename','teamsEditorNameSave','teamsEditorNameCancel'];
+  'teamsEditorName','teamsEditorRename','teamsEditorNameSave','teamsEditorNameCancel','teamsEditorError'];
 const elements = Object.fromEntries(ids.map(id => [id, {
   value: '', checked: false, disabled: false, innerHTML: '', textContent: '',
   classList: { add() {}, remove() {}, toggle() {} },
@@ -25,6 +25,8 @@ let store = JSON.stringify([
 ]);
 const picked = [{ nom: 'Emma', role: 'Ariel' }];
 let syncs = 0;
+let writeDenied = false;
+let ignoreWrite = false;
 const notices = [];
 const context = vm.createContext({
   $: id => elements[id],
@@ -40,7 +42,10 @@ const context = vm.createContext({
   syncAnim: () => syncs++,
   renderPicked: () => {},
   renderTeam: () => {},
-  regStore: { async set(data) { store = data.equipes_types; } },
+  regStore: {
+    async set(data) { if (writeDenied) throw Object.assign(new Error('new row violates row-level security policy'), { code:'42501' }); if (!ignoreWrite) store = data.equipes_types; },
+    async get() { return { equipes_types:store }; },
+  },
   crypto: { randomUUID: () => 'new-team' },
 });
 vm.runInContext(html.slice(start, end), context);
@@ -89,5 +94,19 @@ vm.runInContext(html.slice(start, end), context);
   elements.teamsEditorSelect.value = 'new-team';
   await elements.teamsEditorDelete.onclick();
   assert.equal(JSON.parse(store).length,1,'Supprime seulement la team sélectionnée');
+  elements.teamsEditorNew.onclick();
+  elements.teamsEditorName.value='Team test refusée';
+  writeDenied=true;
+  await elements.teamsEditorNameSave.onclick();
+  assert.equal(JSON.parse(store).length,1,'Une erreur Supabase ne crée pas de fausse team');
+  assert.match(elements.teamsEditorError.textContent,/correctif SQL/,'L’erreur RLS explique quoi faire');
+  writeDenied=false;
+  ignoreWrite=true;
+  await elements.teamsEditorNameSave.onclick();
+  assert.equal(JSON.parse(store).length,1,'Un succès sans persistance ne crée pas de fausse team');
+  assert.match(elements.teamsEditorError.textContent,/pas été retrouvée/,'Le code vérifie la persistance');
+  ignoreWrite=false;
+  await elements.teamsEditorNameSave.onclick();
+  assert.equal(JSON.parse(store).length,2,'La sauvegarde peut être retentée après correction');
   console.log('✅ Teams : création depuis Équipe, menu, multi-appartenance, import, renommage et suppression OK');
 })().catch(err => { console.error(err); process.exitCode = 1; });
