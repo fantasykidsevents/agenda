@@ -16,6 +16,15 @@ assert.equal(levelConfig(1).world,0);
 assert.equal(levelConfig(20).world,0);
 assert.equal(levelConfig(21).world,1);
 assert.equal(levelConfig(100).world,4);
+assert.equal(levelConfig(101).world,5);
+assert.equal(levelConfig(200).world,9);
+assert.equal(levelConfig(110).mode,'combo','Le niveau 110 exige de fusionner deux bonus');
+assert.equal(levelConfig(104).mode,'seal','Les nouveaux mondes ajoutent des sceaux');
+for(let n=101;n<=200;n++){
+  const l=levelConfig(n);
+  assert.ok(l.moves>=14 && l.target>0,'Chapitre 2 : objectif et coups valides au niveau '+n);
+  if(l.mode==='ice')assert.equal(iceCellsForLevel(n,l.target).size,l.target);
+}
 for(let n=1;n<=100;n++){
   const l=levelConfig(n);
   assert.equal(l.number,n);
@@ -86,6 +95,11 @@ const playableLine=Array(64).fill('rose');playableLine[5]='crown|lineH';
 assert.ok(specialSwapTargets(playableLine,4,5)?.has(5),'Le bonus de 4 doit aussi être utilisable');
 const playableRainbow=Array(64).fill('snow');playableRainbow[10]='rainbow|color';playableRainbow[11]='rose';playableRainbow[14]='rose';
 assert.ok(specialSwapTargets(playableRainbow,10,11).has(14),'L’arc-en-ciel doit sélectionner toute une couleur');
+const fusion=Array(64).fill('rose');fusion[27]='star|lineH';fusion[28]='wand|bomb';
+const doubleSpecial=specialSwapTargets(fusion,27,28);
+assert.ok(doubleSpecial.combo,'Deux bonus voisins doivent fusionner');
+assert.ok(doubleSpecial.size>=24,'Une fusion doit produire un vrai effet de zone');
+assert.ok(specialSwapTargets(playableBomb,27,28).combo===false,'Un bonus + pièce simple n’est pas une fusion');
 const autoBoard=Array(64).fill('rose');
 for(const i of [27,28,29,35,36,37,43,44,45])autoBoard[i]='star';
 assert.equal(bestBombCenter(autoBoard,'star'),36,'La bombe du bas doit viser automatiquement le meilleur groupe');
