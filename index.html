@@ -1088,6 +1088,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .poll-date-input input{min-width:0;flex:1}
   .poll-date-input input.poll-choice-text{flex:1}
   .poll-date-input button{flex:none;border:0;background:#f7e9f6;border-radius:11px;padding:9px;color:#a33e7c}
+  .g-makeup{margin:16px 0;padding:13px;border:1px solid #e5d8f5;border-radius:16px;background:linear-gradient(135deg,#fffafa,#f8f3ff)}
+  .g-makeup h3{margin:0 0 5px;color:#523082;font-size:17px}
+  .g-makeup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:11px}
+  .g-makeup-item{display:block;text-decoration:none;color:#4c376d;background:white;border:1px solid #eadff6;border-radius:13px;padding:8px;text-align:center;transition:transform .15s ease}
+  .g-makeup-item:hover{transform:translateY(-2px)}
+  .g-makeup-item img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain;border-radius:9px;background:#fbf8ff}
+  .g-makeup-item span{display:block;margin-top:7px;font-size:13px;font-weight:700}
 </style>
 </head>
 <body>
@@ -7074,11 +7081,41 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     events.filter(e => e.date >= t && e.statut !== "annule").forEach(e => parseTeam(e.animateurs).forEach(p => { if (p.role && estMoi(p.nom) && ficheDe(p.role)) out.add(ficheDe(p.role).nom); }));
     return out;
   }
+  // Photos de références fournies par Fantasy Kids Events.
+  // Les variantes gardent leur propre fiche ; aucune modification des visuels.
+  const GUIDE_MAQUILLAGES = {
+    "Anna":[["Classique","Anna.png"],["Couronnement","Anna couronnement.png"],["Reine","Anna reine.png"]],
+    "Elsa":[["Classique","Elsa.png"],["Spirit","Elsa Spirit.png"]],
+    "Ariel":[["Ariel","Ariel.png"]],
+    "Asha":[["Asha","Asha(1).png"]],
+    "Aurore":[["Aurore","Aurore.png"]],
+    "Belle":[["Belle","Belle.png"]],
+    "Blanche-Neige":[["Blanche-Neige","Blanche neige.png"]],
+    "Cendrillon":[["Cendrillon","Cendrillon(1).png"]],
+    "Jasmine":[["Jasmine","Jasmine.png"]],
+    "Mirabel Madrigal":[["Mirabel","Mirabel(1).png"]],
+    "Raiponce":[["Raiponce","Raiponce(1).png"]],
+    "Vaiana":[["Vaiana","Vaïana.png"]]
+  };
+  function galerieMaquillages(nom){
+    const refs=GUIDE_MAQUILLAGES[nom]||[];
+    if(!refs.length)return "";
+    return '<section id="gMakeups" class="g-makeup"><h3>💄 Références maquillage</h3>'
+      +'<p class="hint" style="margin:0">Touchez une fiche pour l’agrandir.</p>'
+      +'<div class="g-makeup-grid">'
+      +refs.map(([label,file])=>{
+        const url="./maquillages/"+encodeURIComponent(file);
+        return '<a class="g-makeup-item" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer" title="Agrandir : '+esc(label)+'">'
+          +'<img data-guide-makeup src="'+esc(url)+'" alt="Fiche de référence maquillage : '+esc(nom)+' — '+esc(label)+'" loading="lazy" />'
+          +'<span>'+esc(label)+'</span></a>';
+      }).join("")+'</div></section>';
+  }
   function renderGuide(filtre = "") {
     $("guideRetour").classList.toggle("hidden", !guideSel);
     if (guideSel) {
       const f = fichesGuide().find(x => x.nom === guideSel); if (!f) { guideSel = null; return renderGuide(); }
       $("guideBody").innerHTML = `<h2>📖 ${esc(f.nom)}</h2>
+        ${galerieMaquillages(f.nom)}
         ${G_SECS.map(([k, t]) => guideEdit ? `<div class="g-sec ${k}"><h4>${t}</h4><textarea data-gk="${k}">${esc(f[k] || "")}</textarea></div>`
           : f[k] ? `<div class="g-sec ${k}"><h4>${t}</h4><p>${esc(f[k])}</p></div>` : "").join("")}
         ${f._maj ? `<p class="hint">Modifié par ${esc(f._maj.maj_par || "?")}${f._maj.maj_le ? " le " + new Date(f._maj.maj_le).toLocaleDateString("fr-BE") : ""}</p>` : ""}
@@ -7116,6 +7153,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       try { await guideStore.save(nom, {}); await guideReload(); guideSel = nom; guideEdit = true; renderGuide(); } catch (err) { toast("Erreur : " + (err.message || err)); }
     }
   });
+  // Lorsqu'une photo n'a pas encore été déposée dans GitHub, masquer
+  // sa vignette plutôt que de montrer une image cassée.
+  $("guideBg").addEventListener("error",e=>{
+    const img=e.target.closest?.("img[data-guide-makeup]");
+    if(!img)return;
+    img.closest(".g-makeup-item")?.remove();
+    const galerie=$("gMakeups");
+    if(galerie&&!galerie.querySelector(".g-makeup-item"))galerie.remove();
+  },true);
   // 📖 depuis une carte ou la fiche du jour J
   document.addEventListener("click", (e) => { const g = e.target.closest(".g-lien[data-guide]"); if (g && !g.closest("#guideBg")) { e.stopPropagation(); e.preventDefault(); openGuide(g.dataset.guide); } }, true);
 
