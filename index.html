@@ -5505,7 +5505,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         }).join("");
         const attente = a?.costume_id && !cCourante ? `<p class="missing">⚠️ La pièce attribuée n'existe plus ou n'est pas autorisée pour ${esc(p.nom)}.</p>` : "";
         const conflit = cCourante ? conflitsPiece(ev, cCourante) : [];
-        const souhait = demande ? `<div class="tenue-card" style="margin:8px 0 0;padding:10px;background:#fdfaff">
+        // Un choix personnel résolu ne nécessite aucun suivi administratif visible.
+        // Conserver le suivi pour les demandes Fantasy, problèmes ou dossiers encore ouverts.
+        const suiviNecessaire = !!demande && (demande.choix === "fantasy" || !!demande.motif
+          || !!String(demande.detail || "").trim() || !!demande.photo_path
+          || (demande.statut && demande.statut !== "resolue"));
+        const souhait = suiviNecessaire ? `<div class="tenue-card" style="margin:8px 0 0;padding:10px;background:#fdfaff">
           <b>📝 Souhait de ${esc(p.nom)} : ${demande.choix === "personnel" ? "matériel personnel" : demande.choix === "sans_perruque" ? "sans perruque" : "matériel Fantasy"}</b><br>
           ${demande.costume_id ? `<small>Pièce souhaitée : ${esc(nomDe(costumes.find(c => String(c.id) === String(demande.costume_id)) || { personnage: p.role, type }))}</small><br>` : ""}
           <span class="tenue-status ${esc(demande.statut)}">${esc(statutsDemande[demande.statut] || "À traiter")}</span>
@@ -5514,7 +5519,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           ${demande.photo_path ? `<button type="button" class="btn ghost" data-voir-photo="${esc(demande.photo_path)}">📷 Voir la photo jointe</button>` : ""}
           <label class="tenue-details">Suivi de la demande<select data-demande-statut data-assign-member="${esc(p.nom)}" data-assign-role="${esc(p.role)}" data-assign-type="${type}">
             ${Object.entries(statutsDemande).map(([v, t]) => `<option value="${v}"${demande.statut === v ? " selected" : ""}>${t}</option>`).join("")}
-          </select></label></div>` : "";
+          </select></label></div>` : demande?.choix === "sans_perruque"
+          ? `<p class="hint" style="margin:8px 0 0">✨ ${esc(p.nom)} a indiqué qu’aucune perruque n’est nécessaire.</p>` : "";
         return `<div class="cost-row" style="display:block;padding:12px;margin:8px 0">
           <b>${TYPES[type][0]} ${TYPES[type][1]}</b>${verrouille ? ` <span class="badge">🔒 Choix fixé</span>` : ""}
           <select data-assign-piece="1" data-assign-member="${esc(p.nom)}" data-assign-role="${esc(p.role)}" data-assign-type="${type}" style="width:100%;margin-top:8px"${autorise && (resp || choix.some(c => !!persoDe(c))) ? "" : " disabled"}>
