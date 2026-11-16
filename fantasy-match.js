@@ -28,7 +28,7 @@
     return `<span class="fm-piece fm-piece-${KINDS.includes(kind) ? kind : 'rainbow'}${power ? ' fm-piece-' + power : ''}" aria-hidden="true"></span>`;
   };
   let sb = null, user = null, playerName = 'Moi', storageKey = 'fantasy_match_demo_v1', cloudReady = false;
-  let state = null, board = [], selected = -1, booster = '', busy = false;
+  let state = null, board = [], selected = -1, busy = false;
   let remaining = 0, target = 0, moves = 0, roundScore = 0, current = null, toastTimer = null, saveTimer = null;
   let touch = null, suppressClickUntil = 0;
   const rand = n => Math.floor(Math.random() * n);
@@ -207,7 +207,7 @@
     if (state.lives<1) { showNoLives(); return; }
     state.level = Math.min(Math.max(1,n),state.maxUnlocked);
     current = levelConfig(state.level); target=current.target; remaining=target; moves=current.moves;roundScore=0;
-    board=freshBoard(); selected=-1;booster='';busy=false;
+    board=freshBoard(); selected=-1;busy=false;
     $('boardOverlay').classList.add('hidden');
     save(); renderAll();
   }
@@ -227,7 +227,6 @@
     $('colorCount').textContent=state.boosters.color;
     $('bombCount').textContent=state.boosters.bomb;
     $('shuffleCount').textContent=state.boosters.shuffle;
-    for(const type of ['color','bomb','shuffle']) $('boost'+type[0].toUpperCase()+type.slice(1)).classList.toggle('active',booster===type);
     renderHearts();renderBoard();
   }
   function isNeighbor(a,b){return a>=0&&a<64&&b>=0&&b<64&&((Math.abs(a-b)===1&&Math.floor(a/8)===Math.floor(b/8))||Math.abs(a-b)===8)}
@@ -267,20 +266,26 @@
     const best=target-remaining;
     $('gameTip').textContent=best>=target*.7?'Encore un petit effort !':current.boss?'Défi spécial : garde un œil sur tes coups !':'Aligne trois symboles identiques pour récolter ta magie';
   }
+  function specialSwapTargets(b,a,c){
+    const sa=specialOf(b[a]),sc=specialOf(b[c]);
+    if(!sa&&!sc)return null;
+    const chosen=new Set([a,c]);
+    if(sa==='color'||sc==='color'){
+      if(sa==='color'&&sc==='color')for(let i=0;i<64;i++)chosen.add(i);
+      else {
+        const color=sa==='color'?kindOf(b[c]):kindOf(b[a]);
+        for(let i=0;i<64;i++)if(kindOf(b[i])===color)chosen.add(i);
+      }
+    }
+    return chosen;
+  }
   async function swap(a,b){
     if(busy||!isNeighbor(a,b))return;
     busy=true;selected=-1;
     [board[a],board[b]]=[board[b],board[a]];
     renderBoard();await pause(180);
-    const sa=specialOf(board[a]),sb=specialOf(board[b]);
-    if(sa==='color'||sb==='color'||(sa&&sb)){
-      const chosen=new Set([a,b]);
-      if(sa==='color'||sb==='color'){
-        const color=sa==='color'?kindOf(board[b]):kindOf(board[a]);
-        for(let j=0;j<64;j++)if(kindOf(board[j])===color || (sa==='color'&&sb==='color'))chosen.add(j);
-      }
-      moves--;await resolve(chosen,-1,false);return;
-    }
+    const specialTargets=specialSwapTargets(board,a,b);
+    if(specialTargets){moves--;await resolve(specialTargets,-1,false);return;}
     const match=findMatches(board);
     if(!match.size){
       [board[a],board[b]]=[board[b],board[a]];
@@ -288,26 +293,51 @@
     }
     moves--;await resolve(match,b,true);
   }
-  async function useBooster(i){
-    if(!booster||busy)return;
-    const kind=booster;
-    if(state.boosters[kind]<=0){toast('Plus de bonus disponible');booster='';renderAll();return;}
-    busy=true;selected=-1;booster='';state.boosters[kind]--;
+  function bestBombCenter(b,goal){
+    let best=27,bestScore=-1;
+    for(let i=0;i<64;i++){
+      const cy=Math.floor(i/8),cx=i%8;let score=0;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const y=cy+dy,x=cx+dx;
+        if(y<0||y>=8||x<0||x>=8)continue;
+        const v=b[y*8+x];score+=kindOf(v)===goal?4:1;
+        if(specialOf(v))score+=6;
+      }
+      if(score>bestScore){bestScore=score;best=i;}
+    }
+    return best;
+  }
+  async function useBooster(kind,i=-1){
+    if(!kind||busy)return;
+    if(state.boosters[kind]<=0){toast('Plus de bonus disponible');return;}
+    busy=true;selected=-1;state.boosters[kind]--;
     if(kind==='shuffle'){
       board=freshBoard();busy=false;save();renderAll();toast('Plateau mélangé !');return;
     }
     let chosen=new Set();
-    if(kind==='color')for(let j=0;j<64;j++)if(kindOf(board[j])===kindOf(board[i]))chosen.add(j);
-    else for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
-      const y=Math.floor(i/8)+dy,x=i%8+dx;if(y>=0&&y<8&&x>=0&&x<8)chosen.add(y*8+x);
+    if(kind==='color'){
+      const targetKind=i>=0?kindOf(board[i]):current.goal;
+      for(let j=0;j<64;j++)if(kindOf(board[j])===targetKind)chosen.add(j);
+      toast('Magie arc-en-ciel !');
+    }else{
+      const center=i>=0?i:bestBombCenter(board,current.goal);
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const y=Math.floor(center/8)+dy,x=center%8+dx;if(y>=0&&y<8&&x>=0&&x<8)chosen.add(y*8+x);
+      }
+      toast('Bombe magique !');
     }
     save();await resolve(chosen,-1,false);
   }
+  async function activateSpecial(i){
+    if(busy||!specialOf(board[i]))return;
+    busy=true;selected=-1;moves--;
+    toast('Bonus spécial déclenché !');
+    await resolve(new Set([i]),-1,false);
+  }
   function tileTap(i){
     if(busy)return;
-    if(booster){useBooster(i);return;}
-    if(selected<0){selected=i;renderBoard();return;}
-    if(selected===i){selected=-1;renderBoard();return;}
+    if(selected<0){selected=i;renderBoard();if(specialOf(board[i]))toast('Retouche le bonus pour l’activer, ou échange-le avec une pièce voisine');return;}
+    if(selected===i){if(specialOf(board[i]))activateSpecial(i);else{selected=-1;renderBoard();}return;}
     if(isNeighbor(selected,i)){swap(selected,i);return;}
     selected=i;renderBoard();
   }
@@ -398,7 +428,7 @@
     button.disabled=false;
   }
   function showRules(){
-    showDialog('Comment jouer ?',`<p>Échange deux pièces voisines pour aligner <b>3 symboles identiques ou plus</b>.</p><p>✨ <b>4 à la suite</b> : un symbole spécial qui efface une ligne ou une colonne.<br>🌈 <b>5 à la suite</b> : une magie arc-en-ciel qui efface une couleur entière.<br>💥 <b>En L ou en T</b> : une bombe qui explose sur les cases voisines.</p><p>Tu peux combiner des bonus entre eux pour déclencher des réactions en chaîne ! Récolte l’objectif avant de manquer de coups.</p><p>Tu disposes de <b>5 vies</b>. Une vie revient toutes les <b>30 minutes</b>. Tous les dix niveaux, tu gagnes trois bonus. Tu peux aussi offrir <b>une vie par jour</b> à un collègue depuis le classement.</p>`,[{label:'Jouer !',action:hideDialog}],'✦');
+    showDialog('Comment jouer ?',`<p>Échange deux pièces voisines pour aligner <b>3 symboles identiques ou plus</b>.</p><p>✨ <b>4 à la suite</b> : un symbole spécial qui efface une ligne ou une colonne.<br>🌈 <b>5 à la suite</b> : une magie arc-en-ciel qui efface une couleur entière.<br>💥 <b>En L ou en T</b> : une bombe qui explose sur les cases voisines.</p><p>Tu peux <b>échanger un bonus créé avec n’importe quelle pièce voisine</b>, ou le toucher deux fois pour l’activer. Les bonus du bas s’activent <b>en un seul appui</b> : ils visent la case sélectionnée, ou choisissent automatiquement une cible. Récolte l’objectif avant de manquer de coups.</p><p>Tu disposes de <b>5 vies</b>. Une vie revient toutes les <b>30 minutes</b>. Tous les dix niveaux, tu gagnes trois bonus. Tu peux aussi offrir <b>une vie par jour</b> à un collègue depuis le classement.</p>`,[{label:'Jouer !',action:hideDialog}],'✦');
   }
   function events(){
     $('gameBoard').addEventListener('click',e=>{
@@ -421,9 +451,7 @@
       $('boost'+type[0].toUpperCase()+type.slice(1)).addEventListener('click',()=>{
         if(busy)return;
         if(!state.boosters[type]){toast('Plus de bonus disponible');return;}
-        booster=booster===type?'':type;
-        if(booster==='shuffle'){useBooster(0);return;}
-        selected=-1;renderAll();toast(booster?'Choisis une pièce sur le plateau':'Bonus annulé');
+        useBooster(type,selected);
       });
     }
     $('levelsBtn').addEventListener('click',showLevels);

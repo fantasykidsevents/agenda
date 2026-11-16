@@ -48,18 +48,17 @@ body{
 .fm-brand{display:flex;align-items:center;justify-content:center;height:100%;min-width:0;text-decoration:none;padding:0}
 .fm-brand img{display:block;width:min(96%,195px);height:auto;max-height:112px;object-fit:contain;filter:drop-shadow(0 4px 4px #fff9)}
 .fm-game-logo{
-  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  transform:rotate(-4deg);padding:0;margin:0;font-family:'Nunito',system-ui,sans-serif;
-  font-size:clamp(34px,9.2vw,59px);line-height:.86;font-weight:1000;
-  letter-spacing:-.065em;white-space:nowrap;isolation:isolate;
+  position:relative;display:block;align-self:center;
+  width:100%;aspect-ratio:480/245;margin:0;padding:0;
+  background-image:url('fantasy-match-art.jpeg');background-repeat:no-repeat;
+  background-size:213.333% 626.94%;background-position:81.5% 2.3%;
+  -webkit-mask-image:radial-gradient(ellipse at center,#000 59%,#000 68%,transparent 89%);
+  mask-image:radial-gradient(ellipse at center,#000 59%,#000 68%,transparent 89%);
 }
-.fm-game-logo span,.fm-game-logo strong{
-  display:block;-webkit-text-stroke:3px #fff;paint-order:stroke fill;
-  text-shadow:0 5px 0 #781dc3,0 8px 9px #8425d877;
+.fm-game-logo span,.fm-game-logo strong,.fm-game-logo i{
+  position:absolute;width:1px;height:1px;overflow:hidden;
+  white-space:nowrap;clip-path:inset(50%);
 }
-.fm-game-logo span{color:#03bff7;background:linear-gradient(180deg,#90f5ff 0%,#00c0f5 52%,#087dea);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:#04bdf5}
-.fm-game-logo strong{color:#f62ba4;background:linear-gradient(180deg,#ffc0e9,#ff2ba5 47%,#df00a8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:#ff27a8}
-.fm-game-logo i{position:absolute;font-size:21px;font-style:normal;top:9%;right:-2%;color:#fff;text-shadow:0 0 6px #fff,0 0 11px #ff40ce}
 .fm-settings{position:absolute;right:-6px;top:-10px;z-index:3;width:31px;height:31px;font-size:18px;border:2px solid #fff9;border-radius:50%;background:#fff8;color:#a52fd9;box-shadow:0 2px 7px #8c22c833}
 .fm-title-wrap{position:relative;text-align:center;margin:4px 0 18px}
 .fm-level-btn{
@@ -160,16 +159,14 @@ body{
   box-shadow:0 0 3px 1px #fff,0 0 9px 2px #12cbff,0 0 12px #e918ff;
 }
 .fm-piece-lineV:after{transform:rotate(90deg)}
-.fm-piece-bomb:after{
-  content:"✦";position:absolute;inset:14%;display:grid;place-items:center;
-  font-size:clamp(18px,5vw,31px);font-weight:1000;color:#fff8a1;
-  -webkit-text-stroke:1px #fff;text-shadow:0 0 3px #fff,0 0 8px #ff23cf,0 0 12px #fc24ba;
-  border:2px solid #ffeafa;border-radius:50%;
-  background:radial-gradient(circle at 40% 36%,#fff8,#ed18ba9c 60%,#812bec98);
-  box-shadow:0 0 9px 2px #fff,0 0 15px 3px #fa3cf6;
+.fm-piece-bomb{
+  background-image:url('fantasy-match-boost-bomb.webp');
+  background-size:98% 98%;background-position:center;
+  filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 7px #ed28e5);
 }
 .fm-piece-rainbow.fm-piece-color{
-  background-size:1024% 1536%;background-position:25.5% 87.5%;
+  background-image:url('fantasy-match-boost-rainbow.webp');
+  background-size:98% 98%;background-position:center;
   filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 7px #ff36eb);
   animation:fm-rainbow-glow 1.6s ease-in-out infinite alternate;
 }
@@ -186,13 +183,13 @@ body{
 }
 .fm-power.active{outline:4px solid #00deff;box-shadow:0 0 14px #1bdeff,0 5px 0 #a64ad89a}
 .fm-power .fm-bubble{
-  display:block;width:79%;height:83%;background-image:url('fantasy-match-art.jpeg');
-  background-repeat:no-repeat;background-size:1024% 1536%;pointer-events:none;
+  display:block;width:94%;height:94%;background-repeat:no-repeat;
+  background-size:contain;background-position:center;pointer-events:none;
   filter:drop-shadow(0 3px 4px #8126b477);
 }
-#boostColor .fm-bubble{background-position:25.5% 87.5%}
-#boostBomb .fm-bubble{background-position:50.2% 87.5%}
-#boostShuffle .fm-bubble{background-position:75.2% 87.5%}
+#boostColor .fm-bubble{background-image:url('fantasy-match-boost-rainbow.webp')}
+#boostBomb .fm-bubble{background-image:url('fantasy-match-boost-bomb.webp')}
+#boostShuffle .fm-bubble{background-image:url('fantasy-match-boost-shuffle.webp')}
 .fm-power b{
   position:absolute;right:-4px;bottom:-4px;top:auto;
   min-width:32px;height:32px;padding:0 4px;display:grid;place-items:center;
