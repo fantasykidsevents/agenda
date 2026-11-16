@@ -5285,9 +5285,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   // Écran « Costumes »
   let costFiltre = "", costType = "", costSource = "fantasy", costEditId = null;
+  const pieceLieeAPrestation = id => costAttributions.some(a => String(a.costume_id) === String(id)) ||
+    costDemandes.some(d => String(d.costume_id) === String(id));
   function formulaireEditionCostume(c) {
     const personnage = String(c.personnage || "").trim();
-    const attribuee = costAttributions.some(a => String(a.costume_id) === String(c.id));
+    const attribuee = pieceLieeAPrestation(c.id);
     const connu = Object.values(PERSONNAGES).some(l => l.includes(personnage));
     const listePersos = `<option value="">— Personnage —</option>` +
       (personnage && !connu ? `<option value="${esc(personnage)}" selected>${esc(personnage)} (actuel)</option>` : "") +
@@ -5373,7 +5375,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!c) { toast("Fiche introuvable."); return; }
     const allowed = isResp() || normName(persoDe(c)) === normName(chatMe());
     if (!allowed) { toast("Vous ne pouvez modifier que votre propre matériel."); return; }
-    const attribuee = costAttributions.some(a => String(a.costume_id) === String(c.id));
+    const attribuee = pieceLieeAPrestation(c.id);
     const nom = form.elements.nom.value.trim();
     const personnage = attribuee ? c.personnage : (form.elements.personnage.value === "__autre__"
       ? form.elements.autre_personnage.value.trim() : form.elements.personnage.value.trim());
