@@ -13,6 +13,11 @@ Ne pas exécuter de migration à moitié : attendre la confirmation de succès d
 
 Le nouveau formulaire fonctionne dans l'application une fois ces fonctions installées :
 
+Si un membre voit « `column reference "responsable" is ambiguous` » en enregistrant
+son costume ou sa perruque, **réexécuter la version corrigée de `demandes-tenues.sql`**
+dans SQL Editor. La correction ne supprime ni les costumes, ni les attributions,
+ni les demandes déjà enregistrées.
+
 - `enregistrer_demande_tenue` : choix personnel, demande Fantasy, absence de perruque et signalement.
 - `traiter_demande_tenue` : suivi « À traiter / En cours / Résolue » par un responsable.
 
