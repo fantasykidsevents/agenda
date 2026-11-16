@@ -4274,9 +4274,19 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }
     const button=$("pollCreateBtn");button.disabled=true;pollError("");
     try{
-      await pollStore.create({titre,dates,emails,deadline:deadlineISO,notes:$("pollNotes").value.trim()});
+      const createdId=await pollStore.create({titre,dates,emails,deadline:deadlineISO,notes:$("pollNotes").value.trim()});
+      let pushProblem=false;
+      if(!DEMO && createdId){
+        try {
+          const sent=await sb.functions.invoke("notifier",{
+            body:{type:"SONDAGE_NOUVEAU",sondageId:createdId}
+          });
+          if(sent.error || sent.data?.ok===false) pushProblem=true;
+        } catch(err) { console.warn("Push sondage",err);pushProblem=true; }
+      }
       pollCreating=false;$("pollTitle").value=$("pollNotes").value="";$("pollDates").innerHTML="";
       pollAddDate({date:todayISO()});await refreshPolls();toast("🗳️ Sondage publié pour toute l’équipe !");
+      if(pushProblem)pollError("✅ Le sondage est publié dans la cloche. Le push téléphone nécessite de redéployer la fonction Supabase « notifier ».");
 
     }catch(err){pollError("Impossible de publier : "+(err.message||err));}
     finally{button.disabled=false;}
