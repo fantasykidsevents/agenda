@@ -252,6 +252,34 @@
   .remises-jordan .remise-line small{display:block;color:#6d6171;margin:5px 0 8px;line-height:1.4}
   .remises-jordan .remise-line button{width:100%;font-size:13px}
   .remises-jordan .remise-history{margin-top:12px}
+  /* 💰 Caisse physique des prestations, distincte de la caisse de vente */
+  .caisse-presta-sheet{max-width:760px}
+  .cp-hero{padding:18px;border-radius:20px;background:linear-gradient(130deg,#fff8dd,#f5eaff 70%,#e9f8ff);border:1px solid #ead8ae;margin:8px 0 14px}
+  .cp-hero small{font-size:12px;color:#745f7c;font-weight:700}
+  .cp-hero strong{display:block;color:#4e257f;font-size:38px;line-height:1.2;margin:6px 0}
+  .cp-hero p{margin:5px 0 0;color:#6d5875;font-size:13px}
+  .cp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 16px}
+  .cp-kpi{padding:12px 8px;border-radius:15px;background:#f7f2ff;text-align:center;border:1px solid #e6d9fa}
+  .cp-kpi b{display:block;color:#55219b;font-size:19px}
+  .cp-kpi small{font-size:11px;color:#716383;line-height:1.3;display:block;margin-top:3px}
+  .cp-section{font-weight:850;color:#5a2897;font-size:16px;margin:18px 0 10px}
+  .cp-row{display:flex;align-items:flex-start;gap:10px;border:1px solid #ede5f5;border-radius:14px;padding:11px;margin:7px 0;background:#fff}
+  .cp-symbol{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:11px;background:#e8fff2;color:#15803d;font-size:20px;font-weight:850}
+  .cp-row.sortie .cp-symbol{background:#fff0ef;color:#be3535}
+  .cp-row.annule{opacity:.55}
+  .cp-row .cp-main{flex:1;min-width:0}
+  .cp-row .cp-main b{display:block;overflow-wrap:anywhere;font-size:14px}
+  .cp-row .cp-main small{display:block;color:#83768f;margin-top:3px;font-size:12px}
+  .cp-row .cp-val{font-size:16px;font-weight:850;white-space:nowrap;color:#167342}
+  .cp-row.sortie .cp-val{color:#b33434}
+  .cp-row button{flex:none;border:0;border-radius:9px;background:#f0e9fa;color:#7445a9;padding:7px 8px;font-size:12px;font-weight:750}
+  .cp-form{padding:12px;background:#faf7ff;border:1px solid #e7dafa;border-radius:16px}
+  .cp-form .actions{margin-top:12px}
+  .cp-pending{border:1px solid #f1d99d;background:#fffaf0;border-radius:15px;padding:12px;margin:8px 0}
+  .cp-pending b,.cp-pending small{display:block}
+  .cp-pending small{font-size:12px;color:#886b41;margin:3px 0 9px}
+  .cp-pending button{width:100%;padding:10px;font-size:13px}
+  @media(max-width:400px){.cp-grid{gap:5px}.cp-kpi{padding:9px 4px}.cp-kpi b{font-size:16px}.cp-hero strong{font-size:33px}.cp-row{gap:7px;padding:9px}.cp-row .cp-val{font-size:14px}}
   .fiche-status{padding:12px 14px;border-radius:14px;background:#f6f2ff;font-size:14px;margin-bottom:8px;line-height:1.4}
   .fiche-status.ok{background:#dcfce7;color:#166534}
   .fiche-status.wait{background:#fff7ed;color:#9a3412}
@@ -1116,6 +1144,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <!-- Vue Mes animations -->
     <section id="viewMine" class="hidden">
       <div class="mine-head" id="mineHead"></div>
+      <a href="fantasy-match.html" class="mine-head" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;background:linear-gradient(110deg,#e0f5ff,#f0ddff 52%,#ffe0f1);border:1px solid #d8b5ff;box-shadow:0 5px 18px rgba(169,42,220,.13)">
+        <span aria-hidden="true" style="font-size:38px;line-height:1">💎</span>
+        <span style="flex:1"><b style="display:block;color:#8021bf;font-size:19px">Fantasy Match</b><small style="display:block;color:#6c5588;margin-top:3px">Le jeu magique de l'équipe · 100 niveaux · 5 vies</small></span>
+        <span aria-hidden="true" style="font-size:23px;color:#a52fe8">›</span>
+      </a>
       <div class="mine-head post-actions hidden" id="postActions"></div>
       <div class="mine-head remises-jordan hidden" id="remisesJordan"></div>
       <div class="mine-head post-actions photos-jordan hidden" id="photosJordan"></div>
@@ -1181,7 +1214,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue Chiffres (responsables) -->
     <section id="viewStats" class="hidden">
-      <div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
+      <div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
       <div class="group-title" id="gFinT">💶 Finances</div>
       <div class="seg" id="sCaisseSeg" style="margin-bottom:8px">
         <label><input type="radio" name="sCaisse" value="fantasy" checked /><span>💼 Fantasy</span></label>
@@ -1435,6 +1468,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <label class="chk">🎄 Autres événements à thème : <input type="number" id="rgBJ" min="1" max="120" class="mini" /> jours avant</label>
         <b>☀️ Mon résumé du matin (responsables)</b>
         <label class="chk"><input type="checkbox" id="rgRE" /> Chaque matin à <input type="number" id="rgREh" min="0" max="23" class="mini" /> h</label>
+        <b>📧 Mes e-mails automatiques Fantasy dans une autre boîte</b>
+        <p class="hint" style="margin:0 0 6px">Pour désengorger ta boîte principale. Cette adresse recevra les e-mails de l'app normalement destinés à ton compte, sans changer ta connexion, les mails envoyés aux clients ou ceux des autres membres.</p>
+        <label for="rgAdminMail">Nouvelle adresse de réception (Gmail dédié)</label>
+        <input type="email" id="rgAdminMail" placeholder="fantasy.gestion@gmail.com (vide = aucun transfert)" />
         <b>📤 Ma compta du mois par e-mail</b>
         <label class="chk"><input type="checkbox" id="rgCP" /> Le 1er de chaque mois : fichier Excel du mois + tickets, envoyés à :</label>
         <input type="email" id="rgCPmail" placeholder="vous@exemple.be (vide = e-mail des responsables)" />
@@ -1494,7 +1531,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       </div>
     </div>
     <div class="sec">👥 Membres de l'équipe</div>
-    <p class="hint">Écrivez le prénom <b>comme dans le champ Animateur(s)</b> des animations, et l'e-mail avec lequel la personne se connecte. C'est à cet e-mail qu'elle reçoit les notifications.<br>👑 = responsable (toi) : tout, y compris prix, paie et Gestion.<br>⭐ = gestionnaire : voit tout l'agenda, ajoute et modifie les animations et événements, sans voir les prix ni la paie.<br>🎭 les autres : voient tous les événements et spectacles, et seulement <b>leurs</b> animations.</p>
+    <p class="hint">Écrivez le prénom <b>comme dans le champ Animateur(s)</b> des animations, et l'e-mail avec lequel la personne se connecte. C'est à cet e-mail qu'elle reçoit les notifications.<br>👑 = responsable (toi) : tout, y compris prix, paie et Gestion.<br>⭐ = gestionnaire : voit tout l'agenda, ajoute et modifie les animations et événements, sans voir les prix ni la paie.<br>🎭 les autres : voient tous les événements dans l'Agenda, mais uniquement leurs animations et événements assignés dans « Mon espace ».</p>
     <div id="teamList"></div>
     <form id="teamForm" class="resp-only">
       <div class="row">
@@ -1531,6 +1568,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <button type="submit" class="btn primary" id="sigSend">Signaler le matériel et envoyer mon bilan</button>
     </div>
   </form>
+</div>
+
+<!-- ============ 💰 CAISSE PHYSIQUE DES PRESTATIONS ============ -->
+<div id="caissePrestaBg" class="sheet-bg hidden" style="z-index:80">
+  <div class="sheet caisse-presta-sheet">
+    <div class="grab"></div>
+    <div class="sheet-xw"><button type="button" class="sheet-x" id="caissePrestaClose" aria-label="Fermer">✕</button></div>
+    <h2>💰 Caisse des prestations</h2>
+    <p class="hint" style="margin-top:-4px">Ton argent liquide réellement déposé dans la caisse Fantasy. Indépendant de la caisse de vente des événements.</p>
+    <div id="caissePrestaBody"></div>
+  </div>
 </div>
 
 <!-- ============ SOLDE ENCAISSÉ ============ -->
@@ -1940,8 +1988,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if (DEMO) return JSON.parse(localStorage.getItem(LS_KEY) || "[]");
       const { data, error } = await sb.from("evenements").select("*").order("date").order("heure_debut", { nullsFirst: true });
       if (error) throw error;
-      // N'exposer dans les vues et le cache de l'équipe que les missions
-      // auxquelles la personne est affectée. Les gestionnaires voient tout.
+      // Agenda : toute l'équipe voit les événements publics / spectacles,
+      // mais les animations restent limitées aux membres affectés.
       const visibles = data.filter(jeVoisEv);
       if (isResp()) {
         const [{ data: pv }, { data: pa }] = await Promise.all([sb.from("evenements_prive").select("*"), sb.from("paies").select("*")]);
@@ -2092,9 +2140,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (DEMO) return demoRole === "resp" || demoRole === "gest";
     const me = myMember(); return isResp() || !!(me && me.gestionnaire);
   }
-  // Agenda personnel : un animateur ne voit que les prestations et événements
-  // où son prénom figure dans l'équipe (les gestionnaires voient tout).
-  const jeVoisEv = (e) => isGest() || anims(e).some(a => normName(a) === normName(chatMe()));
+  // Agenda commun : événements/spectacles visibles par toute l'équipe ;
+  // animations visibles uniquement si affecté. « Mon espace » conserve son
+  // propre filtre strict sur les affectations, même pour les événements.
+  const jeVoisEv = (e) => isGest() || e.type_evenement === "evenement" || anims(e).some(a => normName(a) === normName(chatMe()));
   function isResp() {
     if (DEMO) return demoRole === "resp";
     const me = myMember();
@@ -2516,10 +2565,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       ${finies.length ? `<details class="remise-group remise-history"><summary>✅ Dépôts en caisse confirmés (${finies.length})</summary>${finies.slice(0, 25).map(x => ligneHtml(x, true)).join("")}${finies.length > 25 ? `<p class="hint" style="padding:0 12px">Les 25 confirmations les plus récentes sont affichées.</p>` : ""}</details>` : ""}`;
   }
   let remiseEnCours = false;
-  $("remisesJordan").addEventListener("click", async e => {
-    const btn = e.target.closest("[data-remise-jordan]");
+  async function confirmerDepotEspeces(btn) {
     if (!btn) return;
-    e.preventDefault(); e.stopPropagation();
     if (remiseEnCours || !peutConfirmerRemise()) return;
     const ev = events.find(x => String(x.id) === btn.dataset.remiseJordan);
     const type = btn.dataset.remiseType, annuler = btn.dataset.remiseAnnuler === "1";
@@ -2534,9 +2581,174 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       ? { solde_remis_jordan_le: annuler ? null : new Date().toISOString(), solde_remis_jordan_par: annuler ? null : "Jordan" }
       : { tatouages_remis_jordan_le: annuler ? null : new Date().toISOString(), tatouages_remis_jordan_par: annuler ? null : "Jordan" };
     remiseEnCours = true; btn.disabled = true;
-    try { await store.patch(ev.id, champs); toast(annuler ? "Dépôt remis en attente" : "💶 Dépôt dans la caisse confirmé !"); await reload(); }
+    try { await store.patch(ev.id, champs);
+      let echecPhotoMontant = false;
+      if (!annuler) {
+        const snapshots = {};
+        if (champs.solde_remis_jordan_le) snapshots[CP_DEP + ev.id + "_s"] = JSON.stringify({ at: champs.solde_remis_jordan_le, montant: totalSolde(ev) });
+        if (champs.tatouages_remis_jordan_le) snapshots[CP_DEP + ev.id + "_t"] = JSON.stringify({ at: champs.tatouages_remis_jordan_le, montant: totalTatouages(ev) });
+        if (Object.keys(snapshots).length) { try { await regStore.set(snapshots); } catch (err) { console.warn("Montant du dépôt non figé :", err); echecPhotoMontant = true; } }
+      }
+      await reload();
+      toast(annuler ? "Dépôt remis en attente" : echecPhotoMontant ? "⚠️ Dépôt confirmé, mais montant historique non figé" : "💶 Dépôt dans la caisse confirmé !");
+      if (!$("caissePrestaBg").classList.contains("hidden")) renderCaissePresta(); }
     catch (err) { toast("Erreur d'enregistrement : " + (err.message || err)); btn.disabled = false; }
     finally { remiseEnCours = false; }
+  }
+  $("remisesJordan").addEventListener("click", e => {
+    const btn = e.target.closest("[data-remise-jordan]");
+    if (!btn) return;
+    e.preventDefault(); e.stopPropagation();
+    confirmerDepotEspeces(btn);
+  });
+
+  // ================= 💰 Caisse physique des prestations =================
+  // Les dépôts automatiques viennent des validations des espèces (solde et
+  // tatouages). Les mouvements manuels sont des lignes distinctes en base,
+  // ce qui évite d'écraser l'historique entre deux appareils.
+  const CP_INIT = "caisse_presta_init_v1";
+  const CP_MVT = "caisse_presta_m_";
+  const CP_ANN = "caisse_presta_a_";
+  const CP_DEP = "cpd_";
+  const cpMontant = (s) => Math.round((parseFloat(String(s ?? "").replace(",", ".")) || 0) * 100) / 100;
+  let cpBusy = false;
+  function cpInitialisation() {
+    try { const x = JSON.parse(reglages[CP_INIT] || "null");
+      return x && typeof x.started_at === "string" && Number.isFinite(+x.initial) && +x.initial >= 0 ? x : null;
+    } catch (_) { return null; }
+  }
+  function cpMouvements() {
+    return Object.entries(reglages).filter(([k]) => k.startsWith(CP_MVT)).flatMap(([k, val]) => {
+      try { const o = JSON.parse(val); if (!o || !["entree", "sortie"].includes(o.type) || !(+o.montant > 0) || !o.id) return [];
+        return [{ ...o, montant: +o.montant, annule: !!reglages[CP_ANN + o.id], automatique: false,
+          titre: o.motif || "Mouvement manuel", at: o.cree_le || o.date + "T12:00:00" }];
+      } catch (_) { return []; }
+    });
+  }
+  function cpDepotsAutomatiques(init) {
+    const out = [], debut = Date.parse(init.started_at);
+    // Un montant validé est figé au moment du dépôt, même si le devis ou
+    // le solde de la prestation sont corrigés plusieurs semaines plus tard.
+    const montantConfirme = (e, type, montant, date) => {
+      try { const s = JSON.parse(reglages[CP_DEP + e.id + (type === "solde" ? "_s" : "_t")] || "null");
+        return s && s.at === date && Number.isFinite(+s.montant) && +s.montant >= 0 ? +s.montant : montant;
+      } catch (_) { return montant; }
+    };
+    for (const e of events) {
+      // Une annulation ultérieure de la prestation ne retire pas les billets
+      // physiquement déposés dans la caisse : une sortie est alors nécessaire.
+      if (e.type_evenement === "evenement") continue;
+      const commun = { automatique: true, evenement_id: e.id, titre: e.titre || e.enfant || "Animation", type: "entree", annule: false };
+      const solde = totalSolde(e), tat = totalTatouages(e);
+      if (e.solde_encaisse === "cash" && solde > 0 && e.solde_remis_jordan_le && Date.parse(e.solde_remis_jordan_le) >= debut)
+        out.push({ ...commun, id: "solde:" + e.id, montant: montantConfirme(e, "solde", solde, e.solde_remis_jordan_le), note: "Solde en espèces", at: e.solde_remis_jordan_le });
+      if (e.tatouages_paiement === "cash" && tat > 0 && e.tatouages_remis_jordan_le && Date.parse(e.tatouages_remis_jordan_le) >= debut)
+        out.push({ ...commun, id: "tatouages:" + e.id, montant: montantConfirme(e, "tatouages", tat, e.tatouages_remis_jordan_le), note: "Tatouages pailletés", at: e.tatouages_remis_jordan_le });
+    }
+    return out;
+  }
+  function cpEtat() {
+    const init = cpInitialisation(); if (!init) return null;
+    const auto = cpDepotsAutomatiques(init), manuels = cpMouvements(), actifs = [...auto, ...manuels.filter(m => !m.annule)];
+    const entrees = actifs.filter(m => m.type === "entree").reduce((s,m) => s + m.montant, 0);
+    const sorties = actifs.filter(m => m.type === "sortie").reduce((s,m) => s + m.montant, 0);
+    const attente = mouvementsEspecesEquipe().filter(m => !m.remis && events.some(e => String(e.id) === String(m.id) && e.type_evenement !== "evenement"));
+    return { init, manuels, auto, attente, entrees, sorties,
+      solde: Math.round((+init.initial + entrees - sorties) * 100) / 100,
+      lignes: [...auto, ...manuels].sort((a,b) => String(b.at).localeCompare(String(a.at))) };
+  }
+  const cpDateTexte = (d) => { try { return new Date(d).toLocaleDateString("fr-BE", { day: "numeric", month: "short", year: "numeric" }); } catch (_) { return d || ""; } };
+  function renderCaissePresta() {
+    const box = $("caissePrestaBody"); if (!box) return;
+    if (!peutConfirmerRemise()) { box.innerHTML = `<p class="hint">Réservé à Jordan.</p>`; return; }
+    const S = cpEtat();
+    if (!S) { box.innerHTML = `<div class="cp-hero"><b>✨ Première ouverture</b><p>Pour ne pas compter deux fois les anciennes recettes, commence par indiquer le montant réellement présent dans ta caisse. Les nouveaux dépôts seront ajoutés automatiquement à partir de maintenant.</p></div>
+      <form id="cpInitForm" class="cp-form"><label for="cpInitial">💶 Argent actuellement dans la caisse (€)</label><input id="cpInitial" type="number" inputmode="decimal" step="0.01" min="0" value="0" required />
+        <p class="hint">Même si tu pars de zéro, tu pourras enregistrer les dépôts et sorties ensuite. Ce solde de départ restera dans l'historique.</p>
+        <div class="actions"><button class="btn primary" type="submit">✨ Ouvrir ma caisse</button></div><div id="cpErreur" class="err"></div></form>`; return; }
+    const totalAttente = S.attente.reduce((s,m) => s + m.montant, 0);
+    const ligne = (m) => {
+      const sort = m.type === "sortie", ann = !!m.annule;
+      const sous = m.automatique ? (m.note + " · Dépôt confirmé " + cpDateTexte(m.at)) : (`${cpDateTexte(m.date)} · ${m.type === "entree" ? "Entrée manuelle" : "Sortie manuelle"}${ann ? " · ANNULÉE" : ""}`);
+      return `<div class="cp-row ${sort ? "sortie" : ""} ${ann ? "annule" : ""}"><span class="cp-symbol">${sort ? "−" : "+"}</span><div class="cp-main"><b>${esc(m.titre)}</b><small>${esc(sous)}</small>
+        ${!m.automatique && !ann ? `<button type="button" data-cp-ann="${esc(m.id)}" style="margin-top:7px">↩️ Annuler ce mouvement</button>` : ""}</div><span class="cp-val">${sort ? "−" : "+"}${euro(m.montant)}</span></div>`;
+    };
+    box.innerHTML = `<div class="cp-hero"><small>💰 ARGENT PHYSIQUEMENT DANS LA CAISSE</small><strong>${euro(S.solde)}</strong><p>Solde de départ : ${euro(+S.init.initial)} · Suivi ouvert le ${cpDateTexte(S.init.started_at)}</p></div>
+      <div class="cp-grid"><div class="cp-kpi"><b>+${euro(S.entrees)}</b><small>Entrées confirmées</small></div><div class="cp-kpi"><b>−${euro(S.sorties)}</b><small>Sorties enregistrées</small></div><div class="cp-kpi"><b>${euro(totalAttente)}</b><small>À déposer</small></div></div>
+      <div class="cp-section">⏳ Espèces encaissées, pas encore déposées</div>
+      ${S.attente.length ? S.attente.sort((a,b)=>b.date.localeCompare(a.date)).map(m => `<div class="cp-pending"><b>${esc(m.titre)} · ${euro(m.montant)}</b><small>${esc(cpDateTexte(m.date))} · ${esc(m.libelle)} · Paiement saisi par ${esc(m.par)}</small>
+        <button type="button" class="btn primary" data-remise-jordan="${esc(m.id)}" data-remise-type="${esc(m.type)}" data-remise-annuler="0">✅ Déposé dans la caisse</button></div>`).join("") : `<p class="hint">✅ Tout le liquide encaissé a été déposé. Les sommes impayées et les paiements électroniques ne figurent pas ici.</p>`}
+      <div class="cp-section">➕ Ajouter une entrée ou une sortie d'espèces</div>
+      <form id="cpMvtForm" class="cp-form"><div class="row"><div><label for="cpType">Mouvement</label><select id="cpType"><option value="sortie">💸 Sortie de la caisse</option><option value="entree">💶 Entrée manuelle</option></select></div>
+        <div><label for="cpMontant">Montant (€)</label><input id="cpMontant" type="number" min="0.01" step="0.01" inputmode="decimal" required placeholder="0,00" /></div></div>
+        <label for="cpMotif">Motif (obligatoire)</label><input id="cpMotif" maxlength="180" required placeholder="Ex. Achat de matériel, dépôt à la banque, apport…" />
+        <label for="cpDate">Date</label><input id="cpDate" type="date" value="${todayISO()}" required />
+        <div class="actions"><button class="btn primary" type="submit">💾 Enregistrer le mouvement</button></div><div id="cpErreur" class="err"></div></form>
+      <div class="cp-section">📖 Historique de la caisse</div><p class="hint">Chaque dépôt de prestation est ajouté automatiquement. Les corrections manuelles restent visibles après annulation.</p>
+      <div class="actions" style="margin:0 0 12px"><button type="button" class="btn ghost" id="cpExport">📥 Exporter l'historique CSV</button></div>
+      ${S.lignes.length ? S.lignes.slice(0,70).map(ligne).join("") : `<p class="hint">Aucun mouvement enregistré.</p>`}
+      ${S.lignes.length > 70 ? `<p class="hint">Les 70 derniers mouvements sont affichés. L'export CSV contient tout l'historique.</p>` : ""}
+      <div class="cp-row"><span class="cp-symbol">+</span><div class="cp-main"><b>Ouverture de la caisse</b><small>${esc(cpDateTexte(S.init.started_at))} · Solde de départ</small></div><span class="cp-val">+${euro(+S.init.initial)}</span></div>`;
+  }
+  const fermerCaissePresta = () => { $("caissePrestaBg").classList.add("hidden"); document.body.style.overflow = ""; };
+  $("caissePrestaClose").onclick = fermerCaissePresta;
+  $("caissePrestaBg").addEventListener("click", e => { if (e.target.id === "caissePrestaBg") fermerCaissePresta(); });
+  async function ouvrirCaissePresta() {
+    if (!peutConfirmerRemise()) { toast("Cette caisse est réservée à Jordan."); return; }
+    $("caissePrestaBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
+    $("caissePrestaBody").innerHTML = `<p class="hint">⏳ Actualisation de la caisse…</p>`;
+    try { reglages = await regStore.get(); events = await store.list(); renderCaissePresta(); }
+    catch (err) { $("caissePrestaBody").innerHTML = `<p class="err">Impossible de charger la caisse : ${esc(err.message || err)}</p>`; }
+  }
+  $("caissePrestaBg").addEventListener("submit", async e => {
+    if (!["cpInitForm", "cpMvtForm"].includes(e.target.id)) return;
+    e.preventDefault(); if (cpBusy || !peutConfirmerRemise()) return;
+    const erreur = $("cpErreur"), montant = cpMontant(e.target.id === "cpInitForm" ? $("cpInitial").value : $("cpMontant").value);
+    if (!Number.isFinite(montant) || (e.target.id === "cpInitForm" ? montant < 0 : montant <= 0)) { erreur.textContent = "Indique un montant valide."; return; }
+    const formulaireInit = e.target.id === "cpInitForm";
+    let nouvelle;
+    if (formulaireInit) {
+      if (cpInitialisation()) { erreur.textContent = "La caisse est déjà initialisée."; return; }
+      nouvelle = { [CP_INIT]: JSON.stringify({ initial: montant, started_at: new Date().toISOString(), auteur: "Jordan" }) };
+    } else {
+      const S = cpEtat(), type = $("cpType").value, motif = $("cpMotif").value.trim(), date = $("cpDate").value;
+      if (!S || !["entree", "sortie"].includes(type)) { erreur.textContent = "Caisse indisponible."; return; }
+      if (motif.length < 3) { erreur.textContent = "Précise le motif de ce mouvement."; return; }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > todayISO()) { erreur.textContent = "Choisis une date valide, sans date future."; return; }
+      if (date < S.init.started_at.slice(0,10)) { erreur.textContent = "Ce mouvement doit dater de l'ouverture de la caisse ou après."; return; }
+      if (type === "sortie" && montant > S.solde + 0.001) { erreur.textContent = `La caisse ne contient que ${euro(S.solde)}. Impossible de sortir ${euro(montant)}.`; return; }
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2,9);
+      nouvelle = { [CP_MVT + id]: JSON.stringify({ id, type, montant, motif, date, cree_le: new Date().toISOString(), auteur: "Jordan" }) };
+    }
+    cpBusy = true; const b = e.target.querySelector('button[type="submit"]'); if (b) b.disabled = true;
+    try { await regStore.set(nouvelle); reglages = await regStore.get(); renderCaissePresta(); toast(formulaireInit ? "💰 Caisse ouverte !" : "💾 Mouvement enregistré dans la caisse"); }
+    catch (err) { erreur.textContent = "Enregistrement impossible : " + (err.message || err); if (b) b.disabled = false; }
+    finally { cpBusy = false; }
+  });
+  $("caissePrestaBg").addEventListener("click", async e => {
+    const dep = e.target.closest("[data-remise-jordan]");
+    if (dep) { e.preventDefault(); e.stopPropagation(); await confirmerDepotEspeces(dep); return; }
+    const ann = e.target.closest("[data-cp-ann]");
+    if (ann) {
+      if (cpBusy || !peutConfirmerRemise()) return;
+      const id = ann.dataset.cpAnn, S = cpEtat(), m = S && S.manuels.find(x => x.id === id && !x.annule);
+      if (!m || !confirm(`Annuler le mouvement « ${m.titre} » de ${euro(m.montant)} ? Il restera dans l'historique.`)) return;
+      cpBusy = true; ann.disabled = true;
+      try { await regStore.set({ [CP_ANN + id]: new Date().toISOString() }); reglages = await regStore.get(); renderCaissePresta(); toast("↩️ Mouvement annulé"); }
+      catch (err) { toast("Erreur : " + (err.message || err)); ann.disabled = false; }
+      finally { cpBusy = false; }
+      return;
+    }
+    if (e.target.id === "cpExport") {
+      const S = cpEtat(); if (!S) return;
+      const rows = [["Date", "Type", "Motif", "Montant EUR", "Source", "Etat"],
+        [S.init.started_at.slice(0,10), "entree", "Solde de départ", (+S.init.initial).toFixed(2), "initial", "valide"],
+        ...S.lignes.map(m => [(m.date || m.at.slice(0,10)), m.type, m.automatique ? `${m.titre} - ${m.note}` : m.titre,
+          (m.type === "sortie" ? -m.montant : m.montant).toFixed(2), m.automatique ? "prestation" : "manuel", m.annule ? "annule" : "valide"])];
+      const csv = "\ufeff" + rows.map(r => r.map(x => '"' + String(x).replace(/"/g, '""') + '"').join(";")).join("\r\n");
+      const a = document.createElement("a"), url = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8" }));
+      a.href = url; a.download = `caisse-prestations-${todayISO()}.csv`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000);
+    }
   });
   // Suivi personnel de Jordan : les photos des prestations client terminées
   // doivent être accessibles même quand il n'était pas dans l'équipe.
@@ -3142,6 +3354,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
      ["rgAE", "rgAEm", "rappel_avant_evt", "", "60"], ["rgCO", "rgCOj", "costumes_jours", "7", "7"], ["rgCK", "rgCKh", "checklist_heure", "18", "18"], ["rgRE", "rgREh", "resume_heure", "8", "8"]].forEach(([c, n, k, d, def]) => {
       const v = rg(k, d); $(c).checked = v !== "" && v !== "0"; $(n).value = v !== "" && v !== "0" ? v : def; });
     $("rgCKitems").value = reglages.checklist_items ?? CK_DEFAUT;
+    $("rgAdminMail").value = reglages.notifications_admin_email || "";
     $("rgCP").checked = reglages.compta_actif !== "0"; $("rgCPmail").value = reglages.compta_email || "";
     const sj = reglages.sauvegarde_jour ?? "1"; $("rgSV").checked = /^[1-7]$/.test(sj); $("rgSVj").value = /^[1-7]$/.test(sj) ? sj : "1"; $("rgSVmail").value = reglages.sauvegarde_email || "";
     $("rgBJ").value = reglages.bandeau_jours || "15";
@@ -3162,6 +3375,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         point_valeur: String(parseFloat(String($("rgPV").value).replace(",", ".")) || ""),
         point_seuil: String(Math.min(60, Math.max(1, +$("rgPS").value || 30))),
         bandeau_spectacle_jours: String(Math.min(200, Math.max(1, +$("rgBS").value || 30))),
+        notifications_admin_email: $("rgAdminMail").value.trim(),
+        notifications_admin_origine: (currentUser?.email || "").trim().toLowerCase(),
         compta_actif: $("rgCP").checked ? "1" : "0", compta_email: $("rgCPmail").value.trim(),
         sauvegarde_jour: $("rgSV").checked ? $("rgSVj").value : "", sauvegarde_email: $("rgSVmail").value.trim(),
         resume_heure: $("rgRE").checked ? String(Math.min(23, Math.max(0, +$("rgREh").value || 8))) : "",
@@ -4080,6 +4295,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("rgClose").onclick = closeRg; $("rgBg").addEventListener("click", (e) => { if (e.target.id === "rgBg") closeRg(); });
   $("gReglages").onclick = openRg;
   $("gFin").onclick = () => $("gFinT").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("gCaissePresta").onclick = ouvrirCaissePresta;
   $("gExport").onclick = () => $("expMonth").scrollIntoView({ behavior: "smooth", block: "center" });
   $("gStock").onclick = () => openStock();
   $("gEquipe").onclick = async () => { await $("teamBtn").onclick(); setTimeout(() => { const t = $("teamList"); if (t) t.scrollIntoView({ block: "start" }); }, 150); };
@@ -4212,6 +4428,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const r = isResp();
     $("statsTab").classList.toggle("hidden", !r);
     $("addBtn").classList.toggle("hidden", !isGest());
+    $("gCaissePresta").classList.toggle("hidden", !peutConfirmerRemise());
     // 📋 Liste : onglet pour 👑 et ⭐ ; cachée pour les animateurs
     document.querySelector('.tab[data-view="list"]').classList.toggle("hidden", !isGest());
     document.querySelectorAll(".vue-seg").forEach(x => x.classList.add("hidden"));
