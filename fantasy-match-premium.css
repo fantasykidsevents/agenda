@@ -257,3 +257,33 @@ body{
   .fm-power b{height:28px;min-width:28px;font-size:17px}
 }
 @media(min-width:550px){.fm-shell{margin-top:14px;margin-bottom:14px;border-radius:35px;min-height:calc(100svh - 28px)}}
+
+/* Chapitre 2 : sceaux, bombes et effets de fusion */
+.fm-cell.sealed{filter:saturate(.7) brightness(.92)}
+.fm-cell.sealed::after{
+  content:"";position:absolute;inset:1px;z-index:3;pointer-events:none;border-radius:7px;
+  background:repeating-linear-gradient(135deg,transparent 0 7px,#7139c37a 8px 11px,transparent 12px 19px);
+  box-shadow:inset 0 0 0 3px #dac3ff,inset 0 0 9px #40116dbb
+}
+.fm-seal{position:absolute;right:1px;bottom:1px;z-index:4;pointer-events:none;border:2px solid #fff9;
+  border-radius:10px;padding:0 5px;background:linear-gradient(145deg,#651bb7,#bc69ed);
+  box-shadow:0 2px 6px #350a7a9c;color:#fff;font-weight:1000;font-size:14px}
+.fm-timer{position:absolute;left:0;top:0;z-index:5;pointer-events:none;border-radius:9px;
+  padding:1px 3px;background:#f72783;color:white;font-size:12px;font-weight:1000;
+  box-shadow:0 2px 7px #b60a5d98;animation:fm-timer-pulse 1s infinite alternate}
+.fm-cell.match{animation:fm-match-pop .35s both;box-shadow:0 0 14px #fff,inset 0 0 19px #ffe082}
+.fm-fx-layer{pointer-events:none;position:absolute;inset:0;z-index:9;overflow:hidden;border-radius:24px}
+.fm-spark{position:absolute;display:block;width:10px;height:10px;border-radius:2px;
+  background:#fff4a6;box-shadow:0 0 6px 3px #fff9,0 0 18px 5px #ff2edac7;
+  transform:translate(-50%,-50%) rotate(45deg);animation:fm-spark-fly .8s cubic-bezier(.2,.7,.4,1) both}
+.fm-spark:nth-child(3n){background:#a7f7ff;box-shadow:0 0 9px #04b9ff}
+.fm-spark:nth-child(3n + 1){background:#ff8ac9;box-shadow:0 0 11px #e92dc3}
+.fm-fx-label{position:absolute;left:4%;right:4%;top:39%;padding:12px 6px;text-align:center;
+  color:#fff;font-size:clamp(18px,5vw,30px);font-weight:1000;text-shadow:0 3px 0 #6a23b5,0 0 16px #e521dc;
+  background:linear-gradient(90deg,transparent,#b024d694,#ee2f9a94,transparent);
+  animation:fm-fusion-banner 1.05s ease-out both}
+@keyframes fm-match-pop{0%{transform:scale(1)}35%{transform:scale(1.13);filter:brightness(1.6)}100%{transform:scale(.72);filter:brightness(1.3)}}
+@keyframes fm-spark-fly{0%{transform:translate(-50%,-50%) rotate(45deg) scale(.4);opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(225deg) scale(.1);opacity:0}}
+@keyframes fm-fusion-banner{0%{transform:scale(.65);opacity:0}23%{transform:scale(1.12);opacity:1}70%{transform:scale(1);opacity:1}100%{transform:scale(1.07);opacity:0}}
+@keyframes fm-timer-pulse{from{filter:brightness(.93)}to{filter:brightness(1.3)}}
+@media(prefers-reduced-motion:reduce){.fm-cell.match,.fm-timer,.fm-spark,.fm-fx-label{animation:none}}
