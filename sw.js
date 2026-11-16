@@ -1,7 +1,7 @@
 // Service worker : permet l'installation et l'ouverture hors connexion.
 // Stratégie « réseau d'abord » : on prend toujours la version la plus
 // récente, et on retombe sur le cache si pas de réseau.
-const CACHE = "fk-agenda-v78";
+const CACHE = "fk-agenda-v79";
 const FICHIERS = [
   "./", "./index.html", "./config.js", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./logo.png", "./nuit-magique.png",
@@ -75,6 +75,7 @@ self.addEventListener("notificationclick", (e) => {
   const signal = url.searchParams.get("signal") === "1";
   const chat = url.searchParams.get("chat");
   const costumes = url.searchParams.get("costumes") === "1";
+  const tenue = url.searchParams.get("tenue");
   const checklist = url.searchParams.get("checklist") === "1";
   const vue = url.searchParams.get("vue");
   e.waitUntil((async () => {
@@ -82,7 +83,7 @@ self.addEventListener("notificationclick", (e) => {
     for (const w of wins) {
       if (w.url.startsWith(self.registration.scope)) {
         await w.focus();
-        if (ev || chat || costumes || checklist || vue) w.postMessage({ ev, signal, chat, costumes, checklist, vue });
+        if (ev || chat || costumes || tenue || checklist || vue) w.postMessage({ ev, signal, chat, costumes, tenue, checklist, vue });
         return;
       }
     }
