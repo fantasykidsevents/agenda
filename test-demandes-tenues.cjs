@@ -29,7 +29,10 @@ function testStatic() {
   assert.match(costume, /data-demande-motif/, 'Motif du problème affiché');
   assert.match(costume, /data-demande-photo/, 'Photo du problème disponible');
   assert.match(html, /costDemandeStore\.setStatut/, 'Suivi administrateur branché');
-  assert.match(fs.readFileSync(path.join(__dirname, 'demandes-tenues.sql'), 'utf8'), /notifications_app/, 'Notification en base prévue');
+  const migration = fs.readFileSync(path.join(__dirname, 'demandes-tenues.sql'), 'utf8');
+  assert.match(migration, /notifications_app/, 'Notification en base prévue');
+  assert.match(migration, /select e\.prenom, e\.responsable into acteur from public\.equipe e/, 'Colonne responsable qualifiée dans la fonction SQL');
+  assert.match(migration, /for contact_responsable in select e\.email from public\.equipe e where e\.responsable = true/, 'Boucle de notifications sans ambiguïté SQL');
   console.log('✅ Formulaire membre, choix séparés, signalement, suivi et notification : OK (test statique)');
 }
 
