@@ -4,7 +4,7 @@
 create table if not exists public.fantasy_match_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   prenom text not null default 'Membre',
-  level integer not null default 1 check (level between 1 and 100),
+  level integer not null default 1 check (level between 1 and 200),
   score bigint not null default 0 check (score >= 0),
   state jsonb not null default '{}'::jsonb,
   last_gift_at date,
