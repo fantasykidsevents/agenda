@@ -46,7 +46,7 @@ body{
   align-items:center;gap:0;position:relative;margin:0 0 2px;
 }
 .fm-brand{display:flex;align-items:center;justify-content:center;height:100%;min-width:0;text-decoration:none;padding:0}
-.fm-brand img{display:block;width:min(96%,195px);max-height:112px;object-fit:contain;filter:drop-shadow(0 4px 4px #fff9)}
+.fm-brand img{display:block;width:min(96%,195px);height:auto;max-height:112px;object-fit:contain;filter:drop-shadow(0 4px 4px #fff9)}
 .fm-game-logo{
   position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
   transform:rotate(-4deg);padding:0;margin:0;font-family:'Nunito',system-ui,sans-serif;
@@ -54,9 +54,8 @@ body{
   letter-spacing:-.065em;white-space:nowrap;isolation:isolate;
 }
 .fm-game-logo span,.fm-game-logo strong{
-  display:block;-webkit-text-stroke:1.8px #fff;
-  text-shadow:-3px -3px 0 #fff,3px -3px 0 #fff,-3px 3px 0 #fff,3px 3px 0 #fff,
-    0 5px 0 #781dc3,0 8px 9px #8425d877;
+  display:block;-webkit-text-stroke:3px #fff;paint-order:stroke fill;
+  text-shadow:0 5px 0 #781dc3,0 8px 9px #8425d877;
 }
 .fm-game-logo span{color:#08bdf8;background:linear-gradient(145deg,#43ebff 4%,#008ee9 45%,#8b1bf0 92%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .fm-game-logo strong{color:#f62ba4;background:linear-gradient(150deg,#ffbbeb,#ff2ba5 47%,#b600cf);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
