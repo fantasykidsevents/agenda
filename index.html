@@ -1708,7 +1708,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 <div id="caissePrestaBg" class="sheet-bg hidden" style="z-index:80">
   <div class="sheet caisse-presta-sheet">
     <div class="grab"></div>
-    <div class="sheet-xw"><button type="button" class="sheet-x" id="caissePrestaClose" aria-label="Fermer">✕</button></div>
+    
     <h2>💰 Caisse des prestations</h2>
     <p class="hint" style="margin-top:-4px">Ton argent liquide réellement déposé dans la caisse Fantasy. Indépendant de la caisse de vente des événements.</p>
     <div id="caissePrestaBody"></div>
@@ -2859,7 +2859,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="cp-row"><span class="cp-symbol">+</span><div class="cp-main"><b>Ouverture de la caisse</b><small>${esc(cpDateTexte(S.init.started_at))} · Solde de départ</small></div><span class="cp-val">+${euro(+S.init.initial)}</span></div>`;
   }
   const fermerCaissePresta = () => { $("caissePrestaBg").classList.add("hidden"); document.body.style.overflow = ""; };
-  $("caissePrestaClose").onclick = fermerCaissePresta;
   $("caissePrestaBg").addEventListener("click", e => { if (e.target.id === "caissePrestaBg") fermerCaissePresta(); });
   async function ouvrirCaissePresta() {
     if (!peutConfirmerRemise()) { toast("Cette caisse est réservée à Jordan."); return; }
