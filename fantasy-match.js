@@ -84,6 +84,28 @@
     state.boosters = {color:3,bomb:3,shuffle:3,...state.boosters};
     state.levels ||= {}; state.bestScores ||= {};
   }
+  // Une ancienne sauvegarde cloud (ou une vie offerte depuis un autre appareil)
+  // ne doit jamais effacer des niveaux déjà débloqués localement.
+  function mergeProgress(local, remote, cloudUpdatedAt) {
+    const online = {...localDefault(), ...remote};
+    const cloudIsNewer = Number(cloudUpdatedAt || 0) > Number(local.updatedAt || 0);
+    const recent = cloudIsNewer ? online : local;
+    const other = cloudIsNewer ? local : online;
+    const unlocked = Math.max(1, Number(local.maxUnlocked || 1), Number(online.maxUnlocked || 1));
+    const progressOwner = Number(recent.maxUnlocked || 1) >= Number(other.maxUnlocked || 1) ? recent : other;
+    const combineBest = (a, b) => Object.fromEntries(Array.from(
+      new Set([...Object.keys(a || {}), ...Object.keys(b || {})]),
+      key => [key, Math.max(Number(a?.[key] || 0), Number(b?.[key] || 0))]
+    ));
+    return {
+      ...other, ...recent,
+      maxUnlocked: unlocked,
+      level: Math.max(1, Math.min(unlocked, Number(progressOwner.level || unlocked))),
+      score: Math.max(Number(local.score || 0), Number(online.score || 0)),
+      levels: combineBest(local.levels, online.levels),
+      bestScores: combineBest(local.bestScores, online.bestScores)
+    };
+  }
   function tickLives() {
     if (!state) return;
     if (state.lives >= MAX_LIVES) { state.nextLifeAt = 0; renderHearts(); return; }
@@ -141,11 +163,18 @@
       if (member?.prenom) playerName = member.prenom;
     } catch { /* le jeu reste disponible */ }
     try {
-      const {data,error} = await sb.from('fantasy_match_profiles').select('state,updated_at').eq('user_id',u.id).maybeSingle();
+      const {data,error} = await sb.from('fantasy_match_profiles').select('state,level,updated_at').eq('user_id',u.id).maybeSingle();
       if (error) throw error;
       cloudReady = true;
-      if (data?.state && Date.parse(data.updated_at || '') > Number(state.updatedAt || 0)) {
-        state = {...localDefault(),...data.state}; ensureState();
+      if (data?.state) {
+        const cloudState = {...data.state};
+        const registeredLevel = Number(data.level || 1);
+        if (registeredLevel > Number(cloudState.maxUnlocked || 1)) {
+          cloudState.maxUnlocked = registeredLevel;
+          cloudState.level = registeredLevel;
+        }
+        state = mergeProgress(state, cloudState, Date.parse(data.updated_at || '') || 0);
+        ensureState();
         localStorage.setItem(storageKey, JSON.stringify(state));
       }
       $('syncStatus').textContent = '✓ Connecté à Fantasy';
@@ -238,7 +267,6 @@
   }
   function startRound(n=state.level) {
     tickLives();
-    if (state.lives<1) { showNoLives(); return; }
     state.level = Math.min(Math.max(1,n),state.maxUnlocked);
     current = levelConfig(state.level); target=current.target; remaining=target; moves=current.moves;roundScore=0;
     remainingByKind = {...current.targets};
@@ -248,9 +276,16 @@
     $('gameTip').textContent=levelHint();
     $('boardOverlay').classList.add('hidden');
     save(); renderAll();
+    if (state.lives<1) { lockBoardForLives(); showNoLives(); }
+  }
+  function lockBoardForLives() {
+    $('boardOverlayText').textContent=`Niveau ${state.level} conservé · En attente d’une vie ♥`;
+    $('boardOverlay').classList.remove('hidden');
+    $('gameTip').textContent=`Tu retrouveras le niveau ${state.level} dès qu’une vie sera disponible.`;
+    renderBoard();
   }
   function renderBoard(mark=new Set()) {
-    $('gameBoard').innerHTML=board.map((kind,i)=>`<button type="button" class="fm-cell ${i===selected?'selected':''} ${mark.has(i)?'match':''} ${frozenCells.has(i)?'frozen':''}" role="gridcell" aria-label="${LABELS[kindOf(kind)]||'Magie arc-en-ciel'}, case ${i+1}${frozenCells.has(i)?', glacée':''}${specialOf(kind)?', bonus spécial':''}" data-index="${i}" ${busy?'disabled':''}>${kind?piece(kind):''}</button>`).join('');
+    $('gameBoard').innerHTML=board.map((kind,i)=>`<button type="button" class="fm-cell ${i===selected?'selected':''} ${mark.has(i)?'match':''} ${frozenCells.has(i)?'frozen':''}" role="gridcell" aria-label="${LABELS[kindOf(kind)]||'Magie arc-en-ciel'}, case ${i+1}${frozenCells.has(i)?', glacée':''}${specialOf(kind)?', bonus spécial':''}" data-index="${i}" ${busy||state.lives<1||moves<=0?'disabled':''}>${kind?piece(kind):''}</button>`).join('');
   }
   function renderAll() {
     if(!current)return;
@@ -343,7 +378,7 @@
     return chosen;
   }
   async function swap(a,b){
-    if(busy||!isNeighbor(a,b))return;
+    if(busy||state.lives<1||moves<=0||!isNeighbor(a,b))return;
     busy=true;selected=-1;
     [board[a],board[b]]=[board[b],board[a]];
     renderBoard();await pause(180);
@@ -371,7 +406,7 @@
     return best;
   }
   async function useBooster(kind,i=-1){
-    if(!kind||busy)return;
+    if(!kind||busy||state.lives<1||moves<=0)return;
     if(state.boosters[kind]<=0){toast('Plus de bonus disponible');return;}
     busy=true;selected=-1;state.boosters[kind]--;
     if(kind==='shuffle'){
@@ -392,13 +427,13 @@
     save();await resolve(chosen,-1,false);
   }
   async function activateSpecial(i){
-    if(busy||!specialOf(board[i]))return;
+    if(busy||state.lives<1||moves<=0||!specialOf(board[i]))return;
     busy=true;selected=-1;moves--;
     toast('Bonus spécial déclenché !');
     await resolve(new Set([i]),-1,false);
   }
   function tileTap(i){
-    if(busy)return;
+    if(busy||state.lives<1||moves<=0)return;
     if(selected<0){selected=i;renderBoard();if(specialOf(board[i]))toast('Retouche le bonus pour l’activer, ou échange-le avec une pièce voisine');return;}
     if(selected===i){if(specialOf(board[i]))activateSpecial(i);else{selected=-1;renderBoard();}return;}
     if(isNeighbor(selected,i)){swap(selected,i);return;}
@@ -423,14 +458,16 @@
     state.lives=Math.max(0,state.lives-1);
     if(state.lives<5 && !state.nextLifeAt)state.nextLifeAt=now()+LIFE_MS;
     save();renderHearts();
+    if(state.lives<1)lockBoardForLives();
+    else renderBoard();
     const goalText=current.mode==='ice'?'cases glacées à briser':current.mode==='score'?'points à marquer'
       :current.mode==='special'?'bonus spéciaux à créer':current.mode==='duo'?'symboles à récolter':LABELS[current.goal].toLowerCase()+' à récolter';
-    showDialog('Presque !',`<p>Il reste <b>${remaining} ${goalText}</b>.</p><p>${state.lives ? 'Retente ta chance !' : 'Tes vies sont épuisées. Une nouvelle vie revient dans 30 minutes.'}</p>`,
+    showDialog('Presque !',`<p>Il reste <b>${remaining} ${goalText}</b>.</p><p>${state.lives ? 'Retente ta chance !' : 'Tes vies sont épuisées. Une nouvelle vie reviendra selon le compteur affiché.'}</p>`,
       state.lives?[{label:'Réessayer',action:()=>{hideDialog();startRound(current.number)}}]:[{label:'D’accord',action:hideDialog}], '♡');
   }
   function showNoLives(){
     tickLives();
-    showDialog('Plus de vies',`<p>Tu as utilisé tes 5 vies. Une nouvelle vie arrive automatiquement toutes les 30 minutes.</p><p><b>${$('lifeTimer').textContent}</b></p>`,[{label:'Compris',action:hideDialog}],'♡');
+    showDialog('Plus de vies',`<p>Ton <b>niveau ${state.level}</b> est bien conservé. Tu pourras le reprendre dès qu’une vie sera revenue.</p><p>Une nouvelle vie arrive automatiquement toutes les 30 minutes.</p><p><b>${$('lifeTimer').textContent}</b></p>`,[{label:'Compris',action:hideDialog}],'♡');
   }
   function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),1900)}
@@ -514,7 +551,7 @@
     });
     for(const type of ['color','bomb','shuffle']){
       $('boost'+type[0].toUpperCase()+type.slice(1)).addEventListener('click',()=>{
-        if(busy)return;
+        if(busy||state.lives<1||moves<=0)return;
         if(!state.boosters[type]){toast('Plus de bonus disponible');return;}
         useBooster(type,selected);
       });
@@ -527,7 +564,14 @@
       document.querySelectorAll('[data-screen]').forEach(x=>x.classList.toggle('active',x===b));
       if(b.dataset.screen==='levels')showLevels();else if(b.dataset.screen==='ranking')showRanking();else if(b.dataset.screen==='team')showTeam();else hideDialog();
     }));
-    setInterval(tickLives,1000);
+    setInterval(()=>{
+      const wasEmpty=state?.lives===0;
+      tickLives();
+      if(wasEmpty && state?.lives>0 && current){
+        if(['Plus de vies','Presque !'].includes($('dialogTitle').textContent))hideDialog();
+        startRound(state.level);
+      }
+    },1000);
   }
   async function init(){
     state=readLocal();ensureState();
@@ -535,5 +579,5 @@
     await setupCloud();ensureState();tickLives();
     startRound(state.level);
   }
-  init().catch(err=>{console.error('Fantasy Match',err);$('syncStatus').textContent='Le jeu reste disponible en mode local';state||=localDefault();startRound(1)});
+  init().catch(err=>{console.error('Fantasy Match',err);$('syncStatus').textContent='Le jeu reste disponible en mode local';state||=readLocal();ensureState();startRound(state.level)});
 })();
