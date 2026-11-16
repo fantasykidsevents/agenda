@@ -7186,14 +7186,20 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       try { await guideStore.save(nom, {}); await guideReload(); guideSel = nom; guideEdit = true; renderGuide(); } catch (err) { toast("Erreur : " + (err.message || err)); }
     }
   });
-  // Lorsqu'une photo n'a pas encore été déposée dans GitHub, masquer
-  // sa vignette plutôt que de montrer une image cassée.
+  // Ne jamais faire disparaître silencieusement les fiches maquillage :
+  // si une image n'est pas servie (cache ou publication GitHub Pages),
+  // son lien reste visible pour permettre le diagnostic.
   $("guideBg").addEventListener("error",e=>{
     const img=e.target.closest?.("img[data-guide-makeup]");
     if(!img)return;
-    img.closest(".g-makeup-item")?.remove();
-    const galerie=$("gMakeups");
-    if(galerie&&!galerie.querySelector(".g-makeup-item"))galerie.remove();
+    const vignette=img.closest(".g-makeup-item");
+    img.style.display="none";
+    if(vignette&&!vignette.querySelector(".g-makeup-error")){
+      const message=document.createElement("p");
+      message.className="g-makeup-error hint";
+      message.textContent="⚠️ Image non chargée — toucher pour ouvrir";
+      vignette.insertBefore(message,vignette.querySelector("span"));
+    }
   },true);
   // 📖 depuis une carte ou la fiche du jour J
   document.addEventListener("click", (e) => { const g = e.target.closest(".g-lien[data-guide]"); if (g && !g.closest("#guideBg")) { e.stopPropagation(); e.preventDefault(); openGuide(g.dataset.guide); } }, true);
