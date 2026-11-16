@@ -1439,6 +1439,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </div>
     <div id="formErr" class="err"></div>
     <div class="actions">
+      <button type="button" class="btn ghost hidden" id="evCostAssignBtn">👗 Attribuer les tenues</button>
       <button type="button" class="btn chat-btn hidden" id="evChatBtn">💬 Chat</button>
       <button type="button" class="btn danger hidden" id="delBtn">Supprimer</button>
       <button type="button" class="btn ghost" id="cancelBtn">Annuler</button>
@@ -1803,12 +1804,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div class="grab"></div>
     <h2>👗 Costumes & perruques</h2>
     <p class="hint" style="margin-top:0">L'état de chaque costume et perruque. Sale ou abîmé : touchez <b>🧺 À laver</b>, <b>💇 À recoiffer</b> ou <b>🪡 À réparer</b> (et dites ce qui ne va pas). Quand c'est réglé : <b>✅ Prêt</b>.</p>
+    <div class="seg" id="costSources" style="margin-bottom:10px">
+      <label><input type="radio" name="costSourceR" value="fantasy" checked /><span>🏰 Stock Fantasy</span></label>
+      <label><input type="radio" name="costSourceR" value="perso" /><span>👤 Matériel personnel</span></label>
+    </div>
     <input id="costSearch" type="search" placeholder="🔎 Elsa, Stitch, Océane…" />
     <div class="chips" id="costChips"></div>
     <div id="costList"></div>
     <form id="costAdd" style="margin-top:14px">
       <div class="sec">Ajouter un costume ou une perruque</div>
-      <p class="hint resp-hide" style="margin-top:0">Vous avez votre propre costume ou perruque ? Ajoutez-le : l'app saura que vous n'avez pas besoin de celui du stock.</p>
+      <p class="hint resp-hide" style="margin-top:0">Ajoutez votre propre tenue : elle sera réservée à vous seul, même lorsqu'elle est rangée chez Fantasy.</p>
       <div id="costOwnerBox" class="hidden" style="margin-bottom:8px"><select id="costOwner"></select></div>
       <div class="seg" style="margin-bottom:8px">
         <label><input type="radio" name="costTypeR" value="costume" checked onchange="document.getElementById('costType').value=this.value" /><span>👗 Costume</span></label>
@@ -1822,6 +1827,19 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="actions" style="margin-top:8px"><button type="submit" class="btn ghost">➕ Ajouter</button></div>
     </form>
     <div class="actions"><button type="button" class="btn primary" id="costClose">Fermer</button></div>
+  </div>
+</div>
+
+<!-- ============ 👗 ATTRIBUTIONS PAR PRESTATION ============ -->
+<div id="costAssignBg" class="sheet-bg hidden">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>👗 Tenues de la prestation</h2>
+    <p id="costAssignTitle" class="hint" style="margin-top:0"></p>
+    <div id="costAssignList"></div>
+    <div id="costAssignErr" class="err"></div>
+    <p class="hint">Chaque costume et chaque perruque sont attribués séparément. Une tenue personnelle est réservée à son propriétaire. 🔒 = choix fixé par le responsable.</p>
+    <div class="actions"><button type="button" class="btn primary" id="costAssignClose">Fermer</button></div>
   </div>
 </div>
 
@@ -2214,7 +2232,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   let horsLigne = false;
   function sauverHL() {
     if (DEMO || !currentUser) return;
-    try { localStorage.setItem(cleHL(), JSON.stringify({ at: new Date().toISOString(), events, members, indispos, reglages, costumes,
+    try { localStorage.setItem(cleHL(), JSON.stringify({ at: new Date().toISOString(), events, members, indispos, reglages, costumes, costAttributions,
       chat: (chatMsgs || []).filter(m => !m.photo_url || m.photo_url.startsWith("http")).slice(-300) })); } catch (e) { /* mémoire pleine : tant pis */ }
   }
   function lireHL() { try { return JSON.parse(localStorage.getItem(cleHL()) || "null"); } catch (e) { return null; } }
@@ -2329,6 +2347,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!ok && !DEMO) {
       const c = lireHL();
       if (c) { members = c.members || []; events = (c.events || []).filter(jeVoisEv); indispos = c.indispos || []; reglages = c.reglages || {}; costumes = c.costumes || [];
+        costAttributions = c.costAttributions || []; costAttributionsOK = Array.isArray(c.costAttributions);
         if (!chatMsgs.length && c.chat) { chatMsgs = c.chat; chatLoaded = true; }
         barreHL(true, c.at); applyRole(); refreshFilters(); render(); return; }
       toast("📶 Pas de réseau, et aucune info enregistrée sur ce téléphone pour l'instant.");
@@ -2336,7 +2355,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     barreHL(false);
     try { indispos = await indStore.list(); } catch (e) { console.error(e); indispos = []; }
     try { reglages = await regStore.get(); } catch (e) { reglages = {}; }
-    await costReload();
+    await Promise.all([costReload(), costAttributionReload()]);
     await stockReload(); await gainsReload();
     try { bilans = await bilanStore.list(); } catch (e) { bilans = []; }
     try { depenses = await depStore.list(); } catch (e) { depenses = []; }
@@ -2411,6 +2430,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const weekAgo = iso(new Date(Date.now() - 7*864e5));
     const canSignal = !interne && e.type_evenement !== "evenement" && e.date <= todayISO() && e.date >= weekAgo && e.statut !== "annule";
     const canMode = modeDisponible(e);
+    const canCost = e.statut !== "annule" && parseTeam(e.animateurs).some(p => estRoleCostume(p) && (isResp() || estMoi(p.nom)));
     const U = universOf(e);
     const parts = U && !reduceMotion ? [0,1,2,3].map(i => `<i class="pt" style="left:${12 + i * 24 + Math.random() * 8}%;color:${U[4]};font-size:${9 + Math.random() * 8}px;animation-duration:${5 + Math.random() * 4}s;animation-delay:${-Math.random() * 8}s">${U[3]}</i>`).join("") : "";
     return `<div class="ev ${U ? "u-" + U[0] : ""}${themeDe(e) ? " spectacle th-c-" + themeDe(e) : ""}" style="--c:${st.color}${themeDe(e) ? `;--th-carte:${THEMES[themeDe(e)].carte};--th-bord:${THEMES[themeDe(e)].bord}` : ""}" data-id="${esc(e.id)}" role="button" tabindex="0">${parts}${U ? `<span class="univ">${U[2]}</span>` : ""}<span class="sheen"></span>
@@ -2430,7 +2450,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       </div>
       ${pay ? `<div class="badges">${pay}</div>` : ""}
       ${missing}
-      ${canMode || canSignal || canEnc || canTat || canPhotos ? `<div class="ev-actions">
+      ${canMode || canSignal || canEnc || canTat || canPhotos || canCost ? `<div class="ev-actions">
+        ${canCost ? `<button type="button" class="sig" data-cost-assign="${esc(e.id)}">👗 ${isResp() ? "Attribuer les tenues" : "Mes tenues"}</button>` : ""}
         ${canMode ? `<button type="button" class="sig mode-inline" data-mode-open="${esc(e.id)}">✨ Mode prestation</button>` : `
           ${canPhotos ? `<button type="button" class="sig photo" data-photos="${esc(e.id)}">${e.photos_envoyees ? "↩️ Photos pas encore envoyées" : "📸 Photos envoyées au client ?"}</button>` : ""}
           ${canTat ? `<button type="button" class="sig tat" data-tat-open="${esc(e.id)}">🦋 ${tatouagesACompleter(e) ? "Compter les tatouages" : "Voir les tatouages"}</button>` : ""}
@@ -2952,7 +2973,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           const n = notificationsApp.find(x => String(x.id) === String(voir));
           const evenement = events.find(x => String(x.id) === String(n?.evenement_id));
           closeCloche();
-          if (evenement && jeVoisEv(evenement)) openForm(evenement);
+          if (evenement && jeVoisEv(evenement)) { if (n?.type === "costume") openCostAssign(evenement); else openForm(evenement); }
           else if (n?.lien) {
             const lien = new URL(n.lien, location.href);
             if (lien.origin !== location.origin) throw new Error("Lien de notification non autorisé");
@@ -3070,6 +3091,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("formTitle").textContent = ev ? (ev.type_evenement === "evenement" ? "Modifier l'événement" : "Modifier l'animation") : "Nouvelle animation";
     $("delBtn").classList.toggle("hidden", !ev);
     $("evChatBtn").classList.toggle("hidden", !ev || !jePeuxVoir(ev));
+    $("evCostAssignBtn").classList.toggle("hidden", !ev || !isResp() || !parseTeam(ev.animateurs).some(estRoleCostume));
     $("formErr").textContent = "";
     setTimeout(() => {
       // ancienne fiche avec un thème libre (ex. « Olaf ») : on le garde dans la liste pour ne rien perdre
@@ -3178,12 +3200,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function renderSigCost() {
     if (!sigEv) return;
     const moi = normName(chatMe()), team = parseTeam(sigEv.animateurs).filter(p => p.role && normName(p.role) !== "acc");
-    const mesRoles = isResp() ? team : team.filter(p => normName(p.nom) === moi);
-    const items = mesRoles.flatMap(p => costDe(p.role).filter(c => utilisable(c, p.nom)));
+    const mesRoles = isResp() ? team.filter(estRoleCostume) : team.filter(p => normName(p.nom) === moi && estRoleCostume(p));
+    const items = mesRoles.flatMap(p => Object.keys(TYPES).map(type => pieceAttribuee(sigEv, p, type)).filter(Boolean));
     $("sigCost").innerHTML = items.length ? `<div class="sec" style="margin-top:4px">👗 Costumes & perruques : dans quel état ?</div>` + items.map(c => `<div class="cost-row ${etatDe(c)}" style="padding:8px 0">
         <span class="em">${TYPES[typeDe(c)][0]}</span><div class="tx"><b class="cost-perso">${esc(c.personnage || nomDe(c))}</b><small class="cost-nom">${TYPES[typeDe(c)][1]}${c.nom && c.nom !== c.personnage ? ` · <b>${esc(c.nom)}</b>` : ""}</small></div>
         <div class="etat">${etatsPour(c).map(([k, [ic, t]]) => `<button type="button" class="${etatDe(c) === k ? "on " + k : ""}" data-etat="${k}" data-cid="${esc(c.id)}">${ic} ${t}</button>`).join("")}</div>
-        ${etatDe(c) !== "ok" ? `<input class="pb" type="text" data-pb="${esc(c.id)}" value="${esc(c.probleme || "")}" placeholder="${etatDe(c) === "reparer" ? "Quel problème ?" : "Précision (facultatif)"}" />` : ""}</div>`).join("") : "";
+        ${etatDe(c) !== "ok" ? `<input class="pb" type="text" data-pb="${esc(c.id)}" value="${esc(c.probleme || "")}" placeholder="${etatDe(c) === "reparer" ? "Quel problème ?" : "Précision (facultatif)"}" />` : ""}</div>`).join("") :
+      (mesRoles.length && costAttributionsOK ? `<p class="hint">Aucune tenue précise attribuée. Touchez « 👗 Mes tenues » sur la prestation pour faire votre choix.</p>` : "");
   }
   $("sigCancel").onclick = async () => {
     try {
@@ -3556,6 +3579,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const maMission = parseTeam(ev.animateurs).find(p => normName(p.nom) === normName(chatMe()));
     const monHoraire = maMission ? horaireDe(ev, maMission.nom) : "";
     const monTrajet = maMission ? voitureTxt(ev, maMission.nom) : "";
+    const mesPieces = maMission && estRoleCostume(maMission) ? Object.keys(TYPES).map(type => {
+      const c = pieceAttribuee(ev, maMission, type);
+      const requis = costDe(maMission.role, type).some(x => utilisable(x, maMission.nom));
+      return c ? `${TYPES[type][0]} <b>${esc(nomDe(c))}</b>${persoDe(c) ? " · personnel" : " · Fantasy"}${etatDe(c) !== "ok" ? ` · ⚠️ ${esc(etatTxt(c))}` : ""}` :
+        (requis ? `${TYPES[type][0]} <span style="color:#b4123c">Pas encore attribué</span>` : "");
+    }).filter(Boolean).join("<br>") : "";
     const missionHtml = maMission ? `<div class="mission"><strong>${roleEmoji(maMission.role) || "🎭"} Ma mission : ${esc(maMission.role || "Animation")}</strong>
       <p>${monHoraire ? `🕐 Mon horaire : <b>${esc(monHoraire)}</b>` : `🕐 Début de l'animation : <b>${esc(hhmm(ev.heure_debut) || "à préciser")}</b> (mon horaire individuel n'est pas renseigné)`}</p>
       ${monTrajet ? `<p>${esc(monTrajet)}</p>` : ""}</div>` : "";
@@ -3578,6 +3607,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <div class="time">${ev.heure_debut ? hhmm(ev.heure_debut) + (ev.heure_fin ? " – " + hhmm(ev.heure_fin) : "") : "Toute la journée"}</div>
         <div class="hint" style="text-transform:capitalize;margin:0">${esc(fmtLong(ev.date))}</div>${cd ? `<span class="cd">${cd}</span>` : ""}</div>
       ${missionHtml}
+      ${maMission && estRoleCostume(maMission) ? `<div class="blk"><h4>👗 Mes tenues pour cette date</h4>${mesPieces || "Aucune pièce encodée pour ce personnage."}<br><button type="button" class="btn ghost" data-cost-assign="${esc(ev.id)}" style="margin-top:9px">👗 Voir / choisir mes tenues</button></div>` : ""}
       <div class="go">
         <a href="https://waze.com/ul?q=${adr}&navigate=yes" target="_blank" rel="noopener"><span>🧭</span>Waze</a>
         <a href="https://www.google.com/maps/dir/?api=1&destination=${adr}" target="_blank" rel="noopener"><span>🗺️</span>Maps</a>
@@ -3759,6 +3789,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     catch (err) { $("formErr").textContent = "Erreur : " + (err.message || err); }
   });
   $("cancelBtn").addEventListener("click", closeForm);
+  $("evCostAssignBtn").addEventListener("click", () => { const ev = events.find(x => String(x.id) === String(editingId)); if (ev) { closeForm(); openCostAssign(ev); } });
   $("sheetBg").addEventListener("click", (e) => { if (e.target.id === "sheetBg") closeForm(); });
 
   // ================= Événements UI =================
@@ -3810,6 +3841,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (eo) { const ev = events.find(x => String(x.id) === eo.dataset.encOpen); if (ev) openEnc(ev); return; }
     const ta = e.target.closest("[data-tat-open]");
     if (ta) { const ev = events.find(x => String(x.id) === ta.dataset.tatOpen); if (ev) openTat(ev); return; }
+    const cs = e.target.closest("[data-cost-assign]");
+    if (cs) { e.preventDefault(); e.stopPropagation(); const ev = events.find(x => String(x.id) === cs.dataset.costAssign); if (ev) openCostAssign(ev); return; }
     const sg = e.target.closest("[data-signal]");
     if (sg) { const ev = events.find(x => String(x.id) === sg.dataset.signal); if (ev) openSignal(ev); return; }
     const c = e.target.closest(".ev"); if (!c) return;
@@ -3832,6 +3865,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const parseTeam = (str) => (str || "").split(",").map(x => x.trim()).filter(Boolean).map(x => {
     const m = x.match(/^(.*?)\s*\((.*)\)\s*$/); return m ? { nom: m[1].trim(), role: m[2].trim() } : { nom: x, role: "" };
   });
+  function estRoleCostume(p) { return !!p?.role && normName(p.role) !== "acc" && !ROLES_EVT.includes(p.role); }
   let picked = [];
   const syncAnim = () => { $("animateurs").value = picked.map(p => p.nom + (p.role ? ` (${p.role})` : "")).join(", "); };
   function renderChips() {   // appelé à l'ouverture du formulaire
@@ -4886,7 +4920,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   // ================= 👗 Costumes =================
   const LS_COST = "fk_agenda_costumes_demo3";
+  const LS_COST_ASSIGN = "fk_agenda_costumes_attributions_demo1";
   let costumes = [];
+  let costAttributions = [], costAttributionsOK = DEMO;
+  let costAssignEv = null;
   const STOCK = "stock";
   const ouEst = (c) => c.chez === STOCK ? "📦 au stock" : `chez ${c.chez}`;
   function costSeed() {
@@ -4931,6 +4968,31 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     },
   };
   async function costReload() { try { costumes = await costStore.list(); } catch (e) { console.error(e); costumes = []; } }
+  const costAttributionStore = {
+    async list() {
+      if (DEMO) { try { return JSON.parse(localStorage.getItem(LS_COST_ASSIGN) || "[]"); } catch { return []; } }
+      const { data, error } = await sb.from("costume_attributions").select("*");
+      if (error) throw error;
+      return data || [];
+    },
+    async save(ev, membre, personnage, type, piece, verrouille) {
+      if (DEMO) {
+        const l = await this.list(), id = String(ev.id), key = a => String(a.evenement_id) === id && normName(a.membre) === normName(membre) && normName(a.personnage) === normName(personnage) && a.type === type;
+        const i = l.findIndex(key);
+        const row = { evenement_id: id, membre, personnage, type, costume_id: piece || null, verrouille: !!verrouille, modifie_par: chatMe(), modifie_le: new Date().toISOString() };
+        if (i === -1) l.push(row); else l[i] = row;
+        localStorage.setItem(LS_COST_ASSIGN, JSON.stringify(l));
+        return;
+      }
+      const { error } = await sb.rpc("attribuer_costume", { p_evenement_id: ev.id, p_membre: membre, p_personnage: personnage,
+        p_type: type, p_costume_id: piece || null, p_verrouille: !!verrouille });
+      if (error) throw error;
+    },
+  };
+  async function costAttributionReload() {
+    try { costAttributions = await costAttributionStore.list(); costAttributionsOK = true; }
+    catch (err) { costAttributions = []; costAttributionsOK = false; console.warn("Attributions de costumes : exécuter la migration Supabase", err.message || err); }
+  }
   const TYPES = { costume: ["👗", "Costume", "Costumes"], perruque: ["💇", "Perruque", "Perruques"] };
   const ETATS = { ok: ["✅", "Prêt"], laver: ["🧺", "À laver"], coiffer: ["💇", "À recoiffer"], reparer: ["🪡", "À réparer"] };
   const etatsPour = (c) => Object.entries(ETATS).filter(([k]) => k !== "coiffer" || typeDe(c) === "perruque");
@@ -4940,86 +5002,113 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const costDe = (role, type) => costumes.filter(c => normName(c.personnage) === normName(role) && (!type || typeDe(c) === type));
   const etatTxt = (c) => etatDe(c) === "ok" ? "" : `${ETATS[etatDe(c)][0]} ${ETATS[etatDe(c)][1].toLowerCase()}${c.probleme ? " (" + c.probleme + ")" : ""}`;
 
-  // Pour chaque personnage de l'animation : costume / perruque utilisé, état, conflits du jour.
-  // Les costumes perso ne servent qu'à leur propriétaire ; ceux de Fantasy sont partagés.
+  // Une ligne = UNE pièce physique choisie pour UN membre, UN rôle et UNE prestation.
+  // Les costumes personnels ne peuvent être utilisés que par leur propriétaire.
   const persoDe = (c) => c.proprietaire || "";
   const utilisable = (c, nom) => !persoDe(c) || normName(persoDe(c)) === normName(nom);
+  const attributionPour = (ev, p, type) => costAttributions.find(a => String(a.evenement_id) === String(ev.id) && normName(a.membre) === normName(p.nom)
+    && normName(a.personnage) === normName(p.role) && a.type === type);
+  const pieceAttribuee = (ev, p, type) => {
+    const a = attributionPour(ev, p, type);
+    if (!a?.costume_id) return null;
+    const c = costumes.find(x => String(x.id) === String(a.costume_id));
+    return c && utilisable(c, p.nom) && normName(c.personnage) === normName(p.role) && typeDe(c) === type ? c : null;
+  };
+  const minuteCost = t => t ? (+String(t).slice(0, 2)) * 60 + (+String(t).slice(3, 5)) : null;
+  function horairesSeChevauchent(a, b) {
+    const x = minuteCost(a.heure_debut), y = minuteCost(b.heure_debut);
+    if (x == null || y == null) return true;
+    const fx = minuteCost(a.heure_fin) ?? x + 120, fy = minuteCost(b.heure_fin) ?? y + 120;
+    return x < fy + 60 && y < fx + 60; // marge pour les trajets et l'habillage
+  }
+  function conflitsPiece(ev, c) {
+    if (!c) return [];
+    return costAttributions.filter(a => String(a.costume_id) === String(c.id) && String(a.evenement_id) !== String(ev.id))
+      .map(a => ({ a, autre: events.find(e => String(e.id) === String(a.evenement_id)) }))
+      .filter(x => x.autre && x.autre.statut !== "annule" && x.autre.date === ev.date && horairesSeChevauchent(ev, x.autre));
+  }
   function besoinsCostumes(e) {
-    if (e.statut === "annule" || e.date < todayISO()) return [];
+    if (!costAttributionsOK || e.statut === "annule" || e.date < todayISO()) return [];
     const out = [];
-    parseTeam(e.animateurs).filter(p => p.role && normName(p.role) !== "acc").forEach(p => {
+    parseTeam(e.animateurs).filter(estRoleCostume).forEach(p => {
       Object.keys(TYPES).forEach(type => {
-        const l = costDe(p.role, type).filter(c => utilisable(c, p.nom)); if (!l.length) return;
-        const perso = l.filter(c => persoDe(c));
-        const src = perso.find(c => etatDe(c) === "ok") || perso[0] || l.find(c => etatDe(c) === "ok" && c.chez === STOCK) || l.find(c => etatDe(c) === "ok") || l[0];
-        let conflit = "";
-        if (!persoDe(src)) {
-          const commun = costDe(p.role, type).filter(c => !persoDe(c)).length;
-          const nbBesoin = events.filter(x => x.date === e.date && x.statut !== "annule")
-            .reduce((n, x) => n + parseTeam(x.animateurs).filter(q => normName(q.role) === normName(p.role) && !costDe(p.role, type).some(c => persoDe(c) && normName(persoDe(c)) === normName(q.nom))).length, 0);
-          if (nbBesoin > commun) conflit = `${commun} ${TYPES[type][1].toLowerCase()}${commun > 1 ? "s" : ""} ${p.role} pour ${nbBesoin} personnes ce jour-là`;
-        }
-        const ailleurs = !persoDe(src) && src.chez !== STOCK && normName(src.chez) !== normName(p.nom);
-        out.push({ ...p, type, src, pret: etatDe(src) === "ok", ailleurs, conflit });
+        const a = attributionPour(e, p, type), l = costDe(p.role, type).filter(c => utilisable(c, p.nom));
+        // Une perruque n'est pas obligatoire si aucun exemplaire de ce rôle n'existe.
+        if (!l.length && !a) return;
+        const src = pieceAttribuee(e, p, type);
+        const conflit = !src ? (a?.costume_id ? "Pièce introuvable ou non autorisée" : "Tenue à attribuer") :
+          (conflitsPiece(e, src).length ? `${nomDe(src)} réservé sur une autre prestation qui se chevauche` : "");
+        const ailleurs = !!src && src.chez !== STOCK && normName(src.chez) !== normName(p.nom);
+        out.push({ ...p, type, src, pret: !!src && etatDe(src) === "ok", ailleurs, conflit });
       });
     });
     return out;
   }
   function costLigne(e) {
-    return besoinsCostumes(e).filter(x => x.conflit || !x.pret || x.ailleurs).map(x => {
+    const alertes = besoinsCostumes(e).filter(x => x.conflit || !x.pret || x.ailleurs);
+    return alertes.slice(0, 3).map(x => {
       const ic = TYPES[x.type][0];
-      if (x.conflit) return `<span class="cost ko" data-cost-open>⚠️ ${ic} ${esc(x.conflit)}</span>`;
+      if (x.conflit) return `<span class="cost ko" data-cost-assign="${esc(e.id)}">⚠️ ${ic} ${esc(x.nom)} (${esc(x.role)}) : ${esc(x.conflit)}</span>`;
       const bits = [!x.pret ? etatTxt(x.src) : "", x.ailleurs ? `à récupérer chez ${x.src.chez}` : ""].filter(Boolean).join(" · ");
       return `<span class="cost${x.pret ? "" : " ko"}" data-cost-open>${ic} ${esc(nomDe(x.src))}${persoDe(x.src) ? " (perso)" : ""} : ${esc(bits)}</span>`;
-    }).join("");
+    }).join("") + (alertes.length > 3 ? `<span class="cost ko" data-cost-assign="${esc(e.id)}">+ ${alertes.length - 3} autres tenues à vérifier</span>` : "");
   }
   function nbConflitsCostumes() {
     const t = todayISO(), d30 = iso(new Date(Date.now() + 30 * 864e5)), vus = new Set();
-    events.filter(e => e.date >= t && e.date <= d30).forEach(e => besoinsCostumes(e).forEach(x => x.conflit && vus.add(e.date + x.role + x.type)));
+    events.filter(e => e.date >= t && e.date <= d30).forEach(e => besoinsCostumes(e).forEach(x => x.src && x.conflit && vus.add(e.id + x.nom + x.role + x.type)));
     return vus.size;
   }
   function nbPasPrets() {   // costumes / perruques pas prêts alors qu'une animation arrive dans les 7 jours
     const nj = +(reglages.costumes_jours ?? 7) || 7;
     const t = todayISO(), d7 = iso(new Date(Date.now() + nj * 864e5)), vus = new Set();
-    events.filter(e => e.date >= t && e.date <= d7).forEach(e => besoinsCostumes(e).forEach(x => !x.pret && !x.conflit && vus.add(x.src.id)));
+    events.filter(e => e.date >= t && e.date <= d7).forEach(e => besoinsCostumes(e).forEach(x => x.src && !x.pret && !x.conflit && vus.add(x.src.id)));
     return vus.size;
   }
 
   // Écran « Costumes »
-  let costFiltre = "", costType = "";
+  let costFiltre = "", costType = "", costSource = "fantasy";
   function prochaineUtil(c) {
     const t = todayISO();
-    const e = events.filter(x => x.date >= t && x.statut !== "annule" && parseTeam(x.animateurs).some(p => normName(p.role) === normName(c.personnage)))
+    const evIds = new Set(costAttributions.filter(a => String(a.costume_id) === String(c.id)).map(a => String(a.evenement_id)));
+    const e = events.filter(x => x.date >= t && x.statut !== "annule" && evIds.has(String(x.id)))
       .sort((a, b) => (a.date + (a.heure_debut || "")).localeCompare(b.date + (b.heure_debut || "")))[0];
     if (!e) return "";
-    const p = parseTeam(e.animateurs).find(q => normName(q.role) === normName(c.personnage));
-    return `Prochaine fois : ${parseISO(e.date).toLocaleDateString("fr-BE", { weekday: "short", day: "numeric", month: "short" })} · ${esc(p.nom)}${!persoDe(c) && c.chez !== STOCK && normName(p.nom) !== normName(c.chez) ? ` ➜ à récupérer chez ${esc(c.chez)}` : ""}`;
+    const p = costAttributions.find(a => String(a.evenement_id) === String(e.id) && String(a.costume_id) === String(c.id));
+    return `Attribué : ${parseISO(e.date).toLocaleDateString("fr-BE", { weekday: "short", day: "numeric", month: "short" })} · ${esc(p?.membre || "Équipe")}${c.chez !== STOCK && normName(p?.membre) !== normName(c.chez) ? ` ➜ à récupérer chez ${esc(c.chez)}` : ""}`;
   }
   function renderCost() {
     const moi = chatMe(), r = isResp(), q = normName(costFiltre);
     const opts = (c) => `<option value="${STOCK}"${c.chez === STOCK ? " selected" : ""}>📦 Au stock</option>` +
       members.map(m => `<option${normName(m.prenom) === normName(c.chez) ? " selected" : ""}>${esc(m.prenom)}</option>`).join("") +
       (c.chez !== STOCK && !members.some(m => normName(m.prenom) === normName(c.chez)) ? `<option selected>${esc(c.chez)}</option>` : "");
-    const l = costumes.filter(c => (!q || normName(c.personnage + " " + nomDe(c) + " " + c.chez + " " + (c.probleme || "")).includes(q))
+    const visibles = costumes.filter(c => costSource === "fantasy" ? !persoDe(c) : !!persoDe(c) && (r || normName(persoDe(c)) === normName(moi)));
+    const l = visibles.filter(c => (!q || normName(c.personnage + " " + nomDe(c) + " " + c.chez + " " + (c.probleme || "") + " " + persoDe(c)).includes(q))
         && (!costType || (costType === "soin" ? etatDe(c) !== "ok" : typeDe(c) === costType)))
-      .sort((a, b) => (etatDe(a) === "ok") - (etatDe(b) === "ok") || a.personnage.localeCompare(b.personnage, "fr") || typeDe(a).localeCompare(typeDe(b)));
-    const nSoin = costumes.filter(c => etatDe(c) !== "ok").length;
+      .sort((a, b) => costSource === "perso" ? (persoDe(a).localeCompare(persoDe(b), "fr") || a.personnage.localeCompare(b.personnage, "fr")) :
+        ((etatDe(a) === "ok") - (etatDe(b) === "ok") || a.personnage.localeCompare(b.personnage, "fr") || typeDe(a).localeCompare(typeDe(b))));
+    const nSoin = visibles.filter(c => etatDe(c) !== "ok").length;
     $("costChips").innerHTML = [["", "Tout"], ["costume", "👗 Costumes"], ["perruque", "💇 Perruques"], ["soin", `🧺 À s'occuper${nSoin ? " (" + nSoin + ")" : ""}`]]
       .map(([v, t]) => `<button type="button" class="chip${costType === v ? " on" : ""}" data-ctype="${v}">${t}</button>`).join("");
-    $("costList").innerHTML = l.length ? l.map(c => `<div class="cost-row ${etatDe(c)}">
+    $("costList").innerHTML = l.length ? l.map((c, i) => `${costSource === "perso" && r && (i === 0 || normName(persoDe(c)) !== normName(persoDe(l[i - 1]))) ? `<div class="group-title">👤 ${esc(persoDe(c))}</div>` : ""}<div class="cost-row ${etatDe(c)}">
         <span class="em">${TYPES[typeDe(c)][0]}<i>${roleEmoji(c.personnage)}</i></span>
-        <div class="tx"><b class="cost-perso">${esc(c.personnage || nomDe(c))}</b><small class="cost-nom">${TYPES[typeDe(c)][1]}${c.nom && c.nom !== c.personnage ? ` · <b>${esc(c.nom)}</b>` : ""}</small><small>${persoDe(c) ? `👤 perso de ${esc(persoDe(c))}` : esc(ouEst(c))}${c.maj_par ? ` · maj ${esc(c.maj_par)}` : ""}</small><small class="nx">${prochaineUtil(c)}</small></div>
-        <div class="etat">${etatsPour(c).map(([k, [ic, t]]) => `<button type="button" class="${etatDe(c) === k ? "on " + k : ""}" data-etat="${k}" data-cid="${esc(c.id)}">${ic} ${t}</button>`).join("")}</div>
-        ${etatDe(c) !== "ok" ? `<input class="pb" type="text" data-pb="${esc(c.id)}" value="${esc(c.probleme || "")}" placeholder="${etatDe(c) === "reparer" ? "Quel problème ? (ex. fermeture cassée, ourlet décousu)" : "Précision (ex. tache de chocolat)"}" />` : ""}
+        <div class="tx"><b class="cost-perso">${esc(c.personnage || nomDe(c))}</b><small class="cost-nom">${TYPES[typeDe(c)][1]}${c.nom && c.nom !== c.personnage ? ` · <b>${esc(c.nom)}</b>` : ""}</small><small>${persoDe(c) ? `👤 ${esc(persoDe(c))} · ${esc(ouEst(c))}` : esc(ouEst(c))}${c.maj_par ? ` · maj ${esc(c.maj_par)}` : ""}</small><small class="nx">${prochaineUtil(c)}</small></div>
+        <div class="etat">${etatsPour(c).map(([k, [ic, t]]) => r || normName(persoDe(c)) === normName(moi) ? `<button type="button" class="${etatDe(c) === k ? "on " + k : ""}" data-etat="${k}" data-cid="${esc(c.id)}">${ic} ${t}</button>` : `<span class="badge ${etatDe(c) === k ? "ok" : ""}">${ic} ${t}</span>`).join("")}</div>
+        ${etatDe(c) !== "ok" && (r || normName(persoDe(c)) === normName(moi)) ? `<input class="pb" type="text" data-pb="${esc(c.id)}" value="${esc(c.probleme || "")}" placeholder="${etatDe(c) === "reparer" ? "Quel problème ? (ex. fermeture cassée, ourlet décousu)" : "Précision (ex. tache de chocolat)"}" />` : ""}
         <div class="ac">
-          ${persoDe(c) ? "" : `<select data-move="${esc(c.id)}" aria-label="Où est ce costume ?">${opts(c)}</select>`}
+          ${r || normName(persoDe(c)) === normName(moi) ? `<select data-move="${esc(c.id)}" aria-label="Où est cette pièce ?">${opts(c)}</select>` : ""}
           ${r || normName(persoDe(c)) === normName(moi) ? `<button type="button" class="x" data-cdel="${esc(c.id)}" title="Supprimer">🗑️</button>` : ""}
         </div></div>`).join("")
-      : `<p class="hint">${costumes.length ? "Aucun costume trouvé." : "Aucun costume encodé pour l'instant."}</p>`;
-    $("costOwnerBox").classList.toggle("hidden", !r);
-    if (r) $("costOwner").innerHTML = `<option value="">🏰 Fantasy (stock)</option>` + members.map(m => `<option value="${esc(m.prenom)}">👤 Perso de ${esc(m.prenom)}</option>`).join("");
+      : `<p class="hint">${visibles.length ? "Aucune pièce ne correspond aux filtres." : "Aucune pièce encodée dans cet espace pour l'instant."}</p>`;
+    $("costAdd").classList.toggle("hidden", !r && costSource === "fantasy");
+    $("costOwnerBox").classList.toggle("hidden", !r || costSource === "fantasy");
+    if (r) {
+      const avant = $("costOwner").value;
+      $("costOwner").innerHTML = members.filter(m => m.prenom).map(m => `<option value="${esc(m.prenom)}">👤 ${esc(m.prenom)}</option>`).join("");
+      if ([...$("costOwner").options].some(o => o.value === avant)) $("costOwner").value = avant;
+    }
+    document.querySelectorAll('input[name="costSourceR"]').forEach(i => { i.checked = i.value === costSource; });
   }
-  function openCost() { costFiltre = ""; $("costSearch").value = ""; renderCost(); $("costBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; }
+  function openCost() { costFiltre = ""; $("costSearch").value = ""; costSource = isResp() ? "fantasy" : "perso"; costType = ""; renderCost(); $("costBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; }
   function closeCost() { $("costBg").classList.add("hidden"); document.body.style.overflow = ""; render(); }
   $("costClose").onclick = closeCost;
   $("costBg").addEventListener("click", async (e) => {
@@ -5039,6 +5128,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     catch (err) { toast("Erreur : " + (err.message || err)); }
   });
   $("costSearch").addEventListener("input", (e) => { costFiltre = e.target.value; renderCost(); });
+  $("costSources").addEventListener("change", e => { if (e.target.name === "costSourceR") { costSource = e.target.value; renderCost(); } });
   $("costChips").addEventListener("click", (e) => { const b = e.target.closest("[data-ctype]"); if (b) { costType = b.dataset.ctype; renderCost(); } });
   async function changerEtat(id, etat, probleme) {
     const c = costumes.find(x => x.id === id); if (!c) return;
@@ -5063,7 +5153,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const personnage = $("costPerso").value || $("costNom").value.trim(); if (!personnage) { toast("Choisissez un personnage"); return; }
     try {
       const type = $("costType").value;
-      const proprietaire = isResp() ? ($("costOwner").value || null) : chatMe();
+      if (!isResp() && costSource === "fantasy") throw new Error("Seul le responsable peut ajouter au stock Fantasy.");
+      const proprietaire = costSource === "fantasy" ? null : (isResp() ? $("costOwner").value : chatMe());
+      if (costSource === "perso" && !proprietaire) throw new Error("Choisissez le propriétaire de la pièce.");
       await costStore.add({ personnage, type, proprietaire, nom: $("costNom").value.trim() || `${TYPES[type][1]} ${personnage}${proprietaire ? " (" + proprietaire + ")" : ""}`,
         chez: proprietaire || STOCK, etat: "ok", maj_par: chatMe() });
       $("costPerso").value = ""; $("costNom").value = ""; toast("👗 Costume ajouté"); await costReload(); renderCost();
@@ -5071,6 +5163,81 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
   document.addEventListener("click", (e) => { if (e.target.closest("[data-cost-open]")) { e.stopPropagation(); openCost(); } }, true);
   $("costBtn").onclick = () => { closeTeam(); openCost(); };
+
+  // Une attribution distincte par prestation, par membre et par type de pièce.
+  // Le responsable peut choisir tout le stock ; un membre ne peut substituer
+  // que SA propre pièce à celle qui lui a été attribuée, sauf verrouillage.
+  function renderCostAssign() {
+    const ev = costAssignEv;
+    if (!ev) return;
+    $("costAssignTitle").textContent = `${ev.titre || ev.enfant || "Prestation"} · ${fmtLong(ev.date)} · ${ev.heure_debut ? hhmm(ev.heure_debut) : "horaire libre"}`;
+    const resp = isResp();
+    if (!costAttributionsOK) {
+      $("costAssignList").innerHTML = `<div class="missing">⚠️ Les attributions ne sont pas encore activées dans Supabase. Jordan doit exécuter le fichier SQL « costumes-attributions.sql » dans l'éditeur SQL du projet. Les costumes existants restent intacts.</div>`;
+      return;
+    }
+    const roles = parseTeam(ev.animateurs).filter(p => estRoleCostume(p) && (resp || normName(p.nom) === normName(chatMe())));
+    $("costAssignList").innerHTML = roles.length ? roles.map(p => {
+      const lignes = Object.keys(TYPES).map(type => {
+        const a = attributionPour(ev, p, type);
+        const dispo = costDe(p.role, type).filter(c => utilisable(c, p.nom));
+        if (!dispo.length && !a) return "";
+        const cCourante = pieceAttribuee(ev, p, type);
+        const verrouille = !!a?.verrouille;
+        const autorise = resp || !verrouille;
+        const choix = resp ? dispo : dispo.filter(c => !!persoDe(c) || String(c.id) === String(a?.costume_id));
+        const choixOptions = choix.map(c => {
+          const conflits = conflitsPiece(ev, c), selected = String(a?.costume_id || "") === String(c.id);
+          const label = `${persoDe(c) ? "👤 Perso" : "🏰 Fantasy"} · ${nomDe(c)}${etatDe(c) !== "ok" ? " · " + ETATS[etatDe(c)][1] : ""}${conflits.length ? " · ⛔ déjà réservé" : ""}`;
+          return `<option value="${esc(c.id)}"${selected ? " selected" : ""}${conflits.length && !selected ? " disabled" : ""}>${esc(label)}</option>`;
+        }).join("");
+        const attente = a?.costume_id && !cCourante ? `<p class="missing">⚠️ La pièce attribuée n'existe plus ou n'est pas autorisée pour ${esc(p.nom)}.</p>` : "";
+        const conflit = cCourante ? conflitsPiece(ev, cCourante) : [];
+        return `<div class="cost-row" style="display:block;padding:12px;margin:8px 0">
+          <b>${TYPES[type][0]} ${TYPES[type][1]}</b>${verrouille ? ` <span class="badge">🔒 Choix fixé</span>` : ""}
+          <select data-assign-piece="1" data-assign-member="${esc(p.nom)}" data-assign-role="${esc(p.role)}" data-assign-type="${type}" style="width:100%;margin-top:8px"${autorise && (resp || choix.some(c => !!persoDe(c))) ? "" : " disabled"}>
+            <option value=""${!a?.costume_id ? " selected" : ""}>— ${resp ? "À attribuer" : "Pas encore attribué"} —</option>${choixOptions}
+          </select>
+          ${attente}
+          ${conflit.length ? `<p class="missing">⚠️ Cette pièce est aussi attribuée à ${esc(conflit.map(x => x.a.membre).join(", "))} sur une prestation qui se chevauche.</p>` : ""}
+          ${cCourante && etatDe(cCourante) !== "ok" ? `<p class="hint" style="margin:6px 0">${esc(etatTxt(cCourante))}</p>` : ""}
+          ${!resp && !verrouille && choix.some(c => !!persoDe(c)) ? `<p class="hint" style="margin:6px 0">Tu peux choisir l'une de tes pièces personnelles ici. Jordan sera averti.</p>` : ""}
+          ${resp ? `<label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px"><input type="checkbox" data-assign-lock="1" data-assign-member="${esc(p.nom)}" data-assign-role="${esc(p.role)}" data-assign-type="${type}"${verrouille ? " checked" : ""} style="width:auto" />🔒 Verrouiller cette tenue pour le spectacle</label>` : ""}
+        </div>`;
+      }).filter(Boolean).join("");
+      return `<div class="group-title" style="margin-top:15px">${roleEmoji(p.role)} ${esc(p.nom)} · ${esc(p.role)}</div>${lignes || `<p class="hint">Aucune tenue encodée pour ce personnage. Ajoutez-la dans Gestion costumes.</p>`}`;
+    }).join("") : `<p class="hint">${resp ? "Attribuez d'abord les rôles dans l'événement, puis enregistrez la fiche." : "Aucun personnage ne vous est attribué sur cette prestation."}</p>`;
+  }
+  function openCostAssign(ev) {
+    if (!isResp() && !parseTeam(ev.animateurs).some(p => estRoleCostume(p) && normName(p.nom) === normName(chatMe()))) { toast("Vous n'êtes pas affecté à cette prestation."); return; }
+    costAssignEv = ev;
+    $("costAssignErr").textContent = "";
+    renderCostAssign();
+    $("costAssignBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
+  }
+  function closeCostAssign() { costAssignEv = null; $("costAssignBg").classList.add("hidden"); document.body.style.overflow = ""; render(); }
+  $("costAssignClose").onclick = closeCostAssign;
+  $("costAssignBg").addEventListener("click", e => { if (e.target.id === "costAssignBg") closeCostAssign(); });
+  $("costAssignList").addEventListener("change", async e => {
+    const el = e.target.closest("[data-assign-piece],[data-assign-lock]");
+    if (!el || !costAssignEv) return;
+    const ev = costAssignEv, membre = el.dataset.assignMember, role = el.dataset.assignRole, type = el.dataset.assignType;
+    const p = { nom: membre, role }, ancienne = attributionPour(ev, p, type);
+    const piece = el.dataset.assignPiece ? el.value : (ancienne?.costume_id || null);
+    const verrouille = el.dataset.assignLock ? el.checked : !!ancienne?.verrouille;
+    el.disabled = true;
+    $("costAssignErr").textContent = "";
+    try {
+      if (!isResp() && !piece) throw new Error("Choisissez votre pièce personnelle.");
+      await costAttributionStore.save(ev, membre, role, type, piece, verrouille);
+      await costAttributionReload();
+      toast(isResp() ? "✅ Tenue attribuée" : "✅ Ta tenue a été choisie · Jordan est averti");
+      renderCostAssign(); render();
+    } catch (err) { $("costAssignErr").textContent = "Impossible de modifier cette attribution : " + (err.message || err); el.disabled = false; el.value = ancienne?.costume_id || ""; }
+  });
+  document.addEventListener("click", e => { const b = e.target.closest("[data-cost-assign]"); if (!b) return;
+    e.preventDefault(); e.stopPropagation(); const ev = events.find(x => String(x.id) === String(b.dataset.costAssign)); if (ev) openCostAssign(ev);
+  }, true);
 
   // ================= 🎟️ Réservations d'événement (Bal de Noël, K-pop Day…) =================
   // Prix par place (même prix pour tous), acompte 50 %. Annulation ≥ 7 j avant : acompte perdu ; < 7 j : solde dû ;
@@ -7657,7 +7824,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       channel = sb.channel("ev").on("postgres_changes", { event: "*", schema: "public", table: "evenements" }, () => reload())
         .on("postgres_changes", { event: "*", schema: "public", table: "equipe" }, () => reload())
         .on("postgres_changes", { event: "*", schema: "public", table: "bilans" }, () => reload())
-        .on("postgres_changes", { event: "*", schema: "public", table: "costumes" }, async () => { await costReload(); if (!$("costBg").classList.contains("hidden")) renderCost(); render(); })
+        .on("postgres_changes", { event: "*", schema: "public", table: "costumes" }, async () => { await costReload(); if (!$("costBg").classList.contains("hidden")) renderCost(); if (!$("costAssignBg").classList.contains("hidden")) renderCostAssign(); render(); })
+        .on("postgres_changes", { event: "*", schema: "public", table: "costume_attributions" }, async () => { await costAttributionReload(); if (!$("costBg").classList.contains("hidden")) renderCost(); if (!$("costAssignBg").classList.contains("hidden")) renderCostAssign(); render(); })
         .on("postgres_changes", { event: "*", schema: "public", table: "pointages" }, () => ptReload())
         .on("postgres_changes", { event: "*", schema: "public", table: "reservations" }, async () => { if (resaEv) { await resaReload(); renderResa(); } })
         .on("postgres_changes", { event: "*", schema: "public", table: "stock" }, async () => { await stockReload(); if (!$("stockBg").classList.contains("hidden")) renderStock(); render(); })

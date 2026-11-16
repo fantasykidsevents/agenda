@@ -784,12 +784,6 @@ async function meteoDuJour(adresse, date) {
 //    rappel aux responsables (et à la personne qui a la pièce perso)
 //  - la veille (dès 17h) : pièce à récupérer chez quelqu'un (cas rare)
 const ETAT_TXT = { laver: "🧺 à laver", reparer: "🪡 à réparer", coiffer: "💇 à recoiffer" };
-function pieceUtilisee(C, a, type) {
-  const l = C.filter((c) => norm(c.personnage) === norm(a.role) && (c.type || "costume") === type && (!c.proprietaire || norm(c.proprietaire) === norm(a.nom)));
-  if (!l.length) return null;
-  const perso = l.filter((c) => c.proprietaire);
-  return perso.find((x) => x.etat === "ok") || perso[0] || l.find((x) => x.etat === "ok" && x.chez === "stock") || l.find((x) => x.etat === "ok") || l[0];
-}
 const isoJ = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const VOEUX = [
   "🎂 Joyeux anniversaire {p} ! ✨ Toute l'équipe Fantasy te souhaite une journée magique 🎉",
@@ -1079,8 +1073,20 @@ async function rappelsCostumes(equipe) {
   const demain = isoJ(new Date(bxl.getFullYear(), bxl.getMonth(), bxl.getDate() + 1));
   const parNom = new Map((equipe || []).map((m) => [norm(m.prenom), m]));
   const resp = (equipe || []).filter((m) => m.responsable);
-  let C = null;
-  const charger = async () => C ??= ((await sb.from("costumes").select("*")).data || []);
+  let C = null, A = null;
+  const charger = async () => {
+    if (C !== null && A !== null) return;
+    const [cost, assign] = await Promise.all([
+      sb.from("costumes").select("*"), sb.from("costume_attributions").select("*"),
+    ]);
+    C = cost.data || []; A = assign.data || [];
+  };
+  const pieceDeLaPrestation = (ev, a, type) => {
+    const attribution = (A || []).find((x) => String(x.evenement_id) === String(ev.id)
+      && norm(x.membre) === norm(a.nom) && norm(x.personnage) === norm(a.role) && x.type === type);
+    // Aucune attribution ? Ne pas deviner une robe parmi plusieurs versions Elsa.
+    return attribution?.costume_id ? (C || []).find((x) => String(x.id) === String(attribution.costume_id)) || null : null;
+  };
 
   // 1) Rappel quotidien : pas prêt dans les 7 jours
   const cle = `costumes_rappel_${auj}`;
@@ -1093,7 +1099,7 @@ async function rappelsCostumes(equipe) {
     for (const ev of evs || []) for (const a of equipeDe(ev)) {
       if (!a.role || norm(a.role) === "acc") continue;
       for (const type of ["costume", "perruque"]) {
-        const c = pieceUtilisee(C, a, type);
+        const c = pieceDeLaPrestation(ev, a, type);
         if (c && c.etat && c.etat !== "ok" && !soucis.has(c.id)) soucis.set(c.id, { c, ev });
       }
     }
@@ -1124,7 +1130,7 @@ async function rappelsCostumes(equipe) {
       for (const a of equipeDe(ev)) {
         if (!a.role || norm(a.role) === "acc") continue;
         for (const type of ["costume", "perruque"]) {
-          const c = pieceUtilisee(C, a, type);
+          const c = pieceDeLaPrestation(ev, a, type);
           if (!c || c.proprietaire || c.chez === "stock" || norm(c.chez) === norm(a.nom)) continue;
           const moi = parNom.get(norm(a.nom));
           if (moi) out.push(await envoyerPush(moi.email, { title: "👗 À récupérer", body: `${c.nom || a.role} est chez ${c.chez}\n${titreDe(ev)} · demain`, url: "./index.html?costumes=1", tag: `costume-${ev.id}-${a.nom}-${type}` }));
