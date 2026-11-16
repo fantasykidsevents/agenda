@@ -566,6 +566,19 @@
   .sheet .seg{flex-wrap:wrap}.sheet .seg label{flex:1 1 auto;min-width:0}.sheet .seg span{white-space:normal}
   .sheet input:not([type=radio]):not([type=checkbox]),.sheet select,.sheet textarea{width:100%}
   .sheet .seg input[type=radio]{max-width:none}
+  .tenue-card{border:1px solid #e7def9;border-radius:16px;background:#fff;padding:14px;margin:10px 0;box-shadow:0 3px 14px rgba(111,62,168,.05)}
+  .tenue-card h3{margin:0 0 8px;font-size:16px}
+  .tenue-options{display:grid;gap:7px;margin:10px 0}
+  .tenue-options label{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #e7def9;border-radius:12px;background:#fbf9ff;font-size:14px;cursor:pointer}
+  .tenue-options label:has(input:checked){background:#efe7ff;border-color:#9154dc;color:#4c1b91;font-weight:700}
+  .tenue-options input{width:auto!important;flex:none;accent-color:#843fe0}
+  .tenue-card .tenue-details{display:grid;gap:8px;margin:9px 0}
+  .tenue-card .tenue-details label{display:grid;gap:5px;font-size:13px;color:var(--muted);font-weight:600}
+  .tenue-card .tenue-details select,.tenue-card .tenue-details textarea,.tenue-card .tenue-details input{width:100%;padding:10px;border:1px solid #e7def9;border-radius:10px;background:#fff;color:var(--txt)}
+  .tenue-card .tenue-details textarea{min-height:66px;resize:vertical}
+  .tenue-status{display:inline-block;padding:4px 8px;border-radius:9px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700}
+  .tenue-status.resolue{background:#dcfce7;color:#166534}.tenue-status.en_cours{background:#dbeafe;color:#1e40af}
+  .tenue-card .btn{width:100%}
   .sheet .hor{flex-wrap:wrap}.sheet .hor input{width:auto;flex:1 1 80px}
   .sheet .chk,.sheet label{overflow-wrap:anywhere}
   .icon-btn.cloche{position:relative;padding:8px 10px;font-size:18px;margin-right:6px}
@@ -1859,7 +1872,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div class="grab"></div>
     <h2>👗 Tenues de la prestation</h2>
     <p id="costAssignTitle" class="hint" style="margin-top:0"></p>
+    <p class="hint">Choisissez séparément votre costume et votre perruque. Une demande de matériel Fantasy sera transmise aux responsables, qui confirmeront l'attribution.</p>
     <div id="costAssignList"></div>
+    <div id="costPhotoViewer" class="hidden" style="margin:10px 0;text-align:center"></div>
     <div id="costAssignErr" class="err"></div>
     <p class="hint">Chaque costume et chaque perruque sont attribués séparément. Une tenue personnelle est réservée à son propriétaire. 🔒 = choix fixé par le responsable.</p>
     <div class="actions"><button type="button" class="btn primary" id="costAssignClose">Fermer</button></div>
@@ -2255,7 +2270,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   let horsLigne = false;
   function sauverHL() {
     if (DEMO || !currentUser) return;
-    try { localStorage.setItem(cleHL(), JSON.stringify({ at: new Date().toISOString(), events, members, indispos, reglages, costumes, costAttributions,
+    try { localStorage.setItem(cleHL(), JSON.stringify({ at: new Date().toISOString(), events, members, indispos, reglages, costumes, costAttributions, costDemandes,
       chat: (chatMsgs || []).filter(m => !m.photo_url || m.photo_url.startsWith("http")).slice(-300) })); } catch (e) { /* mémoire pleine : tant pis */ }
   }
   function lireHL() { try { return JSON.parse(localStorage.getItem(cleHL()) || "null"); } catch (e) { return null; } }
@@ -2371,6 +2386,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const c = lireHL();
       if (c) { members = c.members || []; events = (c.events || []).filter(jeVoisEv); indispos = c.indispos || []; reglages = c.reglages || {}; costumes = c.costumes || [];
         costAttributions = c.costAttributions || []; costAttributionsOK = Array.isArray(c.costAttributions);
+        costDemandes = c.costDemandes || []; costDemandesOK = Array.isArray(c.costDemandes);
         if (!chatMsgs.length && c.chat) { chatMsgs = c.chat; chatLoaded = true; }
         barreHL(true, c.at); applyRole(); refreshFilters(); render(); return; }
       toast("📶 Pas de réseau, et aucune info enregistrée sur ce téléphone pour l'instant.");
@@ -2378,7 +2394,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     barreHL(false);
     try { indispos = await indStore.list(); } catch (e) { console.error(e); indispos = []; }
     try { reglages = await regStore.get(); } catch (e) { reglages = {}; }
-    await Promise.all([costReload(), costAttributionReload()]);
+    await Promise.all([costReload(), costAttributionReload(), costDemandeReload()]);
     await stockReload(); await gainsReload();
     try { bilans = await bilanStore.list(); } catch (e) { bilans = []; }
     try { depenses = await depStore.list(); } catch (e) { depenses = []; }
@@ -4676,6 +4692,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (qs.get("vue")) { const tb = document.querySelector(`.tab[data-view="${qs.get("vue")}"]`); linkHandled = true; history.replaceState(null, "", location.pathname); if (tb) setTimeout(() => tb.click(), 50); return; }
     if (qs.get("checklist")) { linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(openCK, 50); return; }
     if (qs.get("costumes")) { linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(openCost, 50); return; }
+    if (qs.get("tenue")) {
+      const ev = events.find(x => String(x.id) === String(qs.get("tenue")));
+      if (!ev || !jeVoisEv(ev)) return;
+      linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(() => openCostAssign(ev), 50); return;
+    }
     const canal = qs.get("chat");
     if (canal) { if (canal !== "equipe" && !evOfCanal(canal)) return; linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(() => openChat(canal), 50); return; }
     const id = qs.get("ev"); if (!id) return;
@@ -5033,8 +5054,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // ================= 👗 Costumes =================
   const LS_COST = "fk_agenda_costumes_demo3";
   const LS_COST_ASSIGN = "fk_agenda_costumes_attributions_demo1";
+  const LS_COST_DEMANDES = "fk_agenda_costumes_demandes_demo1";
   let costumes = [];
   let costAttributions = [], costAttributionsOK = DEMO;
+  let costDemandes = [], costDemandesOK = DEMO;
   let costAssignEv = null;
   const STOCK = "stock";
   const ouEst = (c) => c.chez === STOCK ? "📦 au stock" : `chez ${c.chez}`;
@@ -5105,6 +5128,70 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     try { costAttributions = await costAttributionStore.list(); costAttributionsOK = true; }
     catch (err) { costAttributions = []; costAttributionsOK = false; console.warn("Attributions de costumes : exécuter la migration Supabase", err.message || err); }
   }
+  const costDemandeStore = {
+    async list() {
+      if (DEMO) { try { return JSON.parse(localStorage.getItem(LS_COST_DEMANDES) || "[]"); } catch { return []; } }
+      const { data, error } = await sb.from("costume_demandes").select("*");
+      if (error) throw error;
+      return data || [];
+    },
+    async save(ev, membre, role, type, choix, piece, motif, detail, photoPath) {
+      if (DEMO) {
+        const l = await this.list(), i = l.findIndex(a => String(a.evenement_id) === String(ev.id) && normName(a.membre) === normName(membre)
+          && normName(a.personnage) === normName(role) && a.type === type);
+        const row = { evenement_id: String(ev.id), membre, personnage: role, type, choix, costume_id: choix === "personnel" ? piece : null,
+          motif: motif || null, detail: detail || null, photo_path: photoPath || null, statut: motif || choix === "fantasy" ? "a_traiter" : "resolue",
+          modifie_par: chatMe(), modifie_le: new Date().toISOString() };
+        if (i < 0) l.push(row); else l[i] = row;
+        localStorage.setItem(LS_COST_DEMANDES, JSON.stringify(l));
+        if (choix === "personnel") await costAttributionStore.save(ev, membre, role, type, piece, false);
+        else {
+          const a = costAttributions.find(a => String(a.evenement_id) === String(ev.id) && normName(a.membre) === normName(membre) && normName(a.personnage) === normName(role) && a.type === type);
+          if (a && !a.verrouille && (choix === "sans_perruque" || !!persoDe(costumes.find(c => String(c.id) === String(a.costume_id)) || {})))
+            await costAttributionStore.save(ev, membre, role, type, null, false);
+        }
+        return;
+      }
+      const { error } = await sb.rpc("enregistrer_demande_tenue", { p_evenement_id: String(ev.id), p_membre: membre,
+        p_personnage: role, p_type: type, p_choix: choix, p_costume_id: piece || null,
+        p_motif: motif || null, p_detail: detail || null, p_photo_path: photoPath || null });
+      if (error) throw error;
+    },
+    async setStatut(d, statut) {
+      if (DEMO) {
+        const l = await this.list(), ligne = l.find(x => String(x.evenement_id) === String(d.evenement_id) && x.membre === d.membre && x.personnage === d.personnage && x.type === d.type);
+        if (ligne) ligne.statut = statut;
+        localStorage.setItem(LS_COST_DEMANDES, JSON.stringify(l)); return;
+      }
+      const { error } = await sb.rpc("traiter_demande_tenue", { p_evenement_id: String(d.evenement_id),
+        p_membre: d.membre, p_personnage: d.personnage, p_type: d.type, p_statut: statut });
+      if (error) throw error;
+    },
+    async upload(file) {
+      const blob = await reduirePhoto(file, 1600);
+      if (DEMO) return await new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ko; r.readAsDataURL(blob); });
+      if (!currentUser?.id) throw new Error("Connectez-vous avant d'envoyer une photo.");
+      const path = `${currentUser.id}/${crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2)}.jpg`;
+      const { error } = await sb.storage.from("signalements-tenues").upload(path, blob, { contentType: "image/jpeg" });
+      if (error) throw error;
+      return path;
+    },
+    async photo(path) {
+      if (DEMO) return path;
+      const { data, error } = await sb.storage.from("signalements-tenues").createSignedUrl(path, 300);
+      if (error) throw error;
+      return data.signedUrl;
+    },
+  };
+  async function costDemandeReload() {
+    try { costDemandes = await costDemandeStore.list(); costDemandesOK = true; }
+    catch (err) { costDemandes = []; costDemandesOK = false; console.warn("Demandes de tenue : exécuter demandes-tenues.sql", err.message || err); }
+  }
+  const demandePour = (ev, p, type) => costDemandes.find(a => String(a.evenement_id) === String(ev.id) && normName(a.membre) === normName(p.nom)
+    && normName(a.personnage) === normName(p.role) && a.type === type);
+  const statutsDemande = { a_traiter: "🟠 À traiter", en_cours: "🔵 En cours", resolue: "✅ Résolue" };
+  const motifsDemande = { endommage: "Costume ou perruque abîmé(e)", entretien: "À laver ou à recoiffer",
+    indisponible: "Ne sera pas prêt(e) à temps", preference: "Je préfère celui de Fantasy", autre: "Autre raison" };
   const TYPES = { costume: ["👗", "Costume", "Costumes"], perruque: ["💇", "Perruque", "Perruques"] };
   const ETATS = { ok: ["✅", "Prêt"], laver: ["🧺", "À laver"], coiffer: ["💇", "À recoiffer"], reparer: ["🪡", "À réparer"] };
   const etatsPour = (c) => Object.entries(ETATS).filter(([k]) => k !== "coiffer" || typeDe(c) === "perruque");
@@ -5145,6 +5232,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     parseTeam(e.animateurs).filter(estRoleCostume).forEach(p => {
       Object.keys(TYPES).forEach(type => {
         const a = attributionPour(e, p, type), l = costDe(p.role, type).filter(c => utilisable(c, p.nom));
+        if (type === "perruque" && demandePour(e, p, type)?.choix === "sans_perruque" && !a?.verrouille) return;
         // Une perruque n'est pas obligatoire si aucun exemplaire de ce rôle n'existe.
         if (!l.length && !a) return;
         const src = pieceAttribuee(e, p, type);
@@ -5276,9 +5364,40 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   document.addEventListener("click", (e) => { if (e.target.closest("[data-cost-open]")) { e.stopPropagation(); openCost(); } }, true);
   $("costBtn").onclick = () => { closeTeam(); openCost(); };
 
-  // Une attribution distincte par prestation, par membre et par type de pièce.
-  // Le responsable peut choisir tout le stock ; un membre ne peut substituer
-  // que SA propre pièce à celle qui lui a été attribuée, sauf verrouillage.
+  // Le choix d'un membre est une demande ; seule l'attribution par un responsable
+  // réserve une tenue précise du stock Fantasy. Costume et perruque sont indépendants.
+  function rendreChoixTenueMembre(ev, p, type) {
+    const demande = demandePour(ev, p, type), a = attributionPour(ev, p, type), attribuee = pieceAttribuee(ev, p, type);
+    const personnelles = costDe(p.role, type).filter(c => normName(persoDe(c)) === normName(p.nom));
+    const choix = demande?.choix || (attribuee ? (persoDe(attribuee) ? "personnel" : "fantasy") : "");
+    const piece = demande?.costume_id || (attribuee && persoDe(attribuee) ? String(attribuee.id) : "");
+    const options = personnelles.map(c => `<option value="${esc(c.id)}"${String(c.id) === String(piece) ? " selected" : ""}>${esc(nomDe(c))}${etatDe(c) !== "ok" ? " · " + esc(ETATS[etatDe(c)][1]) : ""}</option>`).join("");
+    return `<form class="tenue-card" data-demande-form data-assign-member="${esc(p.nom)}" data-assign-role="${esc(p.role)}" data-assign-type="${type}">
+      <h3>${TYPES[type][0]} ${TYPES[type][1]}</h3>
+      ${attribuee ? `<p class="hint">Actuellement attribué : ${esc(nomDe(attribuee))}${a?.verrouille ? " 🔒 (fixé par Jordan)" : ""}</p>` : ""}
+      ${demande ? `<span class="tenue-status ${esc(demande.statut)}">${esc(statutsDemande[demande.statut] || "À traiter")}</span>` : ""}
+      <div class="tenue-options">
+        <label><input type="radio" name="choix-${esc(p.nom)}-${esc(p.role)}-${type}" value="personnel" data-demande-choix${choix === "personnel" ? " checked" : ""}${personnelles.length ? "" : " disabled"} />👤 J'utilise mon ${type === "costume" ? "propre costume" : "propre perruque"}</label>
+        <label><input type="radio" name="choix-${esc(p.nom)}-${esc(p.role)}-${type}" value="fantasy" data-demande-choix${choix === "fantasy" ? " checked" : ""} />🏰 Je souhaite utiliser ${type === "costume" ? "un costume" : "une perruque"} Fantasy</label>
+        ${type === "perruque" ? `<label><input type="radio" name="choix-${esc(p.nom)}-${esc(p.role)}-${type}" value="sans_perruque" data-demande-choix${choix === "sans_perruque" ? " checked" : ""} />✨ Ce personnage n'a pas besoin de perruque</label>` : ""}
+      </div>
+      <div data-piece-box class="tenue-details${choix === "personnel" ? "" : " hidden"}"><label>Ma pièce personnelle<select data-demande-piece>
+        <option value="">— Choisir ma pièce —</option>${options}</select></label></div>
+      ${!personnelles.length ? `<p class="hint">Tu n'as pas encore de ${type} personnel encodé pour ${esc(p.role)}. Tu peux l'ajouter dans « Costumes & perruques ».</p>` : ""}
+      <div class="tenue-details">
+        <label>Un problème à signaler ? (facultatif)<select data-demande-motif>
+          <option value="">Non, aucun problème</option>${Object.entries(motifsDemande).map(([v, label]) => `<option value="${v}"${demande?.motif === v ? " selected" : ""}>${esc(label)}</option>`).join("")}
+        </select></label>
+        <label>Précisions pour Jordan<textarea data-demande-detail maxlength="1000" placeholder="Ex. : mon costume a un accroc, ou ma perruque ne sera pas recoiffée pour dimanche.">${esc(demande?.detail || "")}</textarea></label>
+        <label>Photo du problème (facultatif)<input type="file" data-demande-photo accept="image/*" /></label>
+      </div>
+      ${demande?.photo_path ? `<button type="button" class="btn ghost" data-voir-photo="${esc(demande.photo_path)}">📷 Voir la photo déjà envoyée</button>` : ""}
+      ${a?.verrouille ? `<p class="hint">🔒 Jordan a fixé une tenue. Tu peux envoyer ton souhait ou signaler un problème ; il validera tout changement.</p>` : ""}
+      <button type="submit" class="btn primary" style="margin-top:8px">💾 Enregistrer mon choix</button>
+    </form>`;
+  }
+
+  // Attribution précise : réservée aux responsables, avec suivi des demandes.
   function renderCostAssign() {
     const ev = costAssignEv;
     if (!ev) return;
@@ -5289,11 +5408,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       return;
     }
     const roles = parseTeam(ev.animateurs).filter(p => estRoleCostume(p) && (resp || normName(p.nom) === normName(chatMe())));
+    if (!resp && costDemandesOK) {
+      $("costAssignList").innerHTML = roles.length
+        ? roles.map(p => `<div class="group-title" style="margin-top:15px">${roleEmoji(p.role)} ${esc(p.nom)} · ${esc(p.role)}</div>${Object.keys(TYPES).map(type => rendreChoixTenueMembre(ev, p, type)).join("")}`).join("")
+        : `<p class="hint">Aucun personnage ne vous est attribué sur cette prestation.</p>`;
+      return;
+    }
     $("costAssignList").innerHTML = roles.length ? roles.map(p => {
       const lignes = Object.keys(TYPES).map(type => {
         const a = attributionPour(ev, p, type);
+        const demande = costDemandesOK ? demandePour(ev, p, type) : null;
         const dispo = costDe(p.role, type).filter(c => utilisable(c, p.nom));
-        if (!dispo.length && !a) return "";
+        if (!dispo.length && !a && !demande) return "";
         const cCourante = pieceAttribuee(ev, p, type);
         const verrouille = !!a?.verrouille;
         const autorise = resp || !verrouille;
@@ -5305,6 +5431,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         }).join("");
         const attente = a?.costume_id && !cCourante ? `<p class="missing">⚠️ La pièce attribuée n'existe plus ou n'est pas autorisée pour ${esc(p.nom)}.</p>` : "";
         const conflit = cCourante ? conflitsPiece(ev, cCourante) : [];
+        const souhait = demande ? `<div class="tenue-card" style="margin:8px 0 0;padding:10px;background:#fdfaff">
+          <b>📝 Souhait de ${esc(p.nom)} : ${demande.choix === "personnel" ? "matériel personnel" : demande.choix === "sans_perruque" ? "sans perruque" : "matériel Fantasy"}</b><br>
+          ${demande.costume_id ? `<small>Pièce souhaitée : ${esc(nomDe(costumes.find(c => String(c.id) === String(demande.costume_id)) || { personnage: p.role, type }))}</small><br>` : ""}
+          <span class="tenue-status ${esc(demande.statut)}">${esc(statutsDemande[demande.statut] || "À traiter")}</span>
+          ${demande.motif ? `<p class="hint" style="margin:8px 0 4px">⚠️ ${esc(motifsDemande[demande.motif] || demande.motif)}</p>` : ""}
+          ${demande.detail ? `<p class="hint" style="white-space:pre-wrap">${esc(demande.detail)}</p>` : ""}
+          ${demande.photo_path ? `<button type="button" class="btn ghost" data-voir-photo="${esc(demande.photo_path)}">📷 Voir la photo jointe</button>` : ""}
+          <label class="tenue-details">Suivi de la demande<select data-demande-statut data-assign-member="${esc(p.nom)}" data-assign-role="${esc(p.role)}" data-assign-type="${type}">
+            ${Object.entries(statutsDemande).map(([v, t]) => `<option value="${v}"${demande.statut === v ? " selected" : ""}>${t}</option>`).join("")}
+          </select></label></div>` : "";
         return `<div class="cost-row" style="display:block;padding:12px;margin:8px 0">
           <b>${TYPES[type][0]} ${TYPES[type][1]}</b>${verrouille ? ` <span class="badge">🔒 Choix fixé</span>` : ""}
           <select data-assign-piece="1" data-assign-member="${esc(p.nom)}" data-assign-role="${esc(p.role)}" data-assign-type="${type}" style="width:100%;margin-top:8px"${autorise && (resp || choix.some(c => !!persoDe(c))) ? "" : " disabled"}>
@@ -5315,22 +5451,83 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           ${cCourante && etatDe(cCourante) !== "ok" ? `<p class="hint" style="margin:6px 0">${esc(etatTxt(cCourante))}</p>` : ""}
           ${!resp && !verrouille && choix.some(c => !!persoDe(c)) ? `<p class="hint" style="margin:6px 0">Tu peux choisir l'une de tes pièces personnelles ici. Jordan sera averti.</p>` : ""}
           ${resp ? `<label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px"><input type="checkbox" data-assign-lock="1" data-assign-member="${esc(p.nom)}" data-assign-role="${esc(p.role)}" data-assign-type="${type}"${verrouille ? " checked" : ""} style="width:auto" />🔒 Verrouiller cette tenue pour le spectacle</label>` : ""}
+          ${souhait}
         </div>`;
       }).filter(Boolean).join("");
       return `<div class="group-title" style="margin-top:15px">${roleEmoji(p.role)} ${esc(p.nom)} · ${esc(p.role)}</div>${lignes || `<p class="hint">Aucune tenue encodée pour ce personnage. Ajoutez-la dans Gestion costumes.</p>`}`;
     }).join("") : `<p class="hint">${resp ? "Attribuez d'abord les rôles dans l'événement, puis enregistrez la fiche." : "Aucun personnage ne vous est attribué sur cette prestation."}</p>`;
+    if (!costDemandesOK) $("costAssignList").insertAdjacentHTML("afterbegin", `<div class="missing">⚠️ Le nouveau formulaire de souhaits et de signalements n'est pas encore activé. Exécuter « demandes-tenues.sql » dans Supabase. Les attributions actuelles restent utilisables.</div>`);
   }
   function openCostAssign(ev) {
     if (!isResp() && !parseTeam(ev.animateurs).some(p => estRoleCostume(p) && normName(p.nom) === normName(chatMe()))) { toast("Vous n'êtes pas affecté à cette prestation."); return; }
     costAssignEv = ev;
     $("costAssignErr").textContent = "";
+    $("costPhotoViewer").classList.add("hidden"); $("costPhotoViewer").innerHTML = "";
     renderCostAssign();
     $("costAssignBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
   }
   function closeCostAssign() { costAssignEv = null; $("costAssignBg").classList.add("hidden"); document.body.style.overflow = ""; render(); }
   $("costAssignClose").onclick = closeCostAssign;
   $("costAssignBg").addEventListener("click", e => { if (e.target.id === "costAssignBg") closeCostAssign(); });
+  $("costAssignList").addEventListener("change", e => {
+    if (!e.target.matches("[data-demande-choix]")) return;
+    const form = e.target.closest("[data-demande-form]");
+    const box = form?.querySelector("[data-piece-box]");
+    if (box) box.classList.toggle("hidden", e.target.value !== "personnel");
+  });
+  $("costAssignList").addEventListener("submit", async e => {
+    const form = e.target.closest("[data-demande-form]"); if (!form) return;
+    e.preventDefault();
+    if (!costAssignEv) return;
+    const choix = form.querySelector("[data-demande-choix]:checked")?.value;
+    const piece = form.querySelector("[data-demande-piece]")?.value || null;
+    const motif = form.querySelector("[data-demande-motif]")?.value || null;
+    const detail = form.querySelector("[data-demande-detail]")?.value.trim() || null;
+    const fichier = form.querySelector("[data-demande-photo]")?.files[0];
+    if (!choix) { $("costAssignErr").textContent = "Choisis ton costume ou ta perruque avant d'enregistrer."; return; }
+    if (choix === "personnel" && !piece) { $("costAssignErr").textContent = "Choisis une pièce personnelle dans la liste."; return; }
+    if (motif === "autre" && !detail) { $("costAssignErr").textContent = "Précise la raison du problème."; return; }
+    const ev = costAssignEv, membre = form.dataset.assignMember, role = form.dataset.assignRole, type = form.dataset.assignType;
+    const precedent = demandePour(ev, { nom: membre, role }, type);
+    const bouton = form.querySelector('[type="submit"]');
+    bouton.disabled = true; bouton.textContent = "⏳ Enregistrement…";
+    $("costAssignErr").textContent = "";
+    let nouvellePhoto = null;
+    try {
+      if (fichier) nouvellePhoto = await costDemandeStore.upload(fichier);
+      await costDemandeStore.save(ev, membre, role, type, choix, piece, motif, detail, nouvellePhoto || precedent?.photo_path || null);
+      await Promise.all([costAttributionReload(), costDemandeReload()]);
+      toast(choix === "fantasy" ? "🏰 Demande envoyée à Jordan !" : motif ? "⚠️ Signalement enregistré !" : "✅ Ton choix est enregistré");
+      renderCostAssign(); render();
+    } catch (err) {
+      if (nouvellePhoto && !DEMO) await sb.storage.from("signalements-tenues").remove([nouvellePhoto]).catch(() => {});
+      $("costAssignErr").textContent = "Impossible d'enregistrer : " + (err.message || err);
+      bouton.disabled = false; bouton.textContent = "💾 Enregistrer mon choix";
+    }
+  });
+  $("costAssignList").addEventListener("click", async e => {
+    const btn = e.target.closest("[data-voir-photo]"); if (!btn) return;
+    const box = $("costPhotoViewer");
+    btn.disabled = true;
+    try {
+      const url = await costDemandeStore.photo(btn.dataset.voirPhoto);
+      box.innerHTML = `<p class="hint">📷 Photo du signalement · <button type="button" class="btn ghost" id="costPhotoClose" style="width:auto">Fermer</button></p><img src="${esc(url)}" alt="Photo du costume ou de la perruque" style="max-width:100%;max-height:55vh;border-radius:12px" />`;
+      box.classList.remove("hidden");
+      $("costPhotoClose").onclick = () => { box.innerHTML = ""; box.classList.add("hidden"); };
+      box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (err) { toast("Photo indisponible : " + (err.message || err)); }
+    finally { btn.disabled = false; }
+  });
   $("costAssignList").addEventListener("change", async e => {
+    const statut = e.target.closest("[data-demande-statut]");
+    if (statut && costAssignEv && isResp()) {
+      const demande = demandePour(costAssignEv, { nom: statut.dataset.assignMember, role: statut.dataset.assignRole }, statut.dataset.assignType);
+      if (!demande) return;
+      statut.disabled = true;
+      try { await costDemandeStore.setStatut(demande, statut.value); await costDemandeReload(); toast("✅ Suivi mis à jour · membre informé"); renderCostAssign(); }
+      catch (err) { $("costAssignErr").textContent = "Impossible de modifier le suivi : " + (err.message || err); statut.value = demande.statut; statut.disabled = false; }
+      return;
+    }
     const el = e.target.closest("[data-assign-piece],[data-assign-lock]");
     if (!el || !costAssignEv) return;
     const ev = costAssignEv, membre = el.dataset.assignMember, role = el.dataset.assignRole, type = el.dataset.assignType;
@@ -5343,6 +5540,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if (!isResp() && !piece) throw new Error("Choisissez votre pièce personnelle.");
       await costAttributionStore.save(ev, membre, role, type, piece, verrouille);
       await costAttributionReload();
+      const demande = costDemandesOK && demandePour(ev, p, type);
+      if (isResp() && demande?.choix === "fantasy" && !demande?.motif && piece) {
+        const attribuee = costumes.find(c => String(c.id) === String(piece));
+        if (attribuee && !persoDe(attribuee)) {
+          try { await costDemandeStore.setStatut(demande, "resolue"); await costDemandeReload(); }
+          catch (err) { console.warn("Attribution enregistrée, suivi du souhait non mis à jour", err); }
+        }
+      }
       toast(isResp() ? "✅ Tenue attribuée" : "✅ Ta tenue a été choisie · Jordan est averti");
       renderCostAssign(); render();
     } catch (err) { $("costAssignErr").textContent = "Impossible de modifier cette attribution : " + (err.message || err); el.disabled = false; el.value = ancienne?.costume_id || ""; }
@@ -7938,6 +8143,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         .on("postgres_changes", { event: "*", schema: "public", table: "bilans" }, () => reload())
         .on("postgres_changes", { event: "*", schema: "public", table: "costumes" }, async () => { await costReload(); if (!$("costBg").classList.contains("hidden")) renderCost(); if (!$("costAssignBg").classList.contains("hidden")) renderCostAssign(); render(); })
         .on("postgres_changes", { event: "*", schema: "public", table: "costume_attributions" }, async () => { await costAttributionReload(); if (!$("costBg").classList.contains("hidden")) renderCost(); if (!$("costAssignBg").classList.contains("hidden")) renderCostAssign(); render(); })
+        .on("postgres_changes", { event: "*", schema: "public", table: "costume_demandes" }, async () => { await costDemandeReload(); if (!$("costAssignBg").classList.contains("hidden")) renderCostAssign(); render(); })
         .on("postgres_changes", { event: "*", schema: "public", table: "pointages" }, () => ptReload())
         .on("postgres_changes", { event: "*", schema: "public", table: "reservations" }, async () => { if (resaEv) { await resaReload(); renderResa(); } })
         .on("postgres_changes", { event: "*", schema: "public", table: "stock" }, async () => { await stockReload(); if (!$("stockBg").classList.contains("hidden")) renderStock(); render(); })
