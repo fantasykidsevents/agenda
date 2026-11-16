@@ -163,6 +163,67 @@ begin
 end;
 $$;
 
+-- Un vote de sondage est UNE réponse globale :
+-- plusieurs dates disponibles OU une indisponibilité totale, jamais les deux.
+create or replace function public.enregistrer_choix_sondage(
+  p_sondage_id uuid,p_options text[],p_indisponible boolean default false
+)
+returns void language plpgsql security definer set search_path = public, pg_temp
+as $
+declare
+  v_email text := lower(btrim(coalesce(auth.jwt()->>'email','')));
+  v_sondage public.sondages_dispo%rowtype;
+  v_options text[] := coalesce(p_options, array[]::text[]);
+  v_option text;
+begin
+  if not exists (
+    select 1 from public.equipe e where lower(btrim(e.email))=v_email
+  ) then
+    raise exception 'Votre compte doit être relié à l’équipe.';
+  end if;
+  select * into v_sondage from public.sondages_dispo
+    where id=p_sondage_id for update;
+  if not found or v_sondage.statut<>'ouvert' or now()>=v_sondage.date_limite then
+    raise exception 'Le sondage est fermé ou la date limite est dépassée.';
+  end if;
+  if cardinality(v_options)>12 or
+     (coalesce(p_indisponible,false) and cardinality(v_options)>0) or
+     (not coalesce(p_indisponible,false) and cardinality(v_options)=0) then
+    raise exception 'Choisissez une ou plusieurs dates, ou « Aucune disponibilité ».';
+  end if;
+  if exists (
+    select 1 from unnest(v_options) as opt
+    where opt is null or not exists (
+      select 1 from jsonb_array_elements(v_sondage.dates) as d
+      where d->>'id'=opt
+    )
+  ) then
+    raise exception 'Une date sélectionnée est invalide.';
+  end if;
+  if exists (
+    select 1 from (
+      select opt from unnest(v_options) as opt group by opt having count(*)>1
+    ) doublon
+  ) then
+    raise exception 'Une date a été sélectionnée deux fois.';
+  end if;
+
+  delete from public.sondages_dispo_reponses
+    where sondage_id=p_sondage_id and email=v_email;
+  if coalesce(p_indisponible,false) then
+    insert into public.sondages_dispo_reponses
+      (sondage_id,option_id,email,reponse,modifie_le)
+      values(p_sondage_id,'__aucune__',v_email,'non',now());
+  else
+    foreach v_option in array v_options loop
+      insert into public.sondages_dispo_reponses
+        (sondage_id,option_id,email,reponse,modifie_le)
+        values(p_sondage_id,v_option,v_email,'oui',now());
+    end loop;
+  end if;
+end;
+$;
+
 create or replace function public.fermer_sondage_dispo(
   p_sondage_id uuid,p_ferme boolean
 )
@@ -219,14 +280,17 @@ begin
       select distinct lower(btrim(e.email)) from public.equipe e
       where nullif(btrim(e.email),'') is not null and e.email like '%@%'
     loop
+      -- Une réponse est complète dès qu'une date est cochée ou
+      -- que le membre a choisi « Aucune disponibilité ».
       select count(*) into v_manquantes
-      from jsonb_array_elements(v_s.dates) as opt
-      where not exists (
-        select 1 from public.sondages_dispo_reponses r
-        where r.sondage_id=v_s.id and r.email=v_email
-          and r.option_id=opt->>'id'
-      );
-      if v_manquantes=0 then continue; end if;
+      from public.sondages_dispo_reponses r
+      where r.sondage_id=v_s.id and r.email=v_email
+        and ((r.option_id='__aucune__' and r.reponse='non')
+          or (r.reponse='oui' and exists (
+            select 1 from jsonb_array_elements(v_s.dates) as d
+            where d->>'id'=r.option_id
+          )));
+      if v_manquantes>0 then continue; end if;
 
       v_relance:=null;
       insert into public.sondages_dispo_relances(sondage_id,email,etape)
@@ -236,8 +300,8 @@ begin
       if v_relance is null then continue; end if;
       begin
         email:=v_email;
-        titre:='⏰ Rappel : sondage sans réponse complète';
-        message:=v_s.titre || ' · ' || v_manquantes::text || ' date(s) sans réponse. '
+        titre:='⏰ Rappel : sondage sans réponse';
+        message:=v_s.titre || ' · Tu n’as pas encore choisi de disponibilité. '
           || 'Limite : ' || to_char(v_s.date_limite at time zone 'Europe/Brussels','DD/MM/YYYY HH24:MI');
         lien:='./index.html?sondages=1';
         insert into public.notifications_app
@@ -278,7 +342,7 @@ begin
     update public.sondages_dispo_relances
       set push_envoye_le=now() where id=r.id;
     email:=r.email;
-    titre:='⏰ Rappel : sondage sans réponse complète';
+    titre:='⏰ Rappel : sondage sans réponse';
     message:=r.nom_sondage || ' · Dernier délai : '
       || to_char(r.date_limite at time zone 'Europe/Brussels','DD/MM/YYYY HH24:MI');
     lien:='./index.html?sondages=1';
@@ -291,10 +355,12 @@ revoke all on function public.prendre_push_sondages_dispo() from public;
 grant execute on function public.prendre_push_sondages_dispo() to service_role;
 
 revoke all on function public.creer_sondage_dispo(text,jsonb,timestamptz,text) from public;
+revoke all on function public.enregistrer_choix_sondage(uuid,text[],boolean) from public;
 revoke all on function public.repondre_sondage_dispo(uuid,text,text) from public;
 revoke all on function public.fermer_sondage_dispo(uuid,boolean) from public;
 revoke all on function public.relancer_sondages_dispo() from public;
 grant execute on function public.creer_sondage_dispo(text,jsonb,timestamptz,text) to authenticated;
+grant execute on function public.enregistrer_choix_sondage(uuid,text[],boolean) to authenticated;
 grant execute on function public.repondre_sondage_dispo(uuid,text,text) to authenticated;
 grant execute on function public.fermer_sondage_dispo(uuid,boolean) to authenticated;
 grant execute on function public.relancer_sondages_dispo() to service_role;
