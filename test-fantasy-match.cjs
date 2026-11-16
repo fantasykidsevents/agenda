@@ -7,10 +7,10 @@ const path = require('node:path');
 let src = fs.readFileSync(path.join(__dirname,'fantasy-match.js'),'utf8');
 const end = /\n  init\(\)\.catch\(err=>\{[\s\S]*?\}\);\n\}\)\(\);\s*$/;
 assert.match(src,end,'Point d’entrée reconnu');
-src = src.replace(end,`\n  globalThis.__fmTest = {levelConfig,findMatches,hasPossibleMove,freshBoard,isNeighbor,matchBonus,expandSpecials,kindOf,specialOf,specialSwapTargets,bestBombCenter};\n})();`);
+src = src.replace(end,`\n  globalThis.__fmTest = {levelConfig,iceCellsForLevel,findMatches,hasPossibleMove,freshBoard,isNeighbor,matchBonus,matchEffect,expandSpecials,kindOf,specialOf,specialSwapTargets,bestBombCenter};\n})();`);
 const sandbox = {Math,Date,Set,Array,Number,String,Object,Map,console};
 vm.runInNewContext(src,sandbox,{filename:'fantasy-match.js'});
-const {levelConfig,findMatches,hasPossibleMove,freshBoard,isNeighbor,matchBonus,expandSpecials,kindOf,specialOf,specialSwapTargets,bestBombCenter} = sandbox.__fmTest;
+const {levelConfig,iceCellsForLevel,findMatches,hasPossibleMove,freshBoard,isNeighbor,matchBonus,matchEffect,expandSpecials,kindOf,specialOf,specialSwapTargets,bestBombCenter} = sandbox.__fmTest;
 
 assert.equal(levelConfig(1).world,0);
 assert.equal(levelConfig(20).world,0);
@@ -19,9 +19,13 @@ assert.equal(levelConfig(100).world,4);
 for(let n=1;n<=100;n++){
   const l=levelConfig(n);
   assert.equal(l.number,n);
-  assert.ok(l.moves>=19 && l.moves<=35,`Coups incohérents au niveau ${n}`);
-  assert.ok(l.target>=7 && l.target<=35,`Objectif incohérent au niveau ${n}`);
+  assert.ok(l.moves>=24 && l.moves<=36,`Coups incohérents au niveau ${n}`);
+  assert.ok(l.target>0,`Objectif incohérent au niveau ${n}`);
+  if(l.mode==='duo')assert.equal(l.target,Object.values(l.targets).reduce((a,b)=>a+b,0));
+  if(l.mode==='ice')assert.equal(iceCellsForLevel(n,l.target).size,l.target);
 }
+assert.deepEqual([1,2,3,4,5].map(n=>levelConfig(n).mode),['collect','duo','ice','score','special']);
+assert.notEqual(levelConfig(1).goal,levelConfig(6).goal);
 for(let i=0;i<100;i++){
   const b=freshBoard();
   assert.equal(b.length,64);
@@ -48,6 +52,11 @@ assert.equal(matchBonus(vertical,findMatches(vertical),18).value,'rose|lineV');
 const five=Array(64).fill(null);
 for(const i of [16,17,18,19,20])five[i]='crown';
 assert.equal(matchBonus(five,findMatches(five),19).value,'rainbow|color');
+const rainbowEffect=matchEffect(five,findMatches(five),19,true);
+assert.equal(rainbowEffect.bonus.index,19);
+assert.equal(rainbowEffect.bonus.value,'rainbow|color');
+assert.equal(rainbowEffect.removed.size,4,'Cinq symboles doivent laisser un arc-en-ciel sur la grille');
+assert.ok(!rainbowEffect.removed.has(19),'Le bonus créé ne doit jamais être supprimé par le match');
 const cross=Array(64).fill(null);
 for(const i of [1,9,17,8,10])cross[i]='wand';
 assert.equal(matchBonus(cross,findMatches(cross),9).value,'wand|bomb');

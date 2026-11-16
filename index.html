@@ -48,12 +48,12 @@
   @media(max-width:520px){
     header{padding-left:10px;padding-right:10px}
     .head-row{gap:6px}
-    .head-row .logo{height:40px;max-width:94px;object-fit:contain}
+    .head-row .logo{height:38px;max-width:82px;object-fit:contain}
     #who{text-align:left;justify-content:flex-start;min-width:0}
     #who .who-t{overflow:hidden}
     #who .who-l1{display:block;overflow:hidden;text-overflow:ellipsis;font-size:clamp(12px,3.5vw,15px)}
     #who .alias{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
-    #who .who-av{display:none}
+    #who .who-av{display:block;width:34px;height:34px}
     #clocheBtn{padding:8px 7px}
     #teamBtn{font-size:0;min-width:38px;padding:7px}
     #teamBtn::before{content:"👤";font-size:19px}
@@ -955,6 +955,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .mon-trajet .pk-mine{font-size:13px;color:var(--muted);margin-top:6px}
   .repet-chk input{width:20px!important;height:20px;flex:none;margin:0}
   .evt-resume{margin:0 0 8px;padding:8px 12px;border-radius:12px;background:#f3ecff;font-size:13px;color:#5b2bb5}
+  .team-preset-box{margin:8px 0 14px;padding:13px;border-radius:17px;border:1px solid #dfc6fa;
+    background:linear-gradient(125deg,#ecfaff,#f5edff 54%,#fff0fa)}
+  .team-preset-box>label{margin:0 0 6px;display:block;color:#7130a1;font-weight:800}
+  .team-preset-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .team-preset-row select,.team-preset-row input{min-width:130px;flex:1 1 160px;margin:0}
+  .team-preset-row button{flex:0 0 auto;white-space:nowrap;padding:10px 12px;font-size:13px}
+  .team-preset-row #teamPresetDelete{padding:10px;width:42px}
   .driver-row.evt-off{display:none!important}
   .mon-poste{display:block;margin-top:2px;padding:4px 10px;border-radius:10px;background:linear-gradient(90deg,#fff6db,#ffeefa);color:#7a4b00}
   .rg-rap{display:flex;flex-direction:column;gap:2px}
@@ -1144,7 +1151,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <!-- Vue Mes animations -->
     <section id="viewMine" class="hidden">
       <div class="mine-head" id="mineHead"></div>
-      <a href="fantasy-match.html" class="mine-head" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;background:linear-gradient(110deg,#e0f5ff,#f0ddff 52%,#ffe0f1);border:1px solid #d8b5ff;box-shadow:0 5px 18px rgba(169,42,220,.13)">
+      <a href="fantasy-match.html?v=20261116-2" class="mine-head" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;background:linear-gradient(110deg,#e0f5ff,#f0ddff 52%,#ffe0f1);border:1px solid #d8b5ff;box-shadow:0 5px 18px rgba(169,42,220,.13)">
         <span aria-hidden="true" style="font-size:38px;line-height:1">💎</span>
         <span style="flex:1"><b style="display:block;color:#8021bf;font-size:19px">Fantasy Match</b><small style="display:block;color:#6c5588;margin-top:3px">Le jeu magique de l'équipe · 100 niveaux · 5 vies</small></span>
         <span aria-hidden="true" style="font-size:23px;color:#a52fe8">›</span>
@@ -1299,6 +1306,20 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </div>
     <label for="addAnim" id="teamLabel">Animateur(s)</label>
     <div id="evtResume" class="evt-resume hidden"></div>
+    <div id="teamPresetBox" class="team-preset-box hidden">
+      <label for="teamPresetSel">👥 Ajouter une équipe enregistrée</label>
+      <div class="team-preset-row">
+        <select id="teamPresetSel"><option value="">— Choisir une équipe type —</option></select>
+        <button type="button" class="btn" id="teamPresetApply">Ajouter l'équipe</button>
+      </div>
+      <p class="hint" style="margin:4px 0 9px">Les membres et leurs rôles sont ajoutés d'un coup. Vous pouvez ensuite les modifier pour cette date.</p>
+      <label for="teamPresetName">💾 Enregistrer la sélection actuelle pour les prochains événements</label>
+      <div class="team-preset-row">
+        <input id="teamPresetName" type="text" maxlength="60" placeholder="Ex. Troupe La Nuit Magique" />
+        <button type="button" class="btn ghost" id="teamPresetSave">Enregistrer</button>
+        <button type="button" class="btn ghost" id="teamPresetDelete" title="Supprimer l'équipe type sélectionnée">🗑️</button>
+      </div>
+    </div>
     <input id="animateurs" type="hidden" />
     <div id="pickList"></div>
     <div id="driverRow" class="driver-row hidden">
@@ -2079,8 +2100,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const LS_TEAM = "fk_agenda_team_demo";
   const team = {
     async monPerso(perso) {
+      const me = myMember();
+      if (!me) throw new Error("Votre profil n'est pas encore relié à l'équipe.");
+      if (perso) {
+        const latest = await team.list();
+        const taken = latest.find(m => String(m.id) !== String(me.id) && normName(m.perso_prefere || "") === normName(perso));
+        if (taken) throw new Error(`${perso} est déjà le personnage de ${taken.prenom}. Choisissez-en un autre.`);
+      }
       if (DEMO) { const l = JSON.parse(localStorage.getItem(LS_TEAM) || "[]"), me = myMember(); const x = me && l.find(m => m.id === me.id); if (x) { x.perso_prefere = perso || null; localStorage.setItem(LS_TEAM, JSON.stringify(l)); } return; }
-      const { error } = await sb.rpc("mon_perso", { p_perso: perso || "" }); if (error) throw error;
+      const { error } = await sb.rpc("mon_perso", { p_perso: perso || "" });
+      if (error?.code === "23505") throw new Error("Ce personnage vient d'être choisi par un autre membre. Choisissez-en un autre.");
+      if (error) throw error;
     },
     async list() {
       if (DEMO) { try { return JSON.parse(localStorage.getItem(LS_TEAM) || "[]"); } catch(e) { return []; } }
@@ -3069,6 +3099,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     horaires = {}; voitures = {}; try { JSON.parse((ev && ev.equipe_detail) || "[]").forEach(x => { if (x.debut || x.fin) horaires[normName(x.prenom)] = { d: x.debut || "", f: x.fin || "" }; if (x.voiture) voitures[normName(x.prenom)] = x.voiture; }); } catch (e) {}
     parkings = ((ev && ev.km_detail && ev.km_detail.parkings) || []).map(x => ({ ...x }));
     repetJour = ev && ev.km_detail && ev.km_detail.repet != null ? !!ev.km_detail.repet : null;
+    // Chaque nouvelle fiche commence sans équipe type présélectionnée.
+    $("teamPresetSel").value = "";
+    $("teamPresetName").value = "";
     appliquerType();
     renderChips(); checkJbl();
     if (ev && ev.km_detail && ev.km_detail.mode === "evt" && isResp() && estEvt()) showKmEvt(ev.km_detail);
@@ -3802,11 +3835,77 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     swapIdx = null; $("addAnim").placeholder = "➕ Ajouter : tapez un prénom…";
     renderPicked(); $("addAnim").value = ""; $("sugg").classList.add("hidden");
   }
+  // 👥 Équipes types partagées entre les responsables : membres et rôles,
+  // jamais les horaires, les voitures ni les défraiements d'une autre date.
+  function equipesTypes(){
+    try {
+      const list=JSON.parse(reglages.equipes_types || "[]");
+      return Array.isArray(list) ? list.filter(x => x && x.id && x.nom && Array.isArray(x.membres)) : [];
+    }catch{return [];}
+  }
+  function renderEquipesTypes(){
+    const select=$("teamPresetSel"),ancien=select.value;
+    const list=equipesTypes().sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
+    select.innerHTML='<option value="">— Choisir une équipe type —</option>'+list.map(x=>
+      `<option value="${esc(x.id)}">${esc(x.nom)} (${x.membres.length})</option>`).join("");
+    if(list.some(x=>x.id===ancien))select.value=ancien;
+    $("teamPresetApply").disabled=!isGest()||!select.value;
+    $("teamPresetDelete").disabled=!isGest()||!select.value;
+  }
+  $("teamPresetSel").addEventListener("change",()=>{
+    const chosen=equipesTypes().find(x=>x.id===$("teamPresetSel").value);
+    if(chosen)$("teamPresetName").value=chosen.nom;
+    renderEquipesTypes();
+  });
+  $("teamPresetApply").addEventListener("click",()=>{
+    if(!isGest()||!estEvt())return;
+    const preset=equipesTypes().find(x=>x.id===$("teamPresetSel").value);
+    if(!preset){toast("Choisissez d'abord une équipe type");return;}
+    const disponibles=new Map(members.map(m=>[normName(m.prenom),m.prenom]));
+    const deja=new Set(picked.map(p=>normName(p.nom)));
+    let ajoutes=0,absents=0;
+    for(const p of preset.membres){
+      const nom=disponibles.get(normName(p.nom));
+      if(!nom){absents++;continue;}
+      if(deja.has(normName(nom)))continue;
+      picked.push({nom,role:p.role||""});deja.add(normName(nom));ajoutes++;
+    }
+    syncAnim();renderPicked();
+    toast(`👥 ${ajoutes} membre${ajoutes>1?"s":""} ajouté${ajoutes>1?"s":""}${absents?` · ${absents} hors équipe ignoré(s)`:""}`);
+  });
+  $("teamPresetSave").addEventListener("click",async()=>{
+    if(!isGest()||!estEvt())return;
+    const nom=$("teamPresetName").value.trim();
+    if(!nom){toast("Donnez un nom à cette équipe type");return;}
+    if(!picked.length){toast("Ajoutez d'abord des membres à l'événement");return;}
+    const list=equipesTypes(),existing=list.find(x=>normName(x.nom)===normName(nom));
+    if(existing&&!confirm(`Remplacer l'équipe type « ${existing.nom} » par la sélection actuelle ?`))return;
+    const id=existing?.id||(globalThis.crypto?.randomUUID?.()||String(Date.now()));
+    const entry={id,nom,membres:picked.map(({nom,role})=>({nom,role:role||""}))};
+    const next=[...list.filter(x=>x.id!==id),entry];
+    try{
+      const json=JSON.stringify(next);await regStore.set({equipes_types:json});reglages.equipes_types=json;
+      renderEquipesTypes();$("teamPresetSel").value=id;renderEquipesTypes();
+      toast(`💾 Équipe « ${nom} » enregistrée pour les prochains événements`);
+    }catch(e){toast("Erreur d'enregistrement : "+(e.message||e));}
+  });
+  $("teamPresetDelete").addEventListener("click",async()=>{
+    if(!isGest()||!estEvt())return;
+    const list=equipesTypes(),id=$("teamPresetSel").value,chosen=list.find(x=>x.id===id);
+    if(!chosen||!confirm(`Supprimer l'équipe type « ${chosen.nom} » ? Les événements déjà enregistrés ne changeront pas.`))return;
+    try{
+      const json=JSON.stringify(list.filter(x=>x.id!==id));
+      await regStore.set({equipes_types:json});reglages.equipes_types=json;
+      $("teamPresetName").value="";renderEquipesTypes();toast("Équipe type supprimée");
+    }catch(e){toast("Erreur de suppression : "+(e.message||e));}
+  });
   // ---------- 🎪 Événement (beaucoup de personnel) ----------
   function appliquerType() {
     const evt = estEvt();
     document.querySelectorAll('input[name="typeEv"]').forEach(r => r.checked = r.value === (evt ? "evenement" : "animation"));
     $("teamLabel").textContent = evt ? "👥 Équipe de l'événement" : "Animateur(s)";
+    $("teamPresetBox").classList.toggle("hidden",!(evt&&isGest()));
+    if(evt&&isGest())renderEquipesTypes();
     $("themeBox").classList.toggle("hidden", !evt);
     if (!$("theme_app").value) $("theme_app").value = "auto";
     $("driverRow").classList.toggle("evt-off", evt);
@@ -4142,8 +4241,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   function renderTeam() {
     const moi = myMember(); const visibles = isGest() ? members : members.filter(m => moi && m.id === moi.id); // 👑 et ⭐ voient toute l'équipe ; les autres seulement leur fiche
-    const persoOpts = (cur) => `<option value="">— aucun —</option>` + Object.entries({ ...PERSONNAGES, "Autres": ["Bourriquet"] }).map(([g, l]) => `<optgroup label="${esc(g)}">${l.map(x => `<option ${x === cur ? "selected" : ""}>${esc(x)}</option>`).join("")}</optgroup>`).join("");
-    const monPerso = moi ? `<div class="mine-head" style="margin:0 0 10px"><label style="margin:0 0 4px">🦸 Mon personnage préféré <small style="font-weight:400">(« Bonjour ${esc(moi.prenom)} alias … »)</small></label><select id="monPersoSel">${persoOpts(moi.perso_prefere || "")}</select></div>` : "";
+    const reserved = new Map(members.filter(m => m.perso_prefere && (!moi || String(m.id) !== String(moi.id)))
+      .map(m => [normName(m.perso_prefere),m.prenom]));
+    const persoOpts = (cur) => `<option value="">— aucun —</option>` + Object.entries({ ...PERSONNAGES, "Autres": ["Bourriquet"] }).map(([g, l]) => `<optgroup label="${esc(g)}">${l.map(x => {
+      const owner=reserved.get(normName(x));
+      return `<option value="${esc(x)}" ${x === cur ? "selected" : ""} ${owner ? "disabled" : ""}>${esc(x)}${owner ? ` — réservé par ${esc(owner)}` : ""}</option>`;
+    }).join("")}</optgroup>`).join("");
+    const monPerso = moi ? `<div class="mine-head" style="margin:0 0 10px"><label style="margin:0 0 4px">🦸 Mon personnage préféré <small style="font-weight:400">(un personnage par membre, les personnages réservés sont grisés)</small></label><select id="monPersoSel">${persoOpts(moi.perso_prefere || "")}</select></div>` : "";
     $("teamList").innerHTML = monPerso + (visibles.length ? visibles.map(m => `
       <div class="member">
         ${m.perso_prefere ? persoImg(m.perso_prefere, "av mem-av", `<div class="av">${esc((m.prenom || "?")[0].toUpperCase())}</div>`) : `<div class="av">${esc((m.prenom || "?")[0].toUpperCase())}</div>`}
@@ -4154,8 +4258,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <button type="button" data-del="${esc(m.id)}">Retirer</button>` : (m.responsable ? "👑" : m.gestionnaire ? "⭐" : "")}
       </div>`).join("") : (isResp() ? `<p class="hint">Personne pour l'instant. Ajoutez chaque animateur ci-dessous.</p>` : ""));
     const ps = $("monPersoSel"); if (ps) ps.onchange = async () => {
-      try { await team.monPerso(ps.value); members = await team.list(); majWho(); toast(ps.value ? `🦸 Bonjour ${moi.prenom} alias ${ps.value} !` : "Personnage retiré"); }
-      catch (e) { toast("Erreur : " + (e.message || e)); } };
+      const choice=ps.value;ps.disabled=true;
+      try { await team.monPerso(choice); members = await team.list(); majWho(); renderTeam(); toast(choice ? `🦸 Bonjour ${moi.prenom} alias ${choice} !` : "Personnage retiré"); }
+      catch (e) { members=await team.list().catch(()=>members);renderTeam();toast("⚠️ " + (e.message || e)); } };
   }
   $("teamList").addEventListener("click", async (e) => {
     const ad = e.target.closest("[data-addr]");

@@ -30,6 +30,7 @@
   let sb = null, user = null, playerName = 'Moi', storageKey = 'fantasy_match_demo_v1', cloudReady = false;
   let state = null, board = [], selected = -1, busy = false;
   let remaining = 0, target = 0, moves = 0, roundScore = 0, current = null, toastTimer = null, saveTimer = null;
+  let remainingByKind = {}, frozenCells = new Set(), bonusCreated = 0;
   let touch = null, suppressClickUntil = 0;
   const rand = n => Math.floor(Math.random() * n);
   const randomKind = () => KINDS[rand(KINDS.length)];
@@ -37,12 +38,30 @@
   const localDefault = () => ({level:1,maxUnlocked:1,lives:5,nextLifeAt:0,score:0,levels:{},bestScores:{},boosters:{color:3,bomb:3,shuffle:3},lastGiftAt:'',updatedAt:0});
   const world = n => Math.floor((n - 1) / 20);
   function levelConfig(n) {
-    const w = world(n), sub = (n - 1) % 20;
-    const types = [KINDS[w % KINDS.length], KINDS[(w + 2) % 6], KINDS[(w + 4) % 6]];
-    const goal = types[(sub + Math.floor(sub / 4)) % 3];
-    const targetCount = Math.min(25, 10 + Math.floor((n - 1) / 8) + (n % 10 === 0 ? 3 : 0));
-    const maxMoves = Math.max(22, 30 - Math.floor((n - 1) / 15) + (n % 10 === 0 ? 2 : 0));
-    return {number:n,world:w,goal,target:targetCount,moves:maxMoves,boss:n % 10 === 0};
+    const w = world(n), sub = (n - 1) % 20, phase = (n - 1) % 5;
+    const modes = ['collect','duo','ice','score','special'];
+    const mode = modes[phase], goal = KINDS[(sub + w * 2) % KINDS.length];
+    const goal2 = KINDS[(sub + w * 2 + 2) % KINDS.length];
+    const boss = n % 10 === 0;
+    const targets = mode === 'duo' ? {[goal]:6 + Math.floor(n / 20),[goal2]:5 + Math.floor(n / 25)} : {};
+    const target = mode === 'collect' ? 9 + Math.floor(n / 12) + (sub % 3) * 2
+      : mode === 'duo' ? targets[goal] + targets[goal2]
+      : mode === 'ice' ? Math.min(15,6 + Math.floor(n / 10))
+      : mode === 'score' ? 320 + n * 13 + (sub % 4) * 35
+      : Math.min(3,1 + Math.floor(n / 35));
+    const maxMoves = Math.max(24,32 - Math.floor((n - 1) / 17) + (mode === 'ice' ? 2 : 0) + (boss ? 2 : 0));
+    return {number:n,world:w,mode,goal,goal2,targets,target,moves:maxMoves,boss};
+  }
+  const MODE_LABELS = {collect:'Récolte magique',duo:'Double récolte',ice:'Brise la glace',score:'Course aux points',special:'Défi des bonus'};
+  function iceCellsForLevel(n,count){
+    const patterns = [
+      [9,14,18,21,26,29,34,37,42,45,49,54,10,13,50],
+      [0,7,9,14,18,21,42,45,49,54,56,63,1,6,57],
+      [16,17,18,19,20,21,22,23,40,41,42,43,44,45,46],
+      [3,4,11,12,19,20,27,28,35,36,43,44,51,52,59]
+    ];
+    const pattern = patterns[Math.floor((n - 1) / 5) % patterns.length];
+    return new Set(pattern.slice(0,count));
   }
   function readLocal() {
     try { return {...localDefault(),...JSON.parse(localStorage.getItem(storageKey) || '{}')}; }
@@ -159,6 +178,12 @@
     if(four)return {index:four.positions.includes(preferred)?preferred:four.positions[1],value:four.kind+'|line'+four.orientation};
     return null;
   }
+  function matchEffect(b,matched,preferred=-1,createBonus=true){
+    const bonus = createBonus ? matchBonus(b,matched,preferred) : null;
+    const removed = expandSpecials(b,new Set(matched));
+    if(bonus)removed.delete(bonus.index);
+    return {bonus,removed};
+  }
   function expandSpecials(b,cells){
     const queue=[...cells],triggered=new Set();
     while(queue.length){
@@ -184,7 +209,7 @@
       const j=i+delta;
       if (j>=64 || (delta===1 && Math.floor(i/8)!==Math.floor(j/8))) continue;
       [b[i],b[j]]=[b[j],b[i]];
-      const ok=hasMatches(b) || specialOf(b[i])==='color' || specialOf(b[j])==='color';
+      const ok=hasMatches(b) || !!specialOf(b[i]) || !!specialOf(b[j]);
       [b[i],b[j]]=[b[j],b[i]];
       if(ok)return true;
     }
@@ -207,19 +232,32 @@
     if (state.lives<1) { showNoLives(); return; }
     state.level = Math.min(Math.max(1,n),state.maxUnlocked);
     current = levelConfig(state.level); target=current.target; remaining=target; moves=current.moves;roundScore=0;
+    remainingByKind = {...current.targets};
+    frozenCells = current.mode === 'ice' ? iceCellsForLevel(current.number,target) : new Set();
+    bonusCreated = 0;
     board=freshBoard(); selected=-1;busy=false;
+    $('gameTip').textContent=levelHint();
     $('boardOverlay').classList.add('hidden');
     save(); renderAll();
   }
   function renderBoard(mark=new Set()) {
-    $('gameBoard').innerHTML=board.map((kind,i)=>`<button type="button" class="fm-cell ${i===selected?'selected':''} ${mark.has(i)?'match':''}" role="gridcell" aria-label="${LABELS[kindOf(kind)]||'Magie arc-en-ciel'}, case ${i+1}" data-index="${i}" ${busy?'disabled':''}>${kind?piece(kind):''}</button>`).join('');
+    $('gameBoard').innerHTML=board.map((kind,i)=>`<button type="button" class="fm-cell ${i===selected?'selected':''} ${mark.has(i)?'match':''} ${frozenCells.has(i)?'frozen':''}" role="gridcell" aria-label="${LABELS[kindOf(kind)]||'Magie arc-en-ciel'}, case ${i+1}${frozenCells.has(i)?', glacée':''}${specialOf(kind)?', bonus spécial':''}" data-index="${i}" ${busy?'disabled':''}>${kind?piece(kind):''}</button>`).join('');
   }
   function renderAll() {
     if(!current)return;
-    $('worldName').textContent=WORLD_NAMES[current.world];
+    document.querySelector('.fm-shell').dataset.mode=current.mode;
+    $('worldName').textContent=MODE_LABELS[current.mode]+' · '+WORLD_NAMES[current.world];
     $('levelValue').textContent=current.number;
-    $('goalIcon').innerHTML=piece(current.goal);
-    $('goalName').textContent=LABELS[current.goal];
+    $('goalIcon').classList.toggle('duo',current.mode==='duo');
+    $('goalIcon').innerHTML=current.mode==='duo' ? piece(current.goal)+piece(current.goal2)
+      : current.mode==='special' ? piece('rainbow|color') : piece(current.mode==='ice'?'snow':current.goal);
+    $('goalName').textContent=current.mode==='duo'?'symboles':current.mode==='ice'?'cases glacées'
+      :current.mode==='score'?'points':current.mode==='special'?'bonus spéciaux':LABELS[current.goal].toLowerCase();
+    $('goalDetail').textContent=current.mode==='duo'
+      ? `${remainingByKind[current.goal]} ${LABELS[current.goal].toLowerCase()} · ${remainingByKind[current.goal2]} ${LABELS[current.goal2].toLowerCase()}`
+      :current.mode==='special'?'Combine 4 ou 5 symboles'
+      :current.mode==='ice'?'Casse la glace sur la grille'
+      :current.mode==='score'?'Chaque combinaison compte !':'';
     $('goalRemain').textContent=Math.max(0,remaining);
     $('progressValue').textContent=`${Math.max(0,target-remaining)} / ${target}`;
     $('progressFill').style.width=`${Math.min(100,100*(target-remaining)/target)}%`;
@@ -228,6 +266,11 @@
     $('bombCount').textContent=state.boosters.bomb;
     $('shuffleCount').textContent=state.boosters.shuffle;
     renderHearts();renderBoard();
+  }
+  function levelHint(){
+    return {collect:'Récolte le symbole demandé !',duo:'Récolte les deux sortes de symboles !',
+      ice:'Brise les cases glacées avec des combinaisons !',score:'Marque des points avec des cascades !',
+      special:'Crée des bonus avec 4 ou 5 pièces alignées !'}[current.mode];
   }
   function isNeighbor(a,b){return a>=0&&a<64&&b>=0&&b<64&&((Math.abs(a-b)===1&&Math.floor(a/8)===Math.floor(b/8))||Math.abs(a-b)===8)}
   const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -242,14 +285,25 @@
     let matches=initial || findMatches(board), chain=0;
     while(matches.size && chain<16){
       chain++;
-      const bonus=createBonus?matchBonus(board,matches,preferred):null;
-      const removed=expandSpecials(board,new Set(matches));
-      if(bonus)removed.delete(bonus.index);
-      let goalHits=0;
-      for(const i of removed)if(kindOf(board[i])===current.goal)goalHits++;
-      remaining=Math.max(0,remaining-goalHits);
+      const {bonus,removed}=matchEffect(board,matches,preferred,createBonus);
+      if(current.mode==='collect'){
+        for(const i of removed)if(kindOf(board[i])===current.goal)remaining=Math.max(0,remaining-1);
+      }else if(current.mode==='duo'){
+        for(const i of removed){const k=kindOf(board[i]);if(remainingByKind[k]>0)remainingByKind[k]--;}
+        remaining=Object.values(remainingByKind).reduce((sum,n)=>sum+n,0);
+      }else if(current.mode==='ice'){
+        for(const i of removed)frozenCells.delete(i);
+        remaining=frozenCells.size;
+      }
       roundScore+=removed.size*10*chain;
-      if(bonus)board[bonus.index]=bonus.value;
+      if(current.mode==='score')remaining=Math.max(0,target-roundScore);
+      if(bonus){
+        board[bonus.index]=bonus.value;
+        bonusCreated++;
+        if(current.mode==='special')remaining=Math.max(0,target-bonusCreated);
+        toast(bonus.value==='rainbow|color'?'🌈 Arc-en-ciel créé ! Touche-le deux fois ou échange-le.'
+          :specialOf(bonus.value)==='bomb'?'💥 Bombe créée !':'✨ Fusée créée !');
+      }
       renderAll();renderBoard(removed);
       await pause(chain===1?270:180);
       collapse(removed);renderBoard();
@@ -264,7 +318,20 @@
     if(remaining<=0){winLevel();return;}
     if(moves<=0){loseLevel();return;}
     const best=target-remaining;
-    $('gameTip').textContent=best>=target*.7?'Encore un petit effort !':current.boss?'Défi spécial : garde un œil sur tes coups !':'Aligne trois symboles identiques pour récolter ta magie';
+    $('gameTip').textContent=best>=target*.7?'Encore un petit effort !':levelHint();
+  }
+  function specialSwapTargets(b,a,c){
+    const sa=specialOf(b[a]),sc=specialOf(b[c]);
+    if(!sa&&!sc)return null;
+    const chosen=new Set([a,c]);
+    if(sa==='color'||sc==='color'){
+      if(sa==='color'&&sc==='color')for(let i=0;i<64;i++)chosen.add(i);
+      else {
+        const color=sa==='color'?kindOf(b[c]):kindOf(b[a]);
+        for(let i=0;i<64;i++)if(kindOf(b[i])===color)chosen.add(i);
+      }
+    }
+    return chosen;
   }
   function specialSwapTargets(b,a,c){
     const sa=specialOf(b[a]),sc=specialOf(b[c]);
@@ -360,7 +427,9 @@
     state.lives=Math.max(0,state.lives-1);
     if(state.lives<5 && !state.nextLifeAt)state.nextLifeAt=now()+LIFE_MS;
     save();renderHearts();
-    showDialog('Presque !',`<p>Il reste <b>${remaining} ${LABELS[current.goal].toLowerCase()}</b> à récolter.</p><p>${state.lives ? 'Retente ta chance !' : 'Tes vies sont épuisées. Une nouvelle vie revient dans 30 minutes.'}</p>`,
+    const goalText=current.mode==='ice'?'cases glacées à briser':current.mode==='score'?'points à marquer'
+      :current.mode==='special'?'bonus spéciaux à créer':current.mode==='duo'?'symboles à récolter':LABELS[current.goal].toLowerCase()+' à récolter';
+    showDialog('Presque !',`<p>Il reste <b>${remaining} ${goalText}</b>.</p><p>${state.lives ? 'Retente ta chance !' : 'Tes vies sont épuisées. Une nouvelle vie revient dans 30 minutes.'}</p>`,
       state.lives?[{label:'Réessayer',action:()=>{hideDialog();startRound(current.number)}}]:[{label:'D’accord',action:hideDialog}], '♡');
   }
   function showNoLives(){
@@ -428,7 +497,7 @@
     button.disabled=false;
   }
   function showRules(){
-    showDialog('Comment jouer ?',`<p>Échange deux pièces voisines pour aligner <b>3 symboles identiques ou plus</b>.</p><p>✨ <b>4 à la suite</b> : un symbole spécial qui efface une ligne ou une colonne.<br>🌈 <b>5 à la suite</b> : une magie arc-en-ciel qui efface une couleur entière.<br>💥 <b>En L ou en T</b> : une bombe qui explose sur les cases voisines.</p><p>Tu peux <b>échanger un bonus créé avec n’importe quelle pièce voisine</b>, ou le toucher deux fois pour l’activer. Les bonus du bas s’activent <b>en un seul appui</b> : ils visent la case sélectionnée, ou choisissent automatiquement une cible. Récolte l’objectif avant de manquer de coups.</p><p>Tu disposes de <b>5 vies</b>. Une vie revient toutes les <b>30 minutes</b>. Tous les dix niveaux, tu gagnes trois bonus. Tu peux aussi offrir <b>une vie par jour</b> à un collègue depuis le classement.</p>`,[{label:'Jouer !',action:hideDialog}],'✦');
+    showDialog('Comment jouer ?',`<p>Échange deux pièces voisines pour aligner <b>3 symboles identiques ou plus</b>.</p><p>✨ <b>4 à la suite</b> : une fusée qui efface une ligne ou une colonne.<br>🌈 <b>5 à la suite</b> : un arc-en-ciel qui reste sur le plateau et efface une couleur entière.<br>💥 <b>En L ou en T</b> : une bombe qui explose sur les cases voisines.</p><p>Tu peux <b>échanger un bonus créé avec une pièce voisine</b> ou le toucher deux fois pour l’activer. Les trois bonus du bas s’utilisent en un seul appui.</p><p>Les niveaux proposent des <b>défis variés</b> : récolter un symbole, en récolter deux, casser la glace, atteindre un score ou fabriquer des bonus. Termine l’objectif avant de manquer de coups.</p><p>Tu disposes de <b>5 vies</b> et une vie revient toutes les <b>30 minutes</b>. Tous les dix niveaux, tu gagnes trois bonus. Tu peux aussi offrir <b>une vie par jour</b> à un collègue depuis le classement. La flèche en haut ou le bouton « Quitter le jeu » en bas te ramènent à l’agenda.</p>`,[{label:'Jouer !',action:hideDialog}],'✦');
   }
   function events(){
     $('gameBoard').addEventListener('click',e=>{
