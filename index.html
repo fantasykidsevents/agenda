@@ -1079,6 +1079,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .poll-buttons button{flex:1;min-width:80px;border:1.5px solid #e0d0f5;border-radius:12px;padding:10px 6px;background:white;color:#613d8c;font-family:inherit;font-weight:700;font-size:12px;line-height:1.2;cursor:pointer}
   .poll-buttons button.on{background:#6e3ed1;color:white;border-color:#6e3ed1;box-shadow:0 4px 12px #8050c944}
   .poll-roster{background:#ffffff9c;border:1px solid #ece2f8;border-radius:10px;padding:8px 10px;color:#574c67;font-size:12px;line-height:1.65}
+  .poll-opt{display:flex;align-items:flex-start;gap:10px;border:1px solid #e8dff5;border-radius:12px;padding:10px;margin:7px 0;background:#fff;cursor:pointer;font-size:14px;line-height:1.4}
+  .poll-opt input{width:19px;height:19px;accent-color:#7843d5;flex-shrink:0;margin-top:2px}
+  .poll-opt span{flex:1;min-width:0}
+  .poll-opt small{display:block;color:#726581;font-size:12px;margin-top:4px;line-height:1.45}
+  .poll-opt-none{background:#fff5fa;border-color:#efd8e8}
   .poll-date-input{display:flex;gap:6px;align-items:center;margin:7px 0}
   .poll-date-input input{min-width:0;flex:1}
   .poll-date-input input[type="date"]{flex:2}
@@ -1481,7 +1486,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   <div class="sheet" style="max-width:700px">
     <div class="grab"></div>
     <h2>🗳️ Sondages de disponibilité</h2>
-    <p class="hint" style="margin-top:0">Répondez séparément pour chaque date. Vous pouvez changer votre réponse tant que le sondage reste ouvert.</p>
+    <p class="hint" style="margin-top:0">Cochez toutes les dates où vous êtes disponibles, ou choisissez « Aucune disponibilité ». Vous pouvez modifier votre réponse avant la date limite.</p>
     <button type="button" class="btn primary hidden" id="pollNewBtn" style="margin-bottom:8px">➕ Nouveau sondage</button>
     <div id="pollCreate" class="team-preset-box hidden">
       <div class="sec" style="margin:0 0 8px">✨ Nouveau sondage</div>
@@ -4145,14 +4150,21 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if (error) throw error;
       return createdId;
     },
-    async answer(sondage,option,reponse) {
+    async saveChoices(sondage,options,indisponible) {
       if (DEMO) {
         const state=await this.list(),email=pollEmail();
-        state.answers=state.answers.filter(x=>!(x.sondage_id===sondage&&x.option_id===option&&x.email===email));
-        state.answers.push({sondage_id:sondage,option_id:option,email,reponse,modifie_le:new Date().toISOString()});
+        state.answers=state.answers.filter(x=>!(x.sondage_id===sondage&&x.email===email));
+        const choix=indisponible ? [{option_id:"__aucune__",reponse:"non"}]
+          : options.map(option_id=>({option_id,reponse:"oui"}));
+        state.answers.push(...choix.map(x=>({
+          sondage_id:sondage,email,option_id:x.option_id,reponse:x.reponse,
+          modifie_le:new Date().toISOString()
+        })));
         localStorage.setItem(LS_SONDAGES,JSON.stringify(state));return;
       }
-      const {error}=await sb.rpc("repondre_sondage_dispo",{p_sondage_id:sondage,p_option_id:option,p_reponse:reponse});
+      const {error}=await sb.rpc("enregistrer_choix_sondage",{
+        p_sondage_id:sondage,p_options:options,p_indisponible:indisponible
+      });
       if (error) throw error;
     },
     async close(sondage,ferme) {
@@ -4188,8 +4200,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     return members.find(m=>String(m.email||"").toLowerCase()===email)?.prenom || email;
   }
   function renderPolls() {
-    const admin=isGest(),email=pollEmail();
-    const allEmails=pollRecipients();
+    const admin=isGest(),email=pollEmail(),allEmails=pollRecipients();
     $("pollCreate").classList.toggle("hidden",!admin || !pollCreating);
     $("pollNewBtn").classList.toggle("hidden",!admin);
     $("pollNewBtn").textContent=pollCreating?"✖ Annuler la création":"➕ Nouveau sondage";
@@ -4197,32 +4208,44 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const target=allEmails.includes(email);
       const closed=s.statut==="ferme" || Date.parse(s.date_limite)<=Date.now();
       const dates=Array.isArray(s.dates)?s.dates:[];
-      const deadline=new Date(s.date_limite).toLocaleString("fr-BE",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});
+      const deadline=new Date(s.date_limite).toLocaleString("fr-BE",{
+        day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"
+      });
+      const answers=pollAnswers.filter(r=>r.sondage_id===s.id);
+      const valid=new Set(dates.map(d=>String(d.id)));
+      const datesFor=(mail)=>answers.filter(r=>r.email===mail && r.reponse==="oui" && valid.has(String(r.option_id)));
+      const unavailable=answers.filter(r=>r.option_id==="__aucune__" && r.reponse==="non");
+      const unavailableMine=unavailable.some(r=>r.email===email);
+      const mine=datesFor(email).map(r=>String(r.option_id));
+      const answered=new Set([
+        ...answers.filter(r=>r.reponse==="oui"&&valid.has(String(r.option_id))).map(r=>r.email),
+        ...unavailable.map(r=>r.email)
+      ]);
+      const noAnswer=allEmails.filter(mail=>!answered.has(mail)).map(pollName).join(", ")||"—";
+      const noNames=unavailable.map(r=>pollName(r.email)).join(", ")||"—";
       return '<div class="poll-card" data-poll-card="'+esc(s.id)+'">'
-        +'<h3>'+esc(s.titre)+'</h3>'
+        +'<h3>🗳️ '+esc(s.titre)+'</h3>'
         +'<p class="hint" style="margin:3px 0 9px">👥 Toute l’équipe · '+(closed?"🔒 Fermé":"🟢 Ouvert")
-        +' · ⏰ Avant le '+esc(deadline)+'</p>'
+        +' · ⏰ Répondre avant le '+esc(deadline)+'</p>'
         +(s.notes?'<p style="white-space:pre-wrap;margin:6px 0">'+esc(s.notes)+'</p>':"")
+        +'<p style="font-weight:750;margin:8px 0">Quelles sont vos disponibilités ?</p>'
         +dates.map(opt=>{
-          const votes=pollAnswers.filter(r=>r.sondage_id===s.id&&r.option_id===opt.id);
-          const mine=votes.find(r=>r.email===email)?.reponse;
-          const count=k=>votes.filter(v=>v.reponse===k).length;
-          const names=k=>votes.filter(v=>v.reponse===k).map(v=>pollName(v.email)).join(", ") || "—";
-          const sansReponse=allEmails.filter(mail=>!votes.some(v=>v.email===mail)).map(pollName).join(", ") || "—";
-          return '<div class="poll-date"><b>📅 '+esc(pollDateLabel(opt))+'</b>'
-            +'<p class="hint" style="margin:7px 0">✅ '+count("oui")+' disponible(s) · ❌ '+count("non")
-            +' indisponible(s) · ❔ '+count("peut_etre")+' à confirmer · ⏳ '+Math.max(0,allEmails.length-votes.length)+' sans réponse</p>'
-            +'<div class="poll-roster">✅ <b>Disponibles :</b> '+esc(names("oui"))+'<br>❌ <b>Indisponibles :</b> '+esc(names("non"))
-            +'<br>❔ <b>À confirmer :</b> '+esc(names("peut_etre"))
-            +'<br>⏳ <b>Sans réponse :</b> '+esc(sansReponse)+'</div>'
-            +(target&&!closed?'<div class="poll-buttons">'
-              +[["oui","✅ Disponible"],["non","❌ Indisponible"],["peut_etre","❔ À confirmer"]].map(x=>
-                '<button type="button" data-poll-vote="'+esc(x[0])+'" data-poll-id="'+esc(s.id)
-                +'" data-poll-option="'+esc(opt.id)+'" class="'+(mine===x[0]?"on":"")+'" aria-pressed="'+(mine===x[0])+'">'+x[1]+'</button>').join("")
-              +'</div>':mine?'<p class="hint" style="margin:5px 0">Ta réponse : '+esc(({oui:"✅ Disponible",non:"❌ Indisponible",peut_etre:"❔ À confirmer"})[mine])+'</p>':"")
-            +'</div>';
+          const available=answers.filter(r=>String(r.option_id)===String(opt.id)&&r.reponse==="oui");
+          const names=available.map(r=>pollName(r.email)).join(", ")||"—";
+          return '<label class="poll-opt">'
+            +(target&&!closed?'<input type="checkbox" data-poll-choice="'+esc(opt.id)+'" '
+              +(mine.includes(String(opt.id))?"checked ":"")+'/>':"")
+            +'<span><b>📅 Disponible le '+esc(pollDateLabel(opt))+'</b>'
+            +'<small>✅ '+available.length+' disponible(s) : '+esc(names)+'</small></span></label>';
         }).join("")
-        +(admin && Date.parse(s.date_limite)>Date.now()?'<button type="button" class="btn ghost" data-poll-close="'+esc(s.id)+'" data-poll-closed="'+(s.statut==="ferme")+'" style="margin-top:10px">'
+        +'<label class="poll-opt poll-opt-none">'
+        +(target&&!closed?'<input type="checkbox" data-poll-choice="__aucune__" '+(unavailableMine?"checked ":"")+'/>':"")
+        +'<span><b>❌ Aucune disponibilité à ces dates</b>'
+        +'<small>'+unavailable.length+' personne(s) : '+esc(noNames)+'</small></span></label>'
+        +'<div class="poll-roster">⏳ <b>Sans réponse : </b>'+esc(noAnswer)+'</div>'
+        +(target&&!closed?'<button type="button" class="btn primary" data-poll-save="'+esc(s.id)+'" style="margin-top:12px;width:100%">💾 Enregistrer mes disponibilités</button>':"")
+        +(target&&closed?'<p class="hint">Tes choix : '+(unavailableMine?"❌ Aucune disponibilité":mine.length?esc(dates.filter(d=>mine.includes(String(d.id))).map(pollDateLabel).join(", ")):"Aucune réponse")+'</p>':"")
+        +(admin&&Date.parse(s.date_limite)>Date.now()?'<button type="button" class="btn ghost" data-poll-close="'+esc(s.id)+'" data-poll-closed="'+(s.statut==="ferme")+'" style="margin-top:10px">'
           +(s.statut==="ferme"?"🔓 Réouvrir le sondage":"🔒 Clôturer les réponses")+'</button>':"")
         +'</div>';
     }).join("") : '<p class="hint">Aucun sondage pour le moment. Publie le premier sondage pour toute l’équipe !</p>';
@@ -4291,16 +4314,41 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }catch(err){pollError("Impossible de publier : "+(err.message||err));}
     finally{button.disabled=false;}
   };
+  // Plusieurs dates peuvent être cochées ; « Aucune disponibilité » est exclusive.
+  $("pollList").addEventListener("change",e=>{
+    const input=e.target.closest("input[data-poll-choice]");
+    if(!input)return;
+    const card=input.closest("[data-poll-card]");
+    if(!card)return;
+    const choices=[...card.querySelectorAll("input[data-poll-choice]")];
+    if(input.dataset.pollChoice==="__aucune__" && input.checked)
+      choices.filter(x=>x!==input).forEach(x=>x.checked=false);
+    else if(input.checked){
+      const none=card.querySelector('input[data-poll-choice="__aucune__"]');
+      if(none)none.checked=false;
+    }
+  });
   $("pollList").addEventListener("click",async e=>{
-    const vote=e.target.closest("[data-poll-vote]"),end=e.target.closest("[data-poll-close]");
-    if(!vote&&!end)return;
-    const button=vote||end;button.disabled=true;pollError("");
+    const save=e.target.closest("[data-poll-save]"),end=e.target.closest("[data-poll-close]");
+    if(!save&&!end)return;
+    const button=save||end,card=button.closest("[data-poll-card]");
+    if(!card)return;
+    button.disabled=true;pollError("");
     try{
-      if(vote)await pollStore.answer(vote.dataset.pollId,vote.dataset.pollOption,vote.dataset.pollVote);
-      else if(isGest())await pollStore.close(end.dataset.pollClose,end.dataset.pollClosed!=="true");
-      else throw new Error("Action non autorisée.");
+      if(save){
+        const checked=[...card.querySelectorAll("input[data-poll-choice]:checked")]
+          .map(x=>x.dataset.pollChoice);
+        const indisponible=checked.includes("__aucune__");
+        const selected=checked.filter(id=>id!=="__aucune__");
+        if(!indisponible&&!selected.length)
+          throw new Error("Coche au moins une date ou « Aucune disponibilité ».");
+        await pollStore.saveChoices(save.dataset.pollSave,selected,indisponible);
+      } else if(isGest())
+        await pollStore.close(end.dataset.pollClose,end.dataset.pollClosed!=="true");
+      else
+        throw new Error("Action non autorisée.");
       await refreshPolls();
-      toast(vote?"✅ Disponibilité enregistrée":"✅ Sondage mis à jour");
+      toast(save?"✅ Tes disponibilités sont enregistrées !":"✅ Sondage mis à jour");
     }catch(err){pollError("Enregistrement impossible : "+(err.message||err));button.disabled=false;}
   });
 
