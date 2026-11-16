@@ -1086,7 +1086,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .poll-opt-none{background:#fff5fa;border-color:#efd8e8}
   .poll-date-input{display:flex;gap:6px;align-items:center;margin:7px 0}
   .poll-date-input input{min-width:0;flex:1}
-  .poll-date-input input[type="date"]{flex:2}
+  .poll-date-input input.poll-choice-text{flex:1}
   .poll-date-input button{flex:none;border:0;background:#f7e9f6;border-radius:11px;padding:9px;color:#a33e7c}
 </style>
 </head>
@@ -1485,22 +1485,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 <div id="pollsBg" class="sheet-bg hidden">
   <div class="sheet" style="max-width:700px">
     <div class="grab"></div>
-    <h2>🗳️ Sondages de disponibilité</h2>
-    <p class="hint" style="margin-top:0">Cochez toutes les dates où vous êtes disponibles, ou choisissez « Aucune disponibilité ». Vous pouvez modifier votre réponse avant la date limite.</p>
+    <h2>🗳️ Sondages</h2>
     <button type="button" class="btn primary hidden" id="pollNewBtn" style="margin-bottom:8px">➕ Nouveau sondage</button>
     <div id="pollCreate" class="team-preset-box hidden">
-      <div class="sec" style="margin:0 0 8px">✨ Nouveau sondage</div>
+
       <label for="pollTitle">Titre</label>
-      <input id="pollTitle" maxlength="160" placeholder="Ex. Répétitions La Nuit Magique" />
-      <p class="hint" style="margin:7px 0">👥 Sondage ouvert à toute l’équipe Fantasy Kids Events. Les réponses sont visibles par tous.</p>
-      <label for="pollNotes">Précisions (facultatif)</label>
-      <textarea id="pollNotes" maxlength="500" style="min-height:65px" placeholder="Ex. Essayage à prévoir, prévoir le costume…"></textarea>
-      <label for="pollDeadline">⏰ Date et heure limites pour répondre</label>
-      <input id="pollDeadline" type="datetime-local" required />
-      <p class="hint" style="margin:4px 0 10px">Les membres sans réponse complète reçoivent des rappels avant cette échéance.</p>
-      <div class="sec" style="margin:10px 0 6px">Dates proposées</div>
+      <input id="pollTitle" maxlength="160" placeholder="Ex. Événement de Pâques" />
+      <label for="pollNotes">Question</label>
+      <input id="pollNotes" maxlength="500" placeholder="Ex. À quelles dates êtes-vous disponibles ?" />
+      <label>Choix à cocher</label>
       <div id="pollDates"></div>
-      <button type="button" class="btn ghost" id="pollAddDate">➕ Ajouter une date</button>
+      <button type="button" class="btn ghost" id="pollAddDate">➕ Ajouter un choix</button>
       <button type="button" class="btn primary" id="pollCreateBtn" style="margin-top:10px;width:100%">🗳️ Publier à toute l’équipe</button>
     </div>
     <div id="pollErr" class="err" role="alert"></div>
@@ -4175,6 +4170,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       }
       const {error}=await sb.rpc("fermer_sondage_dispo",{p_sondage_id:sondage,p_ferme:ferme});
       if (error) throw error;
+    },
+    async remove(sondage) {
+      if (!isGest()) throw new Error("Suppression réservée au responsable.");
+      if (DEMO) {
+        const state=await this.list();
+        state.polls=state.polls.filter(p=>p.id!==sondage);
+        state.answers=state.answers.filter(a=>a.sondage_id!==sondage);
+        localStorage.setItem(LS_SONDAGES,JSON.stringify(state));return;
+      }
+      const {error}=await sb.rpc("supprimer_sondage_dispo",{p_sondage_id:sondage});
+      if (error) throw error;
     }
   };
   function pollError(message) {
@@ -4183,17 +4189,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   const pollRecipients = () => [...new Set(members.map(m=>String(m.email||"").trim().toLowerCase()).filter(Boolean))];
   function pollAddDate(value={}) {
-    if ($("pollDates").children.length>=12) {pollError("Maximum 12 dates par sondage.");return;}
+    if ($("pollDates").children.length>=12) {
+      pollError("Maximum 12 choix par sondage.");return;
+    }
     const row=document.createElement("div");
     row.className="poll-date-input";
-    row.innerHTML='<input class="poll-when" type="date" aria-label="Date" value="'+esc(value.date || "")+'" required />'
-      +'<input class="poll-start" type="time" aria-label="Début" value="'+esc(value.heure_debut || "")+'" />'
-      +'<input class="poll-end" type="time" aria-label="Fin" value="'+esc(value.heure_fin || "")+'" />'
-      +'<button type="button" class="poll-remove" title="Retirer cette date" aria-label="Supprimer cette date">✕</button>';
+    row.innerHTML='<input class="poll-choice-text" type="text" maxlength="180" aria-label="Choix proposé" placeholder="Ex. Disponible le 25 avril" value="'+esc(value.label || "")+'" />'
+      +'<button type="button" class="poll-remove" title="Retirer ce choix" aria-label="Supprimer ce choix">✕</button>';
     $("pollDates").appendChild(row);
   }
   function pollDateLabel(option) {
-    const date=option.date ? parseISO(option.date).toLocaleDateString("fr-BE",{weekday:"short",day:"numeric",month:"long",year:"numeric"}) : "Date";
+    if (typeof option.label==="string" && option.label.trim()) return option.label.trim();
+    const date=option.date ? parseISO(option.date).toLocaleDateString("fr-BE",{weekday:"short",day:"numeric",month:"long",year:"numeric"}) : "Choix";
     return date+(option.heure_debut?" · "+hhmm(option.heure_debut):"")+(option.heure_fin?"–"+hhmm(option.heure_fin):"");
   }
   function pollName(email) {
@@ -4203,52 +4210,47 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const admin=isGest(),email=pollEmail(),allEmails=pollRecipients();
     $("pollCreate").classList.toggle("hidden",!admin || !pollCreating);
     $("pollNewBtn").classList.toggle("hidden",!admin);
-    $("pollNewBtn").textContent=pollCreating?"✖ Annuler la création":"➕ Nouveau sondage";
+    $("pollNewBtn").textContent=pollCreating?"✖ Annuler":"➕ Nouveau sondage";
     $("pollList").innerHTML=polls.length ? polls.map(s=>{
       const target=allEmails.includes(email);
       const closed=s.statut==="ferme" || Date.parse(s.date_limite)<=Date.now();
-      const dates=Array.isArray(s.dates)?s.dates:[];
-      const deadline=new Date(s.date_limite).toLocaleString("fr-BE",{
-        day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"
-      });
+      const choices=Array.isArray(s.dates)?s.dates:[];
       const answers=pollAnswers.filter(r=>r.sondage_id===s.id);
-      const valid=new Set(dates.map(d=>String(d.id)));
-      const datesFor=(mail)=>answers.filter(r=>r.email===mail && r.reponse==="oui" && valid.has(String(r.option_id)));
-      const unavailable=answers.filter(r=>r.option_id==="__aucune__" && r.reponse==="non");
-      const unavailableMine=unavailable.some(r=>r.email===email);
-      const mine=datesFor(email).map(r=>String(r.option_id));
-      const answered=new Set([
+      const valid=new Set(choices.map(opt=>String(opt.id)));
+      const selected=answers.filter(r=>r.email===email&&r.reponse==="oui"&&valid.has(String(r.option_id))).map(r=>String(r.option_id));
+      const noVotes=answers.filter(r=>r.option_id==="__aucune__"&&r.reponse==="non");
+      const unavailableMine=noVotes.some(r=>r.email===email);
+      const respondents=new Set([
         ...answers.filter(r=>r.reponse==="oui"&&valid.has(String(r.option_id))).map(r=>r.email),
-        ...unavailable.map(r=>r.email)
+        ...noVotes.map(r=>r.email)
       ]);
-      const noAnswer=allEmails.filter(mail=>!answered.has(mail)).map(pollName).join(", ")||"—";
-      const noNames=unavailable.map(r=>pollName(r.email)).join(", ")||"—";
+      const names=(records)=>records.map(r=>pollName(r.email)).join(", ")||"—";
+      const pending=allEmails.filter(mail=>!respondents.has(mail)).map(pollName).join(", ")||"—";
       return '<div class="poll-card" data-poll-card="'+esc(s.id)+'">'
-        +'<h3>🗳️ '+esc(s.titre)+'</h3>'
-        +'<p class="hint" style="margin:3px 0 9px">👥 Toute l’équipe · '+(closed?"🔒 Fermé":"🟢 Ouvert")
-        +' · ⏰ Répondre avant le '+esc(deadline)+'</p>'
-        +(s.notes?'<p style="white-space:pre-wrap;margin:6px 0">'+esc(s.notes)+'</p>':"")
-        +'<p style="font-weight:750;margin:8px 0">Quelles sont vos disponibilités ?</p>'
-        +dates.map(opt=>{
-          const available=answers.filter(r=>String(r.option_id)===String(opt.id)&&r.reponse==="oui");
-          const names=available.map(r=>pollName(r.email)).join(", ")||"—";
-          return '<label class="poll-opt">'
-            +(target&&!closed?'<input type="checkbox" data-poll-choice="'+esc(opt.id)+'" '
-              +(mine.includes(String(opt.id))?"checked ":"")+'/>':"")
-            +'<span><b>📅 Disponible le '+esc(pollDateLabel(opt))+'</b>'
-            +'<small>✅ '+available.length+' disponible(s) : '+esc(names)+'</small></span></label>';
-        }).join("")
+        +'<h3>'+esc(s.titre)+'</h3>'
+        +'<p style="margin:7px 0 14px;font-size:15px;font-weight:700">'+esc(s.notes||"Quel est votre choix ?")+'</p>'
+        +(closed?'<p class="hint">🔒 Sondage terminé</p>':"")
+        +choices.map(opt=>'<label class="poll-opt">'
+          +(target&&!closed?'<input type="checkbox" data-poll-choice="'+esc(opt.id)+'" '+(selected.includes(String(opt.id))?"checked ":"")+'/>':"")
+          +'<span>'+esc(pollDateLabel(opt))+'</span></label>').join("")
         +'<label class="poll-opt poll-opt-none">'
         +(target&&!closed?'<input type="checkbox" data-poll-choice="__aucune__" '+(unavailableMine?"checked ":"")+'/>':"")
-        +'<span><b>❌ Aucune disponibilité à ces dates</b>'
-        +'<small>'+unavailable.length+' personne(s) : '+esc(noNames)+'</small></span></label>'
-        +'<div class="poll-roster">⏳ <b>Sans réponse : </b>'+esc(noAnswer)+'</div>'
-        +(target&&!closed?'<button type="button" class="btn primary" data-poll-save="'+esc(s.id)+'" style="margin-top:12px;width:100%">💾 Enregistrer mes disponibilités</button>':"")
-        +(target&&closed?'<p class="hint">Tes choix : '+(unavailableMine?"❌ Aucune disponibilité":mine.length?esc(dates.filter(d=>mine.includes(String(d.id))).map(pollDateLabel).join(", ")):"Aucune réponse")+'</p>':"")
-        +(admin&&Date.parse(s.date_limite)>Date.now()?'<button type="button" class="btn ghost" data-poll-close="'+esc(s.id)+'" data-poll-closed="'+(s.statut==="ferme")+'" style="margin-top:10px">'
-          +(s.statut==="ferme"?"🔓 Réouvrir le sondage":"🔒 Clôturer les réponses")+'</button>':"")
+        +'<span>❌ Pas disponible</span></label>'
+        +(target&&!closed?'<button type="button" class="btn primary" data-poll-save="'+esc(s.id)+'" style="margin-top:12px;width:100%">💾 Enregistrer ma réponse</button>':"")
+        +'<details style="margin-top:13px"><summary class="hint" style="cursor:pointer">👀 Voir les réponses ('+respondents.size+'/'+allEmails.length+')</summary>'
+        +'<div class="poll-roster" style="margin-top:8px">'
+        +choices.map(opt=>{
+          const avail=answers.filter(r=>String(r.option_id)===String(opt.id)&&r.reponse==="oui");
+          return '<p style="margin:6px 0"><b>'+esc(pollDateLabel(opt))+' ('+avail.length+')</b><br>'+esc(names(avail))+'</p>';
+        }).join("")
+        +'<p style="margin:6px 0"><b>❌ Pas disponible ('+noVotes.length+')</b><br>'+esc(names(noVotes))+'</p>'
+        +'<p style="margin:6px 0"><b>⏳ Sans réponse</b><br>'+esc(pending)+'</p>'
+        +'</div></details>'
+        +(admin?'<div class="actions" style="margin-top:12px">'
+          +(!closed?'<button type="button" class="btn ghost" data-poll-close="'+esc(s.id)+'" data-poll-closed="false">🔒 Clôturer</button>':"")
+          +'<button type="button" class="btn ghost" data-poll-delete="'+esc(s.id)+'" style="color:#a32252">🗑️ Supprimer</button></div>':"")
         +'</div>';
-    }).join("") : '<p class="hint">Aucun sondage pour le moment. Publie le premier sondage pour toute l’équipe !</p>';
+    }).join("") : '<p class="hint">Aucun sondage pour le moment.</p>';
   }
   async function refreshPolls() {
     const data=await pollStore.list();polls=data.polls;pollAnswers=data.answers;renderPolls();
@@ -4256,8 +4258,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   async function openSondages() {
     pollError("");
     $("pollsBg").classList.remove("hidden");document.body.style.overflow="hidden";
-    if(!$("pollDates").children.length)pollAddDate({date:todayISO()});
-    if(!$("pollDeadline").value){const due=new Date(Date.now()+7*86400000);due.setMinutes(due.getMinutes()-due.getTimezoneOffset());$("pollDeadline").value=due.toISOString().slice(0,16);}
+    if(!$("pollDates").children.length)for(let i=0;i<3;i++)pollAddDate();
     $("pollList").innerHTML='<p class="hint">⏳ Chargement des sondages…</p>';
     try { await refreshPolls(); }
     catch(err){console.warn("Sondages :",err);$("pollList").innerHTML="";
@@ -4272,47 +4273,50 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("pollAddDate").onclick=()=>pollAddDate();
   $("pollDates").addEventListener("click",e=>{
     if(!e.target.closest(".poll-remove"))return;
-    if($("pollDates").children.length===1){pollError("Conservez au moins une date.");return;}
+    if($("pollDates").children.length===1){pollError("Conservez au moins un choix.");return;}
     e.target.closest(".poll-date-input").remove();pollError("");
   });
   $("pollCreateBtn").onclick=async()=>{
     if(!isGest())return;
-    const titre=$("pollTitle").value.trim(),deadline=$("pollDeadline").value;
-    const deadlineISO=deadline && Number.isFinite(Date.parse(deadline)) ? new Date(deadline).toISOString() : "";
-    const rows=[...$("pollDates").querySelectorAll(".poll-date-input")];
-    const dates=rows.map(row=>({
-      id:pollId(),date:row.querySelector(".poll-when").value,
-      heure_debut:row.querySelector(".poll-start").value,
-      heure_fin:row.querySelector(".poll-end").value
-    }));
+    const titre=$("pollTitle").value.trim(),question=$("pollNotes").value.trim();
+    const choices=[...$("pollDates").querySelectorAll(".poll-choice-text")].map(x=>x.value.trim()).filter(Boolean);
     const emails=pollRecipients();
-    if(titre.length<3||!emails.length||!dates.length||dates.some(d=>!d.date)) {
-      pollError("Indiquez un titre et au moins une date. Les membres doivent avoir une adresse e-mail.");return;
+    if(titre.length<3){pollError("Indique un titre d’au moins 3 caractères.");return;}
+    if(question.length<3){pollError("Écris la question du sondage.");return;}
+    if(choices.length<2){
+      pollError("Indique au moins deux choix à cocher.");return;
     }
-    if(!deadlineISO || !Number.isFinite(Date.parse(deadlineISO)) || Date.parse(deadlineISO)<=Date.now()+3600000) {
-      pollError("Choisissez une date limite située au moins une heure dans le futur.");return;
+    if(new Set(choices.map(x=>x.toLowerCase())).size!==choices.length){
+      pollError("Deux choix sont identiques.");return;
     }
-    if(dates.some(d=>d.heure_debut&&d.heure_fin&&d.heure_fin<=d.heure_debut)) {
-      pollError("L’heure de fin doit être après l’heure de début.");return;
+    if(!emails.length){
+      pollError("Aucun membre de l’équipe ne possède d’adresse e-mail.");return;
     }
-    const button=$("pollCreateBtn");button.disabled=true;pollError("");
+    // "Pas disponible" est toujours le choix exclusif automatique.
+    // Si Jordan l'a écrit dans les propositions, ne pas le dupliquer.
+    const isUnavailable=label=>/^(?:pas\s+dispo(?:nible)?|aucune\s+disponibilit[eé]|indisponible|je\s+ne\s+suis\s+pas\s+disponible)$/i.test(label.trim());
+    const dates=choices.filter(label=>!isUnavailable(label)).map(label=>({id:pollId(),label}));
+    if(!dates.length){pollError("Ajoute au moins un choix de disponibilité.");return;}
+    // Date butoir automatique (8 jours), invisible pour conserver un formulaire simple.
+    const deadlineISO=new Date(Date.now()+8*86400000).toISOString();
+    const button=$("pollCreateBtn"),oldText=button.textContent;
+    button.disabled=true;button.textContent="⏳ Publication en cours…";pollError("");
+    let createdId=null;
     try{
-      const createdId=await pollStore.create({titre,dates,emails,deadline:deadlineISO,notes:$("pollNotes").value.trim()});
-      let pushProblem=false;
-      if(!DEMO && createdId){
-        try {
-          const sent=await sb.functions.invoke("notifier",{
-            body:{type:"SONDAGE_NOUVEAU",sondageId:createdId}
-          });
-          if(sent.error || sent.data?.ok===false) pushProblem=true;
-        } catch(err) { console.warn("Push sondage",err);pushProblem=true; }
-      }
+      createdId=await pollStore.create({titre,dates,emails,deadline:deadlineISO,notes:question});
       pollCreating=false;$("pollTitle").value=$("pollNotes").value="";$("pollDates").innerHTML="";
-      pollAddDate({date:todayISO()});await refreshPolls();toast("🗳️ Sondage publié pour toute l’équipe !");
-      if(pushProblem)pollError("✅ Le sondage est publié dans la cloche. Le push téléphone nécessite de redéployer la fonction Supabase « notifier ».");
-
+      for(let i=0;i<3;i++)pollAddDate();
+      try{await refreshPolls();toast("🗳️ Sondage publié !");}
+      catch(err){pollError("✅ Sondage publié, mais la liste n’a pas pu s’actualiser : "+(err.message||err));}
     }catch(err){pollError("Impossible de publier : "+(err.message||err));}
-    finally{button.disabled=false;}
+    finally{button.disabled=false;button.textContent=oldText;}
+    if(!DEMO && createdId){
+      // Les pushs téléphone ne doivent jamais bloquer l'enregistrement.
+      sb.functions.invoke("notifier",{body:{type:"SONDAGE_NOUVEAU",sondageId:createdId}})
+        .then(result=>{if(result.error||result.data?.ok===false)
+          console.warn("Sondage publié, push téléphone non envoyé",result.error||result.data);})
+        .catch(err=>console.warn("Sondage publié, push téléphone non envoyé",err));
+    }
   };
   // Plusieurs dates peuvent être cochées ; « Aucune disponibilité » est exclusive.
   $("pollList").addEventListener("change",e=>{
@@ -4329,10 +4333,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }
   });
   $("pollList").addEventListener("click",async e=>{
-    const save=e.target.closest("[data-poll-save]"),end=e.target.closest("[data-poll-close]");
-    if(!save&&!end)return;
-    const button=save||end,card=button.closest("[data-poll-card]");
+    const save=e.target.closest("[data-poll-save]");
+    const end=e.target.closest("[data-poll-close]");
+    const del=e.target.closest("[data-poll-delete]");
+    if(!save&&!end&&!del)return;
+    const button=save||end||del,card=button.closest("[data-poll-card]");
     if(!card)return;
+    if(del){
+      if(!isGest())return;
+      const poll=polls.find(p=>String(p.id)===String(del.dataset.pollDelete));
+      if(!poll)return;
+      if(!confirm("Supprimer définitivement le sondage « "+poll.titre+" » et toutes ses réponses ?"))return;
+    }
     button.disabled=true;pollError("");
     try{
       if(save){
@@ -4341,15 +4353,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         const indisponible=checked.includes("__aucune__");
         const selected=checked.filter(id=>id!=="__aucune__");
         if(!indisponible&&!selected.length)
-          throw new Error("Coche au moins une date ou « Aucune disponibilité ».");
+          throw new Error("Coche au moins un choix ou « Pas disponible ».");
         await pollStore.saveChoices(save.dataset.pollSave,selected,indisponible);
-      } else if(isGest())
+      } else if(del)
+        await pollStore.remove(del.dataset.pollDelete);
+      else if(isGest())
         await pollStore.close(end.dataset.pollClose,end.dataset.pollClosed!=="true");
       else
         throw new Error("Action non autorisée.");
       await refreshPolls();
-      toast(save?"✅ Tes disponibilités sont enregistrées !":"✅ Sondage mis à jour");
-    }catch(err){pollError("Enregistrement impossible : "+(err.message||err));button.disabled=false;}
+      toast(del?"🗑️ Sondage supprimé":save?"✅ Réponse enregistrée !":"✅ Sondage mis à jour");
+    }catch(err){pollError("Action impossible : "+(err.message||err));button.disabled=false;}
   });
 
   // ---------- 🎪 Événement (beaucoup de personnel) ----------
