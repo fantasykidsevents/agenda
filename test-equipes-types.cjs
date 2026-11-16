@@ -11,11 +11,18 @@ assert(start !== -1 && end > start, 'Code des teams introuvable');
 const listeners = {};
 const ids = ['teamPresetSel','teamPresetApply','teamsEditor','teamsEditorSelect','teamsEditorDetails',
   'teamsEditorMembers','teamsEditorCount','teamsEditorNew','teamsEditorEdit','teamsEditorDelete',
-  'teamsEditorName','teamsEditorRename','teamsEditorNameSave','teamsEditorNameCancel','teamsEditorError'];
+  'teamsEditorName','teamsEditorRename','teamsEditorNameSave','teamsEditorNameCancel','teamsEditorError',
+  'teamsEditorSummary','teamsEditorSummaryText','teamsEditorToggle','teamsEditorDone'];
 const elements = Object.fromEntries(ids.map(id => [id, {
   value: '', checked: false, disabled: false, innerHTML: '', textContent: '',
-  classList: { add() {}, remove() {}, toggle() {} },
+  classList: {
+    hidden: false,
+    add(x) { if(x==='hidden')this.hidden=true; },
+    remove(x) { if(x==='hidden')this.hidden=false; },
+    toggle(x,force) { if(x==='hidden')this.hidden=force===undefined?!this.hidden:!!force; },
+  },
   addEventListener(event, callback) { listeners[`${id}:${event}`] = callback; },
+  setAttribute(name,value) { this[name]=value; },
   focus() {},
 }]));
 let store = JSON.stringify([
@@ -51,6 +58,9 @@ const context = vm.createContext({
 vm.runInContext(html.slice(start, end), context);
 
 (async () => {
+  vm.runInContext('renderTeamsEditor()', context);
+  assert.equal(elements.teamsEditorDetails.classList.hidden,true,'Les membres sont repliés par défaut');
+  assert.equal(elements.teamsEditorSummary.classList.hidden,false,'Le résumé reste visible');
   vm.runInContext('renderEquipesTypes()', context);
   elements.teamPresetSel.value = 'night';
   listeners['teamPresetApply:click']();
@@ -66,6 +76,12 @@ vm.runInContext(html.slice(start, end), context);
   await elements.teamsEditorNameSave.onclick();
   assert.equal(JSON.parse(store).length, 2, 'La création conserve les teams existantes');
   assert.equal(JSON.parse(store).find(t => t.id === 'new-team').membres.length, 0, 'Une team peut être créée vide');
+  assert.equal(elements.teamsEditorDetails.classList.hidden,false,'Une nouvelle team ouvre sa sélection de membres');
+
+  elements.teamsEditorDone.onclick();
+  assert.equal(elements.teamsEditorDetails.classList.hidden,true,'Terminer replie la liste');
+  elements.teamsEditorToggle.onclick();
+  assert.equal(elements.teamsEditorDetails.classList.hidden,false,'Modifier les membres rouvre la liste');
 
   async function cocher(membreId, checked) {
     const target = { dataset:{teamMember:membreId}, checked, disabled:false,
@@ -84,6 +100,8 @@ vm.runInContext(html.slice(start, end), context);
   list=JSON.parse(store);
   assert.equal(list.find(t=>t.id==='night').membres.some(m=>m.nom==='Loïc'),false,'Retire seulement le membre de la team choisie');
   assert.equal(list.find(t=>t.id==='new-team').membres.length,2,'La seconde team reste inchangée');
+  listeners['teamsEditorSelect:change']();
+  assert.equal(elements.teamsEditorDetails.classList.hidden,true,'Changer de team replie la liste');
 
   elements.teamsEditorSelect.value = 'new-team';
   elements.teamsEditorEdit.onclick();

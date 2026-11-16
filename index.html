@@ -1550,7 +1550,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div id="teamManage" class="hidden">
     <div id="teamsEditor" class="team-preset-box hidden" style="margin-bottom:15px">
       <div class="sec" style="margin-top:0">🎭 Mes teams</div>
-      <p class="hint" style="margin-top:0">Choisissez une team, puis cochez les membres qui en font partie. Une personne peut appartenir à plusieurs teams.</p>
+      <p class="hint" style="margin-top:0">Retrouvez vos teams ici. Ouvrez « Modifier les membres » uniquement quand vous voulez changer leur composition.</p>
       <div class="team-preset-row">
         <select id="teamsEditorSelect" aria-label="Choisir une team"><option value="">— Choisir une team —</option></select>
         <button type="button" class="btn ghost" id="teamsEditorNew">✏️ Nouvelle team</button>
@@ -1564,10 +1564,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         </div>
       </div>
       <div id="teamsEditorError" class="err hidden" role="alert" style="margin:10px 0"></div>
+      <div id="teamsEditorSummary" class="team-preset-row hidden" style="margin-top:10px;align-items:center">
+        <div id="teamsEditorSummaryText" class="hint" style="flex:1;min-width:160px;margin:0"></div>
+        <button type="button" class="btn ghost" id="teamsEditorToggle" aria-expanded="false">✏️ Modifier les membres</button>
+      </div>
       <div id="teamsEditorDetails" class="hidden">
         <div class="actions" style="justify-content:flex-start;gap:8px;margin-top:8px">
           <button type="button" class="btn ghost" id="teamsEditorEdit">✏️ Renommer</button>
           <button type="button" class="btn danger" id="teamsEditorDelete">🗑️ Supprimer la team</button>
+          <button type="button" class="btn primary" id="teamsEditorDone">✅ Terminer</button>
         </div>
         <p class="hint" style="margin:7px 0">Membres de cette team <b id="teamsEditorCount"></b> · les changements sont enregistrés automatiquement.</p>
         <div id="teamsEditorMembers" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;max-height:300px;overflow:auto"></div>
@@ -3928,6 +3933,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // Onglet Équipe : sélection par menu déroulant, création/renommage au crayon,
   // affectation de chaque membre par cases à cocher (multi-teams autorisé).
   let teamNomMode = "nouvelle";
+  let teamDetailsExpanded=false;
   const teamSelection = () => equipesTypes().find(t=>String(t.id)===String($("teamsEditorSelect").value));
   let teamSaving=false;
   function teamsErreur(err) {
@@ -3965,16 +3971,23 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if(list.some(t=>String(t.id)===String(avant))) select.value=avant;
     else if(list.length) select.value=list[0].id;
     const chosen=teamSelection();
-    $("teamsEditorDetails").classList.toggle("hidden",!chosen);
+    $("teamsEditorSummary").classList.toggle("hidden",!chosen);
+    $("teamsEditorDetails").classList.toggle("hidden",!chosen||!teamDetailsExpanded);
+    $("teamsEditorToggle").textContent=teamDetailsExpanded?"✅ Replier la liste":"✏️ Modifier les membres";
+    $("teamsEditorToggle").setAttribute("aria-expanded",String(!!chosen&&teamDetailsExpanded));
     if(!chosen){$("teamsEditorMembers").innerHTML="";return;}
     const n=members.filter(m=>membreDansTeam(m,chosen)).length;
+    const noms=members.filter(m=>membreDansTeam(m,chosen)).map(m=>m.prenom);
+    $("teamsEditorSummaryText").textContent=`✅ ${n} membre${n>1?"s":""} · ${noms.length?noms.slice(0,3).join(", ")+(noms.length>3?` et ${noms.length-3} autre${noms.length-3>1?"s":""}`:""):"aucun membre pour le moment"}`;
     $("teamsEditorCount").textContent=`(${n} / ${members.length})`;
     $("teamsEditorMembers").innerHTML=members.slice().sort((a,b)=>a.prenom.localeCompare(b.prenom,"fr")).map(m=>
       `<label class="chip" style="display:flex;align-items:center;gap:8px;padding:9px;cursor:pointer;justify-content:flex-start;min-height:42px" title="${esc(m.prenom)}">
         <input type="checkbox" data-team-member="${esc(m.id)}" ${membreDansTeam(m,chosen)?"checked":""} style="width:18px;height:18px;flex:none" />
         ${esc(m.prenom)}</label>`).join("");
   }
-  $("teamsEditorSelect").addEventListener("change",()=>{ $("teamsEditorRename").classList.add("hidden");renderTeamsEditor(); });
+  $("teamsEditorSelect").addEventListener("change",()=>{ teamDetailsExpanded=false;$("teamsEditorRename").classList.add("hidden");renderTeamsEditor(); });
+  $("teamsEditorToggle").onclick=()=>{teamDetailsExpanded=!teamDetailsExpanded;renderTeamsEditor();};
+  $("teamsEditorDone").onclick=()=>{if(teamSaving){toast("⏳ Enregistrement en cours…");return;}teamDetailsExpanded=false;renderTeamsEditor();toast("✅ Composition de la team enregistrée");};
   function editerNomTeam(mode) {
     teamNomMode=mode;
     $("teamsEditorError").classList.add("hidden");
@@ -3997,14 +4010,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const id=teamNomMode==="nouvelle"?(globalThis.crypto?.randomUUID?.()||String(Date.now())):chosen.id;
     const next=teamNomMode==="nouvelle"?[...list,{id,nom,membres:[]}]:list.map(t=>t.id===id?{...t,nom}:t);
     const bouton=$("teamsEditorNameSave");bouton.disabled=true; bouton.textContent="⏳ Enregistrement…";
-    try{await enregistrerTeams(next,id);$("teamsEditorRename").classList.add("hidden");toast(`🎭 Team « ${nom} » enregistrée`);}
+    try{await enregistrerTeams(next,id);$("teamsEditorRename").classList.add("hidden");if(teamNomMode==="nouvelle"){teamDetailsExpanded=true;renderTeamsEditor(id);}toast(`🎭 Team « ${nom} » enregistrée`);}
     catch(e){teamsErreur(e);}
     finally{bouton.disabled=false; bouton.textContent="💾 Enregistrer";}
   };
   $("teamsEditorDelete").onclick=async()=>{
     if(!isGest())return;
     const chosen=teamSelection();if(!chosen||!confirm(`Supprimer « ${chosen.nom} » ? Les événements déjà enregistrés resteront inchangés.`))return;
-    try{await enregistrerTeams(equipesTypes().filter(t=>t.id!==chosen.id),"");toast("Team supprimée");}
+    try{teamDetailsExpanded=false;await enregistrerTeams(equipesTypes().filter(t=>t.id!==chosen.id),"");toast("Team supprimée");}
     catch(e){teamsErreur(e);}
   };
   $("teamsEditorMembers").addEventListener("change",async e=>{
@@ -4525,7 +4538,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!equipe) { fillReglages(); await refreshNotifBox(); await chargerMesChoixNotif(); }
   };
   $("teamBtn").onclick = () => openTeamSheet("profil");
-  const closeTeam = () => { $("teamBg").classList.add("hidden"); document.body.style.overflow = ""; };
+  const closeTeam = () => { teamDetailsExpanded=false; $("teamBg").classList.add("hidden"); document.body.style.overflow = ""; };
   $("teamClose").onclick = closeTeam;
   $("teamBg").addEventListener("click", (e) => { if (e.target.id === "teamBg") closeTeam(); });
   document.addEventListener("change", (e) => { if (e.target.id === "demoMe") { demoMe = e.target.value; renderMine(); } });
