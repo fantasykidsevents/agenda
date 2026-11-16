@@ -43,14 +43,23 @@
     const mode = modes[phase], goal = KINDS[(sub + w * 2) % KINDS.length];
     const goal2 = KINDS[(sub + w * 2 + 2) % KINDS.length];
     const boss = n % 10 === 0;
-    const targets = mode === 'duo' ? {[goal]:6 + Math.floor(n / 20),[goal2]:5 + Math.floor(n / 25)} : {};
-    const target = mode === 'collect' ? 9 + Math.floor(n / 12) + (sub % 3) * 2
+    // Difficulté pensée pour l'équipe adulte : tutoriel court, puis cinq paliers
+    // progressifs. Les objectifs dépendent du type de défi et pas seulement du niveau.
+    const tier = n <= 5 ? 0 : n <= 15 ? 1 : n <= 30 ? 2 : n <= 50 ? 3 : 4;
+    const starts = [1,6,16,31,51], progression = n - starts[tier];
+    const targets = mode === 'duo' ? {
+      [goal]: [5,8,11,15,17][tier] + Math.floor(progression / 15),
+      [goal2]: [5,7,10,14,16][tier] + Math.floor(progression / 15)
+    } : {};
+    const target = mode === 'collect'
+      ? [9,15,20,21,20][tier] + (tier === 4 ? Math.min(2,Math.floor(progression / 15)) : Math.floor(progression / 9) * 2) + sub % 3
       : mode === 'duo' ? targets[goal] + targets[goal2]
-      : mode === 'ice' ? Math.min(15,6 + Math.floor(n / 10))
-      : mode === 'score' ? 320 + n * 13 + (sub % 4) * 35
-      : Math.min(3,1 + Math.floor(n / 35));
-    const maxMoves = Math.max(24,32 - Math.floor((n - 1) / 17) + (mode === 'ice' ? 2 : 0) + (boss ? 2 : 0));
-    return {number:n,world:w,mode,goal,goal2,targets,target,moves:maxMoves,boss};
+      : mode === 'ice' ? Math.min(15,[7,10,12,14,15][tier] + Math.floor(progression / 14))
+      : mode === 'score' ? [380,680,950,1350,1450][tier] + (tier >= 3 ? Math.min(6,Math.floor(progression / 9)) * 40 : Math.floor(progression / 4) * 35) + (sub % 4) * 30
+      : [1,1,2,3,3][tier] + (boss ? 2 : 0);
+    const extraMoves = mode === 'special' ? 2 : mode === 'ice' ? (tier >= 3 ? 1 : 2) : mode === 'duo' ? 1 : 0;
+    const maxMoves = Math.max(16,[26,22,20,18,17][tier] + extraMoves - (boss ? 1 : 0));
+    return {number:n,world:w,mode,goal,goal2,targets,target,moves:maxMoves,boss,difficulty:tier};
   }
   const MODE_LABELS = {collect:'Récolte magique',duo:'Double récolte',ice:'Brise la glace',score:'Course aux points',special:'Défi des bonus'};
   function iceCellsForLevel(n,count){
@@ -319,19 +328,6 @@
     if(moves<=0){loseLevel();return;}
     const best=target-remaining;
     $('gameTip').textContent=best>=target*.7?'Encore un petit effort !':levelHint();
-  }
-  function specialSwapTargets(b,a,c){
-    const sa=specialOf(b[a]),sc=specialOf(b[c]);
-    if(!sa&&!sc)return null;
-    const chosen=new Set([a,c]);
-    if(sa==='color'||sc==='color'){
-      if(sa==='color'&&sc==='color')for(let i=0;i<64;i++)chosen.add(i);
-      else {
-        const color=sa==='color'?kindOf(b[c]):kindOf(b[a]);
-        for(let i=0;i<64;i++)if(kindOf(b[i])===color)chosen.add(i);
-      }
-    }
-    return chosen;
   }
   function specialSwapTargets(b,a,c){
     const sa=specialOf(b[a]),sc=specialOf(b[c]);

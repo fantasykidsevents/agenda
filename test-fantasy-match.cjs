@@ -19,13 +19,19 @@ assert.equal(levelConfig(100).world,4);
 for(let n=1;n<=100;n++){
   const l=levelConfig(n);
   assert.equal(l.number,n);
-  assert.ok(l.moves>=24 && l.moves<=36,`Coups incohérents au niveau ${n}`);
+  assert.ok(l.moves>=16 && l.moves<=28,`Coups incohérents au niveau ${n}`);
   assert.ok(l.target>0,`Objectif incohérent au niveau ${n}`);
   if(l.mode==='duo')assert.equal(l.target,Object.values(l.targets).reduce((a,b)=>a+b,0));
   if(l.mode==='ice')assert.equal(iceCellsForLevel(n,l.target).size,l.target);
 }
 assert.deepEqual([1,2,3,4,5].map(n=>levelConfig(n).mode),['collect','duo','ice','score','special']);
 assert.notEqual(levelConfig(1).goal,levelConfig(6).goal);
+const adultStages=[1,6,16,31,51].map(n=>levelConfig(n));
+for(let i=1;i<adultStages.length;i++){
+  assert.ok(adultStages[i].moves<adultStages[i-1].moves,'Chaque palier adulte doit avoir moins de coups');
+  assert.ok(adultStages[i].target/adultStages[i].moves>adultStages[i-1].target/adultStages[i-1].moves,'Chaque palier adulte doit exiger davantage par coup');
+}
+assert.ok(levelConfig(10).boss && levelConfig(10).target>levelConfig(5).target,'Le niveau 10 doit être un défi');
 for(let i=0;i<100;i++){
   const b=freshBoard();
   assert.equal(b.length,64);
