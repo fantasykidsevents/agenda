@@ -3891,6 +3891,32 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const avantStatut = editingId ? (events.find(x => x.id === editingId) || {}).statut : null;
     if (isResp() && ev.type_evenement === "animation" && ev.statut === "confirme" && avantStatut !== "confirme" && ev.email && !(+ev.acompte > 0) && !ev.acompte_paye
         && !confirm("Aucun acompte n'est indiqué : le client recevra directement la fiche anniversaire, sans demande d'acompte.\n\nOK = envoyer quand même · Annuler = je mets l'acompte d'abord")) { $("acompte")?.focus(); return; }
+    // Une indisponibilité du calendrier reste contournable, mais jamais à l'insu
+    // du responsable. Les réponses aux sondages ne sont PAS utilisées ici.
+    if (isGest() && ev.statut !== "annule" && picked.length) {
+      const anciens = new Set(parseTeam(orig.animateurs).map(p => normName(p.nom)));
+      const dateChangee = !editingId || orig.date !== ev.date || orig.statut === "annule";
+      const personnes = picked.filter(p => dateChangee || !anciens.has(normName(p.nom)));
+      const alertes = personnes.flatMap(p => indispos
+        .filter(x => normName(x.prenom) === normName(p.nom)
+          && x.debut <= ev.date && (x.fin || x.debut) >= ev.date)
+        .map(x => ({ nom:p.nom, note:String(x.note || "").trim() })));
+      if (alertes.length) {
+        const noms = [...new Set(alertes.map(x => x.nom))];
+        const details = noms.map(nom => {
+          const notes = [...new Set(alertes.filter(x => x.nom === nom && x.note).map(x => x.note))];
+          return "• " + nom + " — indisponible" + (notes.length ? " (" + notes.join(" ; ") + ")" : "");
+        }).join("\n");
+        const jour = parseISO(ev.date).toLocaleDateString("fr-BE",
+          { weekday:"long",day:"numeric",month:"long",year:"numeric" });
+        if (!confirm("⚠️ Indisponibilité déclarée pour le " + jour + "\n\n" + details
+          + "\n\nVeux-tu quand même affecter " + (noms.length > 1 ? "ces membres" : "ce membre")
+          + " à cette prestation ?")) {
+          $("formErr").textContent="Affectation annulée : vérifie les indisponibilités de l'équipe.";
+          return;
+        }
+      }
+    }
     if (editingId) ev.id = editingId;
     $("saveBtn").disabled = true;
     try {
