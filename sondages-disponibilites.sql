@@ -30,7 +30,7 @@ create table if not exists public.sondages_dispo_relances (
   id uuid primary key default gen_random_uuid(),
   sondage_id uuid not null references public.sondages_dispo(id) on delete cascade,
   email text not null,
-  etape text not null check(etape in ('j2','j1','h4')),
+  etape text not null check(etape in ('j7','j2','j1','h4')),
   envoyee_le timestamptz not null default now(),
   unique (sondage_id,email,etape)
 );
@@ -188,7 +188,7 @@ end;
 $$;
 
 -- Appelée régulièrement par la fonction Edge "notifier" déjà planifiée.
--- 48h, 24h et 4h avant la limite, au plus une alerte par étape et par membre.
+-- 7 jours, 48h, 24h et 4h avant la limite, au plus une alerte par étape et par membre.
 -- Un membre n'est relancé que s'il lui manque AU MOINS UNE réponse.
 create or replace function public.relancer_sondages_dispo()
 returns table(email text,titre text,message text,lien text)
@@ -205,12 +205,13 @@ begin
     select * from public.sondages_dispo
     where statut='ouvert'
       and date_limite>now()
-      and date_limite<=now()+interval '48 hours'
+      and date_limite<=now()+interval '7 days'
   loop
     v_etape := case
       when v_s.date_limite <= now()+interval '4 hours' then 'h4'
       when v_s.date_limite <= now()+interval '24 hours' then 'j1'
-      else 'j2'
+      when v_s.date_limite <= now()+interval '48 hours' then 'j2'
+      else 'j7'
     end;
     for v_email in
       select distinct lower(btrim(e.email)) from public.equipe e
