@@ -4274,16 +4274,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }
     const button=$("pollCreateBtn");button.disabled=true;pollError("");
     try{
-      const pollCreatedId=await pollStore.create({titre,dates,emails,deadline:deadlineISO,notes:$("pollNotes").value.trim()});
-      let pushFailed=false;
-      if(!DEMO && pollCreatedId){
-        try{const result=await sb.functions.invoke("notifier",{body:{type:"SONDAGE_NOUVEAU",sondageId:pollCreatedId}});
-          if(result.error || result.data?.ok===false)pushFailed=true;
-        }catch(err){console.warn("Push sondage",err);pushFailed=true;}
-      }
+      await pollStore.create({titre,dates,emails,deadline:deadlineISO,notes:$("pollNotes").value.trim()});
       pollCreating=false;$("pollTitle").value=$("pollNotes").value="";$("pollDates").innerHTML="";
       pollAddDate({date:todayISO()});await refreshPolls();toast("🗳️ Sondage publié pour toute l’équipe !");
-      if(pushFailed)pollError("✅ Le sondage est publié et visible dans la cloche. Les notifications téléphone nécessitent la mise à jour de la fonction Supabase « notifier ».");
+
     }catch(err){pollError("Impossible de publier : "+(err.message||err));}
     finally{button.disabled=false;}
   };
