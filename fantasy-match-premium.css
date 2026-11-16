@@ -49,11 +49,9 @@ body{
 .fm-brand img{display:block;width:min(96%,195px);height:auto;max-height:112px;object-fit:contain;filter:drop-shadow(0 4px 4px #fff9)}
 .fm-game-logo{
   position:relative;display:block;align-self:center;
-  width:100%;aspect-ratio:480/245;margin:0;padding:0;
-  background-image:url('fantasy-match-art.jpeg');background-repeat:no-repeat;
-  background-size:213.333% 626.94%;background-position:81.5% 2.3%;
-  -webkit-mask-image:radial-gradient(ellipse at center,#000 59%,#000 68%,transparent 89%);
-  mask-image:radial-gradient(ellipse at center,#000 59%,#000 68%,transparent 89%);
+  width:100%;aspect-ratio:1817/866;margin:0;padding:0;
+  background-image:url('fantasy-match-logo.webp');background-repeat:no-repeat;
+  background-size:contain;background-position:center;
 }
 .fm-game-logo span,.fm-game-logo strong,.fm-game-logo i{
   position:absolute;width:1px;height:1px;overflow:hidden;
