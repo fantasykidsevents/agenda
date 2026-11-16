@@ -319,6 +319,7 @@
   .ind{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:#f8f5ff;margin-bottom:6px;font-size:14px}
   .ind span{flex:1}
   .ind button{border:0;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:6px 9px;font-weight:600}
+  .ind button.edit{background:#ece2ff;color:#6a2ad6;white-space:nowrap}
   .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
   .kpi{background:rgba(255,255,255,.9);border-radius:14px;padding:12px;box-shadow:0 6px 24px rgba(120,60,220,.10)}
   .kpi b{display:block;font-size:22px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -829,6 +830,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .cost-row .ac{display:flex;gap:6px;align-items:center;margin-left:auto}
   .cost-row select{width:auto;max-width:130px;padding:8px;font-size:13px}
   .cost-row .take{border:0;border-radius:12px;padding:8px 10px;font:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--grad);cursor:pointer;white-space:nowrap}
+  .cost-row .edit-btn{border:0;border-radius:10px;background:#eee4ff;color:#6125bf;padding:8px 10px;font-weight:700}
+  .cost-edit{width:100%;flex:1 0 100%;padding:12px;border:1px solid #e9ddfd;border-radius:12px;background:#fbf9ff}
+  .cost-edit label{display:block;font-size:13px;font-weight:600;color:#5f5180;margin-bottom:7px}
+  .cost-edit input,.cost-edit select{width:100%;max-width:100%;margin-top:4px;border:1px solid #e7def9;border-radius:10px;padding:10px;background:#fff}
   .cost-row .mine{font-size:13px;font-weight:600;color:#17714f;white-space:nowrap}
   .cost-row .em{position:relative}
   .cost-row .em i{position:absolute;right:-4px;bottom:-4px;font-size:13px;font-style:normal}
@@ -1857,7 +1862,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       </div>
       <input type="hidden" id="costType" value="costume" />
       <div class="row">
-        <div><select id="costPerso"></select></div>
+        <div><select id="costPerso" aria-label="Personnage"></select><input id="costAutrePerso" class="hidden" type="text" maxlength="80" placeholder="Nom du personnage" style="margin-top:6px" /></div>
         <div><input id="costNom" type="text" placeholder="Nom (ex. Robe Elsa 2)" /></div>
       </div>
       <div class="actions" style="margin-top:8px"><button type="submit" class="btn ghost">➕ Ajouter</button></div>
@@ -5102,6 +5107,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if (DEMO) return this._demo(a => a.map(c => c.id === id ? { ...c, ...o } : c));
       const { error } = await sb.from("costumes").update(o).eq("id", id); if (error) throw error;
     },
+    async details(id, fields) {
+      const o = { nom: fields.nom, personnage: fields.personnage, type: fields.type,
+        maj_le: new Date().toISOString(), maj_par: chatMe() };
+      if (DEMO) return this._demo(a => a.map(c => String(c.id) === String(id) ? { ...c, ...o } : c));
+      const { data, error } = await sb.from("costumes").update(o).eq("id", id).select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("La modification n'a pas été autorisée. Vérifiez vos droits sur ce costume.");
+    },
     async remove(id) {
       if (DEMO) return this._demo(a => a.filter(c => c.id !== id));
       const { error } = await sb.from("costumes").delete().eq("id", id); if (error) throw error;
@@ -5271,7 +5284,29 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
 
   // Écran « Costumes »
-  let costFiltre = "", costType = "", costSource = "fantasy";
+  let costFiltre = "", costType = "", costSource = "fantasy", costEditId = null;
+  function formulaireEditionCostume(c) {
+    const personnage = String(c.personnage || "").trim();
+    const attribuee = costAttributions.some(a => String(a.costume_id) === String(c.id));
+    const connu = Object.values(PERSONNAGES).some(l => l.includes(personnage));
+    const listePersos = `<option value="">— Personnage —</option>` +
+      (personnage && !connu ? `<option value="${esc(personnage)}" selected>${esc(personnage)} (actuel)</option>` : "") +
+      Object.entries(PERSONNAGES).map(([g, l]) => `<optgroup label="${esc(g)}">${l.map(p => `<option value="${esc(p)}"${p === personnage ? " selected" : ""}>${esc(p)}</option>`).join("")}</optgroup>`).join("") +
+      `<option value="__autre__">✏️ Autre personnage…</option>`;
+    return `<form class="cost-edit" data-cost-edit-form="${esc(c.id)}">
+      <div class="sec" style="margin:0 0 8px">✏️ Modifier la fiche</div>
+      <label>Personnage<select name="personnage" required${attribuee ? " disabled" : ""}>${listePersos}</select></label>
+      <input name="autre_personnage" class="hidden" maxlength="80" placeholder="Nom du personnage" />
+      <label>Nom de la tenue<input name="nom" maxlength="160" value="${esc(c.nom || "")}" placeholder="Ex. Robe jaune, version parade…" required /></label>
+      <label>Type<select name="type"${attribuee ? " disabled" : ""}>
+        <option value="costume"${typeDe(c) === "costume" ? " selected" : ""}>👗 Costume</option>
+        <option value="perruque"${typeDe(c) === "perruque" ? " selected" : ""}>💇 Perruque</option>
+      </select></label>
+      ${attribuee ? `<p class="hint">Cette pièce est déjà attribuée à une prestation : le personnage et le type restent fixés. Tu peux modifier son nom.</p>` : ""}
+      <div class="actions"><button type="button" class="btn ghost" data-cost-edit-cancel>Annuler</button>
+        <button type="submit" class="btn primary">💾 Enregistrer</button></div>
+    </form>`;
+  }
   function prochaineUtil(c) {
     const t = todayISO();
     const evIds = new Set(costAttributions.filter(a => String(a.costume_id) === String(c.id)).map(a => String(a.evenement_id)));
@@ -5301,8 +5336,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         ${etatDe(c) !== "ok" && (r || normName(persoDe(c)) === normName(moi)) ? `<input class="pb" type="text" data-pb="${esc(c.id)}" value="${esc(c.probleme || "")}" placeholder="${etatDe(c) === "reparer" ? "Quel problème ? (ex. fermeture cassée, ourlet décousu)" : "Précision (ex. tache de chocolat)"}" />` : ""}
         <div class="ac">
           ${r || normName(persoDe(c)) === normName(moi) ? `<select data-move="${esc(c.id)}" aria-label="Où est cette pièce ?">${opts(c)}</select>` : ""}
+          ${r || normName(persoDe(c)) === normName(moi) ? `<button type="button" class="edit-btn" data-cost-edit-open="${esc(c.id)}" aria-label="Modifier ${esc(nomDe(c))}">✏️</button>` : ""}
           ${r || normName(persoDe(c)) === normName(moi) ? `<button type="button" class="x" data-cdel="${esc(c.id)}" title="Supprimer">🗑️</button>` : ""}
-        </div></div>`).join("")
+        </div>${String(costEditId) === String(c.id) ? formulaireEditionCostume(c) : ""}</div>`).join("")
       : `<p class="hint">${visibles.length ? "Aucune pièce ne correspond aux filtres." : "Aucune pièce encodée dans cet espace pour l'instant."}</p>`;
     $("costAdd").classList.toggle("hidden", !r && costSource === "fantasy");
     $("costOwnerBox").classList.toggle("hidden", !r || costSource === "fantasy");
@@ -5313,11 +5349,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }
     document.querySelectorAll('input[name="costSourceR"]').forEach(i => { i.checked = i.value === costSource; });
   }
-  function openCost() { costFiltre = ""; $("costSearch").value = ""; costSource = isResp() ? "fantasy" : "perso"; costType = ""; renderCost(); $("costBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; }
-  function closeCost() { $("costBg").classList.add("hidden"); document.body.style.overflow = ""; render(); }
+  function openCost() { costFiltre = ""; $("costSearch").value = ""; costSource = isResp() ? "fantasy" : "perso"; costType = ""; costEditId = null; renderCost(); $("costBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; }
+  function closeCost() { costEditId = null; $("costBg").classList.add("hidden"); document.body.style.overflow = ""; render(); }
   $("costClose").onclick = closeCost;
   $("costBg").addEventListener("click", async (e) => {
     if (e.target.id === "costBg") return closeCost();
+    const ouvrir = e.target.closest("[data-cost-edit-open]");
+    if (ouvrir) { costEditId = ouvrir.dataset.costEditOpen; renderCost(); return; }
+    if (e.target.closest("[data-cost-edit-cancel]")) { costEditId = null; renderCost(); return; }
     const del = e.target.closest("[data-cdel]");
     try {
       if (del) {
@@ -5326,6 +5365,32 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       } else return;
       await costReload(); renderCost();
     } catch (err) { toast("Erreur : " + (err.message || err)); }
+  });
+  $("costList").addEventListener("submit", async e => {
+    const form = e.target.closest("[data-cost-edit-form]"); if (!form) return;
+    e.preventDefault();
+    const c = costumes.find(x => String(x.id) === String(form.dataset.costEditForm));
+    if (!c) { toast("Fiche introuvable."); return; }
+    const allowed = isResp() || normName(persoDe(c)) === normName(chatMe());
+    if (!allowed) { toast("Vous ne pouvez modifier que votre propre matériel."); return; }
+    const attribuee = costAttributions.some(a => String(a.costume_id) === String(c.id));
+    const nom = form.elements.nom.value.trim();
+    const personnage = attribuee ? c.personnage : (form.elements.personnage.value === "__autre__"
+      ? form.elements.autre_personnage.value.trim() : form.elements.personnage.value.trim());
+    const type = attribuee ? typeDe(c) : form.elements.type.value;
+    if (!nom || !personnage) { toast("Indiquez un personnage et un nom pour cette tenue."); return; }
+    const bouton = form.querySelector('[type="submit"]'); bouton.disabled = true;
+    try {
+      await costStore.details(c.id, { nom, personnage, type });
+      costEditId = null;
+      await costReload(); renderCost(); render();
+      toast("✅ Fiche modifiée !");
+    } catch (err) { bouton.disabled = false; toast("Impossible de modifier : " + (err.message || err)); }
+  });
+  $("costList").addEventListener("change", e => {
+    if (e.target.name !== "personnage") return;
+    const form = e.target.closest("[data-cost-edit-form]");
+    if (form) form.elements.autre_personnage.classList.toggle("hidden", e.target.value !== "__autre__");
   });
   $("costList").addEventListener("change", async (e) => {
     const s = e.target.closest("[data-move]"); if (!s) return;
@@ -5352,10 +5417,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const c = costumes.find(x => x.id === i.dataset.pb); if (!c) return;
     try { await costStore.etat(c.id, etatDe(c), i.value.trim() || null); await costReload(); toast("📝 Noté"); } catch (err) { toast("Erreur : " + (err.message || err)); }
   });
-  $("costPerso").innerHTML = `<option value="">— Personnage —</option>` + Object.entries(PERSONNAGES).map(([g, l]) => `<optgroup label="${g}">${l.map(p => `<option>${p}</option>`).join("")}</optgroup>`).join("");
+  $("costPerso").innerHTML = `<option value="">— Choisir le personnage —</option>` + Object.entries(PERSONNAGES).map(([g, l]) => `<optgroup label="${esc(g)}">${l.map(p => `<option>${esc(p)}</option>`).join("")}</optgroup>`).join("") + `<option value="__autre__">✏️ Autre personnage…</option>`;
+  $("costPerso").addEventListener("change", e => $("costAutrePerso").classList.toggle("hidden", e.target.value !== "__autre__"));
   $("costAdd").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const personnage = $("costPerso").value || $("costNom").value.trim(); if (!personnage) { toast("Choisissez un personnage"); return; }
+    const personnage = $("costPerso").value === "__autre__" ? $("costAutrePerso").value.trim() : $("costPerso").value;
+    if (!personnage) { toast("Choisissez d'abord le personnage de cette tenue."); return; }
     try {
       const type = $("costType").value;
       if (!isResp() && costSource === "fantasy") throw new Error("Seul le responsable peut ajouter au stock Fantasy.");
@@ -5363,7 +5430,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if (costSource === "perso" && !proprietaire) throw new Error("Choisissez le propriétaire de la pièce.");
       await costStore.add({ personnage, type, proprietaire, nom: $("costNom").value.trim() || `${TYPES[type][1]} ${personnage}${proprietaire ? " (" + proprietaire + ")" : ""}`,
         chez: proprietaire || STOCK, etat: "ok", maj_par: chatMe() });
-      $("costPerso").value = ""; $("costNom").value = ""; toast("👗 Costume ajouté"); await costReload(); renderCost();
+      $("costPerso").value = ""; $("costAutrePerso").value = ""; $("costAutrePerso").classList.add("hidden"); $("costNom").value = ""; toast("👗 Costume ajouté"); await costReload(); renderCost();
     } catch (err) { toast("Erreur : " + (err.message || err)); }
   });
   document.addEventListener("click", (e) => { if (e.target.closest("[data-cost-open]")) { e.stopPropagation(); openCost(); } }, true);
@@ -6632,10 +6699,19 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   $("myCostBtn").onclick = openCost;
   function renderMesCostumes() {
-    const moi = chatMe(), l = costumes.filter(c => normName(persoDe(c)) === normName(moi) || (!persoDe(c) && normName(c.chez) === normName(moi)));
-    $("myCost").innerHTML = l.length ? l.map(c => `<div class="ind"><span>${TYPES[typeDe(c)][0]} ${esc(nomDe(c))}${etatDe(c) !== "ok" ? ` <b style="color:#b4123c">· ${esc(etatTxt(c))}</b>` : ""}<small style="display:block;color:var(--muted)">${prochaineUtil(c)}</small></span></div>`).join("")
+    const moi = chatMe(), l = costumes.filter(c => normName(persoDe(c)) === normName(moi) || (!persoDe(c) && normName(c.chez) === normName(moi)))
+      .sort((a, b) => String(a.personnage || "").localeCompare(String(b.personnage || ""), "fr") || nomDe(a).localeCompare(nomDe(b), "fr"));
+    $("myCost").innerHTML = l.length ? l.map(c => `<div class="ind"><span>${TYPES[typeDe(c)][0]} <b>${esc(c.personnage || "Personnage à préciser")}</b> · ${esc(nomDe(c))}${etatDe(c) !== "ok" ? ` <b style="color:#b4123c">· ${esc(etatTxt(c))}</b>` : ""}<small style="display:block;color:var(--muted)">${prochaineUtil(c)}</small></span>
+      ${isResp() || normName(persoDe(c)) === normName(moi) ? `<button type="button" class="edit" data-my-cost-edit="${esc(c.id)}" aria-label="Modifier ${esc(nomDe(c))}">✏️</button>` : ""}</div>`).join("")
       : `<p class="hint" style="margin:0">Pas de costume ni perruque perso encodé. Vous en avez ? Ajoutez-le dans « Tous les costumes & perruques ».</p>`;
   }
+  $("myCost").addEventListener("click", e => {
+    const b = e.target.closest("[data-my-cost-edit]"); if (!b) return;
+    const c = costumes.find(c => String(c.id) === String(b.dataset.myCostEdit)); if (!c) return;
+    if (!isResp() && normName(persoDe(c)) !== normName(chatMe())) return;
+    openCost(); costSource = persoDe(c) ? "perso" : "fantasy"; costEditId = String(c.id); renderCost();
+    requestAnimationFrame(() => $("costList").querySelector("[data-cost-edit-form]")?.scrollIntoView({ block: "center", behavior: "smooth" }));
+  });
 
   // ================= 🎂 Anniversaires de l'équipe (dates privées, responsables) =================
   const LS_NAISS = "fk_agenda_naissances_demo";
