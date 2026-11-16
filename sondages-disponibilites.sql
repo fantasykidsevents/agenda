@@ -80,15 +80,16 @@ begin
   end if;
   if p_dates is null or jsonb_typeof(p_dates) <> 'array'
     or jsonb_array_length(p_dates) not between 1 and 12 then
-    raise exception 'Proposez entre 1 et 12 dates.';
+    raise exception 'Proposez entre 1 et 12 choix.';
   end if;
   if exists (
     select 1 from jsonb_array_elements(p_dates) as d
     where nullif(d->>'id','') is null
-       or (d->>'date') is null
-       or (d->>'date') !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+      or (d->>'label' is not null and length(btrim(d->>'label')) not between 1 and 180)
+      or (d->>'label' is null and ((d->>'date') is null
+        or (d->>'date') !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'))
   ) then
-    raise exception 'Une date proposée est invalide.';
+    raise exception 'Un choix proposé est invalide.';
   end if;
   if exists (
     select 1 from (
@@ -96,7 +97,7 @@ begin
       group by d->>'id' having count(*)>1
     ) doublons
   ) then
-    raise exception 'Une option de date est répétée.';
+    raise exception 'Un choix est répété.';
   end if;
   if p_date_limite is null or p_date_limite <= now() then
     raise exception 'La date limite doit être dans le futur.';
@@ -250,6 +251,24 @@ begin
 end;
 $$;
 
+-- Suppression ciblée, réservée aux responsables.
+-- Les réponses et rappels liés au sondage sont supprimés par les clés étrangères.
+create or replace function public.supprimer_sondage_dispo(p_sondage_id uuid)
+returns void language plpgsql security definer set search_path = public, pg_temp
+as $$
+begin
+  if not exists (
+    select 1 from public.equipe e
+    where lower(btrim(e.email))=lower(btrim(auth.jwt()->>'email'))
+      and (coalesce(e.responsable,false) or coalesce(e.gestionnaire,false))
+  ) then
+    raise exception 'Suppression réservée au responsable.';
+  end if;
+  delete from public.sondages_dispo where id=p_sondage_id;
+  if not found then raise exception 'Sondage introuvable.'; end if;
+end;
+$$;
+
 -- Appelée régulièrement par la fonction Edge "notifier" déjà planifiée.
 -- 7 jours, 48h, 24h et 4h avant la limite, au plus une alerte par étape et par membre.
 -- Un membre n'est relancé que s'il lui manque AU MOINS UNE réponse.
@@ -358,10 +377,12 @@ revoke all on function public.creer_sondage_dispo(text,jsonb,timestamptz,text) f
 revoke all on function public.enregistrer_choix_sondage(uuid,text[],boolean) from public;
 revoke all on function public.repondre_sondage_dispo(uuid,text,text) from public;
 revoke all on function public.fermer_sondage_dispo(uuid,boolean) from public;
+revoke all on function public.supprimer_sondage_dispo(uuid) from public;
 revoke all on function public.relancer_sondages_dispo() from public;
 grant execute on function public.creer_sondage_dispo(text,jsonb,timestamptz,text) to authenticated;
 grant execute on function public.enregistrer_choix_sondage(uuid,text[],boolean) to authenticated;
 grant execute on function public.repondre_sondage_dispo(uuid,text,text) to authenticated;
 grant execute on function public.fermer_sondage_dispo(uuid,boolean) to authenticated;
+grant execute on function public.supprimer_sondage_dispo(uuid) to authenticated;
 grant execute on function public.relancer_sondages_dispo() to service_role;
 commit;
