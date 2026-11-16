@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const MAX_LEVEL = 100, MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, SIZE = 8;
+  const MAX_LEVEL = 100, MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, SIZE = 8, POINTS_PER_UNUSED_MOVE = 50;
   const WORLD_NAMES = ['Le Royaume des Étoiles', 'Le Jardin Enchanté', 'Le Palais des Neiges', 'La Grotte des Cristaux', 'Le Royaume de la Magie'];
   const KINDS = ['star', 'rose', 'crystal', 'snow', 'crown', 'wand'];
   const LABELS = {star:'Étoiles',rose:'Roses',crystal:'Cristaux',snow:'Flocons',crown:'Couronnes',wand:'Baguettes'};
@@ -442,8 +442,12 @@
   function starsForSuccess(){return moves>=Math.ceil(current.moves*.35)?3:moves>=Math.ceil(current.moves*.15)?2:1}
   function winLevel(){
     const n=current.number,earned=starsForSuccess(),previous=Number(state.bestScores[n]||0);
-    state.bestScores[n]=Math.max(previous,roundScore);
-    state.score+=Math.max(0,roundScore-previous);
+    const unusedMoves=Math.max(0,Math.floor(moves));
+    const bonus=unusedMoves*POINTS_PER_UNUSED_MOVE;
+    const finalScore=roundScore+bonus;
+    state.bestScores[n]=Math.max(previous,finalScore);
+    // Rejouer un niveau ne crédite que l'amélioration du meilleur score.
+    state.score+=Math.max(0,finalScore-previous);
     state.levels[n]=Math.max(earned,Number(state.levels[n]||0));
     state.maxUnlocked=Math.max(state.maxUnlocked,Math.min(100,n+1));
     if(n%10===0){state.boosters.color++;state.boosters.bomb++;state.boosters.shuffle++;}
@@ -451,7 +455,7 @@
     save();
     const last=n===100;
     showDialog(last?'100 niveaux terminés !':'Niveau réussi !',
-      `<div style="font-size:32px;color:#ffc02b">${'★'.repeat(earned)}${'☆'.repeat(3-earned)}</div><p>Bravo ${escapeHtml(playerName)} ! ${n%10===0?'Tu gagnes un bonus de chaque sorte !':''}</p><p><b>+ ${roundScore.toLocaleString('fr-BE')} points</b></p>`,
+      `<div style="font-size:32px;color:#ffc02b">${'★'.repeat(earned)}${'☆'.repeat(3-earned)}</div><p>Bravo ${escapeHtml(playerName)} ! ${n%10===0?'Tu gagnes un bonus de chaque sorte !':''}</p><p>💎 Combinaisons : <b>${roundScore.toLocaleString('fr-BE')} pts</b><br>✨ ${unusedMoves} coup${unusedMoves>1?'s':''} restant${unusedMoves>1?'s':''} × ${POINTS_PER_UNUSED_MOVE} = <b>+${bonus.toLocaleString('fr-BE')} pts</b></p><p><b>Total : ${finalScore.toLocaleString('fr-BE')} points</b></p>`,
       [{label:last?'Rejouer le niveau 100':'Niveau suivant →',action:()=>{hideDialog();startRound(last?100:n+1)}}], '✦');
   }
   function loseLevel(){
