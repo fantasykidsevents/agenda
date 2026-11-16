@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#b62dea">
+  <meta name="description" content="Fantasy Match, le jeu magique de l'équipe Fantasy Kids Events.">
+  <title>Fantasy Match · Fantasy Kids Events</title>
+  <link rel="stylesheet" href="fantasy-match.css">
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="fantasy-match.js"></script>
+</head>
+<body>
+  <div class="fm-bg-stars" aria-hidden="true"></div>
+  <div class="fm-shell">
+    <header class="fm-header">
+      <a class="fm-back" href="index.html" aria-label="Revenir à Fantasy">‹</a>
+      <div class="fm-brand">
+        <img src="logo.png" alt="Fantasy Kids Events" onerror="this.style.display='none'">
+        <span>Le jeu de l'équipe</span>
+      </div>
+      <button class="fm-settings" id="rulesBtn" aria-label="Règles du jeu">?</button>
+    </header>
+
+    <div class="fm-title-wrap">
+      <h1><span>Fantasy</span> <strong>Match</strong><span class="fm-twinkle" aria-hidden="true">✦</span></h1>
+      <div class="fm-world" id="worldName">Le Royaume des Étoiles</div>
+    </div>
+
+    <section class="fm-status" aria-label="Progression et vies">
+      <button id="levelsBtn" class="fm-level-btn" title="Choisir un niveau">Niveau <b id="levelValue">1</b> <span>⌄</span></button>
+      <div class="fm-lives"><div id="hearts" class="fm-hearts" aria-label="Cinq vies"></div><small id="lifeTimer">5 / 5 vies</small></div>
+    </section>
+
+    <section class="fm-progress">
+      <div class="fm-progress-top"><span>Progression du niveau</span><span id="progressValue">0 / 18</span></div>
+      <div class="fm-track"><div class="fm-progress-fill" id="progressFill"></div></div>
+    </section>
+
+    <section class="fm-objective">
+      <div class="fm-objective-icon" id="goalIcon"></div>
+      <div class="fm-objective-label"><small>À récolter</small><strong id="goalName">Étoiles</strong></div>
+      <div class="fm-objective-count"><strong id="goalRemain">18</strong><small>restantes</small></div>
+      <div class="fm-moves"><strong id="movesValue">24</strong><small>coups</small></div>
+    </section>
+
+    <div class="fm-board-wrap">
+      <div class="fm-board" id="gameBoard" role="grid" aria-label="Plateau Fantasy Match, huit cases sur huit"></div>
+      <div class="fm-board-overlay hidden" id="boardOverlay"><span id="boardOverlayText">Préparation…</span></div>
+    </div>
+
+    <div class="fm-below">
+      <p class="fm-tip" id="gameTip">Aligne 3 symboles identiques pour les faire disparaître ✨</p>
+      <div class="fm-powerups" aria-label="Bonus spéciaux">
+        <button id="boostColor" class="fm-power" title="Effacer toutes les pièces identiques"><span class="fm-bubble">✦</span><b id="colorCount">3</b><small>Magie</small></button>
+        <button id="boostBomb" class="fm-power" title="Effacer neuf cases"><span class="fm-bubble">✹</span><b id="bombCount">3</b><small>Éclat</small></button>
+        <button id="boostShuffle" class="fm-power" title="Mélanger le plateau"><span class="fm-bubble">↝</span><b id="shuffleCount">3</b><small>Mélanger</small></button>
+      </div>
+    </div>
+
+    <nav class="fm-nav" aria-label="Navigation Fantasy Match">
+      <button class="active" data-screen="play"><span>✦</span>Jouer</button>
+      <button data-screen="levels"><span>◈</span>100 niveaux</button>
+      <button data-screen="ranking"><span>♛</span>Classement</button>
+    </nav>
+    <div class="fm-sync" id="syncStatus" aria-live="polite">Sauvegarde en préparation…</div>
+  </div>
+
+  <div class="fm-modal-backdrop hidden" id="dialogBackdrop" role="presentation">
+    <section class="fm-dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <button class="fm-dialog-x" id="dialogClose" aria-label="Fermer">×</button>
+      <div class="fm-dialog-sparkle" id="dialogSymbol">✦</div>
+      <h2 id="dialogTitle">Fantasy Match</h2>
+      <div id="dialogContent"></div>
+      <div class="fm-dialog-actions" id="dialogActions"></div>
+    </section>
+  </div>
+  <div class="fm-toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
