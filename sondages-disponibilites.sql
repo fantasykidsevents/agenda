@@ -34,6 +34,8 @@ create table if not exists public.sondages_dispo_relances (
   envoyee_le timestamptz not null default now(),
   unique (sondage_id,email,etape)
 );
+alter table public.sondages_dispo_relances
+  add column if not exists push_envoye_le timestamptz;
 
 -- Tous les membres connectés peuvent consulter tous les sondages
 -- et les réponses nominatives, y compris hors de leur ancienne Team.
@@ -253,6 +255,40 @@ begin
     where statut='ouvert' and date_limite<=now();
 end;
 $$;
+
+
+-- Les pushs téléphone sont prélevés séparément des rappels dans la cloche.
+-- Ainsi, le Cron SQL et l'Edge Function peuvent tourner dans n'importe quel ordre.
+create or replace function public.prendre_push_sondages_dispo()
+returns table(email text,titre text,message text,lien text)
+language plpgsql security definer set search_path = public, pg_temp
+as $$
+declare
+  r record;
+begin
+  for r in
+    select q.id,q.email,s.titre as nom_sondage,s.date_limite
+    from public.sondages_dispo_relances q
+    join public.sondages_dispo s on s.id=q.sondage_id
+    where q.push_envoye_le is null and s.date_limite>now()
+    order by q.envoyee_le
+    limit 200
+    for update of q skip locked
+  loop
+    update public.sondages_dispo_relances
+      set push_envoye_le=now() where id=r.id;
+    email:=r.email;
+    titre:='⏰ Rappel : sondage sans réponse complète';
+    message:=r.nom_sondage || ' · Dernier délai : '
+      || to_char(r.date_limite at time zone 'Europe/Brussels','DD/MM/YYYY HH24:MI');
+    lien:='./index.html?sondages=1';
+    return next;
+  end loop;
+end;
+$$;
+
+revoke all on function public.prendre_push_sondages_dispo() from public;
+grant execute on function public.prendre_push_sondages_dispo() to service_role;
 
 revoke all on function public.creer_sondage_dispo(text,jsonb,timestamptz,text) from public;
 revoke all on function public.repondre_sondage_dispo(uuid,text,text) from public;
