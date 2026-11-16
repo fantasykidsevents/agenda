@@ -4709,6 +4709,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   if (navigator.serviceWorker) navigator.serviceWorker.addEventListener("message", (e) => {
     if (e.data && e.data.costumes) { openCost(); return; }
+    if (e.data && e.data.tenue) {
+      const ev = events.find(x => String(x.id) === String(e.data.tenue));
+      if (ev && jeVoisEv(ev)) openCostAssign(ev);
+      return;
+    }
     if (e.data && e.data.checklist) { openCK(); return; }
     if (e.data && e.data.vue) { const tb = document.querySelector(`.tab[data-view="${e.data.vue}"]`); if (tb) tb.click(); return; }
     if (e.data && e.data.chat) { closeForm(); openChat(e.data.chat); return; }
