@@ -1561,7 +1561,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 </div>
 
 <!-- ============ 🦋 TATOUAGES PAILLETÉS : COMPTAGE AJOUTÉ AU SOLDE ============ -->
-<div id="tatBg" class="sheet-bg hidden">
+<div id="tatBg" class="sheet-bg hidden" style="z-index:70">
   <div class="sheet">
     <div class="grab"></div>
     <h2>🦋 Atelier tatouages pailletés</h2>
@@ -1940,15 +1940,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if (DEMO) return JSON.parse(localStorage.getItem(LS_KEY) || "[]");
       const { data, error } = await sb.from("evenements").select("*").order("date").order("heure_debut", { nullsFirst: true });
       if (error) throw error;
+      // N'exposer dans les vues et le cache de l'équipe que les missions
+      // auxquelles la personne est affectée. Les gestionnaires voient tout.
+      const visibles = data.filter(jeVoisEv);
       if (isResp()) {
         const [{ data: pv }, { data: pa }] = await Promise.all([sb.from("evenements_prive").select("*"), sb.from("paies").select("*")]);
         const P = new Map((pv || []).map(x => [x.id, x]));
-        data.forEach(e => { const p = P.get(e.id); if (p) PRIV.forEach(k => e[k] = p[k]); e.paies = (pa || []).filter(x => x.evenement_id === e.id); });
+        visibles.forEach(e => { const p = P.get(e.id); if (p) PRIV.forEach(k => e[k] = p[k]); e.paies = (pa || []).filter(x => x.evenement_id === e.id); });
       }
       const { data: fi } = await sb.from("fiches").select("*");
       const F = new Map((fi || []).map(x => [x.evenement_id, x]));
-      data.forEach(e => { if (F.has(e.id)) e.fiche = F.get(e.id); });
-      return data;
+      visibles.forEach(e => { if (F.has(e.id)) e.fiche = F.get(e.id); });
+      return visibles;
     },
     async patch(id, fields) {
       if (DEMO) {
@@ -2089,12 +2092,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (DEMO) return demoRole === "resp" || demoRole === "gest";
     const me = myMember(); return isResp() || !!(me && me.gestionnaire);
   }
-  // Animateur : voit tous les événements/spectacles + seulement SES animations
-  const jeVoisEv = (e) => isGest() || e.type_evenement === "evenement" || anims(e).some(a => normName(a) === normName(chatMe()));
+  // Agenda personnel : un animateur ne voit que les prestations et événements
+  // où son prénom figure dans l'équipe (les gestionnaires voient tout).
+  const jeVoisEv = (e) => isGest() || anims(e).some(a => normName(a) === normName(chatMe()));
   function isResp() {
     if (DEMO) return demoRole === "resp";
     const me = myMember();
-    return !members.some(m => m.responsable) || !!(me && me.responsable);
+    // Ne jamais donner les droits de responsable par défaut si l'équipe
+    // est vide ou filtrée par les autorisations de la base de données.
+    return !!(me && me.responsable);
   }
   // L'envoi des photos aux clients est réservé à Jordan personnellement,
   // même si d'autres membres ont le rôle de responsable / gestionnaire.
@@ -2140,6 +2146,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   let resaSite = [];   // 🎟️ réservations arrivées du site, pas encore vues
   let notificationsApp = []; // 🔔 Boîte personnelle : seules les lignes autorisées par RLS sont visibles
+  const notificationsVuesIci = new Set(); // Évite qu'un rechargement simultané réaffiche un « Vu » déjà confirmé.
   async function rafraichirActionsPartagees(ids) {
     if (!ids.length || DEMO) return true;
     // Les autres membres peuvent avoir déjà envoyé le bilan / encaissé le
@@ -2172,7 +2179,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       .is("lue_le", null)
       .order("cree_le", { ascending: false }).limit(100);
     if (error) { console.warn("Notifications personnelles non disponibles :", error.message); return; }
-    const notifs = (data || []).filter(n => n.type !== "chat" && !n.lue_le);
+    const notifs = (data || []).filter(n => n.type !== "chat" && !n.lue_le && !notificationsVuesIci.has(String(n.id)));
     const depuis = iso(new Date(Date.now() - 45 * 864e5));
     const moi = normName(myMember()?.prenom || "");
     const ids = [...new Set([
@@ -2198,20 +2205,34 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     });
     if (terminees.length) {
       // Les rappels terminés disparaissent aussi durablement de la cloche.
-      const { error: errLues } = await sb.from("notifications_app")
-        .update({ lue_le: new Date().toISOString() }).in("id", terminees);
-      if (errLues) console.warn("Rangement des rappels terminés :", errLues.message);
+      try { await marquerNotificationLue(terminees); }
+      catch (err) { console.warn("Rangement des rappels terminés :", err.message || err); }
     }
     majCloche();
     if (view === "mine" && !$('app').classList.contains('hidden')) renderMine0();
     if (!$('clocheBg').classList.contains('hidden')) openCloche();
   }
   async function marquerNotificationLue(ids) {
-    if (!ids.length || DEMO) return;
-    const { error } = await sb.from("notifications_app").update({ lue_le: new Date().toISOString() }).in("id", ids);
+    if (!ids.length) return;
+    const uniques = [...new Set(ids.map(String))];
+    if (DEMO) {
+      uniques.forEach(id => notificationsVuesIci.add(id));
+      notificationsApp.forEach(n => { if (notificationsVuesIci.has(String(n.id))) n.lue_le = new Date().toISOString(); });
+      majCloche();
+      return;
+    }
+    // Supabase peut répondre sans erreur tout en modifiant ZÉRO ligne si les
+    // droits RLS refusent l'UPDATE : vérifier les identifiants effectivement mis à jour.
+    const horodatage = new Date().toISOString();
+    const { data, error } = await sb.from("notifications_app")
+      .update({ lue_le: horodatage }).in("id", uniques).select("id");
     if (error) throw error;
-    const vus = new Set(ids.map(String));
-    notificationsApp.forEach(n => { if (vus.has(String(n.id))) n.lue_le = new Date().toISOString(); });
+    const vus = new Set((data || []).map(n => String(n.id)));
+    if (uniques.some(id => !vus.has(id))) {
+      throw new Error("La base de données n'a pas confirmé le changement. Vérifie les autorisations des notifications dans Supabase.");
+    }
+    uniques.forEach(id => notificationsVuesIci.add(id));
+    notificationsApp.forEach(n => { if (vus.has(String(n.id))) n.lue_le = horodatage; });
     majCloche();
   }
   async function reload() {
@@ -2224,7 +2245,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     resaSite = resaSite.filter(r => { const e = events.find(x => String(x.id) === String(r.evenement_id)); return e && e.date >= todayISO(); });
     if (!ok && !DEMO) {
       const c = lireHL();
-      if (c) { events = c.events || []; members = c.members || []; indispos = c.indispos || []; reglages = c.reglages || {}; costumes = c.costumes || [];
+      if (c) { members = c.members || []; events = (c.events || []).filter(jeVoisEv); indispos = c.indispos || []; reglages = c.reglages || {}; costumes = c.costumes || [];
         if (!chatMsgs.length && c.chat) { chatMsgs = c.chat; chatLoaded = true; }
         barreHL(true, c.at); applyRole(); refreshFilters(); render(); return; }
       toast("📶 Pas de réseau, et aucune info enregistrée sur ce téléphone pour l'instant.");
@@ -2256,7 +2277,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
 
   function refreshFilters() {
-    const set = new Set(); events.forEach(e => anims(e).forEach(n => set.add(n)));
+    const set = new Set(); events.filter(jeVoisEv).forEach(e => anims(e).forEach(n => set.add(n)));
     const sel = $("fAnim"), cur = sel.value;
     sel.innerHTML = `<option value="">Tous les animateurs</option>` +
       [...set].sort((a,b)=>a.localeCompare(b,"fr")).map(n => `<option ${n===cur?"selected":""}>${esc(n)}</option>`).join("");
@@ -2589,7 +2610,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (view !== "cal") { b.classList.add("hidden"); return; }   // seulement sur l'accueil (Agenda)
     const me = myMember(), n = me && !isResp() ? normName(me.prenom) : null;
     const now2 = new Date(), t = todayISO(), hm = `${pad(now2.getHours())}:${pad(now2.getMinutes())}`;
-    const next = events.filter(e => e.statut !== "annule" && (e.date > t || (e.date === t && (!e.heure_debut || e.heure_debut.slice(0,5) >= hm)))
+    const next = events.filter(e => jeVoisEv(e) && e.statut !== "annule" && (e.date > t || (e.date === t && (!e.heure_debut || e.heure_debut.slice(0,5) >= hm)))
       && (!n || anims(e).some(a => normName(a) === n)))
       .sort((x, y) => (x.date + (x.heure_debut || "")).localeCompare(y.date + (y.heure_debut || "")))[0];
     if (!next) { b.classList.add("hidden"); return; }
@@ -2620,7 +2641,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const b = $("clocheBtn"); if (!b) return;
     b.classList.toggle("hidden", !DEMO && !currentUser);
     const attente = isGest() ? demandesAttente().length + resaSite.length : 0;
-    const nonLues = notificationsApp.filter(n => !n.lue_le).length;
+    const nonLues = notificationsApp.filter(n => !n.lue_le && !notificationsVuesIci.has(String(n.id))).length;
     const n = attente + nonLues;
     $("clocheN").textContent = n ? (n > 99 ? "99+" : n) : "";
     b.classList.toggle("on", n > 0);
@@ -2632,7 +2653,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const R = (isGest() ? resaSite : []).map(r => { const e = events.find(x => String(x.id) === String(r.evenement_id));
       return `<div class="dem-row"><b>🎟️ ${esc(r.nom || "Réservation")}</b> · ${r.places} place${r.places > 1 ? "s" : ""}${r.bebes ? ` + ${r.bebes} bébé${r.bebes > 1 ? "s" : ""}` : ""}<br><small>${esc(e ? e.titre : "Événement")}${e ? " · " + esc(fmtLong(e.date)) : ""}</small>${r.notes ? `<br><small class="hint">${esc(String(r.notes).replace(/^🌐 Via le site[^:]*: /, "").slice(0, 160))}</small>` : ""}
       <div class="actions"><button type="button" class="btn" data-resa-ouvrir="${esc(r.evenement_id)}" data-id="${esc(r.id)}">👀 Ouvrir les réservations</button><button type="button" class="btn primary" data-resa-vu="${esc(r.id)}">✅ Vu</button></div></div>`; }).join("");
-    const mesNotifs = notificationsApp.filter(n => !n.lue_le && n.type !== "chat").map(n => {
+    const mesNotifs = notificationsApp.filter(n => !n.lue_le && n.type !== "chat" && !notificationsVuesIci.has(String(n.id))).map(n => {
       const ev = events.find(x => String(x.id) === String(n.evenement_id));
       const ouvrir = (ev && jeVoisEv(ev)) || !!n.lien;
       const date = new Date(n.cree_le).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -2642,10 +2663,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <small class="hint">${esc(date)}</small>
         <div class="actions">
           ${ouvrir ? `<button type="button" class="btn" data-notif-voir="${esc(n.id)}">👀 Ouvrir</button>` : ""}
-          ${n.lue_le ? "" : `<button type="button" class="btn primary" data-notif-lu="${esc(n.id)}">✅ Lu</button>`}
+          <button type="button" class="btn primary" data-notif-lu="${esc(n.id)}">✅ Vu · retirer</button>
         </div></div>`;
     }).join("");
-    const nbNonLues = notificationsApp.filter(n => !n.lue_le).length;
+    const nbNonLues = notificationsApp.filter(n => !n.lue_le && !notificationsVuesIci.has(String(n.id))).length;
     const notifSection = (mesNotifs ? `<div class="sec">✨ Mes notifications</div>` +
       (nbNonLues ? `<div class="actions"><button type="button" class="btn ghost" data-notif-tout>✅ Tout marquer comme lu (${nbNonLues})</button></div>` : "") +
       mesNotifs : "");
@@ -2661,15 +2682,22 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // App rouverte : la pastille de l'icône = demandes à traiter (👑/⭐), sinon effacée ; on range les notifications déjà vues
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { chargerNotifications().catch(console.warn);
     try { navigator.serviceWorker?.getRegistration().then(r => r && r.getNotifications().then(L => L.forEach(x => x.close()))); } catch (_) {} } });
-  $("clocheBtn").onclick = openCloche; $("clocheClose").onclick = closeCloche;
+  $("clocheBtn").onclick = () => {
+    openCloche();
+    // Un membre a pu lire ces notifications depuis un autre appareil.
+    // Recharger les vraies notifications encore non lues à chaque ouverture.
+    if (!DEMO) chargerNotifications().catch(err => console.warn("Actualisation de la cloche :", err));
+  };
+  $("clocheClose").onclick = closeCloche;
   $("clocheBg").addEventListener("click", async (ev) => {
     if (ev.target.id === "clocheBg") return closeCloche();
     const nt = ev.target.closest("[data-notif-lu],[data-notif-voir],[data-notif-tout]");
     if (nt) {
       const voir = nt.dataset.notifVoir;
-      const ids = nt.hasAttribute("data-notif-tout") ? notificationsApp.filter(n => !n.lue_le).map(n => n.id) :
+      const ids = nt.hasAttribute("data-notif-tout") ? notificationsApp.filter(n => !n.lue_le && !notificationsVuesIci.has(String(n.id))).map(n => n.id) :
         [voir || nt.dataset.notifLu];
       try {
+        nt.disabled = true;
         await marquerNotificationLue(ids);
         if (voir) {
           const n = notificationsApp.find(x => String(x.id) === String(voir));
@@ -2695,15 +2723,20 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
             }
           } else toast("Cette prestation n'est plus disponible dans ton agenda.");
         } else openCloche();
-      } catch (err) { toast("Impossible de marquer la notification comme lue : " + (err.message || err)); }
+      } catch (err) { nt.disabled = false; toast("Impossible de marquer la notification comme vue : " + (err.message || err)); }
       return;
     }
     const rv = ev.target.closest("[data-resa-vu],[data-resa-ouvrir]");
     if (rv) {
       const id = rv.dataset.resaVu || rv.dataset.id;
-      try { await sb.from("reservations").update({ vue_le: new Date().toISOString() }).eq("id", id); } catch (_) {}
-      resaSite = resaSite.filter(x => String(x.id) !== String(id)); majCloche();
-      if (rv.dataset.resaOuvrir) { closeCloche(); openResa(rv.dataset.resaOuvrir); } else openCloche();
+      rv.disabled = true;
+      try {
+        const { data, error } = await sb.from("reservations").update({ vue_le: new Date().toISOString() }).eq("id", id).select("id");
+        if (error) throw error;
+        if (!data?.length) throw new Error("La base de données n'a pas confirmé que cette réservation est vue.");
+        resaSite = resaSite.filter(x => String(x.id) !== String(id)); majCloche();
+        if (rv.dataset.resaOuvrir) { closeCloche(); openResa(rv.dataset.resaOuvrir); } else openCloche();
+      } catch (err) { rv.disabled = false; toast("Impossible de marquer comme vue : " + (err.message || err)); }
       return;
     }
     const b = ev.target.closest("[data-dem]"); if (!b) return;
@@ -3330,8 +3363,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const days = (parseISO(ev.date) - parseISO(todayISO())) / 864e5;
     if (ev.adresse && days >= 0 && days <= 14) meteo(ev).then(t => { if (t && $("jourBg").dataset.id === ev.id) { $("jourMeteo").querySelector("span").textContent = t; $("jourMeteo").classList.remove("hidden"); } });
   }
-  function openModePrestation(ev) {
-    if (!modeDisponible(ev)) { toast("Le Mode prestation est réservé à l'équipe de cette animation, le jour J ou jusqu'à sa clôture."); return; }
+  function openModePrestation(ev, etapeARestaurer = null, retourApresSaisie = false) {
+    if (!retourApresSaisie && !modeDisponible(ev)) { toast("Le Mode prestation est réservé à l'équipe de cette animation, le jour J ou jusqu'à sa clôture."); return; }
     openJour(ev); // On réutilise la vraie fiche et ses validations, sans doublons.
     const contenu = $("jourBody");
     const etapes = [...contenu.children].filter(el => el.matches("h3.etape"));
@@ -3366,7 +3399,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const debut = ev.heure_debut ? new Date(`${ev.date}T${ev.heure_debut.slice(0, 5)}:00`) : null;
     const etape = animationTerminee(ev) ? "apres" : debut && Date.now() >= debut.getTime() ? "pendant" : "avant";
     $("jourBg").classList.add("mode-active");
-    changer(etape);
+    changer(etapeARestaurer || etape);
   }
   let jourDepuis = null;   // fiche d'événement d'où on est venu (pour y revenir en fermant)
   const closeJour = () => { jourDepuis = null; $("jourBg").classList.add("hidden"); $("jourBg").classList.remove("mode-active"); document.body.style.overflow = ""; };
@@ -3399,9 +3432,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (b.dataset.jour === "photos" && !peutEnvoyerPhotos()) { toast("Seul Jordan envoie les photos aux clients."); return; }
     if (b.dataset.jourUnlock === "fin" && !animationTerminee(ev)) { toast("Cette action s'ouvre à la fin de l'animation."); return; }
     if (b.dataset.jourUnlock === "date" && ev.date > todayISO()) { toast("La réception du solde se confirme le jour J."); return; }
+    // Le comptage des tatouages est une sous-fenêtre du mode prestation :
+    // ne pas fermer la fiche derrière, afin d'y revenir après sauvegarde.
+    if (b.dataset.jour === "tat") { openTat(ev); return; }
     closeJour();
     if (b.dataset.jour === "enc") openEnc(ev);
-    if (b.dataset.jour === "tat") openTat(ev);
     if (b.dataset.jour === "sig") openSignal(ev);
     if (b.dataset.jour === "photos" && !ev.photos_envoyees && ev.email && ev.email.includes("@")) { openForm(ev); setTimeout(() => { $("fPhotosLien").scrollIntoView({ block: "center" }); $("fPhotosLien").focus(); }, 300); return; }
     if (b.dataset.jour === "photos") document.querySelector(`[data-photos="${ev.id}"]`)?.click() || (async () => {
@@ -4259,7 +4294,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     majTat();
     $("tatBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
   }
-  const closeTat = () => { $("tatBg").classList.add("hidden"); document.body.style.overflow = ""; tatEv = null; };
+  const closeTat = () => {
+    $("tatBg").classList.add("hidden");
+    document.body.style.overflow = $("jourBg").classList.contains("hidden") ? "" : "hidden";
+    tatEv = null;
+  };
   $("tatClose").onclick = closeTat;
   $("tatBg").addEventListener("click", e => { if (e.target.id === "tatBg") closeTat(); });
   function nbTatSaisi() {
@@ -4281,6 +4320,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!tatEv) return;
     const n = nbTatSaisi();
     if (n == null) { $("tatErr").textContent = "Indiquez un nombre entier, même 0 si aucun enfant n'a été tatoué."; return; }
+    const idPrestation = tatEv.id;
+    const retourFiche = !$("jourBg").classList.contains("hidden") && String($("jourBg").dataset.id) === String(idPrestation);
+    const retourMode = retourFiche && $("jourBg").classList.contains("mode-active");
+    const etapeRetour = retourMode ? $("jourBg").querySelector('[data-mode-etape][aria-selected="true"]')?.dataset.modeEtape : null;
     const membre = myMember()?.prenom || chatMe(), ancien = tatEv.tatouages_nb;
     const change = ancien == null || Number(ancien) !== n;
     if (change && tatEv.solde_encaisse && tatEv.solde_encaisse !== "non" &&
@@ -4302,6 +4345,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       closeTat();
       toast(`🦋 ${n} tatouage${n > 1 ? "s" : ""} noté${n > 1 ? "s" : ""} · ${euro(n * TAT)} ajoutés au solde`);
       await reload();
+      if (retourFiche) {
+        const maj = events.find(ev => String(ev.id) === String(idPrestation));
+        if (maj) {
+          if (retourMode) openModePrestation(maj, etapeRetour, true);
+          else openJour(maj);
+        }
+      }
     } catch (err) { $("tatErr").textContent = "Erreur : " + (err.message || err); }
     finally { $("tatSaveCount").disabled = false; if (tatEv) majTat(); }
   }
