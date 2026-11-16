@@ -1219,7 +1219,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="mine-head"><div id="mesGains"></div></div>
       <div class="evt-tiles">
         <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
-        <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button>
+        <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span>📣</span>Infos équipe</button>
         <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
         <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
       </div>
@@ -1254,7 +1254,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue Chiffres (responsables) -->
     <section id="viewStats" class="hidden">
-      <div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
+      <div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
       <div class="group-title" id="gFinT">💶 Finances</div>
       <div class="seg" id="sCaisseSeg" style="margin-bottom:8px">
         <label><input type="radio" name="sCaisse" value="fantasy" checked /><span>💼 Fantasy</span></label>
@@ -1481,6 +1481,25 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   <div class="actions"><button type="button" class="btn primary" id="clocheClose">Fermer</button></div></div></div>
 <div id="evtsBg" class="sheet-bg hidden"><div class="sheet"><div class="grab"></div><h2>🎪 Événements</h2><div id="evtsBody"></div>
   <div class="actions"><button type="button" class="btn primary" id="evtsClose">Fermer</button></div></div></div>
+<!-- ============ 📣 INFORMATIONS IMPORTANTES DE L'ÉQUIPE ============ -->
+<div id="infosBg" class="sheet-bg hidden">
+  <div class="sheet" style="max-width:700px">
+    <div class="grab"></div>
+    <h2>📣 Infos équipe</h2>
+    <button type="button" class="btn primary hidden" id="infoNewBtn" style="margin-bottom:9px">➕ Nouvelle information</button>
+    <button type="button" class="btn ghost" id="infoRefreshBtn" style="margin-bottom:9px">↻ Actualiser les lectures</button>
+    <div class="team-preset-box hidden" id="infoCreate">
+      <label for="infoTitle">Titre</label>
+      <input id="infoTitle" maxlength="150" placeholder="Ex. Organisation du dimanche" />
+      <label for="infoBody">Message</label>
+      <textarea id="infoBody" maxlength="3000" rows="5" placeholder="Ton information à toute l'équipe…"></textarea>
+      <button type="button" class="btn primary" id="infoPublish" style="width:100%;margin-top:11px">📣 Publier à toute l'équipe</button>
+    </div>
+    <div id="infoErr" class="err hidden" role="alert"></div>
+    <div id="infoList"></div>
+    <div class="actions"><button type="button" class="btn primary" id="infoClose">Fermer</button></div>
+  </div>
+</div>
 <!-- ============ 🗳️ SONDAGES DE DISPONIBILITÉ ============ -->
 <div id="pollsBg" class="sheet-bg hidden">
   <div class="sheet" style="max-width:700px">
@@ -3066,7 +3085,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
             if (canal) {
               if (canal === "equipe" || evOfCanal(canal)) openChat(canal);
               else toast("Cette conversation n'est plus disponible.");
-            } else if (qs.get("costumes")) openCost();
+            } else if (qs.has("infos")) openInfosEquipe(qs.get("infos"));
+            else if (qs.get("costumes")) openCost();
             else if (qs.get("checklist")) openCK();
             else if (qs.get("sondages")) openSondages();
             else if (qs.get("vue")) {
@@ -4247,6 +4267,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         +'<p style="margin:6px 0"><b>⏳ Sans réponse</b><br>'+esc(pending)+'</p>'
         +'</div></details>'
         +(admin?'<div class="actions" style="margin-top:12px">'
+          +'<button type="button" class="btn ghost" data-poll-event="'+esc(s.id)+'">📅 Créer un événement</button>'
           +(!closed?'<button type="button" class="btn ghost" data-poll-close="'+esc(s.id)+'" data-poll-closed="false">🔒 Clôturer</button>':"")
           +'<button type="button" class="btn ghost" data-poll-delete="'+esc(s.id)+'" style="color:#a32252">🗑️ Supprimer</button></div>':"")
         +'</div>';
@@ -4336,9 +4357,34 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const save=e.target.closest("[data-poll-save]");
     const end=e.target.closest("[data-poll-close]");
     const del=e.target.closest("[data-poll-delete]");
-    if(!save&&!end&&!del)return;
-    const button=save||end||del,card=button.closest("[data-poll-card]");
+    const plan=e.target.closest("[data-poll-event]");
+    if(!save&&!end&&!del&&!plan)return;
+    const button=save||end||del||plan,card=button.closest("[data-poll-card]");
     if(!card)return;
+    if(plan){
+      if(!isGest())return;
+      const sondage=polls.find(p=>String(p.id)===String(plan.dataset.pollEvent));
+      if(!sondage)return;
+      // Les options sont des disponibilités (montage, spectacle, etc.),
+      // et non des dates gagnantes : ne présélectionner aucune personne.
+      const resume=(Array.isArray(sondage.dates)?sondage.dates:[]).map(opt=>{
+        const emails=pollAnswers.filter(r=>String(r.sondage_id)===String(sondage.id)
+          && String(r.option_id)===String(opt.id) && r.reponse==="oui");
+        return "• "+pollDateLabel(opt)+" : "+(emails.map(r=>pollName(r.email)).join(", ")||"personne");
+      }).join("\n");
+      closeSondages();
+      openForm(null);
+      $("type_evenement").value="evenement";
+      appliquerType();
+      $("titre").value=sondage.titre;
+      $("notes").value=(sondage.notes||"")+
+        (resume?"\n\nDisponibilités issues du sondage :\n"+resume:"");
+      // Pas de jour retenu automatiquement : le dimanche est à confirmer.
+      $("date").value="";
+      $("date").focus();
+      toast("📅 Fiche préparée : choisis le dimanche, les horaires et l'équipe.");
+      return;
+    }
     if(del){
       if(!isGest())return;
       const poll=polls.find(p=>String(p.id)===String(del.dataset.pollDelete));
@@ -4364,6 +4410,178 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       await refreshPolls();
       toast(del?"🗑️ Sondage supprimé":save?"✅ Réponse enregistrée !":"✅ Sondage mis à jour");
     }catch(err){pollError("Action impossible : "+(err.message||err));button.disabled=false;}
+  });
+
+
+  // ---------- 📣 Informations d'équipe avec lecture confirmée ----------
+  const LS_INFOS_EQUIPE="fk_infos_equipe_demo_v1";
+  let infosEquipe=[],infoLectures=[],infoCreating=false;
+  const infoEmail=()=>String(myMember()?.email||currentUser?.email||"").trim().toLowerCase();
+  function infoMsgErreur(message){
+    $("infoErr").textContent=message||"";
+    $("infoErr").classList.toggle("hidden",!message);
+  }
+  const infoStore={
+    async list(){
+      if(DEMO){
+        const v=JSON.parse(localStorage.getItem(LS_INFOS_EQUIPE)||'{"infos":[],"lectures":[],"relances":[]}');
+        return {infos:v.infos||[],lectures:v.lectures||[]};
+      }
+      const [i,l]=await Promise.all([
+        sb.from("infos_equipe").select("id,titre,contenu,cree_le").order("cree_le",{ascending:false}).limit(100),
+        sb.from("infos_equipe_lectures").select("info_id,email,lu_le").limit(4000)
+      ]);
+      if(i.error)throw i.error;
+      if(l.error)throw l.error;
+      return {infos:i.data||[],lectures:l.data||[]};
+    },
+    async publish(titre,contenu){
+      if(!isGest())throw new Error("Publication réservée aux responsables.");
+      if(DEMO){
+        const s=JSON.parse(localStorage.getItem(LS_INFOS_EQUIPE)||'{"infos":[],"lectures":[],"relances":[]}');
+        s.infos.unshift({id:pollId(),titre,contenu,cree_le:new Date().toISOString()});
+        localStorage.setItem(LS_INFOS_EQUIPE,JSON.stringify(s));return;
+      }
+      const {error}=await sb.rpc("publier_info_equipe",{p_titre:titre,p_contenu:contenu});
+      if(error)throw error;
+    },
+    async acknowledge(id){
+      if(DEMO){
+        const s=JSON.parse(localStorage.getItem(LS_INFOS_EQUIPE)||'{"infos":[],"lectures":[],"relances":[]}');
+        if(!s.lectures.some(l=>l.info_id===id&&l.email===infoEmail()))
+          s.lectures.push({info_id:id,email:infoEmail(),lu_le:new Date().toISOString()});
+        localStorage.setItem(LS_INFOS_EQUIPE,JSON.stringify(s));return;
+      }
+      const {error}=await sb.rpc("accuser_lecture_info_equipe",{p_info_id:id});
+      if(error)throw error;
+    },
+    async remind(id){
+      if(!isGest())throw new Error("Relance réservée aux responsables.");
+      if(DEMO){
+        const s=JSON.parse(localStorage.getItem(LS_INFOS_EQUIPE)||'{"infos":[],"lectures":[],"relances":[]}');
+        const readers=new Set(s.lectures.filter(l=>l.info_id===id).map(l=>l.email));
+        const now=Date.now();let count=0;
+        for(const mail of pollRecipients()){
+          if(readers.has(mail))continue;
+          const prev=s.relances.find(r=>r.info_id===id&&r.email===mail);
+          if(prev&&now-Date.parse(prev.relance_le)<86400000)continue;
+          if(prev)prev.relance_le=new Date().toISOString();
+          else s.relances.push({info_id:id,email:mail,relance_le:new Date().toISOString()});
+          count++;
+        }
+        localStorage.setItem(LS_INFOS_EQUIPE,JSON.stringify(s));return count;
+      }
+      const {data,error}=await sb.rpc("relancer_lectures_info_equipe",{p_info_id:id});
+      if(error)throw error;
+      return Number(data||0);
+    },
+    async remove(id){
+      if(!isGest())throw new Error("Suppression réservée aux responsables.");
+      if(DEMO){
+        const s=JSON.parse(localStorage.getItem(LS_INFOS_EQUIPE)||'{"infos":[],"lectures":[],"relances":[]}');
+        s.infos=s.infos.filter(i=>i.id!==id);
+        s.lectures=s.lectures.filter(l=>l.info_id!==id);
+        s.relances=s.relances.filter(l=>l.info_id!==id);
+        localStorage.setItem(LS_INFOS_EQUIPE,JSON.stringify(s));return;
+      }
+      const {error}=await sb.rpc("supprimer_info_equipe",{p_info_id:id});
+      if(error)throw error;
+    }
+  };
+  function renderInfosEquipe(){
+    const admin=isGest(),email=infoEmail(),allEmails=pollRecipients();
+    $("infoNewBtn").classList.toggle("hidden",!admin);
+    $("infoNewBtn").textContent=infoCreating?"✕ Annuler":"➕ Nouvelle information";
+    $("infoCreate").classList.toggle("hidden",!admin||!infoCreating);
+    $("infoList").innerHTML=infosEquipe.length?infosEquipe.map(info=>{
+      const lectures=infoLectures.filter(l=>String(l.info_id)===String(info.id));
+      const reads=new Set(lectures.map(l=>l.email));
+      const missing=allEmails.filter(mail=>!reads.has(mail));
+      const mine=lectures.find(l=>l.email===email);
+      const date=new Date(info.cree_le).toLocaleDateString("fr-BE",{day:"numeric",month:"long",year:"numeric"});
+      return '<div class="poll-card" data-info-card="'+esc(info.id)+'">'
+        +'<h3>'+esc(info.titre)+'</h3>'
+        +'<p class="hint" style="margin:4px 0 12px">'+esc(date)+'</p>'
+        +'<p style="margin:8px 0 14px;white-space:pre-wrap;overflow-wrap:anywhere">'+esc(info.contenu)+'</p>'
+        +(mine?'<p class="hint" style="color:#208156">✅ Lecture confirmée</p>'
+          :'<button type="button" class="btn primary" data-info-ack="'+esc(info.id)+'" style="width:100%">✅ J’ai lu</button>')
+        +(admin?'<details style="margin-top:12px"><summary class="hint" style="cursor:pointer">'
+          +'👀 Lu par '+reads.size+' / '+allEmails.length+'</summary>'
+          +'<div class="poll-roster" style="margin-top:9px"><p><b>✅ Ont lu</b><br>'
+          +esc(lectures.map(l=>pollName(l.email)).join(", ")||"—")+'</p>'
+          +'<p><b>⏳ N’ont pas lu</b><br>'
+          +esc(missing.map(pollName).join(", ")||"—")+'</p></div></details>'
+          +'<div class="actions" style="margin-top:11px">'
+          +(missing.length?'<button type="button" class="btn ghost" data-info-remind="'+esc(info.id)+'">🔔 Relancer</button>':"")
+          +'<button type="button" class="btn ghost" data-info-delete="'+esc(info.id)+'" style="color:#a32252">🗑️ Supprimer</button></div>'
+          :"")
+        +'</div>';
+    }).join(""):'<p class="hint">Aucune information pour le moment.</p>';
+  }
+  async function reloadInfosEquipe(){
+    const value=await infoStore.list();infosEquipe=value.infos;infoLectures=value.lectures;renderInfosEquipe();
+  }
+  async function openInfosEquipe(id){
+    infoMsgErreur("");
+    $("infosBg").classList.remove("hidden");document.body.style.overflow="hidden";
+    $("infoList").innerHTML='<p class="hint">Chargement…</p>';
+    try{
+      await reloadInfosEquipe();
+      if(typeof id==="string"&&id!=="1"){
+        const card=[...$("infoList").querySelectorAll("[data-info-card]")].find(el=>el.dataset.infoCard===id);
+        if(card)card.scrollIntoView({behavior:"smooth",block:"start"});
+      }
+    }catch(err){
+      $("infoList").innerHTML="";
+      infoMsgErreur("Informations indisponibles : "+(err.message||err)+
+        ". Si c’est la première utilisation, exécute « informations-equipe.sql » dans Supabase.");
+    }
+  }
+  const closeInfosEquipe=()=>{$("infosBg").classList.add("hidden");document.body.style.overflow="";};
+  $("myInfosBtn").onclick=()=>openInfosEquipe();
+  $("gInfos").onclick=()=>openInfosEquipe();
+  $("infoClose").onclick=closeInfosEquipe;
+  $("infoRefreshBtn").onclick=async()=>{infoMsgErreur("");try{await reloadInfosEquipe();toast("Lectures actualisées");}catch(err){infoMsgErreur("Actualisation impossible : "+(err.message||err));}};
+  $("infosBg").addEventListener("click",e=>{if(e.target.id==="infosBg")closeInfosEquipe();});
+  $("infoNewBtn").onclick=()=>{infoCreating=!infoCreating;infoMsgErreur("");renderInfosEquipe();};
+  $("infoPublish").onclick=async()=>{
+    if(!isGest())return;
+    const titre=$("infoTitle").value.trim(),contenu=$("infoBody").value.trim();
+    if(titre.length<3||contenu.length<3){infoMsgErreur("Indique un titre et un message.");return;}
+    const button=$("infoPublish");button.disabled=true;infoMsgErreur("");
+    try{
+      await infoStore.publish(titre,contenu);
+      infoCreating=false;$("infoTitle").value="";$("infoBody").value="";
+      await reloadInfosEquipe();toast("📣 Information publiée à l’équipe !");
+      if(!DEMO)chargerNotifications().catch(console.warn);
+    }catch(err){infoMsgErreur("Publication impossible : "+(err.message||err));}
+    finally{button.disabled=false;}
+  };
+  $("infoList").addEventListener("click",async e=>{
+    const ack=e.target.closest("[data-info-ack]");
+    const remind=e.target.closest("[data-info-remind]");
+    const del=e.target.closest("[data-info-delete]");
+    if(!ack&&!remind&&!del)return;
+    const b=ack||remind||del,id=ack?.dataset.infoAck||remind?.dataset.infoRemind||del?.dataset.infoDelete;
+    if(del){
+      if(!isGest())return;
+      const info=infosEquipe.find(i=>String(i.id)===String(id));
+      if(!info||!confirm("Supprimer définitivement l'information « "+info.titre+" » et ses confirmations de lecture ?"))return;
+    }
+    b.disabled=true;infoMsgErreur("");
+    try{
+      if(ack){
+        await infoStore.acknowledge(id);
+        const notificationIds=notificationsApp.filter(n=>n.lien==="./index.html?infos="+id).map(n=>n.id);
+        if(notificationIds.length)try{await marquerNotificationLue(notificationIds);}catch(err){console.warn(err);}
+      }else if(remind){
+        const count=await infoStore.remind(id);
+        toast(count?count+" rappel(s) envoyé(s) aux personnes sans réponse.":"Aucune relance possible (déjà envoyée récemment ou tout est lu).");
+      }else await infoStore.remove(id);
+      await reloadInfosEquipe();
+      if(del)toast("🗑️ Information supprimée");
+      else if(ack)toast("✅ Lecture confirmée !");
+    }catch(err){infoMsgErreur("Action impossible : "+(err.message||err));b.disabled=false;}
   });
 
   // ---------- 🎪 Événement (beaucoup de personnel) ----------
@@ -4995,6 +5213,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const qs = new URLSearchParams(location.search);
     if (qs.get("vue")) { const tb = document.querySelector(`.tab[data-view="${qs.get("vue")}"]`); linkHandled = true; history.replaceState(null, "", location.pathname); if (tb) setTimeout(() => tb.click(), 50); return; }
     if (qs.get("checklist")) { linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(openCK, 50); return; }
+    if (qs.has("infos")) { const infoId=qs.get("infos"); linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(() => openInfosEquipe(infoId), 50); return; }
     if (qs.get("sondages")) { linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(openSondages, 50); return; }
     if (qs.get("costumes")) { linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(openCost, 50); return; }
     if (qs.get("tenue")) {
