@@ -31,6 +31,7 @@ assert.equal((myCost.innerHTML.match(/data-my-cost-edit=/g) || []).length, 2, 'L
 
 const editCtx = {
   costAttributions: [], PERSONNAGES: { Classiques: ['Elsa', 'Rumi'] },
+  pieceLieeAPrestation: id => editCtx.costAttributions.some(a => String(a.costume_id) === String(id)),
   TYPES: ctx.TYPES, typeDe: ctx.typeDe, esc: ctx.esc,
 };
 const edit = vm.runInNewContext(`${html.slice(debutEdit, finEdit)}\nformulaireEditionCostume`, editCtx);
