@@ -2456,6 +2456,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // Le client règle un seul solde, tatouages inclus. Pour les anciennes
   // données, les deux montants peuvent encore exister dans des colonnes
   // distinctes ; les regrouper lors d'une remise de liquide commune.
+  // Toutes les espèces non confirmées restent à vérifier, même si Jordan
+  // a enregistré le paiement depuis son propre compte : l'auteur de la
+  // saisie n'est pas nécessairement la personne qui détient l'argent.
   // Aucune remise à suivre pour les virements ou Payconiq.
   function mouvementsEspecesEquipe() {
     const lignes = [];
@@ -2464,8 +2467,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const commun = { id: e.id, titre: e.titre || e.enfant || "Animation", date: e.date };
       const solde = totalSolde(e), parSolde = (e.solde_encaisse_par || "Non précisé").trim();
       const tatouages = totalTatouages(e), parTat = (e.tatouages_paiement_par || "Non précisé").trim();
-      const cashSolde = e.solde_encaisse === "cash" && solde > 0 && normName(parSolde) !== "jordan";
-      const cashTat = e.tatouages_paiement === "cash" && tatouages > 0 && normName(parTat) !== "jordan";
+      const cashSolde = e.solde_encaisse === "cash" && solde > 0;
+      const cashTat = e.tatouages_paiement === "cash" && tatouages > 0;
       if (cashSolde && cashTat && normName(parSolde) === normName(parTat) &&
           !!e.solde_remis_jordan_le === !!e.tatouages_remis_jordan_le) {
         lignes.push({ ...commun, type: "ensemble", libelle: "Solde + tatouages", montant: solde + tatouages,
@@ -2499,18 +2502,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     });
     const ligneHtml = (x, annuler = false) => `<div class="remise-line">
       <b>${esc(x.titre)} · ${esc(x.libelle)} · ${euro(x.montant)}</b>
-      <small><span style="text-transform:capitalize">${esc(fmtLong(x.date))}</span> · Encaissé par ${esc(x.par)}${annuler ? `<br>✅ Reçu le ${esc(new Date(x.remis).toLocaleDateString("fr-BE"))}` : ""}</small>
-      <button type="button" class="btn ${annuler ? "ghost" : "primary"}" data-remise-jordan="${esc(x.id)}" data-remise-type="${esc(x.type)}" data-remise-annuler="${annuler ? "1" : "0"}">${annuler ? "↩️ Corriger : non récupéré" : "✅ J'ai récupéré cet argent"}</button>
+      <small><span style="text-transform:capitalize">${esc(fmtLong(x.date))}</span> · Paiement saisi par ${esc(x.par)}${annuler ? `<br>✅ Déposé le ${esc(new Date(x.remis).toLocaleDateString("fr-BE"))}` : ""}</small>
+      <button type="button" class="btn ${annuler ? "ghost" : "primary"}" data-remise-jordan="${esc(x.id)}" data-remise-type="${esc(x.type)}" data-remise-annuler="${annuler ? "1" : "0"}">${annuler ? "↩️ Corriger : non déposé" : "✅ Déposé dans la caisse"}</button>
     </div>`;
     box.classList.remove("hidden");
-    box.innerHTML = `<div class="group-title">💶 Argent à récupérer auprès de l'équipe</div>
+    box.innerHTML = `<div class="group-title">💶 Espèces à déposer dans la caisse</div>
       <div class="remise-total">${euro(total)}</div>
-      <p class="hint" style="margin:0 0 8px">${attente.length ? `${attente.length} encaissement${attente.length > 1 ? "s" : ""} en espèces à vérifier.` : "✅ Tous les encaissements en espèces sont marqués récupérés."} Seul Jordan confirme leur remise. Les virements et Payconiq ne sont pas concernés.</p>
+      <p class="hint" style="margin:0 0 8px">${attente.length ? `${attente.length} encaissement${attente.length > 1 ? "s" : ""} en espèces à déposer.` : "✅ Aucun dépôt d'espèces en attente de confirmation."} Seul Jordan confirme le dépôt dans la caisse, même lorsqu'il a lui-même encaissé. Les virements et Payconiq ne sont pas concernés.</p>
       ${[...groupes.values()].sort((a,b) => a.nom.localeCompare(b.nom, "fr")).map(g => `<details class="remise-group">
         <summary>👤 ${esc(g.nom)} · ${euro(g.lignes.reduce((s,x) => s + x.montant, 0))} (${g.lignes.length})</summary>
         ${g.lignes.sort((a,b) => b.date.localeCompare(a.date)).map(x => ligneHtml(x)).join("")}
       </details>`).join("")}
-      ${finies.length ? `<details class="remise-group remise-history"><summary>✅ Remises déjà confirmées (${finies.length})</summary>${finies.slice(0, 25).map(x => ligneHtml(x, true)).join("")}${finies.length > 25 ? `<p class="hint" style="padding:0 12px">Les 25 confirmations les plus récentes sont affichées.</p>` : ""}</details>` : ""}`;
+      ${finies.length ? `<details class="remise-group remise-history"><summary>✅ Dépôts en caisse confirmés (${finies.length})</summary>${finies.slice(0, 25).map(x => ligneHtml(x, true)).join("")}${finies.length > 25 ? `<p class="hint" style="padding:0 12px">Les 25 confirmations les plus récentes sont affichées.</p>` : ""}</details>` : ""}`;
   }
   let remiseEnCours = false;
   $("remisesJordan").addEventListener("click", async e => {
@@ -2523,7 +2526,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!ev || !["solde", "tatouages", "ensemble"].includes(type)) return;
     const ligne = mouvementsEspecesEquipe().find(x => String(x.id) === String(ev.id) && x.type === type);
     if (!ligne || (!!ligne.remis) !== annuler) return;
-    if (!confirm(annuler ? `Annuler la remise de ${euro(ligne.montant)} par ${ligne.par} ?` : `Confirmes-tu avoir réellement reçu ${euro(ligne.montant)} en espèces de ${ligne.par} ?`)) return;
+    if (!confirm(annuler ? `Annuler la confirmation de dépôt en caisse de ${euro(ligne.montant)} ?` : `Confirmes-tu avoir déposé ${euro(ligne.montant)} en espèces dans la caisse ?`)) return;
     const champs = type === "ensemble"
       ? { solde_remis_jordan_le: annuler ? null : new Date().toISOString(), solde_remis_jordan_par: annuler ? null : "Jordan",
           tatouages_remis_jordan_le: annuler ? null : new Date().toISOString(), tatouages_remis_jordan_par: annuler ? null : "Jordan" }
@@ -2531,7 +2534,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       ? { solde_remis_jordan_le: annuler ? null : new Date().toISOString(), solde_remis_jordan_par: annuler ? null : "Jordan" }
       : { tatouages_remis_jordan_le: annuler ? null : new Date().toISOString(), tatouages_remis_jordan_par: annuler ? null : "Jordan" };
     remiseEnCours = true; btn.disabled = true;
-    try { await store.patch(ev.id, champs); toast(annuler ? "Remise remise en attente" : "💶 Argent récupéré !"); await reload(); }
+    try { await store.patch(ev.id, champs); toast(annuler ? "Dépôt remis en attente" : "💶 Dépôt dans la caisse confirmé !"); await reload(); }
     catch (err) { toast("Erreur d'enregistrement : " + (err.message || err)); btn.disabled = false; }
     finally { remiseEnCours = false; }
   });
