@@ -19,12 +19,16 @@
     crystal:['#aaf4ff','#17c8fb','#1775ec'],snow:['#e9fbff','#82d8fa','#5499e9'],
     crown:['#fff3a6','#ffcd4d','#eb8c20'],wand:['#ffd2ff','#f18dfd','#ad35e9']
   };
-  const piece = kind => {
-    const c = COLORS[kind] || COLORS.star;
-    return `<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><defs><linearGradient id="gem-${kind}" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="${c[0]}"/><stop offset=".54" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[2]}"/></linearGradient></defs><g fill="url(#gem-${kind})">${GLYPHS[kind].replace(/url\(#a\)/g,`url(#gem-${kind})`)}</g></svg>`;
+  // Les pièces reprennent les illustrations brillantes de l'aperçu validé.
+  // Le dessin est une image, mais chaque case et chaque déplacement restent interactifs.
+  const kindOf = v => String(v || '').split('|')[0];
+  const specialOf = v => String(v || '').split('|')[1] || '';
+  const piece = value => {
+    const kind = kindOf(value), power = specialOf(value);
+    return `<span class="fm-piece fm-piece-${KINDS.includes(kind) ? kind : 'rainbow'}${power ? ' fm-piece-' + power : ''}" aria-hidden="true"></span>`;
   };
   let sb = null, user = null, playerName = 'Moi', storageKey = 'fantasy_match_demo_v1', cloudReady = false;
-  let state = null, board = [], selected = -1, booster = '', busy = false;
+  let state = null, board = [], selected = -1, busy = false;
   let remaining = 0, target = 0, moves = 0, roundScore = 0, current = null, toastTimer = null, saveTimer = null;
   let touch = null, suppressClickUntil = 0;
   const rand = n => Math.floor(Math.random() * n);
@@ -121,25 +125,66 @@
     } catch { $('syncStatus').textContent = 'Sauvegarde locale · activer le module dans Supabase'; }
   }
   function hasMatches(b) { return findMatches(b).size > 0; }
-  function findMatches(b) {
-    const matched = new Set();
-    for (let y=0;y<SIZE;y++) for (let x=0;x<SIZE;x++) {
-      const pos=y*SIZE+x,kind=b[pos]; if (!kind) continue;
-      if (x <= SIZE-3 && kind===b[pos+1] && kind===b[pos+2]) {
-        let k=x;while(k<SIZE && b[y*SIZE+k]===kind) matched.add(y*SIZE+k++);
+  function matchDetails(b) {
+    const matched = new Set(), groups = [];
+    for (let y=0;y<SIZE;y++) for (let x=0;x<SIZE;) {
+      const first = y*SIZE+x,kind = kindOf(b[first]); let end=x+1;
+      while(kind && kind!=='rainbow' && end<SIZE && kindOf(b[y*SIZE+end])===kind)end++;
+      if(kind && kind!=='rainbow' && end-x>=3){
+        const positions=Array.from({length:end-x},(_,i)=>y*SIZE+x+i);
+        groups.push({kind,orientation:'H',positions});positions.forEach(p=>matched.add(p));
       }
-      if (y <= SIZE-3 && kind===b[pos+SIZE] && kind===b[pos+SIZE*2]) {
-        let k=y;while(k<SIZE && b[k*SIZE+x]===kind) matched.add(k++*SIZE+x);
-      }
+      x=end;
     }
-    return matched;
+    for (let x=0;x<SIZE;x++) for (let y=0;y<SIZE;) {
+      const first=y*SIZE+x,kind=kindOf(b[first]);let end=y+1;
+      while(kind && kind!=='rainbow' && end<SIZE && kindOf(b[end*SIZE+x])===kind)end++;
+      if(kind && kind!=='rainbow' && end-y>=3){
+        const positions=Array.from({length:end-y},(_,i)=>(y+i)*SIZE+x);
+        groups.push({kind,orientation:'V',positions});positions.forEach(p=>matched.add(p));
+      }
+      y=end;
+    }
+    return {matched,groups};
+  }
+  const findMatches = b => matchDetails(b).matched;
+  function matchBonus(b,matched,preferred=-1){
+    const groups=matchDetails(b).groups.filter(g=>g.positions.every(p=>matched.has(p)));
+    const five=groups.find(g=>g.positions.length>=5);
+    if(five)return {index:five.positions.includes(preferred)?preferred:five.positions[2],value:'rainbow|color'};
+    const hz=new Set(groups.filter(g=>g.orientation==='H').flatMap(g=>g.positions));
+    const cross=groups.filter(g=>g.orientation==='V').flatMap(g=>g.positions).find(p=>hz.has(p));
+    if(cross!==undefined)return {index:cross,value:kindOf(b[cross])+'|bomb'};
+    const four=groups.find(g=>g.positions.length===4);
+    if(four)return {index:four.positions.includes(preferred)?preferred:four.positions[1],value:four.kind+'|line'+four.orientation};
+    return null;
+  }
+  function expandSpecials(b,cells){
+    const queue=[...cells],triggered=new Set();
+    while(queue.length){
+      const pos=queue.shift(),sp=specialOf(b[pos]);
+      if(!sp || triggered.has(pos))continue;
+      triggered.add(pos);
+      let extra=[];
+      if(sp==='lineH')extra=Array.from({length:8},(_,x)=>Math.floor(pos/8)*8+x);
+      else if(sp==='lineV')extra=Array.from({length:8},(_,y)=>y*8+pos%8);
+      else if(sp==='bomb'){
+        for(let y=Math.max(0,Math.floor(pos/8)-1);y<=Math.min(7,Math.floor(pos/8)+1);y++)
+          for(let x=Math.max(0,pos%8-1);x<=Math.min(7,pos%8+1);x++)extra.push(y*8+x);
+      } else if(sp==='color'){
+        const kind=KINDS[rand(KINDS.length)];
+        extra=b.map((v,i)=>kindOf(v)===kind?i:-1).filter(i=>i>=0);
+      }
+      for(const i of extra)if(!cells.has(i)){cells.add(i);queue.push(i)}
+    }
+    return cells;
   }
   function hasPossibleMove(b) {
     for(let i=0;i<b.length;i++) for(const delta of [1,SIZE]) {
       const j=i+delta;
       if (j>=64 || (delta===1 && Math.floor(i/8)!==Math.floor(j/8))) continue;
       [b[i],b[j]]=[b[j],b[i]];
-      const ok=hasMatches(b);
+      const ok=hasMatches(b) || specialOf(b[i])==='color' || specialOf(b[j])==='color';
       [b[i],b[j]]=[b[j],b[i]];
       if(ok)return true;
     }
@@ -162,12 +207,12 @@
     if (state.lives<1) { showNoLives(); return; }
     state.level = Math.min(Math.max(1,n),state.maxUnlocked);
     current = levelConfig(state.level); target=current.target; remaining=target; moves=current.moves;roundScore=0;
-    board=freshBoard(); selected=-1;booster='';busy=false;
+    board=freshBoard(); selected=-1;busy=false;
     $('boardOverlay').classList.add('hidden');
     save(); renderAll();
   }
   function renderBoard(mark=new Set()) {
-    $('gameBoard').innerHTML=board.map((kind,i)=>`<button type="button" class="fm-cell ${i===selected?'selected':''} ${mark.has(i)?'match':''}" role="gridcell" aria-label="${LABELS[kind]||'Vide'}, case ${i+1}" data-index="${i}" ${busy?'disabled':''}>${kind?piece(kind):''}</button>`).join('');
+    $('gameBoard').innerHTML=board.map((kind,i)=>`<button type="button" class="fm-cell ${i===selected?'selected':''} ${mark.has(i)?'match':''}" role="gridcell" aria-label="${LABELS[kindOf(kind)]||'Magie arc-en-ciel'}, case ${i+1}" data-index="${i}" ${busy?'disabled':''}>${kind?piece(kind):''}</button>`).join('');
   }
   function renderAll() {
     if(!current)return;
@@ -182,7 +227,6 @@
     $('colorCount').textContent=state.boosters.color;
     $('bombCount').textContent=state.boosters.bomb;
     $('shuffleCount').textContent=state.boosters.shuffle;
-    for(const type of ['color','bomb','shuffle']) $('boost'+type[0].toUpperCase()+type.slice(1)).classList.toggle('active',booster===type);
     renderHearts();renderBoard();
   }
   function isNeighbor(a,b){return a>=0&&a<64&&b>=0&&b<64&&((Math.abs(a-b)===1&&Math.floor(a/8)===Math.floor(b/8))||Math.abs(a-b)===8)}
@@ -194,19 +238,24 @@
       for(let y=7;y>=0;y--)board[y*8+x]=keep.shift()||randomKind();
     }
   }
-  async function resolve(initial=null) {
+  async function resolve(initial=null,preferred=-1,createBonus=true) {
     let matches=initial || findMatches(board), chain=0;
     while(matches.size && chain<16){
       chain++;
+      const bonus=createBonus?matchBonus(board,matches,preferred):null;
+      const removed=expandSpecials(board,new Set(matches));
+      if(bonus)removed.delete(bonus.index);
       let goalHits=0;
-      for(const i of matches)if(board[i]===current.goal)goalHits++;
+      for(const i of removed)if(kindOf(board[i])===current.goal)goalHits++;
       remaining=Math.max(0,remaining-goalHits);
-      roundScore+=matches.size*10*chain;
-      renderAll();renderBoard(matches);
+      roundScore+=removed.size*10*chain;
+      if(bonus)board[bonus.index]=bonus.value;
+      renderAll();renderBoard(removed);
       await pause(chain===1?270:180);
-      collapse(matches);renderBoard();
+      collapse(removed);renderBoard();
       await pause(140);
       matches=findMatches(board);
+      preferred=-1;createBonus=true;
     }
     if(!hasPossibleMove(board)){board=freshBoard();toast('Le plateau se mélange ✨');}
     busy=false;renderAll();checkEnd();
@@ -217,38 +266,78 @@
     const best=target-remaining;
     $('gameTip').textContent=best>=target*.7?'Encore un petit effort !':current.boss?'Défi spécial : garde un œil sur tes coups !':'Aligne trois symboles identiques pour récolter ta magie';
   }
+  function specialSwapTargets(b,a,c){
+    const sa=specialOf(b[a]),sc=specialOf(b[c]);
+    if(!sa&&!sc)return null;
+    const chosen=new Set([a,c]);
+    if(sa==='color'||sc==='color'){
+      if(sa==='color'&&sc==='color')for(let i=0;i<64;i++)chosen.add(i);
+      else {
+        const color=sa==='color'?kindOf(b[c]):kindOf(b[a]);
+        for(let i=0;i<64;i++)if(kindOf(b[i])===color)chosen.add(i);
+      }
+    }
+    return chosen;
+  }
   async function swap(a,b){
     if(busy||!isNeighbor(a,b))return;
     busy=true;selected=-1;
     [board[a],board[b]]=[board[b],board[a]];
     renderBoard();await pause(180);
+    const specialTargets=specialSwapTargets(board,a,b);
+    if(specialTargets){moves--;await resolve(specialTargets,-1,false);return;}
     const match=findMatches(board);
     if(!match.size){
       [board[a],board[b]]=[board[b],board[a]];
       busy=false;renderAll();toast('Essaie une autre combinaison');return;
     }
-    moves--;await resolve(match);
+    moves--;await resolve(match,b,true);
   }
-  async function useBooster(i){
-    if(!booster||busy)return;
-    const kind=booster;
-    if(state.boosters[kind]<=0){toast('Plus de bonus disponible');booster='';renderAll();return;}
-    busy=true;selected=-1;booster='';state.boosters[kind]--;
+  function bestBombCenter(b,goal){
+    let best=27,bestScore=-1;
+    for(let i=0;i<64;i++){
+      const cy=Math.floor(i/8),cx=i%8;let score=0;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const y=cy+dy,x=cx+dx;
+        if(y<0||y>=8||x<0||x>=8)continue;
+        const v=b[y*8+x];score+=kindOf(v)===goal?4:1;
+        if(specialOf(v))score+=6;
+      }
+      if(score>bestScore){bestScore=score;best=i;}
+    }
+    return best;
+  }
+  async function useBooster(kind,i=-1){
+    if(!kind||busy)return;
+    if(state.boosters[kind]<=0){toast('Plus de bonus disponible');return;}
+    busy=true;selected=-1;state.boosters[kind]--;
     if(kind==='shuffle'){
       board=freshBoard();busy=false;save();renderAll();toast('Plateau mélangé !');return;
     }
     let chosen=new Set();
-    if(kind==='color')for(let j=0;j<64;j++)if(board[j]===board[i])chosen.add(j);
-    else for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
-      const y=Math.floor(i/8)+dy,x=i%8+dx;if(y>=0&&y<8&&x>=0&&x<8)chosen.add(y*8+x);
+    if(kind==='color'){
+      const targetKind=i>=0?kindOf(board[i]):current.goal;
+      for(let j=0;j<64;j++)if(kindOf(board[j])===targetKind)chosen.add(j);
+      toast('Magie arc-en-ciel !');
+    }else{
+      const center=i>=0?i:bestBombCenter(board,current.goal);
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const y=Math.floor(center/8)+dy,x=center%8+dx;if(y>=0&&y<8&&x>=0&&x<8)chosen.add(y*8+x);
+      }
+      toast('Bombe magique !');
     }
-    save();await resolve(chosen);
+    save();await resolve(chosen,-1,false);
+  }
+  async function activateSpecial(i){
+    if(busy||!specialOf(board[i]))return;
+    busy=true;selected=-1;moves--;
+    toast('Bonus spécial déclenché !');
+    await resolve(new Set([i]),-1,false);
   }
   function tileTap(i){
     if(busy)return;
-    if(booster){useBooster(i);return;}
-    if(selected<0){selected=i;renderBoard();return;}
-    if(selected===i){selected=-1;renderBoard();return;}
+    if(selected<0){selected=i;renderBoard();if(specialOf(board[i]))toast('Retouche le bonus pour l’activer, ou échange-le avec une pièce voisine');return;}
+    if(selected===i){if(specialOf(board[i]))activateSpecial(i);else{selected=-1;renderBoard();}return;}
     if(isNeighbor(selected,i)){swap(selected,i);return;}
     selected=i;renderBoard();
   }
@@ -315,6 +404,19 @@
       $('dialogContent').querySelectorAll('[data-gift]').forEach(b=>b.addEventListener('click',()=>giveLife(b.dataset.gift,b)));
     }catch{$('dialogContent').innerHTML='<p>Le classement sera disponible dès que le module Fantasy Match sera activé dans Supabase.</p>'}
   }
+  async function showTeam(){
+    showDialog('L’équipe Fantasy','<p>Chargement des membres du jeu…</p>',[{label:'Retour au jeu',action:hideDialog}],'♥');
+    if(!sb||!user||!cloudReady){
+      $('dialogContent').innerHTML='<p>Les membres apparaîtront ici après leur première partie connectée.</p>';return;
+    }
+    try {
+      const {data,error}=await sb.from('fantasy_match_profiles').select('user_id,prenom,level').order('prenom',{ascending:true}).limit(60);
+      if(error)throw error;
+      if($('dialogTitle').textContent!=='L’équipe Fantasy')return;
+      $('dialogContent').innerHTML=(data||[]).map(p=>`<div class="fm-ranking-row"><b>✦ ${escapeHtml(p.prenom||'Membre')}</b><small>Niveau ${p.level||1}</small>${p.user_id!==user.id?`<button data-gift="${escapeHtml(p.user_id)}" title="Offrir une vie">♥ +1</button>`:''}</div>`).join('')||'<p>Aucun membre n’a encore commencé à jouer.</p>';
+      $('dialogContent').querySelectorAll('[data-gift]').forEach(b=>b.addEventListener('click',()=>giveLife(b.dataset.gift,b)));
+    } catch { $('dialogContent').innerHTML='<p>La liste des joueurs est momentanément indisponible.</p>'; }
+  }
   async function giveLife(recipient,button){
     if(!sb||!user||!cloudReady)return;
     button.disabled=true;
@@ -326,7 +428,7 @@
     button.disabled=false;
   }
   function showRules(){
-    showDialog('Comment jouer ?',`<p>Échange deux pièces voisines pour aligner <b>3 symboles identiques ou plus</b>.</p><p>Récolte la quantité demandée avant de manquer de coups. Enchaîne les combinaisons pour gagner des points !</p><p>Tu disposes de <b>5 vies</b> : tu en perds une seulement si tu rates un niveau. Une vie revient toutes les <b>30 minutes</b>.</p><p>Tous les dix niveaux, tu gagnes trois bonus. Tu peux aussi offrir <b>une vie par jour</b> à un collègue depuis le classement.</p>`,[{label:'Jouer !',action:hideDialog}],'✦');
+    showDialog('Comment jouer ?',`<p>Échange deux pièces voisines pour aligner <b>3 symboles identiques ou plus</b>.</p><p>✨ <b>4 à la suite</b> : un symbole spécial qui efface une ligne ou une colonne.<br>🌈 <b>5 à la suite</b> : une magie arc-en-ciel qui efface une couleur entière.<br>💥 <b>En L ou en T</b> : une bombe qui explose sur les cases voisines.</p><p>Tu peux <b>échanger un bonus créé avec n’importe quelle pièce voisine</b>, ou le toucher deux fois pour l’activer. Les bonus du bas s’activent <b>en un seul appui</b> : ils visent la case sélectionnée, ou choisissent automatiquement une cible. Récolte l’objectif avant de manquer de coups.</p><p>Tu disposes de <b>5 vies</b>. Une vie revient toutes les <b>30 minutes</b>. Tous les dix niveaux, tu gagnes trois bonus. Tu peux aussi offrir <b>une vie par jour</b> à un collègue depuis le classement.</p>`,[{label:'Jouer !',action:hideDialog}],'✦');
   }
   function events(){
     $('gameBoard').addEventListener('click',e=>{
@@ -349,9 +451,7 @@
       $('boost'+type[0].toUpperCase()+type.slice(1)).addEventListener('click',()=>{
         if(busy)return;
         if(!state.boosters[type]){toast('Plus de bonus disponible');return;}
-        booster=booster===type?'':type;
-        if(booster==='shuffle'){useBooster(0);return;}
-        selected=-1;renderAll();toast(booster?'Choisis une pièce sur le plateau':'Bonus annulé');
+        useBooster(type,selected);
       });
     }
     $('levelsBtn').addEventListener('click',showLevels);
@@ -360,7 +460,7 @@
     $('dialogBackdrop').addEventListener('click',e=>{if(e.target===$('dialogBackdrop'))hideDialog()});
     document.querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>{
       document.querySelectorAll('[data-screen]').forEach(x=>x.classList.toggle('active',x===b));
-      if(b.dataset.screen==='levels')showLevels();else if(b.dataset.screen==='ranking')showRanking();else hideDialog();
+      if(b.dataset.screen==='levels')showLevels();else if(b.dataset.screen==='ranking')showRanking();else if(b.dataset.screen==='team')showTeam();else hideDialog();
     }));
     setInterval(tickLives,1000);
   }
