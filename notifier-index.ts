@@ -1243,6 +1243,43 @@ Deno.serve(async (req) => {
   try {
     const p = await req.json();
 
+    // 🗳️ Push à toute l'équipe lors de la création d'un sondage.
+    // La cloche est déjà enregistrée par la fonction SQL.
+    if (p.type === "SONDAGE_NOUVEAU") {
+      const bearer=(req.headers.get("Authorization")||"").match(/^Bearer\s+(.+)$/i)?.[1];
+      if (!bearer) return json({ok:false,erreur:"Connexion requise"},401);
+      const {data:identite,error:identErreur}=await sb.auth.getUser(bearer);
+      const email=identite?.user?.email;
+      if (identErreur || !email) return json({ok:false,erreur:"Session invalide"},401);
+      const {data:profil,error:profilErreur}=await sb.from("equipe")
+        .select("responsable,gestionnaire").ilike("email",email);
+      if (profilErreur || !(profil||[]).some(m=>m.responsable || m.gestionnaire))
+        return json({ok:false,erreur:"Action réservée au responsable"},403);
+      const id=String(p.sondageId||"").trim();
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+        return json({ok:false,erreur:"Identifiant de sondage invalide"},400);
+      // Réservation atomique : un second clic ne renvoie pas les notifications.
+      const {data:sondage,error:sondageErreur}=await sb.from("sondages_dispo")
+        .update({push_initial_envoye:new Date().toISOString()})
+        .eq("id",id).is("push_initial_envoye",null)
+        .select("titre,date_limite,destinataires").maybeSingle();
+      if (sondageErreur) throw sondageErreur;
+      if (!sondage) return json({ok:true,dejaEnvoye:true});
+      let pushs=0;
+      const limite=new Date(sondage.date_limite).toLocaleString("fr-BE",{
+        timeZone:"Europe/Brussels",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"
+      });
+      for (const destinataire of sondage.destinataires || []) {
+        pushs += await envoyerPush(destinataire,{
+          title:"🗳️ Nouveau sondage de disponibilité",
+          body:sondage.titre+" · Réponds avant le "+limite+".",
+          url:"./index.html?sondages=1",
+          tag:"sondage-"+id
+        },{dejaEnCloche:true,categorie:"autres"});
+      }
+      return json({ok:true,pushs});
+    }
+
     // 💶 Paiements marqués par Jordan : seuls les responsables connectés peuvent
     // déclencher l'alerte. Les sommes sont relues côté serveur, jamais acceptées du navigateur.
     if (p.type === "PAIES_MAJ") {
@@ -1487,6 +1524,23 @@ Deno.serve(async (req) => {
       const { data: equipe } = await sb.from("equipe").select("prenom,email,responsable");
       const parNom = new Map((equipe || []).map((m) => [norm(m.prenom), m]));
       const resultats = [];
+      // 🗳️ Rappels de sondages : J-7, J-2, J-1 et H-4.
+      // Les notifications de la cloche peuvent avoir été créées par Cron ;
+      // un petit registre SQL permet d'envoyer les pushs sans doublon.
+      try {
+        const {error:errCreation}=await sb.rpc("relancer_sondages_dispo");
+        if (errCreation) throw errCreation;
+        const {data:pushsSondages,error:errPushs}=await sb.rpc("prendre_push_sondages_dispo");
+        if (errPushs) throw errPushs;
+        for (const alerte of pushsSondages || []) {
+          const pushs=await envoyerPush(alerte.email,{
+            title:alerte.titre,body:alerte.message,
+            url:alerte.lien || "./index.html?sondages=1",
+            tag:"sondage-rappel"
+          },{dejaEnCloche:true,categorie:"rappels"});
+          resultats.push({sondage:alerte.email,pushs});
+        }
+      } catch(err){console.error("Rappels sondages",err);}
       for (const ev of aVenir || []) {
         // on marque d'abord, pour ne jamais envoyer deux fois
         const { data: pris } = await sb.from("evenements").update({ rappel_envoye: new Date().toISOString() })
