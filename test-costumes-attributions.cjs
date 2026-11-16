@@ -40,6 +40,7 @@ const contexte = {
   }),
   estRoleCostume: p => !!p.role && p.role !== 'acc',
   todayISO: () => '2030-12-01',
+  demandePour: () => null,
 };
 const api = vm.runInNewContext(`${html.slice(debut, fin)}\n({ utilisable, attributionPour, pieceAttribuee, conflitsPiece, besoinsCostumes })`, contexte);
 const roleC = { nom: 'Cyrielle', role: 'Elsa' }, roleE = { nom: 'Emma', role: 'Elsa' };
