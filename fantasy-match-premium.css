@@ -57,8 +57,8 @@ body{
   display:block;-webkit-text-stroke:3px #fff;paint-order:stroke fill;
   text-shadow:0 5px 0 #781dc3,0 8px 9px #8425d877;
 }
-.fm-game-logo span{color:#08bdf8;background:linear-gradient(145deg,#43ebff 4%,#008ee9 45%,#8b1bf0 92%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.fm-game-logo strong{color:#f62ba4;background:linear-gradient(150deg,#ffbbeb,#ff2ba5 47%,#b600cf);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.fm-game-logo span{color:#03bff7;background:linear-gradient(180deg,#90f5ff 0%,#00c0f5 52%,#087dea);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:#04bdf5}
+.fm-game-logo strong{color:#f62ba4;background:linear-gradient(180deg,#ffc0e9,#ff2ba5 47%,#df00a8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:#ff27a8}
 .fm-game-logo i{position:absolute;font-size:21px;font-style:normal;top:9%;right:-2%;color:#fff;text-shadow:0 0 6px #fff,0 0 11px #ff40ce}
 .fm-settings{position:absolute;right:-6px;top:-10px;z-index:3;width:31px;height:31px;font-size:18px;border:2px solid #fff9;border-radius:50%;background:#fff8;color:#a52fd9;box-shadow:0 2px 7px #8c22c833}
 .fm-title-wrap{position:relative;text-align:center;margin:4px 0 18px}
