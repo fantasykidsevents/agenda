@@ -169,7 +169,7 @@ create or replace function public.enregistrer_choix_sondage(
   p_sondage_id uuid,p_options text[],p_indisponible boolean default false
 )
 returns void language plpgsql security definer set search_path = public, pg_temp
-as $
+as $$
 declare
   v_email text := lower(btrim(coalesce(auth.jwt()->>'email','')));
   v_sondage public.sondages_dispo%rowtype;
@@ -222,7 +222,7 @@ begin
     end loop;
   end if;
 end;
-$;
+$$;
 
 create or replace function public.fermer_sondage_dispo(
   p_sondage_id uuid,p_ferme boolean
