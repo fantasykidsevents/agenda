@@ -1095,6 +1095,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .g-makeup-item:hover{transform:translateY(-2px)}
   .g-makeup-item img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain;border-radius:9px;background:#fbf8ff}
   .g-makeup-item span{display:block;margin-top:7px;font-size:13px;font-weight:700}
+  .g-makeup-quick{border:1px solid #ecd6f4;background:#fcf7ff;border-radius:14px;padding:11px 12px;margin:12px 0}
+  .g-makeup-quick summary{font-weight:700;color:#673d9a;cursor:pointer}
 </style>
 </head>
 <body>
@@ -7113,14 +7115,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     "Anna":[["Classique","Anna.png"],["Couronnement","Anna couronnement.png"],["Reine","Anna reine.png"]],
     "Elsa":[["Classique","Elsa.png"],["Spirit","Elsa Spirit.png"]],
     "Ariel":[["Ariel","Ariel.png"]],
-    "Asha":[["Asha","Asha(1).png"]],
+    "Asha":[["Asha","Asha.png"]],
     "Aurore":[["Aurore","Aurore.png"]],
     "Belle":[["Belle","Belle.png"]],
     "Blanche-Neige":[["Blanche-Neige","Blanche neige.png"]],
-    "Cendrillon":[["Cendrillon","Cendrillon(1).png"]],
+    "Cendrillon":[["Cendrillon","Cendrillon.png"]],
     "Jasmine":[["Jasmine","Jasmine.png"]],
-    "Mirabel Madrigal":[["Mirabel","Mirabel(1).png"]],
-    "Raiponce":[["Raiponce","Raiponce(1).png"]],
+    "Mirabel Madrigal":[["Mirabel","Mirabel.png"]],
+    "Raiponce":[["Raiponce","Raiponce.png"]],
     "Vaiana":[["Vaiana","Vaïana.png"]]
   };
   function galerieMaquillages(nom){
@@ -7152,9 +7154,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const vis = L.filter(f => !q || gNorm(f.nom).includes(q) || gNorm(f.personnalite).includes(q));
     $("guideBody").innerHTML = `<h2>📖 Guide d'interprétation</h2>
       <p class="hint" style="margin-top:0">Personnalité, voix, posture et conseils de jeu pour chaque personnage. Astuce : gardez 2 ou 3 traits dominants en tête pendant l'animation.</p>
+      <details class="g-makeup-quick" open>
+        <summary>💄 Fiches maquillage (${Object.keys(GUIDE_MAQUILLAGES).length} personnages)</summary>
+        <p class="hint" style="margin:7px 0">Choisis un personnage pour voir ses références.</p>
+        <div class="g-list">${Object.keys(GUIDE_MAQUILLAGES).map(n => `<button type="button" data-guide="${esc(n)}">💄 ${esc(n)}</button>`).join("")}</div>
+      </details>
       ${mes.size ? `<p style="margin:6px 0 0"><b>⭐ Tes prochains personnages :</b></p><div class="g-list">${[...mes].map(n => `<button type="button" class="mine" data-guide="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : ""}
       <input id="guideSearch" type="search" placeholder="🔎 Elsa, Stitch, Rumi…" value="${esc(filtre)}" style="margin-top:12px" />
-      <div class="g-list">${vis.map(f => `<button type="button" data-guide="${esc(f.nom)}">${esc(f.nom)}</button>`).join("") || `<p class="hint">Aucun personnage trouvé.</p>`}</div>
+      <div class="g-list">${vis.map(f => `<button type="button" data-guide="${esc(f.nom)}">${esc(f.nom)}${GUIDE_MAQUILLAGES[f.nom] ? " 💄" : ""}</button>`).join("") || `<p class="hint">Aucun personnage trouvé.</p>`}</div>
       ${isResp() ? `<div class="after-btns" style="margin-top:12px"><button type="button" class="sig photo" id="gNew">➕ Nouvelle fiche</button></div>` : ""}`;
     const inp = $("guideSearch"); inp.oninput = () => { const v = inp.value, pos = inp.selectionStart; renderGuide(v); const n = $("guideSearch"); n.focus(); n.setSelectionRange(pos, pos); };
   }
