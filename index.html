@@ -198,6 +198,18 @@
   .driver-row{display:flex;align-items:center;gap:10px;margin:2px 0 8px;padding:8px 10px;border-radius:12px;background:#f0f9ff}
   .driver-row label{margin:0;white-space:nowrap;color:#0369a1}
   .driver-row select{flex:1;padding:8px 10px}
+  .anim-transport{background:#f6f2ff;border:1px solid #e5d9ff;border-radius:14px;padding:10px;margin:7px 0 13px}
+  .anim-transport h4{font-size:15px;margin:0 0 8px;color:#613b9c}
+  .anim-transport-row{display:flex;gap:8px;align-items:center;padding:8px 3px;border-top:1px solid #e9e1f8;flex-wrap:wrap}
+  .anim-transport-row b{min-width:115px;flex:1}
+  .anim-transport-row select{flex:2;min-width:175px;max-width:100%}
+  .anim-transport-row input{flex:1;min-width:115px;max-width:160px}
+  .km-route-row{padding:8px 0;border-bottom:1px solid #cfe8f6;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+  .km-route-row b{min-width:120px;flex:1}
+  .km-route-row input{width:85px;min-width:85px;text-align:right;padding:7px}
+  .km-route-row a{color:#124eaf;font-size:13px;font-weight:700}
+  .km-route-warn{background:#fff0e5;color:#94520c;border-radius:9px;padding:8px 10px;margin:7px 0}
+
   .km-box{background:#f0f9ff;border-radius:14px;padding:12px;font-size:14px;margin-bottom:10px;line-height:1.5}
   .km-box b{color:#0369a1}
   .km-box .km-client{margin-top:8px;padding-top:8px;border-top:1px dashed #bae6fd}
@@ -809,6 +821,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .g-sec textarea{width:100%;min-height:70px;font-size:14px}
   a.g-lien,button.g-lien{border:0;background:#ede5ff;color:var(--violet-d);border-radius:999px;padding:2px 8px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;margin-left:4px}
   .stk-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #f1eafb;flex-wrap:wrap}
+  .stock-icon-edit{border:1px solid #e8ddf7;background:#f7f2ff;border-radius:12px;padding:7px;cursor:pointer;font-size:22px;min-width:44px}
+  .stock-icon-picker{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px;padding:9px;background:#faf7ff;border:1px solid #e9d8fe;border-radius:13px;width:100%}
+  .stock-icon-picker.hidden{display:none}
+  .stock-icon-picker button{font-size:23px;background:#fff;border:1px solid #e6dcf7;border-radius:10px;cursor:pointer;min-width:40px;height:40px}
+  .stock-icon-picker button:hover{background:#ede5ff}
   .stk-row .em{font-size:22px;width:30px;text-align:center}.stk-row .tx{flex:1;min-width:120px}
   .stk-row .tx small{display:block;color:var(--muted);font-size:11.5px}
   .stk-row .et{display:flex;gap:4px}.stk-row .et button{border:1px solid #e6dcf7;background:#fff;border-radius:10px;padding:6px 8px;font-size:13px;cursor:pointer}
@@ -1208,6 +1225,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <!-- Vue Mes animations -->
     <section id="viewMine" class="hidden">
       <div class="mine-head" id="mineHead"></div>
+      <div class="evt-tiles">
+        <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
+        <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span>📣</span>Infos équipe</button>
+        <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
+        <button type="button" class="evt-tile" id="myFavBtn"><span>⭐</span>Mes personnages</button>
+        <button type="button" class="evt-tile" id="myIdeasBtn"><span>💡</span>Boîte à idées</button>
+        <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
+      </div>
       <a href="fantasy-match.html?v=20261116-2" class="mine-head" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;background:linear-gradient(110deg,#e0f5ff,#f0ddff 52%,#ffe0f1);border:1px solid #d8b5ff;box-shadow:0 5px 18px rgba(169,42,220,.13)">
         <span aria-hidden="true" style="font-size:38px;line-height:1">💎</span>
         <span style="flex:1"><b style="display:block;color:#8021bf;font-size:19px">Fantasy Match</b><small style="display:block;color:#6c5588;margin-top:3px">Le jeu magique de l'équipe · 200 niveaux · 5 vies</small></span>
@@ -1241,14 +1266,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div id="mineList"></div>
       <div class="group-title">💶 Mes gains</div>
       <div class="mine-head"><div id="mesGains"></div></div>
-      <div class="evt-tiles">
-        <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
-        <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span>📣</span>Infos équipe</button>
-        <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
-        <button type="button" class="evt-tile" id="myFavBtn"><span>⭐</span>Mes personnages</button>
-        <button type="button" class="evt-tile" id="myIdeasBtn"><span>💡</span>Boîte à idées</button>
-        <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
-      </div>
       <div class="group-title">👗 Mes costumes & perruques</div>
       <div class="mine-head"><div id="myCost"></div></div>
       <details class="fold mine-fold">
@@ -1381,6 +1398,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <select id="driverSel"></select>
     </div>
     <input type="hidden" id="conducteur" />
+    <div id="animTransportBox" class="anim-transport hidden"></div>
     <div class="add-wrap">
       <input id="addAnim" type="text" autocomplete="off" placeholder="➕ Ajouter : tapez un prénom…" />
       <div id="sugg" class="sugg hidden"></div>
@@ -1564,11 +1582,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       </div>
       <label for="rgForfaitRep">🎭 Forfait déplacement max les jours de répétition (€, hors covoiturage)</label>
       <input id="rgForfaitRep" type="number" step="0.01" min="0" inputmode="decimal" class="mini" />
-      <label>Le client paie…</label>
-      <div class="seg" id="rgModeSeg">
-        <label><input type="radio" name="rgMode" value="complet" checked><span>Fantasy ↔ client + trajets équipe</span></label>
-        <label><input type="radio" name="rgMode" value="simple"><span>Fantasy ↔ client seulement</span></label>
-      </div>
+      <p class="hint" style="margin:8px 0">🧾 Le client prend en charge tous les trajets domicile ↔ Fantasy, le véhicule Fantasy ↔ client et les billets de train/bus, suivant les tarifs enregistrés ici.</p>
       <div class="sec">⏰ Rappels à l'équipe</div>
       <div class="rg-rap">
         <b>🎂 Animations</b>
@@ -1955,7 +1969,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div id="stockCourses"></div>
     <div id="stockList"></div>
     <div id="stockAdd" class="resp-only" style="margin-top:12px">
-      <div class="row"><div style="flex:0 0 70px"><input id="stockEm" type="text" placeholder="✨" maxlength="4" /></div><div><input id="stockNom" type="text" placeholder="Ex. Paillettes dorées" /></div></div>
+      <div class="row" style="align-items:center">
+        <div style="flex:0 0 68px"><input id="stockEm" type="text" placeholder="📦" value="📦" maxlength="8" aria-label="Icône de l'article" /></div>
+        <div style="flex:1"><input id="stockNom" type="text" placeholder="Ex. Paillettes dorées" /></div>
+        <button type="button" class="btn ghost" id="stockChooseEmoji" style="flex:0 0 auto;padding:10px">😀</button>
+      </div>
+      <div id="stockEmojiPaletteAdd" class="stock-icon-picker hidden"></div>
       <button type="button" class="btn ghost" id="stockAjout" style="width:100%">➕ Ajouter un article</button>
     </div>
     <div class="actions"><button type="button" class="btn primary" id="stockClose">Fermer</button></div>
@@ -2353,6 +2372,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   let indispos = [];
   let reglages = {};
   let kmCalc = null;
+  let kmAjouteDansPrix = null;
   let currentUser = null;
   let demoRole = "resp";
   // ⭐ Gestionnaire : voit tout l'agenda et gère le planning (sans prix ni paie)
@@ -3282,12 +3302,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!$("site_affichage").value) $("site_affichage").value = "auto";
     document.querySelectorAll('input[name="site_affichage"]').forEach(r => r.checked = r.value === $("site_affichage").value);
     paieMap = new Map(((ev && ev.paies) || []).map(p => [normName(p.prenom), { ...p }]));
-    kmCalc = null; $("kmBox").classList.add("hidden");
-    if (ev && ev.km_detail && isResp() && ev.km_detail.mode !== "evt") showKm({ detail: ev.km_detail, client: ev.deplacement_client }, false);
+    kmCalc = null; kmAjouteDansPrix=null; $("kmBox").classList.add("hidden");
+    if(ev?.km_detail?.equipe?.length && isResp() && ev.km_detail.mode!=="evt")
+      showKm({detail:ev.km_detail,client:ev.deplacement_client},false);
     // solde « à la main » seulement s'il ne correspond à aucun calcul automatique (prix, ou prix − acompte)
     soldeTouched = !!(ev && ev.solde != null && !(isResp() && +ev.prix && [+ev.prix, +ev.prix - (+ev.acompte || 0)].some(v => Math.abs(v - +ev.solde) < 0.01)));
     $("type_evenement").value = ev && ["evenement", "repetition"].includes(ev.type_evenement) ? ev.type_evenement : "animation";
     $("collerBox").classList.toggle("hidden", !!ev); $("collerBox").open = false; $("collerTxt").value = ""; $("collerRes").className = "lecture hidden";
+    animTransports=ev?.km_detail?.transports && typeof ev.km_detail.transports==="object" ? JSON.parse(JSON.stringify(ev.km_detail.transports)) : {};
+    animTransportDirty=false;
     horaires = {}; voitures = {}; try { JSON.parse((ev && ev.equipe_detail) || "[]").forEach(x => { if (x.debut || x.fin) horaires[normName(x.prenom)] = { d: x.debut || "", f: x.fin || "" }; if (x.voiture) voitures[normName(x.prenom)] = x.voiture; }); } catch (e) {}
     parkings = ((ev && ev.km_detail && ev.km_detail.parkings) || []).map(x => ({ ...x }));
     repetJour = ev && ev.km_detail && ev.km_detail.repet != null ? !!ev.km_detail.repet : null;
@@ -3494,17 +3517,40 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
 
   // ---------- 🧮 Déplacements ----------
-  const GEO_KEY = "fk_geo_cache";
-  let geoCache = {}; try { geoCache = JSON.parse(localStorage.getItem(GEO_KEY) || "{}"); } catch (e) {}
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  let lastGeo = 0;
-  async function geocode(adr) {
-    const k = normName(adr); if (geoCache[k]) return geoCache[k];
-    const wait = 1100 - (Date.now() - lastGeo); if (wait > 0) await sleep(wait); lastGeo = Date.now();
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=be,fr,nl,lu&q=${encodeURIComponent(adr)}`, { headers: { "Accept-Language": "fr" } });
-    const j = await r.json(); if (!j[0]) throw new Error(`adresse introuvable : ${adr}`);
-    geoCache[k] = { lat: +j[0].lat, lon: +j[0].lon }; try { localStorage.setItem(GEO_KEY, JSON.stringify(geoCache)); } catch (e) {}
-    return geoCache[k];
+  // Cache v2 : les anciens résultats sans précision avaient parfois pointé sur
+  // le centre d'une rue/ville. Stocker le libellé reconnu et vérifier le code postal.
+  const GEO_KEY = "fk_geo_cache_verified_v2";
+  let geoCache={};try{geoCache=JSON.parse(localStorage.getItem(GEO_KEY)||"{}");}catch(e){}
+  const sleep = ms => new Promise(r=>setTimeout(r,ms));
+  let lastGeo=0;
+  async function geocode(adr){
+    const k=normName(adr);if(geoCache[k]?.lat!=null&&geoCache[k]?.lon!=null)return geoCache[k];
+    const wait=1150-(Date.now()-lastGeo);if(wait>0)await sleep(wait);lastGeo=Date.now();
+    const url="https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=3&countrycodes=be,fr,nl,lu&q="+encodeURIComponent(adr);
+    const r=await fetch(url,{headers:{"Accept-Language":"fr"}});
+    if(!r.ok)throw new Error("Recherche d'adresse indisponible ("+r.status+") : réessaie dans un instant.");
+    const liste=await r.json();if(!liste.length)throw new Error("adresse introuvable : "+adr);
+    const cp=String(adr).match(/\b\d{4,5}\b/)?.[0];
+    const juste=cp?liste.find(x=>String(x.address?.postcode||"").trim()===cp):null;
+    const choix=juste||liste[0];
+    const trouvé=String(choix.address?.postcode||"").trim();
+    const numeroSaisi=String(adr).match(/\b(\d{1,4}[a-zA-Z]?)\s*,?\s+\d{4,5}\b/)?.[1]||"";
+    const numeroTrouve=String(choix.address?.house_number||"").trim();
+    const precisionInsuffisante=!!(numeroSaisi&&(!numeroTrouve||numeroSaisi.toLowerCase()!==numeroTrouve.toLowerCase()));
+    const geo={
+      lat:Number(choix.lat),lon:Number(choix.lon),
+      label:String(choix.display_name||adr),
+      warning:!!(cp&&trouvé&&cp!==trouvé)||precisionInsuffisante,
+      saisie:adr
+    };
+    geoCache[k]=geo;try{localStorage.setItem(GEO_KEY,JSON.stringify(geoCache));}catch(e){}
+    return geo;
+  }
+  const lienPlansApple=(depart,arrivee)=>"https://maps.apple.com/?saddr="+encodeURIComponent(depart)+"&daddr="+encodeURIComponent(arrivee)+"&dirflg=d";
+  function lienCarteRoute(depart,arrivee,etapes=[]){
+    const params=new URLSearchParams({api:"1",origin:depart,destination:arrivee,travelmode:"driving"});
+    if(etapes.length)params.set("waypoints",etapes.join("|"));
+    return "https://www.google.com/maps/dir/?"+params.toString();
   }
   async function kmEntre(a, b) {
     const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`);
@@ -3512,7 +3558,149 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     return j.routes[0].distance / 1000;
   }
   const r2 = (x) => Math.round(x * 100) / 100;
+
+  function recalculerMontantsAnimation(res){
+    const d=res.detail,clientRoute=d.trajets.find(t=>t.id==="client")?.km||0;
+    const routeParNom=new Map(d.trajets.filter(t=>t.id!=="client").map(t=>[t.prenom,t]));
+    const conducteur=d.conducteur;
+    let kmClient=clientRoute,billets=0;
+    d.equipe=picked.map(p=>{
+      const t=transportDe(p.nom),v=routeParNom.get(normName(p.nom));
+      const allerRetour=v?v.km:0;
+      const km=r2(allerRetour+(normName(p.nom)===normName(conducteur)?clientRoute:0));
+      const billet=["bus","train"].includes(t.mode)?r2(Number(t.billet)||0):0;
+      if(v)kmClient+=v.km;
+      billets+=billet;
+      const montant=r2(km*d.tarifEquipe+billet);
+      return {prenom:p.nom,conducteur:normName(p.nom)===normName(conducteur),
+        mode:t.mode,passagerDe:t.mode==="avec"?t.avec:null,
+        km,montant,billet,adresse: v?.adresse||"",
+        trajet:t.mode==="avec"?"Covoiturage avec "+t.avec+" · trajet remboursé au conducteur"
+          :t.mode==="bus"?"Bus · billet aller-retour":t.mode==="train"?"Train · billet aller-retour"
+          :normName(p.nom)===normName(conducteur)?"Domicile ↔ Fantasy + Fantasy ↔ client":"Domicile ↔ Fantasy"};
+    });
+    d.kmClient=r2(kmClient);d.billets=r2(billets);
+    d.modeTxt="Tous les véhicules domicile ↔ Fantasy + véhicule de l’ACC Fantasy ↔ client + billets au prix réel";
+    res.client=r2(d.kmClient*d.tarifClient+d.billets);
+    for(const m of d.equipe){
+      const key=normName(m.prenom),row=paieMap.get(key)||{prenom:m.prenom,deplacement:0,prestation:0};
+      if(!row.paye){row.deplacement=m.montant;paieMap.set(key,row);}
+    }
+  }
+  async function calculerKmAnimation(){
+    const adrClient=$("adresse").value.trim(),fantasy=(reglages.fantasy_adresse||"").trim();
+    if(!fantasy)throw new Error("Renseigne l’adresse de Fantasy dans les réglages.");
+    if(!adrClient)throw new Error("Adresse du client manquante.");
+    if(!picked.length)throw new Error("Ajoute d’abord l’équipe.");
+    const conducteur=$("conducteur").value||(picked.find(p=>p.role==="acc")||picked[0]).nom;
+    if(transportDe(conducteur).mode!=="voiture")
+      throw new Error("La personne qui fait Fantasy ↔ client doit être indiquée « Ma voiture ».");
+    const F=await geocode(fantasy),C=await geocode(adrClient);
+    const trajets=[],warnings=[];
+    function avertir(label,g){
+      if(g.warning)warnings.push("⚠️ "+label+" : vérifie le résultat « "+g.label+" » (numéro ou code postal à vérifier).");
+    }
+    avertir("Fantasy",F);avertir("Client",C);
+    for(const p of picked){
+      const t=transportDe(p.nom);
+      if(["bus","train"].includes(t.mode)){
+        if(t.billet==null||!Number.isFinite(Number(t.billet))||Number(t.billet)<0)
+          throw new Error("Indique le prix réel du billet aller-retour pour "+p.nom+".");
+      }else if(t.mode==="avec"){
+        const ref=picked.find(x=>normName(x.nom)===normName(t.avec));
+        if(!ref||transportDe(ref.nom).mode!=="voiture")
+          throw new Error("Choisis un conducteur valide pour "+p.nom+".");
+      }else if(t.mode!=="voiture")throw new Error("Transport non reconnu pour "+p.nom+".");
+    }
+    for(const conducteurMembre of picked.filter(p=>transportDe(p.nom).mode==="voiture")){
+      const profil=members.find(x=>normName(x.prenom)===normName(conducteurMembre.nom));
+      if(!profil?.adresse)throw new Error("Adresse manquante pour "+conducteurMembre.nom+" (Équipe → Mon adresse).");
+      const H=await geocode(profil.adresse);
+      avertir(conducteurMembre.nom,H);
+      const aRamasser=[];
+      for(const passager of picked.filter(p=>transportDe(p.nom).mode==="avec"&&normName(transportDe(p.nom).avec)===normName(conducteurMembre.nom))){
+        const pm=members.find(x=>normName(x.prenom)===normName(passager.nom));
+        if(!pm?.adresse)throw new Error("Adresse manquante pour "+passager.nom+" (covoiturage).");
+        const P=await geocode(pm.adresse);avertir(passager.nom,P);
+        aRamasser.push({nom:passager.nom,adresse:pm.adresse,point:P});
+      }
+      // Choix de l'ordre de ramassage ; les kilomètres eux-mêmes restent routiers (OSRM).
+      const etapes=[],reste=aRamasser.slice();let position=H;
+      while(reste.length){
+        reste.sort((a,b)=>{
+          const dist=x=>Math.hypot(x.point.lat-position.lat,(x.point.lon-position.lon)*Math.cos(position.lat*Math.PI/180));
+          return dist(a)-dist(b);
+        });
+        const prochaine=reste.shift();etapes.push(prochaine);position=prochaine.point;
+      }
+      const points=[H,...etapes.map(x=>x.point),F];
+      const inverse=[F,...etapes.slice().reverse().map(x=>x.point),H];
+      const aller=await kmRoute(points),retour=await kmRoute(inverse);
+      const km=r2(aller+retour);
+      trajets.push({
+        id:"domicile:"+normName(conducteurMembre.nom),prenom:normName(conducteurMembre.nom),
+        label:conducteurMembre.nom+" · domicile ↔ Fantasy"+(etapes.length?" (via "+etapes.map(x=>x.nom).join(", ")+")":""),
+        km,adresse:H.label,
+        lien:lienCarteRoute(profil.adresse,fantasy,etapes.map(x=>x.adresse)),
+        lienApple:etapes.length?null:lienPlansApple(profil.adresse,fantasy)
+      });
+    }
+    trajets.push({id:"client",label:conducteur+" · Fantasy ↔ client",
+      km:r2(await kmEntre(F,C)+await kmEntre(C,F)),
+      adresse:F.label+" → "+C.label,
+      lien:lienCarteRoute(fantasy,adrClient),lienApple:lienPlansApple(fantasy,adrClient)});
+    const tarifEquipe=Number(reglages.km_equipe??0.15),tarifClient=Number(reglages.km_client??0.25);
+    if(!Number.isFinite(tarifEquipe)||tarifEquipe<0||!Number.isFinite(tarifClient)||tarifClient<0)
+      throw new Error("Tarif kilométrique invalide dans les réglages.");
+    kmCalc={client:0,detail:{
+      mode:"animation_v2",conducteur,transports:JSON.parse(JSON.stringify(animTransports)),
+      trajets,warnings,equipe:[],tarifEquipe,tarifClient,le:new Date().toISOString()
+    }};
+    recalculerMontantsAnimation(kmCalc);
+    animTransportDirty=false;
+    renderPaie();
+    showKm(kmCalc,true);
+  }
+  function montrerKmAnimation(res,appliquer){
+    const d=res.detail;
+    const lignes=d.equipe.map(x=>{
+      const cout=x.mode==="train"||x.mode==="bus"?"billet "+euro(x.billet):x.mode==="avec"?"covoiturage · 0 €":x.km.toFixed(1)+" km × "+euro(d.tarifEquipe)+" = "+euro(x.montant);
+      return '<p style="margin:8px 0"><b>'+esc(x.prenom)+'</b> : '+cout+'<br><small>'+esc(x.trajet)+'</small></p>';
+    }).join("");
+    const trajet=(d.trajets||[]).map(t=>'<div class="km-route-row"><b>'+esc(t.label)+'</b>'
+      +'<input type="number" min="0" step="0.1" inputmode="decimal" data-km-route="'+esc(t.id)+'" value="'+esc(t.km)+'" aria-label="Kilomètres aller-retour de '+esc(t.label)+'" '+(!appliquer?'disabled':'')+' />'
+      +'<span>km A/R</span><a href="'+esc(t.lien)+'" target="_blank" rel="noopener noreferrer">🗺️ Maps</a>'
+      +(t.lienApple?'<a href="'+esc(t.lienApple)+'" target="_blank" rel="noopener noreferrer">🍎 Plans iPhone</a>':"")
+      +'<small style="width:100%">'+esc(t.adresse||"")+'</small></div>').join("");
+    $("kmBox").innerHTML='<div><b>🚗 Déplacements de l’équipe</b>'+lignes+'</div>'
+      +'<div style="margin-top:13px"><b>🗺️ Vérifier ou corriger les kilomètres</b><p class="hint" style="margin:4px 0">Compare avec Plans/Maps puis modifie le kilométrage aller-retour si nécessaire.</p>'
+      +trajet
+      +(appliquer?'<button type="button" class="btn ghost" id="kmReviser" style="width:100%;margin-top:8px">🔄 Recalculer avec ces kilomètres</button>':'')+'</div>'
+      +(d.warnings||[]).map(x=>'<p class="km-route-warn">'+esc(x)+'</p>').join("")
+      +'<div class="km-client">🧾 <b>Facturation client</b> : '+d.kmClient.toFixed(1)+' km × '+euro(d.tarifClient)
+      +' + billets '+euro(d.billets)+' = <b>'+euro(res.client)+'</b><br><small>'+esc(d.modeTxt)+'</small>'
+      +(appliquer?'<div class="after-btns" style="margin-top:8px"><button type="button" class="sig enc" id="kmAddPrix">➕ Ajouter '+euro(res.client)+' au prix total</button></div>':"")
+      +'</div>';
+    $("kmBox").classList.remove("hidden");
+  }
+  function appliquerCorrectionKmAnimation(){
+    if(!kmCalc||kmCalc.detail.mode!=="animation_v2")return false;
+    const inputs=[...$("kmBox").querySelectorAll("[data-km-route]")];
+    const valeurs=new Map();
+    for(const input of inputs){
+      const km=Number(input.value);
+      if(!input.value.trim()||!Number.isFinite(km)||km<0||km>2000){
+        toast("Indique des kilomètres valides (0 à 2000).");input.focus();return false;
+      }
+      valeurs.set(input.dataset.kmRoute,r2(km));
+    }
+    for(const t of kmCalc.detail.trajets)if(valeurs.has(t.id))t.km=valeurs.get(t.id);
+    recalculerMontantsAnimation(kmCalc);renderPaie();montrerKmAnimation(kmCalc,true);
+    return true;
+  }
+
   function showKm(res, appliquer) {
+    if(res?.detail?.mode==="animation_v2")return montrerKmAnimation(res,appliquer);
     const d = res.detail || {};
     const lignes = (d.equipe || []).map(x => `${x.conducteur ? "🚗" : "🎭"} <b>${esc(x.prenom)}</b> : ${x.km != null ? `${x.km.toFixed(1)} km × ${euro(d.tarifEquipe)} = <b>${euro(x.montant)}</b>` : `<span style="color:#b91c1c">adresse manquante</span>`}<br><small>${esc(x.trajet || "")}</small>`).join("<br>");
     $("kmBox").innerHTML = `${lignes}
@@ -3528,51 +3716,49 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!fantasy) { toast("⚙️ Indiquez d'abord l'adresse de Fantasy (👥 Équipe → Réglages)"); return; }
     if (!adrClient) { toast("Indiquez l'adresse de l'animation"); return; }
     if (!picked.length) { toast("Ajoutez d'abord l'équipe"); return; }
-    const tarifClient = +(reglages.km_client || 0.25), tarifEquipe = +(reglages.km_equipe || 0.20), mode = reglages.km_mode || "complet";
-    btn.disabled = true; btn.textContent = "🧮 Calcul en cours…";
-    try {
-      const F = await geocode(fantasy), C = await geocode(adrClient);
-      const fc = await kmEntre(F, C);
-      const driver = $("conducteur").value || (picked.find(p => p.role === "acc") || picked[0]).nom;
-      const equipe = []; let homesKm = 0;
-      for (const p of picked) {
-        const m = members.find(x => normName(x.prenom) === normName(p.nom));
-        const isDriver = normName(p.nom) === normName(driver);
-        if (!m || !m.adresse) { equipe.push({ prenom: p.nom, conducteur: isDriver, km: null }); continue; }
-        const H = await geocode(m.adresse), hf = await kmEntre(H, F);
-        const km = isDriver ? 2 * hf + 2 * fc : 2 * hf;
-        homesKm += 2 * hf;
-        const montant = r2(km * tarifEquipe);
-        equipe.push({ prenom: p.nom, conducteur: isDriver, km: r2(km), montant,
-          trajet: isDriver ? `domicile → Fantasy → client → Fantasy → domicile` : `domicile → Fantasy → domicile` });
-        const key = normName(p.nom), row = paieMap.get(key) || { prenom: p.nom, deplacement: 0, prestation: 0 };
-        if (!row.paye) { row.deplacement = montant; paieMap.set(key, row); }
-      }
-      const kmClient = mode === "simple" ? 2 * fc : 2 * fc + homesKm;
-      const client = r2(kmClient * tarifClient);
-      kmCalc = { client, detail: { equipe, kmClient: r2(kmClient), tarifClient, tarifEquipe, conducteur: driver, fantasyClientKm: r2(fc),
-        modeTxt: mode === "simple" ? "Fantasy ↔ client aller-retour" : "Fantasy ↔ client aller-retour + domicile ↔ Fantasy de chaque animateur", le: new Date().toISOString() } };
-      renderPaie(); showKm(kmCalc, true);
-      if (equipe.some(x => x.km == null)) toast("⚠️ Adresse manquante pour " + equipe.filter(x => x.km == null).map(x => x.prenom).join(", "));
-      else toast("🧮 Déplacements calculés ✓");
-    } catch (err) {
-      toast(DEMO ? "Le calcul des km fonctionne dans la version en ligne" : "Calcul impossible : " + (err.message || err));
-    } finally { btn.disabled = false; btn.textContent = "🧮 Calculer les déplacements (km)"; }
+    btn.disabled=true;btn.textContent="🧮 Calcul en cours…";
+    try{
+      await calculerKmAnimation();
+      toast("🧮 Trajets calculés : vérifie les itinéraires avant d'ajouter les frais.");
+    }catch(err){toast("Calcul impossible : "+(err.message||err));}
+    finally{btn.disabled=false;btn.textContent="🧮 Calculer les déplacements (km)";}
   });
-  $("kmBox").addEventListener("click", (e) => {
-    if (e.target.id !== "kmAddPrix" || !kmCalc) return;
-    $("prix").value = r2((+$("prix").value || 0) + kmCalc.client);
-    const ligne = `Déplacement client : ${kmCalc.detail.kmClient} km × ${String(kmCalc.detail.tarifClient).replace(".", ",")} € = ${String(kmCalc.client.toFixed(2)).replace(".", ",")} €`;
-    $("notes_privees").value = ($("notes_privees").value ? $("notes_privees").value + "\n" : "") + ligne;
+  $("kmBox").addEventListener("click",(e)=>{
+    const id=e.target.id;
+    if(id==="kmReviser"){
+      if(appliquerCorrectionKmAnimation())toast("✅ Kilomètres et défraiements recalculés.");
+      return;
+    }
+    if(id!=="kmAddPrix"||!kmCalc)return;
+    if(kmCalc.detail?.mode==="animation_v2"&&!appliquerCorrectionKmAnimation())return;
+    const courant=events.find(x=>x.id===editingId),ancien=Number(courant?.deplacement_client);
+    let ajout=kmCalc.client;
+    if(kmAjouteDansPrix!==null){
+      ajout=kmCalc.client-kmAjouteDansPrix;
+    }else if(editingId&&courant?.deplacement_client!=null){
+      if(!confirm("Cette fiche contient déjà un calcul de frais de déplacement ("+euro(ancien)+").\n\nSi ce montant est déjà inclus dans le prix, OK = le remplacer par "+euro(kmCalc.client)+".\n\nAnnuler = ne pas modifier le prix."))
+        return;
+      ajout=kmCalc.client-ancien;
+    }
+    $("prix").value=r2((+$("prix").value||0)+ajout);
+    kmAjouteDansPrix=kmCalc.client;
+    const d=kmCalc.detail;
+    const ligne="Déplacement client : "+d.kmClient+" km × "+String(d.tarifClient).replace(".",",")
+      +" €"+(d.billets?" + billets "+euro(d.billets):"")+" = "+euro(kmCalc.client);
+    const notes=($("notes_privees").value||"").split("\n");
+    const k=notes.findLastIndex(x=>x.startsWith("Déplacement client : "));
+    if(k>=0)notes[k]=ligne;else notes.push(ligne);
+    $("notes_privees").value=notes.join("\n").replace(/^\n/,"");
     $("prix").dispatchEvent(new Event("input"));
-    e.target.disabled = true; e.target.textContent = "✅ Ajouté au prix"; toast("➕ Ajouté au prix total");
+    const bouton=$("kmAddPrix");if(bouton){bouton.disabled=true;bouton.textContent="✅ Frais intégrés au prix";}
+    toast("💶 Frais de déplacement mis à jour dans le prix");
   });
 
   // ---------- ⚙️ Réglages & adresses ----------
   function fillReglages() {
     $("rgFantasy").value = reglages.fantasy_adresse || "";
     $("rgKmClient").value = reglages.km_client || "0.25";
-    $("rgKmEquipe").value = reglages.km_equipe || "0.20";
+    $("rgKmEquipe").value = reglages.km_equipe ?? "0.15";
     $("rgForfaitRep").value = reglages.forfait_repet || "22.50";
     document.querySelectorAll('input[name="rgMode"]').forEach(r => r.checked = r.value === (reglages.km_mode || "complet"));
     const rg = (k, d) => reglages[k] ?? d;
@@ -3590,7 +3776,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   $("rgSave").onclick = async () => {
     try {
-      await regStore.set({ fantasy_adresse: $("rgFantasy").value.trim(), km_client: $("rgKmClient").value || "0.25", km_equipe: $("rgKmEquipe").value || "0.20", forfait_repet: $("rgForfaitRep").value || "22.50",
+      await regStore.set({ fantasy_adresse: $("rgFantasy").value.trim(), km_client: $("rgKmClient").value || "0.25", km_equipe: $("rgKmEquipe").value || "0.15", forfait_repet: $("rgForfaitRep").value || "22.50",
         km_mode: (document.querySelector('input[name="rgMode"]:checked') || {}).value || "complet",
         rappel_veille_anim: $("rgVA").checked ? String(Math.min(23, Math.max(0, +$("rgVAh").value || 18))) : "",
         rappel_avant_anim: $("rgAA").checked ? String(Math.max(5, +$("rgAAm").value || 60)) : "",
@@ -3927,9 +4113,28 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     });
     if (!ev.date) { $("formErr").textContent = "La date est obligatoire."; return; }
     if (!soldeTouched && (ev.solde == null || isResp())) ev.solde = autoSolde();
+    if(ev.type_evenement==="animation" && kmCalc?.detail?.mode==="animation_v2"){
+      if(!appliquerCorrectionKmAnimation())return;
+      if(kmAjouteDansPrix!==null && Math.abs(kmAjouteDansPrix-kmCalc.client)>0.009){
+        $("formErr").textContent="💶 Tu as modifié les kilomètres après avoir ajouté les frais au prix. Clique de nouveau sur « Ajouter au prix total » pour mettre le prix à jour.";
+        return;
+      }
+      if(kmAjouteDansPrix===null && !confirm("Les déplacements ont été calculés mais pas ajoutés au prix de l’animation. Enregistrer quand même sans modifier le prix ?"))
+        return;
+    }
     const orig = events.find(x => x.id === editingId) || {};
     ev.deplacement_client = kmCalc ? kmCalc.client : (orig.deplacement_client ?? null);
     ev.km_detail = kmCalc ? kmCalc.detail : (orig.km_detail ?? null);
+    // Choix de transport conservés même avant le premier calcul.
+    // Si un ancien calcul existe, il faut recalculer après toute modification
+    // afin de ne pas sauvegarder des frais incohérents.
+    if(ev.type_evenement==="animation" && animTransportDirty && !kmCalc && orig.km_detail?.equipe?.length){
+      $("formErr").textContent="🚗 Les transports ont changé : clique sur « Calculer les déplacements » avant d’enregistrer.";
+      return;
+    }
+    if(ev.type_evenement==="animation"){
+      ev.km_detail={...(ev.km_detail||{mode:"animation_prefs"}),transports:JSON.parse(JSON.stringify(animTransports))};
+    }
     if (["evenement", "repetition"].includes(ev.type_evenement)) ev.km_detail = { ...(ev.km_detail || { mode: "evt" }), parkings: parkings.filter(x => +x.montant > 0).map(x => ({ ...x, vu: true })), repet: estRepet(), team_ids: eventTeamIds.slice() };
     ev.paies = picked.map(p => paieMap.get(normName(p.nom)) || { prenom: p.nom, deplacement: 0, prestation: 0 })
       .map(p => ({ ...p, prenom: picked.find(x => normName(x.nom) === normName(p.prenom))?.nom || p.prenom }))
@@ -4770,12 +4975,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("driverSel").innerHTML = picked.map(p => `<option ${normName(p.nom) === normName(cur) ? "selected" : ""}>${esc(p.nom)}</option>`).join("");
     $("driverSel").disabled = !isResp();
   }
-  $("driverSel").addEventListener("change", () => { $("conducteur").value = $("driverSel").value; kmCalc = null; $("kmBox").classList.add("hidden"); });
+  $("driverSel").addEventListener("change", () => { $("conducteur").value = $("driverSel").value; kmCalc = null; $("kmBox").classList.add("hidden"); if(!estEvt())animTransportDirty=true; renderAnimTransports(); });
   let horaires = {};   // prénom normalisé -> { d: "10:00", f: "14:00" } (événements)
   const estEvt = () => ["evenement", "repetition"].includes($("type_evenement").value);
   const syncHoraires = () => { $("equipe_detail").value = estEvt() ? JSON.stringify(picked.map(p => ({ prenom: p.nom, role: p.role || "", debut: (horaires[normName(p.nom)] || {}).d || "", fin: (horaires[normName(p.nom)] || {}).f || "", voiture: carDe(p.nom) }))) : ""; };
   // 🚗 Covoiturage (événements) : "conduit" | prénom du conducteur | "aucune"
   let voitures = {}, parkings = [], repetJour = null;
+  let animTransports = {}, animTransportDirty = false;
+  const transportDe = nom => animTransports[normName(nom)] || {mode:"voiture",avec:"",billet:null};
   function carDe(nom) {
     const v = voitures[normName(nom)];
     if (!v || v === "conduit") return "conduit";
@@ -4784,6 +4991,51 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const d = picked.find(p => normName(p.nom) === normName(v));
     return d && normName(d.nom) !== normName(nom) && (voitures[normName(d.nom)] || "conduit") === "conduit" ? d.nom : "conduit";
   }
+
+  // 🚘 Pour les animations : voiture, covoiturage ou billet au prix réel.
+  // Conserver ce choix dans km_detail (table privée déjà existante), sans toucher aux anciens paiements.
+  function renderAnimTransports(){
+    const box=$("animTransportBox");
+    if(estEvt()||!picked.length){box.classList.add("hidden");box.innerHTML="";return;}
+    box.classList.remove("hidden");
+    const destinataire=$("conducteur").value;
+    const conducteurs=picked.filter(p=>transportDe(p.nom).mode==="voiture");
+    box.innerHTML='<h4>🚗 Comment chacun rejoint Fantasy ?</h4>'
+      +'<p class="hint" style="margin:0 0 6px">Le véhicule indiqué ci-dessus effectue ensuite Fantasy ↔ client. Bus/train : indique le prix total des billets aller-retour. Les passagers n’ont pas de kilomètres facturés séparément.</p>'
+      +picked.map(p=>{
+        const t=transportDe(p.nom),actif=t.mode==="avec"?"avec:"+t.avec:t.mode;
+        const choices=[
+          '<option value="voiture"'+(actif==="voiture"?" selected":"")+'>🚗 Ma voiture</option>',
+          ...conducteurs.filter(x=>normName(x.nom)!==normName(p.nom)).map(x=>{
+            const val="avec:"+x.nom;
+            return '<option value="'+esc(val)+'"'+(actif===val?" selected":"")+'>🧍 Avec '+esc(x.nom)+'</option>';
+          }),
+          '<option value="bus"'+(actif==="bus"?" selected":"")+'>🚌 Bus</option>',
+          '<option value="train"'+(actif==="train"?" selected":"")+'>🚆 Train</option>'
+        ];
+        const isClientDriver=normName(p.nom)===normName(destinataire);
+        return '<div class="anim-transport-row"><b>'+esc(p.nom)+(isClientDriver?' · ACC 🚗':'')+'</b>'
+          +'<select data-anim-transport="'+esc(p.nom)+'" '+(!isResp()?"disabled":"")+'>'+choices.join("")+'</select>'
+          +(["bus","train"].includes(t.mode)?'<input type="number" min="0" step="0.01" inputmode="decimal" data-anim-billet="'+esc(p.nom)+'" value="'+(t.billet==null?"":esc(t.billet))+'" placeholder="Billet A/R (€)" aria-label="Prix total du billet pour '+esc(p.nom)+'" '+(!isResp()?"disabled":"")+' />':"")
+          +'</div>';
+      }).join("");
+  }
+  $("animTransportBox").addEventListener("change",e=>{
+    const sel=e.target.closest("[data-anim-transport]"),billet=e.target.closest("[data-anim-billet]");
+    if(sel){
+      const nom=sel.dataset.animTransport,val=sel.value;
+      const ancien=transportDe(nom);
+      animTransports[normName(nom)]=val.startsWith("avec:")
+        ? {mode:"avec",avec:val.slice(5),billet:null}
+        : {mode:val,avec:"",billet:val===ancien.mode?ancien.billet:null};
+      renderAnimTransports();
+    }else if(billet){
+      const nom=billet.dataset.animBillet,ancien=transportDe(nom);
+      animTransports[normName(nom)]={...ancien,billet:billet.value===""?null:Number(billet.value)};
+    }else return;
+    kmCalc=null;animTransportDirty=true;$("kmBox").classList.add("hidden");
+  });
+
   const REPET_RX = /r[ée]p[ée]t|g[ée]n[ée]rale/i;
   const estRepet = () => $("type_evenement").value === "repetition" || (repetJour != null ? repetJour : REPET_RX.test($("titre") ? $("titre").value : ""));
   // 🚗 L'équipe indique elle-même sa voiture et ses parkings (les responsables valident et calculent)
@@ -4866,7 +5118,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const ty = e.target.dataset.pkTy; if (ty != null) parkings[+ty].type = e.target.value;
     appliquerDeplEvt();
   });
-  // Montant déplacement de chacun = km (0,20 €/km, conducteurs seulement) plafonnés au forfait les jours de répétition (sauf covoiturage) + parkings payés
+  // Montant déplacement de chacun = km (tarif défini dans Gestion, conducteurs seulement) plafonnés au forfait les jours de répétition (sauf covoiturage) + parkings payés
   function deplEvtDe(nom, detail) {
     const x = ((detail && detail.equipe) || []).find(y => normName(y.prenom) === normName(nom));
     let km = x && x.montantKm != null ? x.montantKm : 0, covoit = 0, plafonne = false;
@@ -4919,7 +5171,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const lieu = $("adresse").value.trim();
     if (!lieu) { toast("Indiquez l'adresse de l'événement"); return; }
     if (!picked.length) { toast("Ajoutez d'abord l'équipe"); return; }
-    const tarif = +(reglages.km_equipe || 0.20), L = await geocode(lieu), equipe = [], manquants = [];
+    const tarif = +(reglages.km_equipe ?? 0.15), L = await geocode(lieu), equipe = [], manquants = [];
     for (const d of picked.filter(p => carDe(p.nom) === "conduit")) {
       const m = members.find(x => normName(x.prenom) === normName(d.nom));
       const pass = picked.filter(p => carDe(p.nom) === d.nom).map(p => p.nom);
@@ -4946,7 +5198,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     box.classList.remove("hidden");
   }
   function renderPicked() {
-    renderPaie(); renderDriver(); syncHoraires(); renderEvtResume(); renderParkBox(); if (typeof planifierTrajets === "function") planifierTrajets();
+    renderPaie(); renderDriver(); renderAnimTransports(); syncHoraires(); renderEvtResume(); renderParkBox(); if (typeof planifierTrajets === "function") planifierTrajets();
     const conds = picked.filter(p => carDe(p.nom) === "conduit");
     const carSel = (p, i) => { const c = carDe(p.nom); return `<select class="car" data-car="${i}"><option value="conduit" ${c === "conduit" ? "selected" : ""}>🚗 conduit</option>${conds.filter(d => normName(d.nom) !== normName(p.nom)).map(d => `<option value="${esc(d.nom)}" ${normName(c) === normName(d.nom) ? "selected" : ""}>🧍 avec ${esc(d.nom)}</option>`).join("")}<option value="transport" ${c === "transport" ? "selected" : ""}>🚆 train / bus</option><option value="aucune" ${c === "aucune" ? "selected" : ""}>🚶 sans voiture</option></select>`; };
     $("pickList").innerHTML = picked.map((p, i) => `
@@ -7492,7 +7744,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const STOCK_BASE = [["🖊️", "Marqueurs"], ["🧲", "Magnets à coller"], ["🧻", "Lingettes"], ["🍬", "Sachets de bonbons", "enfant"], ["🎁", "Cadeaux pour l'enfant", "annif"], ["🖨️", "Coloriages 3D à imprimer (papier + encre)", "enfant"],
     ["🧴", "Colle à tatouage", "tatouage"], ["✨", "Paillettes", "tatouage"], ["🌀", "Pochoirs", "tatouage"], ["🖌️", "Pinceaux", "tatouage"], ["🧽", "Essuies", "tatouage"],
     ["🎨", "Peinture visage (Aquacolor)"], ["💎", "Strass"], ["🎈", "Ballons à sculpter"], ["🫧", "Liquide à bulles"], ["💇", "Laque / spray cheveux"], ["🔋", "Piles (JBL…)"]];
-  let stock = [];
+  let stock = [],stockEditingEmoji=null;
+  const STOCK_EMOJIS=["📦","🎨","✨","🎈","💎","💄","🧴","🫧","🪄","👑","🎭","🎤","📷","🎁","🍬","🧸","🧵","🪡","🛠️","🔋","🧹","🧼","🧪","✂️","🎀","🪞","🧦","🎟️","🍭","🧷","🧺","🩰","💇","🌸","🪅","🎶"];
+  const boutonsIcones=id=>STOCK_EMOJIS.map(emoji=>'<button type="button" data-stk-choose="'+esc(emoji)+'" '+(id?'data-stk-id="'+esc(id)+'"':'')+' title="Choisir '+esc(emoji)+'">'+esc(emoji)+'</button>').join("");
   const stockStore = {
     async list() {
       if (DEMO) { let a = null; try { a = JSON.parse(localStorage.getItem(LS_STOCK) || "null"); } catch (e) {}
@@ -7504,6 +7758,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     async etat(id, etat) { const o = { etat, maj_par: chatMe(), maj_le: new Date().toISOString() };
       if (DEMO) return this._d(a => a.map(x => x.id === id ? { ...x, ...o } : x));
       const { error } = await sb.from("stock").update(o).eq("id", id); if (error) throw error; },
+    async emoji(id,emoji){
+      if(DEMO)return this._d(a=>a.map(x=>String(x.id)===String(id)?{...x,emoji}:x));
+      const {error}=await sb.from("stock").update({emoji}).eq("id",id);if(error)throw error;
+    },
     async add(emoji, nom) { const o = { emoji: emoji || "📦", nom, etat: "ok", ordre: 999 };
       if (DEMO) return this._d(a => [...a, { id: "s" + Date.now(), ...o }]);
       const { error } = await sb.from("stock").insert(o); if (error) throw error; },
@@ -7537,9 +7795,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("stockCourses").innerHTML = isResp() && aa.length ? `<div class="courses"><b>🛒 Liste de courses (${aa.length})</b><br>${aa.map(x => `${x.etat === "vide" ? "🔴" : "🟠"} ${esc(x.nom)}${besoinTxt(x) ? ` <small>(${esc(besoinTxt(x).replace(/^\S+ /, ""))})</small>` : ""}`).join("<br>")}
       <div class="after-btns" style="margin-top:8px"><button type="button" class="sig photo" id="stockCopy">📋 Copier / envoyer la liste</button></div></div>` : "";
     const tri = [...stock].sort((a, b) => ({ vide: 0, bas: 1, ok: 2 }[a.etat] ?? 2) - ({ vide: 0, bas: 1, ok: 2 }[b.etat] ?? 2) || (a.ordre ?? 0) - (b.ordre ?? 0));
-    $("stockList").innerHTML = tri.map(x => `<div class="stk-row"><span class="em">${esc(x.emoji || "📦")}</span><span class="tx"><b>${esc(x.nom)}</b>${besoinTxt(x) ? `<small style="color:var(--violet-d)">${esc(besoinTxt(x))}</small>` : ""}${x.etat !== "ok" && x.maj_par ? `<small>signalé par ${esc(x.maj_par)}${x.maj_le ? " · " + new Date(x.maj_le).toLocaleDateString("fr-BE", { day: "numeric", month: "short" }) : ""}</small>` : ""}</span>
+    $("stockList").innerHTML = tri.map(x => `<div class="stk-row">${isResp() ? `<button type="button" class="stock-icon-edit" data-stk-icon="${esc(x.id)}" aria-label="Changer l’icône de ${esc(x.nom)}" title="Changer l’icône">${esc(x.emoji || "📦")} ✏️</button>` : `<span class="em">${esc(x.emoji || "📦")}</span>`}<span class="tx"><b>${esc(x.nom)}</b>${besoinTxt(x) ? `<small style="color:var(--violet-d)">${esc(besoinTxt(x))}</small>` : ""}${x.etat !== "ok" && x.maj_par ? `<small>signalé par ${esc(x.maj_par)}${x.maj_le ? " · " + new Date(x.maj_le).toLocaleDateString("fr-BE", { day: "numeric", month: "short" }) : ""}</small>` : ""}</span>
       <span class="et">${ETATS_STOCK.map(([k, t]) => `<button type="button" class="${(x.etat || "ok") === k ? "on" : ""}" data-stk="${esc(x.id)}" data-et="${k}">${t}</button>`).join("")}</span>
-      ${isResp() ? `<button type="button" class="x" data-stk-rm="${esc(x.id)}" aria-label="Retirer">✕</button>` : ""}</div>`).join("") || `<p class="hint">Aucun article.</p>`;
+      ${isResp() ? `<button type="button" class="x" data-stk-rm="${esc(x.id)}" aria-label="Retirer">✕</button>` : ""}${stockEditingEmoji===String(x.id)?`<div class="stock-icon-picker">${boutonsIcones(x.id)}<div style="display:flex;gap:6px;width:100%;align-items:center"><input type="text" data-stk-custom-input maxlength="8" placeholder="Autre emoji…" style="flex:1;min-width:90px" /><button type="button" data-stk-custom-save="${esc(x.id)}" style="font-size:13px;font-weight:800;min-width:100px">💾 Enregistrer</button></div></div>`:""}</div>`).join("") || `<p class="hint">Aucun article.</p>`;
+    $("stockEmojiPaletteAdd").innerHTML=boutonsIcones(null);
     $("stockAdd").classList.toggle("hidden", !isResp());
   }
   function openStock() { renderStock(); $("stockBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; }
@@ -7548,6 +7807,41 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("stockClose").onclick = closeStock;
   $("stockBg").addEventListener("click", async (e) => {
     if (e.target.id === "stockBg") { closeStock(); return; }
+    if(e.target.id==="stockChooseEmoji"){
+      $("stockEmojiPaletteAdd").classList.toggle("hidden");
+      return;
+    }
+    const iconEdit=e.target.closest("[data-stk-icon]");
+    if(iconEdit&&isResp()){
+      stockEditingEmoji=stockEditingEmoji===iconEdit.dataset.stkIcon?null:iconEdit.dataset.stkIcon;
+      renderStock();return;
+    }
+    const customSave=e.target.closest("[data-stk-custom-save]");
+    if(customSave&&isResp()){
+      const input=customSave.closest(".stock-icon-picker")?.querySelector("[data-stk-custom-input]");
+      const emoji=(input?.value||"").trim();
+      if(!emoji){toast("Choisis ou saisis un emoji.");return;}
+      try{
+        await stockStore.emoji(customSave.dataset.stkCustomSave,emoji);
+        stockEditingEmoji=null;await stockReload();renderStock();toast("🎨 Icône personnalisée enregistrée !");
+      }catch(err){toast("Erreur : "+(err.message||err));}
+      return;
+    }
+    const iconSelect=e.target.closest("[data-stk-choose]");
+    if(iconSelect&&isResp()){
+      const emoji=iconSelect.dataset.stkChoose,articleId=iconSelect.dataset.stkId;
+      if(articleId){
+        try{
+          await stockStore.emoji(articleId,emoji);
+          stockEditingEmoji=null;await stockReload();renderStock();
+          toast("🎨 Icône modifiée !");
+        }catch(err){toast("Impossible de modifier l’icône : "+(err.message||err));}
+      }else{
+        $("stockEm").value=emoji;
+        $("stockEmojiPaletteAdd").classList.add("hidden");
+      }
+      return;
+    }
     const b = e.target.closest("[data-stk]");
     if (b) { try { await stockStore.etat(b.dataset.stk, b.dataset.et); await stockReload(); renderStock(); render();
         toast(b.dataset.et === "ok" ? "✅ C'est noté, merci !" : "🛒 Les responsables sont prévenus"); } catch (err) { toast("Erreur : " + (err.message || err)); } return; }
@@ -7561,7 +7855,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
   $("stockAjout").onclick = async () => {
     const nom = $("stockNom").value.trim(); if (!nom) { toast("Indiquez le nom de l'article"); return; }
-    try { await stockStore.add($("stockEm").value.trim(), nom); $("stockNom").value = ""; $("stockEm").value = ""; await stockReload(); renderStock(); toast("➕ Ajouté"); } catch (err) { toast("Erreur : " + (err.message || err)); }
+    try { await stockStore.add($("stockEm").value.trim(), nom); $("stockNom").value = ""; $("stockEm").value = "📦"; $("stockEmojiPaletteAdd").classList.add("hidden"); await stockReload(); renderStock(); toast("➕ Ajouté"); } catch (err) { toast("Erreur : " + (err.message || err)); }
   };
   document.addEventListener("click", (e) => { if (e.target.closest("[data-stock-open]")) { e.stopPropagation(); openStock(); } }, true);
 
