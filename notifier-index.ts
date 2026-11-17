@@ -155,33 +155,35 @@ function getMailer() {
   return { transport: mailer, adresse: env("GMAIL_USER") };
 }
 
-async function envoyerEmail(to, sujet, html, texte, pj = [], options: { canal?: "automatique" | "professionnel" } = {}) {
-  const canal = options.canal || "automatique";
-  // Resend pour les mails automatiques ; Gmail reste réservé aux contrats pro.
-  if (canal === "automatique" && env("RESEND_API_KEY")) {
-    const expediteur = env("EMAIL_FROM_AUTO") || env("EMAIL_FROM");
-    if (!expediteur) throw new Error("Envoi automatique : EMAIL_FROM_AUTO doit être configuré pour Resend.");
-    const r = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${env("RESEND_API_KEY")}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: expediteur, to, subject: sujet, html, text: texte,
-        reply_to: env("EMAIL_REPLY_TO") || env("GMAIL_USER") || "fantasykidsevents@gmail.com",
-        ...(pj.length ? { attachments: pj.map((a) => ({ filename: a.filename, content: btoa(Array.from(a.content, (c) => String.fromCharCode(c)).join("")) })) } : {}) }),
+async function envoyerEmail(to, sujet, html, texte, pj = [], options: { canal?: "client" | "interne" } = {}) {
+  const canal = options.canal || "interne";
+  // Les mails AUX CLIENTS doivent apparaître dans « Envoyés » de Gmail,
+  // pour que Jordan puisse retrouver les échanges et les réponses.
+  if (canal === "client") {
+    const config = getMailer();
+    if (!config) throw new Error("Envoi au client impossible : compte Gmail professionnel non configuré.");
+    await config.transport.sendMail({
+      from: `"Fantasy Kids Events" <${config.adresse}>`,
+      to, subject: sujet, html, text: texte,
+      attachments: pj.map((a) => ({ filename: a.filename, content: a.content })),
     });
-    if (!r.ok) throw new Error("Resend : " + (await r.text()));
     return;
   }
-  // Secours Gmail pour les automatisations tant que Resend n'est pas configuré.
-  const config = getMailer();
-  if (!config) throw new Error(canal === "professionnel"
-    ? "Compte Gmail professionnel non configuré"
-    : "Envois automatiques non configurés : renseigner RESEND_API_KEY et EMAIL_FROM_AUTO");
-  if (canal === "automatique") console.warn("Resend non configuré : envois automatiques encore envoyés via Gmail jusqu'à activation.");
-  await config.transport.sendMail({
-    from: `"Fantasy Kids Events" <${config.adresse}>`,
-    to, subject: sujet, html, text: texte,
-    attachments: pj.map((a) => ({ filename: a.filename, content: a.content })),
+
+  // Les notifications équipe / administration partent uniquement par Resend :
+  // pas de copie dans les éléments envoyés de Gmail, même pour un contrat pro.
+  const cleResend = env("RESEND_API_KEY");
+  const expediteur = env("EMAIL_FROM_AUTO") || env("EMAIL_FROM");
+  if (!cleResend || !expediteur)
+    throw new Error("Notification interne non envoyée : Resend n'est pas configuré (aucun repli sur Gmail).");
+  const r = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${cleResend}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from: expediteur, to, subject: sujet, html, text: texte,
+      reply_to: env("EMAIL_REPLY_TO") || env("GMAIL_USER") || "fantasykidsevents@gmail.com",
+      ...(pj.length ? { attachments: pj.map((a) => ({ filename: a.filename, content: btoa(Array.from(a.content, (c) => String.fromCharCode(c)).join("")) })) } : {}) }),
   });
+  if (!r.ok) throw new Error("Resend : " + (await r.text()));
 }
 
 // Préférences individuelles : les cases non encore enregistrées restent cochées.
@@ -407,7 +409,7 @@ async function prevenir(email, prenom, type, ev, role, options: { sansEmail?: bo
       ? EMAIL_PRO : categorie === "administration" && norm(prenom) === "jordan"
       ? EMAIL_GESTION : await adresseMailAdministration(email);
     mail = (await envoyerEmail(boite, `${emojiNotif} ${titreNotif} – ${titre} (${quand(ev)})`, html, texte, [],
-      { canal: ev.type_evenement === "contrat_pro" ? "professionnel" : "automatique" })) || "envoyé";
+      { canal: "interne" })) || "envoyé";
   }
   catch (e) { mail = "erreur : " + (e?.message || e); console.error("email", e); }
   return { email, prenom, type, pushs, mail };
@@ -638,7 +640,7 @@ async function mailConfirmationAnimation(ev) {
     <p style="font-size:15px">Dès réception de l'acompte, la date est <b>officiellement réservée rien que pour vous</b> 🔒 et nous vous envoyons la <b>fiche anniversaire</b> pour connaître tous les petits secrets de la star du jour 🪄</p>
     ${SIGNATURE}</div>`;
   const texte = `Bonjour,\n\nVotre animation est confirmée : ${quand(ev)}${ev.adresse ? " – " + ev.adresse : ""}.\n${prix ? `Prix total : ${euros0(prix)}\n` : ""}\n${texteVirement(acompte, comm, "Acompte à verser pour bloquer la date")}\n${solde ? `\nSolde restant : ${euros0(solde)}, à régler le jour de la fête.\n` : ""}\nDès réception de l'acompte, nous vous envoyons la fiche anniversaire à remplir.\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
-  await envoyerEmail(ev.email, `✨ Animation confirmée${enfant} – acompte à verser`, html, texte);
+  await envoyerEmail(ev.email, `✨ Animation confirmée${enfant} – acompte à verser`, html, texte, [], { canal: "client" });
   return "confirmation + acompte envoyés";
 }
 
@@ -666,7 +668,7 @@ async function envoyerFicheParent(ev, forcer = false, pvDonne = null) {
       <a href="https://www.fantasykidsevents.be/invitation.html" style="display:inline-block;background:#ff7f9f;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:15px">🎉 Créer mon invitation</a></div>
     ${SIGNATURE}</div>`;
   const texte = `Bonjour,\n\n${recu ? `Nous avons bien reçu votre acompte de ${euros0(acompte)} : la date est réservée.` : "Votre animation est confirmée."}\n${quand(ev)}${ev.adresse ? " – " + ev.adresse : ""}${solde ? `\nSolde restant : ${euros0(solde)}, à régler le jour de la fête.` : ""}\n\nPour préparer une fête magique, merci de remplir cette petite fiche (3 minutes) :\n${lien}\n\n💌 Créez vos invitations d'anniversaire sur notre site :\nhttps://www.fantasykidsevents.be/invitation.html\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
-  await envoyerEmail(ev.email, recu ? `✅ Acompte reçu – la fiche anniversaire${enfant}` : `✨ Préparons l'anniversaire magique${enfant} !`, html, texte);
+  await envoyerEmail(ev.email, recu ? `✅ Acompte reçu – la fiche anniversaire${enfant}` : `✨ Préparons l'anniversaire magique${enfant} !`, html, texte, [], { canal: "client" });
   await sb.from("fiches").update({ envoyee_le: new Date().toISOString() }).eq("evenement_id", ev.id);
   return "fiche envoyée";
 }
@@ -702,7 +704,7 @@ async function mailsReservation(type, r, avant) {
       <p style="font-size:15px">Nous avons hâte de vous accueillir et de partager ce moment féerique avec vous 🌟</p>
       ${SIGNATURE}</div>`;
     const texte = `Bonjour,\n\nNous avons bien reçu votre acompte de ${euros0(recu)} : vos places pour ${ev.titre} (${quandEv}) sont réservées.\n${places} place(s)${bebes}.\n${solde ? `\nSolde à payer sur place, en liquide : ${euros0(solde)}` : "\nTout est réglé."}\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
-    await envoyerEmail(r.email, `✅ ${ev.titre} – acompte reçu, solde ${euros0(solde)} sur place`, html, texte);
+    await envoyerEmail(r.email, `✅ ${ev.titre} – acompte reçu, solde ${euros0(solde)} sur place`, html, texte, [], { canal: "client" });
     return "mail acompte reçu";
   }
   // 1️⃣ confirmation + demande d'acompte (50 %)
@@ -718,7 +720,7 @@ async function mailsReservation(type, r, avant) {
     <p style="font-size:14px;color:#6b6385">Bon à savoir : Annulation 7 jours ou plus avant l'événement : l'acompte reste acquis ; moins de 7 jours avant : le solde reste dû.</p>
     ${SIGNATURE}</div>`;
   const texte = `Bonjour,\n\nVotre réservation pour ${ev.titre} (${quandEv}) est confirmée : ${places} place(s)${bebes}.\n${total ? `Total : ${euros0(total)}\n\n${texteVirement(aVerser, comm, "Acompte à verser (50 %)")}\n\nLe solde (${euros0(total - moitie)}) sera à payer en liquide sur place.` : ""}\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
-  await envoyerEmail(r.email, `🎟️ ${ev.titre} – réservation confirmée, acompte à verser`, html, texte);
+  await envoyerEmail(r.email, `🎟️ ${ev.titre} – réservation confirmée, acompte à verser`, html, texte, [], { canal: "client" });
   return "mail confirmation + acompte";
 }
 
@@ -750,7 +752,7 @@ async function envoyerDevis(ev) {
     ${SIGNATURE}</div>`;
   const texte = `Bonjour,\n\nVoici votre devis pour l'animation${enfant} : ${quand(ev)}.\n${ev.theme ? ev.theme + "\n" : ""}${prix ? `Total : ${euros0(prix)}${acompte ? ` (dont acompte ${euros0(acompte)})` : ""}\n` : ""}\nPour l'accepter en un clic :\n${lien}\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
   await envoyerEmail(ev.email, `📜 Votre devis Fantasy Kids Events${enfant}`, html, texte, [],
-    { canal: ev.type_evenement === "contrat_pro" ? "professionnel" : "automatique" });
+    { canal: "client" });
   await sb.from("devis").update({ envoye_le: new Date().toISOString() }).eq("evenement_id", ev.id);
   return "devis envoyé";
 }
@@ -778,7 +780,7 @@ async function envoyerPhotosClient(ev) {
       ${btn(DIPLOME_URL, "🎓 Créer le diplôme", "#a020ff")}</div>
     <p style="font-size:15px">Au plaisir de vous retrouver pour de nouvelles aventures enchantées ✨<br><b>L'équipe Fantasy Kids Events</b><br><span style="color:#8a80a6;font-size:13px">Là où les rêves d'enfants prennent vie 🏰</span></p></div>`;
   const texte = `Bonjour,\n\nMerci encore de nous avoir invités ! Voici les photos de la fête :\n${ev.photos_lien}\n\n⭐ Vous avez aimé ? Laissez-nous un avis Google (1 minute) :\n${AVIS_GOOGLE}\n\n🎓 Créez le diplôme souvenir :\n${DIPLOME_URL}\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
-  await envoyerEmail(ev.email, `📸 Les photos de la fête${ev.enfant ? " de " + ev.enfant : ""} ✨`, html, texte);
+  await envoyerEmail(ev.email, `📸 Les photos de la fête${ev.enfant ? " de " + ev.enfant : ""} ✨`, html, texte, [], { canal: "client" });
   return "envoyé";
 }
 
