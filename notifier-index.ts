@@ -1460,10 +1460,7 @@ Deno.serve(async (req) => {
         const paiement = (paiementsRep.data || []).find((x) =>
           String(x.evenement_id) === ligne.evId && norm(x.prenom) === norm(ligne.prenom));
         const ev = parId.get(ligne.evId), membre = parNom.get(norm(ligne.prenom));
-        if(ev?.date && ev.date<aujourdhuiBelgique()){
-          envoyes.push({prenom:ligne.prenom,ignore:"historique : notification désactivée"});
-          continue;
-        }
+        // Le paiement est une action explicite du responsable : notifier même si la prestation est passée.
         if (!paiement?.paye || !paiement.paye_le || !ev || !membre?.email) {
           envoyes.push({ prenom: ligne.prenom, ignore: "paiement non confirmé ou membre introuvable" });
           continue;
