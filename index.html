@@ -135,6 +135,7 @@
   @media(min-width:700px){.sheet-bg{align-items:center}.sheet{border-radius:22px}}
   @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
   #evForm.mode-evt .anniv-only{display:none!important}
+  #evForm:not(.mode-pro) .pro-only{display:none!important}
   #typeSeg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   @media(min-width:650px){#typeSeg{grid-template-columns:repeat(4,minmax(0,1fr))}}
   #tpkBg{position:fixed;inset:0;z-index:150;background:rgba(20,10,40,.45);display:flex;align-items:flex-end;justify-content:center}
@@ -1480,7 +1481,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </details></div>
 
     <div id="privSec"><details class="fold fold-auto">
-      <summary class="sec">💰 Argent : prix, acompte & paie <small class="lock">🔒 responsables</small></summary>
+      <summary class="sec" id="argentSummary">💰 Argent : prix, acompte & paie <small class="lock">🔒 responsables</small></summary>
+      <div class="pro-only">
+        <label for="contratProPrix">💼 Montant de la prestation (€)</label>
+        <input id="contratProPrix" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Ex. 350,00" />
+        <p class="hint" style="margin:4px 0 10px">Montant convenu avec le client professionnel, sans acompte ni fiche anniversaire.</p>
+      </div>
       <div class="anniv-only">
       <div class="row">
         <div><label for="prix">Prix total (€)</label><input id="prix" type="number" step="0.01" min="0" inputmode="decimal" /></div>
@@ -4243,6 +4249,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     });
     if (!ev.date) { $("formErr").textContent = "La date est obligatoire."; return; }
     if (!soldeTouched && (ev.solde == null || isResp())) ev.solde = autoSolde();
+    if (ev.type_evenement === "contrat_pro") {
+      ev.prix = $("contratProPrix").value === "" ? null : Number($("contratProPrix").value);
+      ev.acompte = null;
+      ev.acompte_paye = false;
+      ev.solde = null;
+    }
     if(ev.type_evenement==="animation" && kmCalc?.detail?.mode==="animation_v2"){
       if(!appliquerCorrectionKmAnimation())return;
       if(kmAjouteDansPrix!==null && Math.abs(kmAjouteDansPrix-kmCalc.client)>0.009){
@@ -5034,6 +5046,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!$("theme_app").value) $("theme_app").value = "auto";
     $("driverRow").classList.toggle("evt-off", evt);
     $("evForm").classList.toggle("mode-evt", evt);
+    $("evForm").classList.toggle("mode-pro", pro);
+    $("contratProPrix").value = $("prix").value;
+    $("argentSummary").innerHTML = pro ? '💰 Montant du contrat & paie <small class="lock">🔒 responsables</small>' : '💰 Argent : prix, acompte & paie <small class="lock">🔒 responsables</small>';
     $("titre").placeholder = repete ? "Ex. Répétition La Nuit Magique" : pro ? "Ex. Prestation au centre commercial" : evt ? "Ex. Le Bal de Noël" : "Ex. Anniversaire – Elsa & Rumi – Bierwart";
     $("adresseLbl").textContent = evt ? "📍 Lieu (pour les trajets de l'équipe)" : "Adresse";
     if (!editingId) $("formTitle").textContent = repete ? "Nouvelle répétition" : pro ? "Nouveau contrat pro" : evt ? "Nouvel événement" : "Nouvelle animation";
@@ -5101,6 +5116,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     r[e.target.dataset.k] = e.target.value === "" ? 0 : +e.target.value; paieMap.set(key, r); renderPaie();
   });
   const autoSolde = () => { const p = +$("prix").value || 0, a = +$("acompte").value || 0; return p ? Math.round(Math.max(0, p - ($("acompte_paye").checked ? a : 0)) * 100) / 100 : null; };
+  $("contratProPrix").addEventListener("input", () => { $("prix").value = $("contratProPrix").value; $("prix").dispatchEvent(new Event("input")); });
   ["prix","acompte","acompte_paye"].forEach(id => $(id).addEventListener(id === "acompte_paye" ? "change" : "input", () => { if (!soldeTouched) { const v = autoSolde(); $("solde").value = v ?? ""; } }));
   $("solde").addEventListener("input", () => { soldeTouched = $("solde").value !== ""; });
 
