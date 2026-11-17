@@ -1480,6 +1480,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="sec">🏢 Client professionnel</div>
       <label for="proClientNom">Nom du client / entreprise</label>
       <input id="proClientNom" type="text" placeholder="Ex. Hôtel Restaurant Charleroi Airport" />
+      <label for="proClientEmail">Adresse e-mail du client professionnel</label>
+      <input id="proClientEmail" type="email" inputmode="email" autocomplete="off" placeholder="contact@entreprise.be" />
       <label for="proClientTva">Numéro de TVA du client (si applicable)</label>
       <input id="proClientTva" type="text" placeholder="Ex. BE 0123.456.789" autocomplete="off" />
       <button type="button" class="btn ghost resp-only hidden" id="proDevisBtn" style="margin-top:10px;width:100%">📄 Préparer un devis pour ce contrat</button>
@@ -3562,6 +3564,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     });
     $("proClientNom").value = ev?.parent || "";
     $("proClientTva").value = ev?.client_tva || "";
+    $("proClientEmail").value = ev?.email || "";
     if (!ev) $("date").value = date || selDay || todayISO();
     document.querySelectorAll('input[name="enceinte"]').forEach(r => r.checked = r.value === ($("enceinte").value || ""));
     if (!$("site_affichage").value) $("site_affichage").value = "auto";
@@ -4417,6 +4420,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!soldeTouched && (ev.solde == null || isResp())) ev.solde = autoSolde();
     if (ev.type_evenement === "contrat_pro") {
       ev.parent = $("proClientNom").value.trim() || null;
+      ev.email = $("proClientEmail").value.trim() || null;
       ev.client_tva = $("proClientTva").value.trim() || null;
       ev.prix = $("contratProPrix").value === "" ? null : Number($("contratProPrix").value);
       ev.acompte = null;
