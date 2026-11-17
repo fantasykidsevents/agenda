@@ -1023,6 +1023,70 @@ async function resumeMatin(equipe) {
     await envoyerPush(m.email, { title: `☀️ Bonjour ${m.prenom} !`, body: lignes.join("\n"), url: "./index.html?vue=list", tag: "resume-matin" });
 }
 
+// 📩 Les demandes d'animation peuvent être « vues » sans être confirmées.
+// Dès le lendemain, rappel quotidien à Jordan tant que la fiche est en attente.
+// Les rappels restent des notifications : ils ne modifient jamais le statut.
+async function relancerDemandesAnimation(equipe) {
+  const belge = maintenantBxl();
+  if (belge.getHours() < 9) return [];
+  const aujourd = isoJ(belge);
+  const destinataires = (equipe || []).filter(m => m.responsable && m.email && norm(m.prenom) === "jordan");
+  if (!destinataires.length) return [];
+  const { data: enAttente, error } = await sb.from("evenements").select("*")
+    .eq("statut", "en_attente").gte("date", aujourd);
+  if (error) throw error;
+  const demandes = (enAttente || []).filter(ev =>
+    ev.type_evenement !== "evenement" && ev.type_evenement !== "repetition"
+    && (ev.source === "site" || ev.parent || ev.email || ev.telephone));
+  if (!demandes.length) return [];
+
+  // La notification initiale permet de ne pas relancer une nouvelle demande
+  // quelques minutes après sa réception (et sans ajouter de colonne SQL).
+  const ids = demandes.map(ev => String(ev.id));
+  const { data: precedentes, error: errPrecedentes } = await sb.from("notifications_app")
+    .select("evenement_id,cree_le").eq("type", "demande")
+    .in("evenement_id", ids).order("cree_le", { ascending: true }).limit(5000);
+  if (errPrecedentes) throw errPrecedentes;
+  const premieres = new Map();
+  for (const n of precedentes || []) {
+    const id = String(n.evenement_id);
+    if (!premieres.has(id) && n.cree_le) premieres.set(id, n.cree_le);
+  }
+
+  const resultats = [];
+  for (const ev of demandes) {
+    const cree = ev.created_at || ev.cree_le || premieres.get(String(ev.id));
+    if (cree && Date.now() - new Date(cree).getTime() < 24 * 60 * 60_000) continue;
+    for (const m of destinataires) {
+      const email = String(m.email).trim().toLowerCase();
+      const payload = {
+        title: "⏳ Demande d'animation toujours en attente",
+        body: `${ev.parent || "Un client"} · ${ev.titre || "Animation"}\n${quand(ev)}\nOuvre la fiche pour prendre une décision.`,
+        url: `./index.html?ev=${ev.id}`,
+        tag: `rappel-demande-${ev.id}`,
+      };
+      // Même si RAPPELS se lance toutes les 5 minutes, un seul rappel par jour.
+      const cle = `relance-demande-${ev.id}-${aujourd}-${email}`;
+      const mise = await garderDansCloche(email, payload, "demande", ev.id, cle);
+      if (mise.deja) continue;
+
+      // Remplacer l'ancien avis par celui d'aujourd'hui dans la cloche.
+      const { error: errAnciennes } = await sb.from("notifications_app")
+        .update({ lue_le: new Date().toISOString() })
+        .eq("destinataire_email", email).eq("evenement_id", String(ev.id))
+        .eq("type", "demande").is("lue_le", null)
+        .lt("cree_le", new Date(Date.now() - 60_000).toISOString());
+      if (errAnciennes) console.error("Anciens avis de demande", errAnciennes.message);
+
+      const pushs = await envoyerPush(email, payload, {
+        categorie: "administration", dejaEnCloche: true,
+      });
+      resultats.push({ demande: ev.id, email, pushs });
+    }
+  }
+  return resultats;
+}
+
 async function rappelChecklist(equipe) {
   const { data: r } = await sb.from("reglages").select("valeur").eq("cle", "checklist_heure").maybeSingle();
   const h = parseInt(r?.valeur ?? "18", 10); if (Number.isNaN(h)) return;
@@ -1524,6 +1588,9 @@ Deno.serve(async (req) => {
       const { data: equipe } = await sb.from("equipe").select("prenom,email,responsable");
       const parNom = new Map((equipe || []).map((m) => [norm(m.prenom), m]));
       const resultats = [];
+      // ⏳ Demandes clients non traitées : rappels quotidiens pour Jordan.
+      try { resultats.push(...(await relancerDemandesAnimation(equipe))); }
+      catch (err) { console.error("Relances demandes d'animation", err); }
       // 🗳️ Rappels de sondages : J-7, J-2, J-1 et H-4.
       // Les notifications de la cloche peuvent avoir été créées par Cron ;
       // un petit registre SQL permet d'envoyer les pushs sans doublon.
@@ -1748,6 +1815,13 @@ Deno.serve(async (req) => {
     const ev = type === "DELETE" ? p.old_record : p.record;
     const ancien = p.old_record || {};
     if (!ev || !ev.date) return json({ ok: true, ignore: "pas d'événement" });
+
+    // Le traitement de la fiche clôt automatiquement l'alerte initiale
+    // et tous les anciens rappels, même sans clic sur « Vu ».
+    if ((type === "UPDATE" && ancien.statut === "en_attente" && ev.statut !== "en_attente")
+      || (type === "DELETE" && ancien.statut === "en_attente")) {
+      await classerRappels(ev.id, "demande");
+    }
 
     if (type === "UPDATE") {
       // Aussitôt le nombre réel et le mode de paiement saisis, le rappel
