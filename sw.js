@@ -1,7 +1,7 @@
 // Service worker : permet l'installation et l'ouverture hors connexion.
 // Stratégie « réseau d'abord » : on prend toujours la version la plus
 // récente, et on retombe sur le cache si pas de réseau.
-const CACHE = "fk-agenda-v99";
+const CACHE = "fk-agenda-v100";
 const FICHIERS = [
   "./", "./index.html", "./factures.html", "./factures-pdf.js", "./factures-fond-magique.jpg", "./config.js", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./logo.png", "./nuit-magique.png",
@@ -30,7 +30,7 @@ self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET" || (url.origin !== self.location.origin && !externe && !photoProduit)) return;
   if (/tesseract|pdf\.worker|pdfjs|traineddata/i.test(url.href)) return;   // gros fichiers de lecture de tickets : pas en cache
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: url.origin === self.location.origin ? "no-store" : "default" })
       .then((rep) => {
         const copie = rep.clone();
         caches.open(CACHE).then((c) => c.put(e.request, copie));

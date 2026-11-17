@@ -3,6 +3,8 @@
   'use strict';
 
   let jsPdfLoader;
+  const TEMPLATE_VERSION='magique-20261117-v2';
+  window.fkFacturesPdfVersion=TEMPLATE_VERSION;
   const COLORS = {
     cyan: [0, 181, 235], purple: [82, 25, 119], pink: [203, 27, 179],
     ink: [62, 25, 86], muted: [108, 81, 124], light: [252, 246, 255],
@@ -137,7 +139,7 @@
     const [JsPDF, logo, background] = await Promise.all([loadJsPdf(), loadImage('logo.png'), loadImage('factures-fond-magique.jpg')]);
     const pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
     const name = kind === 'devis' ? 'Devis' : 'Facture';
-    pdf.setProperties({ title: `${name} ${number || 'en préparation'} - Fantasy Kids Events`, author: 'Fantasy Kids Events', subject: 'Prestation Fantasy Kids Events' });
+    pdf.setProperties({ title: `${name} ${number || 'en préparation'} - Fantasy Kids Events`, author: 'Fantasy Kids Events', subject: `Prestation Fantasy Kids Events - modèle ${TEMPLATE_VERSION}` });
     let page = 1;
     header(pdf, kind, number, logo, background, false, cancelled);
     let y = customer(pdf, data, number, kind);
