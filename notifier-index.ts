@@ -1632,7 +1632,7 @@ Deno.serve(async (req) => {
         const ouverts = new Set((pres || []).map((x) => String(x.email).toLowerCase()));
         dest = dest.filter((x) => !ouverts.has(x.email.toLowerCase()));
       } catch (_) { /* table absente : on notifie tout le monde */ }
-      const corps = (m.texte || "").trim() || "📸 Photo";
+      const corps = (m.texte || "").trim() || (m.audio_path ? "🎤 Message vocal" : "📸 Photo");
       // 📣 @Prénom / @tous → notification « t'a mentionné »
       const norm = (x: string) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
       const txt = norm(m.texte || ""), tous = /(^|\s)@tous(?![\w])/.test(txt);
