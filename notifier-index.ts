@@ -1327,21 +1327,22 @@ function quiPrevenir(type, ev, ancien) {
   const out = [];
 
   if (type === "INSERT") {
-    if (ev.statut !== "annule") nouv.forEach((a) => out.push({ ...a, type: "nouvelle" }));
+    if (ev.statut === "confirme") nouv.forEach((a) => out.push({ ...a, type: "nouvelle" }));
   } else if (type === "UPDATE") {
-    const vientDetreAnnule = ev.statut === "annule" && ancien.statut !== "annule";
+    if (ev.statut === "en_attente") return out;
+    const vientDetreAnnule = ev.statut === "annule" && ancien.statut === "confirme";
     const reactive = ev.statut !== "annule" && ancien.statut === "annule";
     const change = CHAMPS_IMPORTANTS.some((k) => (ev[k] || "") !== (ancien[k] || ""));
     for (const a of nouv) {
       const avant = ancMap.get(norm(a.nom));
       if (ev.statut === "annule") { if (vientDetreAnnule && avant) out.push({ ...a, type: "annulee" }); continue; }
-      if (!avant || reactive) out.push({ ...a, type: "nouvelle" });
+      if (ev.statut === "confirme" && (!avant || reactive || ancien.statut !== "confirme")) out.push({ ...a, type: "nouvelle" });
       else if (change || (avant.role || "") !== (a.role || "")) out.push({ ...a, type: "modifiee" });
     }
-    if (ev.statut !== "annule")
+    if (ev.statut === "confirme")
       for (const a of anc) if (!nouvSet.has(norm(a.nom))) out.push({ ...a, type: "retire" });
   } else if (type === "DELETE") {
-    if (ancien.statut !== "annule") anc.forEach((a) => out.push({ ...a, type: "annulee" }));
+    if (ancien.statut === "confirme") anc.forEach((a) => out.push({ ...a, type: "annulee" }));
   }
   return out;
 }
@@ -1703,6 +1704,7 @@ Deno.serve(async (req) => {
         }
       } catch(err){console.error("Rappels sondages",err);}
       for (const ev of aVenir || []) {
+        if (ev.statut !== "confirme") continue;
         // on marque d'abord, pour ne jamais envoyer deux fois
         const { data: pris } = await sb.from("evenements").update({ rappel_envoye: new Date().toISOString() })
           .eq("id", ev.id).is("rappel_envoye", null).select("id");
@@ -1716,6 +1718,7 @@ Deno.serve(async (req) => {
       try {
         const { data: veille } = await sb.rpc("rappels_veille");
         for (const ev of veille || []) {
+          if (ev.statut !== "confirme") continue;
           const { data: pris } = await sb.from("evenements").update({ rappel_veille_envoye: new Date().toISOString() })
             .eq("id", ev.id).is("rappel_veille_envoye", null).select("id");
           if (!pris || !pris.length) continue;
@@ -1735,7 +1738,7 @@ Deno.serve(async (req) => {
         .eq("date", aujourd).is("tatouages_rappel_milieu_envoye", null);
       if (eTat) throw eTat;
       for (const ev of auMilieu || []) {
-        if (ev.statut === "annule" || ev.type_evenement !== "animation" || !tatouagesACompleter(ev)
+        if (ev.statut !== "confirme" || ev.type_evenement !== "animation" || !tatouagesACompleter(ev)
           || !rappelTatouagesMilieuEligible(ev, maintenantMs)) continue;
         const accompagnateurs = equipeDe(ev).filter((a) => estAccompagnateur(a.role))
           .map((a) => ({ ...a, membre: parNom.get(norm(a.nom)) })).filter((a) => !!a.membre?.email);
@@ -1756,7 +1759,7 @@ Deno.serve(async (req) => {
       const { data: finies, error: e2 } = await sb.from("evenements").select("*")
         .gte("date", hier).lte("date", aujourd).is("fin_envoye", null);
       if (e2) throw e2;
-      const eligibles = (finies || []).filter((ev) => ev.statut !== "annule" && ev.type_evenement === "animation" && rappelFinEligible(ev, maintenantMs));
+      const eligibles = (finies || []).filter((ev) => ev.statut === "confirme" && ev.type_evenement === "animation" && rappelFinEligible(ev, maintenantMs));
       const ids = eligibles.map((ev) => ev.id);
       let bilansEnvoyes = new Set();
       if (ids.length) {
