@@ -2412,6 +2412,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const actualise = await rafraichirActionsPartagees(ids);
     const terminees = [];
     notificationsApp = notifs.flatMap(n => {
+      // Une demande confirmée/annulée dans sa fiche n'est plus une alerte.
+      // Même si le membre n'a pas appuyé sur « Vu », on la retire.
+      if (n.type === "demande" && n.evenement_id) {
+        const demande = events.find(e => String(e.id) === String(n.evenement_id));
+        if (demande && demande.statut !== "en_attente") { terminees.push(n.id); return []; }
+      }
       if (n.type !== "fin" || !n.evenement_id) return [n];
       if (!actualise) return [n]; // Ne pas effacer une tâche sur des données périmées.
       const e = events.find(ev => String(ev.id) === String(n.evenement_id));
@@ -3026,11 +3032,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     w.title = mail;
   }
   // 🔔 Cloche pour toute l'équipe : messages personnels + demandes à traiter pour 👑/⭐
-  const demandesAttente = () => events.filter(e => e.statut === "en_attente" && e.date >= todayISO() && !(e.titre === "Ventes hors événement" && e.date === "2000-01-01")).sort((a, b) => a.date.localeCompare(b.date));
   function majCloche() {
     const b = $("clocheBtn"); if (!b) return;
     b.classList.toggle("hidden", !DEMO && !currentUser);
-    const attente = isGest() ? demandesAttente().length + resaSite.length : 0;
+    const attente = isGest() ? resaSite.length : 0;
     const nonLues = notificationsApp.filter(n => !n.lue_le && !notificationsVuesIci.has(String(n.id))).length;
     const n = attente + nonLues;
     $("clocheN").textContent = n ? (n > 99 ? "99+" : n) : "";
@@ -3039,7 +3044,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     try { if ("setAppBadge" in navigator) n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } catch (_) {}
   }
   function openCloche() {
-    const l = isGest() ? demandesAttente() : [];
     const R = (isGest() ? resaSite : []).map(r => { const e = events.find(x => String(x.id) === String(r.evenement_id));
       return `<div class="dem-row"><b>🎟️ ${esc(r.nom || "Réservation")}</b> · ${r.places} place${r.places > 1 ? "s" : ""}${r.bebes ? ` + ${r.bebes} bébé${r.bebes > 1 ? "s" : ""}` : ""}<br><small>${esc(e ? e.titre : "Événement")}${e ? " · " + esc(fmtLong(e.date)) : ""}</small>${r.notes ? `<br><small class="hint">${esc(String(r.notes).replace(/^🌐 Via le site[^:]*: /, "").slice(0, 160))}</small>` : ""}
       <div class="actions"><button type="button" class="btn" data-resa-ouvrir="${esc(r.evenement_id)}" data-id="${esc(r.id)}">👀 Ouvrir les réservations</button><button type="button" class="btn primary" data-resa-vu="${esc(r.id)}">✅ Vu</button></div></div>`; }).join("");
@@ -3053,7 +3057,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <small class="hint">${esc(date)}</small>
         <div class="actions">
           ${ouvrir ? `<button type="button" class="btn" data-notif-voir="${esc(n.id)}">👀 Ouvrir</button>` : ""}
-          <button type="button" class="btn primary" data-notif-lu="${esc(n.id)}">✅ Vu · retirer</button>
+          <button type="button" class="btn primary" data-notif-lu="${esc(n.id)}">${n.type === "demande" ? "✅ Vu" : "✅ Vu · retirer"}</button>
         </div></div>`;
     }).join("");
     const nbNonLues = notificationsApp.filter(n => !n.lue_le && !notificationsVuesIci.has(String(n.id))).length;
@@ -3062,10 +3066,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       mesNotifs : "");
     $("clocheBody").innerHTML = notifSection +
       (R ? `<div class="sec">🎟️ Réservations d'événements (site)</div>` + R : "") +
-      (l.length ? `<div class="sec">🎂 Demandes d'animation</div>` : "") +
-      (l.length ? l.map(e => `<div class="dem-row"><b>${esc(e.titre || e.enfant || "Demande")}</b><br><small style="text-transform:capitalize">${esc(fmtLong(e.date))}${e.heure_debut ? " · " + hhmm(e.heure_debut) : ""}</small>${e.parent ? `<br><small>👤 ${esc(e.parent)}</small>` : ""}${e.theme ? `<br><small>✨ ${esc(e.theme)}</small>` : ""}
-      <div class="actions"><button type="button" class="btn" data-dem="voir" data-id="${esc(e.id)}">👀 Ouvrir</button>${isResp() ? `<button type="button" class="btn primary" data-dem="ok" data-id="${esc(e.id)}">✅ Confirmer</button>` : ""}</div></div>`).join("")
-      : (!mesNotifs && !R ? `<p class="hint">🎉 Aucune notification en attente pour le moment.</p>` : ""));
+      (!mesNotifs && !R ? `<p class="hint">🎉 Aucune notification en attente pour le moment.</p>` : "");
     $("clocheBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
   }
   const closeCloche = () => { $("clocheBg").classList.add("hidden"); document.body.style.overflow = ""; };
@@ -3131,15 +3132,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       } catch (err) { rv.disabled = false; toast("Impossible de marquer comme vue : " + (err.message || err)); }
       return;
     }
-    const b = ev.target.closest("[data-dem]"); if (!b) return;
-    const e = events.find(x => String(x.id) === b.dataset.id); if (!e) return;
-    if (b.dataset.dem === "voir") { closeCloche(); openForm(e); return; }
-    const pv = +e.acompte > 0 ? `\n\nLe client recevra le mail de confirmation avec la demande d'acompte (${euro(+e.acompte)}).` : (e.email ? "\n\n⚠️ Pas d'acompte indiqué : le client recevra le mail sans demande d'acompte. Ouvre la fiche pour l'ajouter." : "");
-    if (!confirm(`Confirmer « ${e.titre || e.enfant || "cette demande"} » ?${pv}`)) return;
-    b.disabled = true;
-    try { const { error } = await sb.from("evenements").update({ statut: "confirme" }).eq("id", e.id); if (error) throw error;
-      e.statut = "confirme"; toast("✅ Confirmée"); render(); openCloche();
-    } catch (err) { b.disabled = false; toast("Oups : " + (err.message || err)); }
+
   });
 
   function render() { majWho(); majCloche(); modeNuit(); renderNext(); renderModeAccueil(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
