@@ -15,6 +15,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const env = (k) => Deno.env.get(k) || "";
 const sb = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"));
 const APP_URL = env("APP_URL").replace(/\/+$/, "");
+const EMAIL_PRO = env("FANTASY_PRO_EMAIL") || "fantasykidsevents@gmail.com";
+// Les alertes importantes vont sur la boîte professionnelle habituelle.
+const EMAIL_GESTION = EMAIL_PRO;
 
 const PUSH_OK = !!(env("VAPID_PUBLIC_KEY") && env("VAPID_PRIVATE_KEY"));
 if (PUSH_OK) {
@@ -144,31 +147,38 @@ const extrasTxt = (ev) => ev.supplement ? `supplément${ev.supplement_note ? " "
 // ---------- envoi ----------
 let mailer = null;
 function getMailer() {
-  if (mailer || !env("GMAIL_USER") || !env("GMAIL_APP_PASSWORD")) return mailer;
-  mailer = nodemailer.createTransport({
+  if (!env("GMAIL_USER") || !env("GMAIL_APP_PASSWORD")) return null;
+  if (!mailer) mailer = nodemailer.createTransport({
     host: "smtp.gmail.com", port: 465, secure: true,
     auth: { user: env("GMAIL_USER"), pass: env("GMAIL_APP_PASSWORD").replace(/\s/g, "") },
   });
-  return mailer;
+  return { transport: mailer, adresse: env("GMAIL_USER") };
 }
 
-async function envoyerEmail(to, sujet, html, texte, pj = []) {
-  // Option 1 : Resend (si configuré)
-  if (env("RESEND_API_KEY") && env("EMAIL_FROM")) {
+async function envoyerEmail(to, sujet, html, texte, pj = [], options: { canal?: "automatique" | "professionnel" } = {}) {
+  const canal = options.canal || "automatique";
+  // Resend pour les mails automatiques ; Gmail reste réservé aux contrats pro.
+  if (canal === "automatique" && env("RESEND_API_KEY")) {
+    const expediteur = env("EMAIL_FROM_AUTO") || env("EMAIL_FROM");
+    if (!expediteur) throw new Error("Envoi automatique : EMAIL_FROM_AUTO doit être configuré pour Resend.");
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${env("RESEND_API_KEY")}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: env("EMAIL_FROM"), to, subject: sujet, html, text: texte,
+      body: JSON.stringify({ from: expediteur, to, subject: sujet, html, text: texte,
+        reply_to: env("EMAIL_REPLY_TO") || env("GMAIL_USER") || "fantasykidsevents@gmail.com",
         ...(pj.length ? { attachments: pj.map((a) => ({ filename: a.filename, content: btoa(Array.from(a.content, (c) => String.fromCharCode(c)).join("")) })) } : {}) }),
     });
     if (!r.ok) throw new Error("Resend : " + (await r.text()));
     return;
   }
-  // Option 2 : Gmail
-  const t = getMailer();
-  if (!t) return "email non configuré";
-  await t.sendMail({
-    from: `"Fantasy Kids Events" <${env("GMAIL_USER")}>`,
+  // Secours Gmail pour les automatisations tant que Resend n'est pas configuré.
+  const config = getMailer();
+  if (!config) throw new Error(canal === "professionnel"
+    ? "Compte Gmail professionnel non configuré"
+    : "Envois automatiques non configurés : renseigner RESEND_API_KEY et EMAIL_FROM_AUTO");
+  if (canal === "automatique") console.warn("Resend non configuré : envois automatiques encore envoyés via Gmail jusqu'à activation.");
+  await config.transport.sendMail({
+    from: `"Fantasy Kids Events" <${config.adresse}>`,
     to, subject: sujet, html, text: texte,
     attachments: pj.map((a) => ({ filename: a.filename, content: a.content })),
   });
@@ -281,7 +291,7 @@ async function envoyerPush(email, payload, options = {}) {
   return n;
 }
 
-async function prevenir(email, prenom, type, ev, role) {
+async function prevenir(email, prenom, type, ev, role, options: { sansEmail?: boolean } = {}) {
   if (!email) return { pushs: 0, mail: "pas d'e-mail" };
   const T = TEXTES[type];
   const titresPro = { nouvelle: "Nouveau contrat pro", modifiee: "Contrat pro modifié", annulee: "Contrat pro annulé", retire: "Vous n'êtes plus sur ce contrat pro" };
@@ -337,6 +347,11 @@ async function prevenir(email, prenom, type, ev, role) {
   // En pleine prestation, une alerte dans la cloche + un push suffit :
   // ne pas envoyer d'e-mail supplémentaire à l'accompagnateur.
   if (type === "tatouages_milieu") return { email, prenom, type, pushs, mail: "non (rappel sur téléphone)" };
+  if (options.sansEmail) return { email, prenom, type, pushs, mail: "centralisé dans la boîte Fantasy" };
+  // Jordan suit les tâches habituelles dans l'app : pas de doublon par mail.
+  // Les incidents critiques continuent d'arriver dans sa boîte principale.
+  if (norm(prenom) === "jordan" && ev.id !== "test" && !["nonpaye", "materiel_j1"].includes(type))
+    return { email, prenom, type, pushs, mail: "dans l'application (sans e-mail)" };
   if (!canaux.email) return { email, prenom, type, pushs, mail: "désactivé dans les préférences" };
 
   const lignes = [
@@ -388,8 +403,11 @@ async function prevenir(email, prenom, type, ev, role) {
 
   let mail = "envoyé";
   try {
-    const boite = await adresseMailAdministration(email);
-    mail = (await envoyerEmail(boite, `${emojiNotif} ${titreNotif} – ${titre} (${quand(ev)})`, html, texte)) || "envoyé";
+    const boite = norm(prenom) === "jordan" && ev.type_evenement === "contrat_pro"
+      ? EMAIL_PRO : categorie === "administration" && norm(prenom) === "jordan"
+      ? EMAIL_GESTION : await adresseMailAdministration(email);
+    mail = (await envoyerEmail(boite, `${emojiNotif} ${titreNotif} – ${titre} (${quand(ev)})`, html, texte, [],
+      { canal: ev.type_evenement === "contrat_pro" ? "professionnel" : "automatique" })) || "envoyé";
   }
   catch (e) { mail = "erreur : " + (e?.message || e); console.error("email", e); }
   return { email, prenom, type, pushs, mail };
@@ -731,7 +749,8 @@ async function envoyerDevis(ev) {
     <p style="font-size:14px;color:#6b6385">Dès votre accord, nous vous envoyons les infos pour l'acompte afin de bloquer la date rien que pour vous 🔒 Une modification à faire ? Répondez simplement à ce mail.</p>
     ${SIGNATURE}</div>`;
   const texte = `Bonjour,\n\nVoici votre devis pour l'animation${enfant} : ${quand(ev)}.\n${ev.theme ? ev.theme + "\n" : ""}${prix ? `Total : ${euros0(prix)}${acompte ? ` (dont acompte ${euros0(acompte)})` : ""}\n` : ""}\nPour l'accepter en un clic :\n${lien}\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
-  await envoyerEmail(ev.email, `📜 Votre devis Fantasy Kids Events${enfant}`, html, texte);
+  await envoyerEmail(ev.email, `📜 Votre devis Fantasy Kids Events${enfant}`, html, texte, [],
+    { canal: ev.type_evenement === "contrat_pro" ? "professionnel" : "automatique" });
   await sb.from("devis").update({ envoye_le: new Date().toISOString() }).eq("evenement_id", ev.id);
   return "devis envoyé";
 }
@@ -1827,29 +1846,24 @@ Deno.serve(async (req) => {
       // 📩 Nouvelles demandes du formulaire du site -> animations « en attente »
       try {
         const nouvelles = await importerDemandes();
-        for (const ev of nouvelles)
-          for (const m of equipe || []) if (m.responsable) resultats.push(await prevenir(m.email, m.prenom, "demande", ev, ""));
+        for (const ev of nouvelles) {
+          // Wix expédie déjà son e-mail de demande : garder la cloche/push,
+          // sans ajouter un second message pour cette même demande.
+          for (const m of equipe || []) if (m.responsable && m.email)
+            resultats.push(await prevenir(m.email, m.prenom, "demande", ev, "", { sansEmail: true }));
+        }
       } catch (e) { console.error("import site", e); resultats.push({ erreur_import: String(e?.message || e) }); }
 
       // 🎟️ Réservations d'événements reçues via le formulaire Contact du site
       try {
         const resa = await importerResaSite();
-        for (const x of resa)
+        for (const x of resa) {
+          // Une réservation Wix figure déjà dans la section réservations.
+          // Éviter un doublon de cloche et un deuxième e-mail automatique.
           for (const m of (equipe || []).filter((y) => y.responsable && y.email)) {
-            const nb = `${x.places} place${x.places > 1 ? "s" : ""}${x.bebes ? ` + ${x.bebes} bébé${x.bebes > 1 ? "s" : ""}` : ""}`;
-            try {
-              if ((await canauxChoisis(m.email, "administration")).email)
-                await envoyerEmail(m.email, `🎟️ Nouvelle réservation : ${x.titre} – ${x.nom} (${nb})`,
-                `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1f1735"><div style="height:6px;border-radius:3px;background:linear-gradient(90deg,#00b4ff,#a020ff,#d63fd0,#ff7f7f)"></div>
-                <h2>🎟️ Nouvelle réservation – ${esc(x.titre)}</h2>
-                <p style="font-size:16px"><b>${esc(x.nom)}</b> · ${esc(nb)}</p>
-                ${x.telephone ? `<p>📞 ${esc(x.telephone)}</p>` : ""}${x.email ? `<p>✉️ ${esc(x.email)}</p>` : ""}
-                <p style="white-space:pre-wrap;background:#f6f2ff;border-radius:10px;padding:10px">${esc(String(x.notes || "").replace(/^🌐 Via le site[^:]*: /, ""))}</p>
-                ${APP_URL ? `<p><a href="${APP_URL}/index.html" style="display:inline-block;background:#8a3cf7;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:bold">Ouvrir l'app (🔔)</a></p>` : ""}</div>`,
-                `Nouvelle réservation – ${x.titre}\n${x.nom} · ${nb}\n${x.telephone || ""} ${x.email || ""}\n\n${x.notes || ""}`);
-            } catch (e) { console.error("mail résa", e); }
-            resultats.push(await envoyerPush(m.email, { title: `🎟️ Nouvelle réservation : ${x.titre}`, body: `${x.nom} · ${x.places} place${x.places > 1 ? "s" : ""}${x.bebes ? ` + ${x.bebes} bébé${x.bebes > 1 ? "s" : ""}` : ""} (via le site, à vérifier)`, url: "./index.html", tag: `resa-${x.wix_submission_id}` }));
+            resultats.push(await envoyerPush(m.email, { title: `🎟️ Nouvelle réservation : ${x.titre}`, body: `${x.nom} · ${x.places} place${x.places > 1 ? "s" : ""}${x.bebes ? ` + ${x.bebes} bébé${x.bebes > 1 ? "s" : ""}` : ""} (via le site, à vérifier)`, url: "./index.html", tag: `resa-${x.wix_submission_id}` }, { sansCloche: true }));
           }
+        }
       } catch (e) { console.error("import résa", e); resultats.push({ erreur_import_resa: String(e?.message || e) }); }
       console.log("rappels", JSON.stringify(resultats));
       return json({ ok: true, rappels: resultats });
