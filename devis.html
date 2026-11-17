@@ -127,7 +127,7 @@
   }
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const eur = (n) => (Math.round(n * 100) / 100).toLocaleString("fr-BE", { minimumFractionDigits: Number.isInteger(+n) ? 0 : 2, maximumFractionDigits: 2 }) + " €";
-  const OPT = { enfant: ["👧 Enfant supplémentaire", 7], tatouage: ["🦋 Atelier tatouage paillettes", 2], perso_flash: ["🎭 Personnage supplémentaire · Flash (30 min)", 40],
+  const OPT = { hors_zone: ["🚗 Forfait hors zone", 25], enfant: ["👧 Enfant supplémentaire", 7], tatouage: ["🦋 Atelier tatouage paillettes", 2], perso_flash: ["🎭 Personnage supplémentaire · Flash (30 min)", 40],
     perso_magic: ["🎭 Personnage supplémentaire · Magic (1 h)", 65], perso_fantastic: ["🎭 Personnage supplémentaire · Fantastic (1 h 30)", 80],
     perso_celebration: ["🎭 Personnage supplémentaire · Célébration (2 h)", 90], mascotte: ["🐭 Mascotte surprise (30 min)", 100],
     perso_30: ["🎤 Personnage supplémentaire · 30 min", 40], perso_1h: ["🎤 Personnage supplémentaire · 1 h", 45] };
@@ -136,11 +136,13 @@
     const jour = d.date ? new Date(d.date + "T12:00:00").toLocaleDateString("fr-BE", { weekday: "long", day: "numeric", month: "long" }) : "";
     const h = (x) => x ? String(x).slice(0, 5).replace(":", "h") : "";
     $("recap").innerHTML = `<b>🎂 ${d.enfant ? "L'anniversaire de " + esc(d.enfant) + (d.age ? ` (${esc(d.age)} ans)` : "") : "Votre animation"}</b>📅 ${esc(jour.charAt(0).toUpperCase() + jour.slice(1))}${d.heure ? " · " + h(d.heure) + (d.heure_fin ? " – " + h(d.heure_fin) : "") : ""}${d.adresse ? "<br>📍 " + esc(d.adresse) : ""}`;
-    const PF = [["superstar", 350], ["celebration", 330], ["fantastic", 225], ["surprise", 225], ["idol party", 180], ["magic", 175], ["rising star", 125], ["flash", 110]];
-    const th = String(d.theme || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""), pf = (PF.find(([k]) => th.includes(k)) || [0, 0])[1];
-    let L = d.theme ? `<tr><td>✨ Formule ${esc(d.theme)}</td><td>${pf ? eur(pf) : ""}</td></tr>` : "";
+    const optionsFacturees = Object.entries(d.options || {}).reduce((t,[k,n]) => t + (k === "tatouage" ? 0 : (OPT[k]?.[1] || 0) * (+n || 0)),0);
+    const deplacement = d.km_detail?.fraisInclusPrix === true || d.frais_deplacement_inclus === true ? Math.max(0,+d.deplacement_client || 0) : 0;
+    const formule = Math.max(0,Math.round(((+d.prix || 0)-optionsFacturees-deplacement)*100)/100);
+    let L = `<tr><td>✨ Formule ${esc(d.theme || "Animation")}</td><td>${eur(formule)}</td></tr>`;
     Object.entries(d.options || {}).filter(([, n]) => +n > 0).forEach(([k, n]) => { const o = OPT[k]; if (!o) return;
       L += `<tr><td>${esc(o[0])}${+n > 1 ? ` × ${n}` : ""}${k === "tatouage" ? "<br><small style='color:#6b6385'>à régler le jour même, selon le nombre d'enfants tatoués</small>" : ""}</td><td>${k === "tatouage" ? eur(o[1]) + " / enfant" : eur(o[1] * n)}</td></tr>`; });
+    if (deplacement) L += `<tr><td>🚗 Frais de déplacement</td><td>${eur(deplacement)}</td></tr>`;
     if (+d.prix) L += `<tr class="tot"><td>Total</td><td>${eur(+d.prix)}</td></tr>`;
     if (+d.acompte) L += `<tr class="sub"><td>💳 Acompte pour réserver la date</td><td>${eur(+d.acompte)}</td></tr>`;
     if (+d.prix && +d.acompte && +d.prix > +d.acompte) L += `<tr class="sub"><td>💰 Solde le jour de la fête</td><td>${eur(+d.prix - +d.acompte)}</td></tr>`;
