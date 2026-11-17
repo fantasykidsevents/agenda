@@ -935,6 +935,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .dl.ac select{border-color:#f0c96a;background:#fff8e6;color:#8a5200;font-weight:600}
   .dl input{width:96px;flex:none;text-align:right;font-weight:600}
   .dl button{flex:none;border:0;background:#fff0f3;border-radius:10px;width:38px;height:42px;cursor:pointer;color:#b4123c}
+  .dep-cat-creator{margin:8px 0 12px;padding:12px;border:1px solid #d8c3f8;background:#f9f4ff;border-radius:14px}
+  .dep-cat-creator .row{align-items:end}
+  .dep-cat-creator .row>div:last-child{max-width:95px}
+  .dep-cat-creator .actions{margin-top:10px}
   #depPrev img{max-height:140px;border-radius:12px;display:block;margin:6px 0}
   .ticket-btn{width:100%;border:2px dashed #c9a2f5;background:#faf6ff;border-radius:16px;padding:16px;font:inherit;font-weight:600;color:#6b2bb5;cursor:pointer}
   .big-money{font-size:28px!important;font-weight:700;text-align:center}
@@ -1935,6 +1939,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <input id="depDesc" type="text" placeholder="Ex. Action, Kruidvat, Total…" />
     <label>Catégorie</label>
     <div id="depLignes"></div>
+    <button type="button" class="btn ghost" id="depNouvelleCat" style="width:100%;margin-top:5px">✨ Créer une nouvelle catégorie</button>
+    <div id="depCatCreator" class="dep-cat-creator hidden">
+      <div class="row">
+        <div><label for="depCatNom">Nom de la catégorie</label><input id="depCatNom" type="text" maxlength="45" placeholder="Ex. Décors, location de matériel…" /></div>
+        <div><label for="depCatEmoji">Icône</label><input id="depCatEmoji" type="text" maxlength="12" placeholder="✨" /></div>
+      </div>
+      <div class="actions"><button type="button" class="btn ghost" id="depCatAnnuler">Annuler</button><button type="button" class="btn primary" id="depCatCreer">Enregistrer la catégorie</button></div>
+      <p class="hint" style="margin-bottom:0">Elle sera disponible pour tous tes prochains tickets.</p>
+    </div>
     <label for="depEv">Pour une animation ? (facultatif)</label>
     <select id="depEv"></select>
     <div id="depErr" class="err"></div>
@@ -8801,7 +8814,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const LS_DEP = "fk_agenda_depenses_demo";
   const CATS = { materiel: ["🎨", "Matériel d'animation"], maquillage: ["💄", "Maquillage & paillettes"], costumes: ["👗", "Costumes & perruques"],
     deplacement: ["⛽", "Carburant & parking"], pub: ["📣", "Pub & site"], cadeaux: ["🎁", "Cadeaux & goodies"], autre: ["📦", "Autre"] };
-  let depenses = [], depTicket = null, depEdit = null, depLignes = [];
+  const CLE_CATS_DEP = "depenses_categories_personnalisees";
+  let depenses = [], depTicket = null, depEdit = null, depLignes = [], depCatCible = 0;
+  function lireCatsDep(s) {
+    try {
+      const liste=JSON.parse(s||"[]");
+      return Array.isArray(liste) ? liste.filter(c => c && /^perso_[a-z0-9_-]+$/.test(c.id||"") && typeof c.nom === "string" && c.nom.trim()) : [];
+    } catch(e) { return []; }
+  }
+  function syncCatsDep() {
+    Object.keys(CATS).filter(k => k.startsWith("perso_")).forEach(k => delete CATS[k]);
+    lireCatsDep(reglages[CLE_CATS_DEP]).forEach(c => { CATS[c.id]=[String(c.emoji||"✨").slice(0,12),c.nom.trim().slice(0,45)]; });
+  }
   const depStore = {
     async list() {
       if (!isResp()) return [];
@@ -8848,7 +8872,53 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     return [...m.values()].sort((a, b) => b[0].date.localeCompare(a[0].date));
   }
   const num = (v) => Math.round(parseFloat(String(v || "").replace(",", ".")) * 100) / 100 || 0;
-  const optCats = (sel) => (sel ? "" : `<option value="" selected>❓ À classer…</option>`) + Object.entries(CATS).map(([k, [e, t]]) => `<option value="${k}"${sel === k ? " selected" : ""}>${e} ${t}</option>`).join("");
+  const optCats = (sel) => {
+    syncCatsDep();
+    return (sel ? "" : `<option value="" selected>❓ À classer…</option>`)
+      + Object.entries(CATS).map(([k, [e, t]]) => `<option value="${esc(k)}"${sel === k ? " selected" : ""}>${esc(e)} ${esc(t)}</option>`).join("")
+      + `<option value="__creer__">✨ + Créer une catégorie…</option>`;
+  };
+
+  function afficherCreationCatDep(index) {
+    depCatCible=index;
+    $("depCatNom").value=""; $("depCatEmoji").value="✨";
+    $("depCatCreator").classList.remove("hidden");
+    $("depCatNom").focus();
+    $("depCatCreator").scrollIntoView({block:"nearest",behavior:"smooth"});
+  }
+  function cacherCreationCatDep() { $("depCatCreator").classList.add("hidden"); }
+  $("depNouvelleCat").addEventListener("click",() => {
+    const i=depLignes.findIndex(l => !l.categorie);
+    afficherCreationCatDep(i>=0?i:Math.max(0,depLignes.length-1));
+  });
+  $("depCatAnnuler").addEventListener("click",cacherCreationCatDep);
+  $("depCatCreer").addEventListener("click",async () => {
+    const nom=$("depCatNom").value.trim().replace(/\s+/g," ");
+    const emoji=$("depCatEmoji").value.trim().slice(0,12)||"✨";
+    if(!nom){$("depErr").textContent="Donne un nom à ta nouvelle catégorie.";$("depCatNom").focus();return;}
+    $("depErr").textContent="";
+    const btn=$("depCatCreer");btn.disabled=true;
+    try {
+      // Relire les catégories partagées avant de compléter la liste, pour ne pas
+      // écraser une catégorie créée récemment sur un autre appareil.
+      const distant=await regStore.get();
+      const personnalisees=lireCatsDep(distant[CLE_CATS_DEP]??reglages[CLE_CATS_DEP]);
+      reglages[CLE_CATS_DEP]=JSON.stringify(personnalisees);syncCatsDep();
+      const existante=Object.entries(CATS).find(([,v]) => normName(v[1])===normName(nom));
+      let cle;
+      if(existante)cle=existante[0];
+      else {
+        cle="perso_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,6);
+        const json=JSON.stringify([...personnalisees,{id:cle,nom,emoji}]);
+        await regStore.set({[CLE_CATS_DEP]:json});
+        reglages[CLE_CATS_DEP]=json;syncCatsDep();
+      }
+      if(depLignes[depCatCible])depLignes[depCatCible].categorie=cle;
+      cacherCreationCatDep();renderLignes();
+      toast(existante?"Cette catégorie existe déjà : elle a été sélectionnée.":"✨ Catégorie créée et enregistrée !");
+    } catch(err){$("depErr").textContent="Impossible d'enregistrer la catégorie : "+(err.message||err);}
+    finally{btn.disabled=false;}
+  });
 
   function renderLignes() {
     const tot = num($("depMontant").value), seule = depLignes.length === 1;
@@ -8867,7 +8937,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     p.style.color = Math.abs(reste) < 0.005 ? "#17714f" : "#b45309";
     p.textContent = Math.abs(reste) < 0.005 ? "✅ Tout est réparti" : reste > 0 ? `Reste à répartir : ${euro(reste)}` : `Trop réparti de ${euro(-reste)}`;
   }
-  $("depLignes").addEventListener("change", (e) => { const s = e.target.closest("[data-lcat]"); if (s) { depLignes[+s.dataset.lcat].categorie = s.value; renderLignes(); } });
+  $("depLignes").addEventListener("change", (e) => { const s = e.target.closest("[data-lcat]"); if (s) {
+    const i=+s.dataset.lcat;
+    if(s.value==="__creer__"){afficherCreationCatDep(i);return;}
+    depLignes[i].categorie=s.value;renderLignes();
+  } });
   $("depLignes").addEventListener("input", (e) => { const m = e.target.closest("[data-lmt]"); if (m) { depLignes[+m.dataset.lmt].montant = num(m.value); majReste(); } });
   $("depLignes").addEventListener("click", (e) => {
     if (e.target.closest("#depAddLigne")) {
@@ -8885,6 +8959,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function openDep(d) {
     const anc = d ? lignesDe(d) : [];
     depEdit = d ? anc : null; depTicket = null;
+    cacherCreationCatDep();
     $("depTitle").textContent = d ? "Modifier le ticket" : "🧾 Nouvel achat";
     const tot = anc.reduce((t, x) => t + +x.montant, 0);
     $("depMontant").value = d ? String(Math.round(tot * 100) / 100).replace(".", ",") : ""; $("depDate").value = d ? d.date : todayISO(); $("depDesc").value = d ? d.description || "" : "";
@@ -8965,6 +9040,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   document.addEventListener("click", (e) => { if (e.target.closest("#statsBody")) clicDep(e); });
   function panelDepenses(liste, an) {
+    syncCatsDep();
     const tot = liste.reduce((t, d) => t + +d.montant, 0), tk = tickets(liste), sansTicket = tk.filter(l => !l.some(x => x.ticket)).length;
     const parCat = Object.entries(CATS).map(([k, [e, t]]) => [`${e} ${t}`, liste.filter(d => (CATS[d.categorie] ? d.categorie : "autre") === k).reduce((s, d) => s + +d.montant, 0)]).filter(([, v]) => v);
     return `<div class="panel"><h3>🧾 Dépenses ${an ? "de l'année" : "du mois"} : ${euro(tot)}</h3>
