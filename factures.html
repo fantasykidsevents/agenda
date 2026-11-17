@@ -51,14 +51,37 @@
     @media(max-width:900px){main{display:block}#paperWrap{position:static}#paper{max-width:700px;margin:auto}}
     @media(max-width:540px){.row{grid-template-columns:1fr}.paper-content{font-size:9px}.paper-content h3{font-size:12px}.bill-table{font-size:9px}.paper-meta{margin-top:35px}.paper-head h2{font-size:19px}.paper-footer{font-size:8px}.total-badge{font-size:12px}.payment{font-size:9px}}
     @page{size:A4;margin:0}
-    @media print{html,body{background:white;margin:0!important}body *{visibility:hidden!important}#paper,#paper *{visibility:visible!important}#paper{position:absolute;left:0;top:0;width:210mm;height:297mm;min-height:0;box-shadow:none;aspect-ratio:auto;print-color-adjust:exact;-webkit-print-color-adjust:exact}#paper .paper-content{font-size:12px}#paper .bill-table{font-size:12px}#paper .paper-head h2{font-size:25px}#paper .paper-footer{font-size:10px}#paper .payment{font-size:12px}}
+    @media print{
+      @page{size:A4;margin:0}
+      html,body{width:210mm!important;height:auto!important;margin:0!important;padding:0!important;overflow:visible!important;background:white!important}
+      body > .top,body > #blocked,#app > div,#paperWrap > .controls{display:none!important}
+      #app{display:block!important;max-width:none!important;width:210mm!important;margin:0!important;padding:0!important;background:white!important}
+      #paperWrap{display:block!important;position:static!important;width:210mm!important;margin:0!important;padding:0!important}
+      #paper{display:block!important;position:relative!important;left:auto!important;top:auto!important;width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;margin:0!important;padding:0!important;aspect-ratio:auto!important;box-shadow:none!important;overflow:hidden!important;break-inside:avoid;page-break-inside:avoid;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+      #paper,#paper *{visibility:visible!important;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+      #paper .paper-head{padding-top:17%!important}
+      #paper .paper-head h2{font-size:28px!important}
+      #paper .paper-content{padding:8% 10% 15%!important;font-size:14px!important}
+      #paper .paper-content h3{font-size:17px!important}
+      #paper .bill-table{font-size:14px!important}
+      #paper .bill-table th{padding:10px!important}
+      #paper .bill-table td{padding:11px 9px!important}
+      #paper .paper-client{min-height:120px!important}
+      #paper .paper-meta{margin-top:48px!important}
+      #paper .totals{font-size:16px!important}
+      #paper .quote-note,#paper .payment{font-size:13px!important}
+      #paper .paper-footer{font-size:11px!important;line-height:1.5!important}
+      #paper .paper-footer .tax{font-size:10px!important}
+      #paper .bottom-text{font-size:9.5px!important}
+      #paper .total-badge{font-size:18px!important}
+    }
   </style>
 </head>
 <body>
 <header class="top"><a href="index.html">← Agenda</a><div><h1>🧾 Factures & devis</h1><p>Fantasy Kids Events · réservé aux responsables</p></div></header>
 <main id="app" hidden>
  <div>
-  <section class="panel"><label for="kind">Type de document</label><select id="kind"><option value="facture">🧾 Factures</option><option value="devis">📄 Devis</option></select><div class="controls"><button class="primary" id="new">＋ Nouvelle facture</button><button id="refresh">↻ Actualiser</button></div><h2 id="listTitle">Mes factures</h2><div id="list">Chargement…</div></section>
+  <section class="panel"><label for="kind">Type de document</label><select id="kind"><option value="facture">🧾 Factures</option><option value="devis">📄 Devis</option></select><div class="controls"><button class="primary" id="new">＋ Nouvelle facture</button><button id="refresh">↻ Actualiser</button><button id="toggleArchive">📂 Archives</button></div><h2 id="listTitle">Mes factures</h2><div id="list">Chargement…</div></section>
   <section class="panel"><h2 id="editorTitle">Préparer la facture</h2><div id="message" role="status" aria-live="polite"></div>
    <label for="event">Reprendre une prestation de l’agenda</label><select id="event"><option value="">Facture libre / choisir une prestation</option></select>
    <p class="note">Le prix est repris de l'agenda et peut déjà comprendre les déplacements : vérifie toujours les lignes avant l’émission.</p>
@@ -77,7 +100,7 @@ fantasykidsevents@gmail.com</textarea>
    <div class="row"><div><label for="date">Date prévue / prestation</label><input id="date" type="date"></div><div><label for="due" id="dueLabel">Date d’échéance</label><input id="due" type="date"></div></div>
    <h3>Prestations facturées</h3><div id="lines"></div><button id="addLine">＋ Ajouter une ligne</button>
    <div class="row"><div><label for="priceType">Prix indiqués</label><select id="priceType"><option value="ttc">Montants finaux (€)</option><option value="ht">Hors TVA (€)</option></select></div><div><label for="notes" id="notesLabel">Note facultative</label><textarea id="notes" placeholder="Référence, acompte déjà versé…"></textarea></div></div>
-   <div class="controls"><button id="save" class="primary">💾 Enregistrer le brouillon</button><button id="issue">🔒 Émettre et numéroter</button><button id="paid">✅ Marquer payée</button></div>
+   <div class="controls"><button id="save" class="primary">💾 Enregistrer le brouillon</button><button id="issue">🔒 Émettre et numéroter</button><button id="paid">✅ Marquer payée</button><button id="deleteDraft" type="button" hidden>🗑️ Supprimer le brouillon</button><button id="archiveDoc" type="button" hidden>🗑️ Retirer de la liste</button><button id="restoreDoc" type="button" hidden>↩️ Restaurer</button><button id="cancelQuote" type="button" hidden>🚫 Annuler ce devis</button></div>
    <p class="note" id="lockNote">Une facture émise est définitive : ses montants et coordonnées ne peuvent plus être modifiés. Le bouton « PDF » utilise l'impression du navigateur, option « Enregistrer en PDF ».</p>
   </section>
  </div>
@@ -101,9 +124,9 @@ fantasykidsevents@gmail.com</textarea>
  const config=window.APP_CONFIG||{}, sb=(window.supabase&&config.SUPABASE_URL&&config.SUPABASE_ANON_KEY)?window.supabase.createClient(config.SUPABASE_URL,config.SUPABASE_ANON_KEY):null;
  const params=new URLSearchParams(location.search);
  let mode=params.get('mode')==='devis'?'devis':'facture';
- let docs=[],events=[],selected=null,readonly=false;
+ let docs=[],events=[],selected=null,readonly=false,showArchived=false;
  const table=()=>mode==='devis'?'devis_fantasy':'factures_fantasy';
- function updateMode(){const isQuote=mode==='devis';$('kind').value=mode;$('new').textContent=isQuote?'＋ Nouveau devis':'＋ Nouvelle facture';$('listTitle').textContent=isQuote?'Mes devis':'Mes factures';$('editorTitle').textContent=isQuote?'Préparer le devis':'Préparer la facture';$('pTitle').textContent=isQuote?'DEVIS ✦':'FACTURE ✦';$('issue').textContent=isQuote?'🔒 Finaliser le devis':'🔒 Émettre et numéroter';$('paid').hidden=isQuote;$('notesLabel').textContent=isQuote?'Notes visibles sur le devis':'Note facultative';$('notes').placeholder=isQuote?'Ex. Personnages présents, durée, conditions, détail de la prestation…':'Référence, acompte déjà versé…';$('dueLabel').textContent=isQuote?'Valable jusqu’au':'Date d’échéance';$('pDueLabel').textContent=isQuote?'Devis valable jusqu’au':'Échéance';$('lockNote').textContent=isQuote?'Une fois le devis finalisé, son contenu est verrouillé. Il ne sera pas compté comme une facture. Pour le PDF, utilise Imprimer / PDF.':'Une facture émise est définitive : ses montants et coordonnées ne peuvent plus être modifiés. Le bouton PDF utilise l’impression du navigateur.';}
+ function updateMode(){const isQuote=mode==='devis';$('kind').value=mode;$('new').textContent=isQuote?'＋ Nouveau devis':'＋ Nouvelle facture';$('listTitle').textContent=isQuote?'Mes devis':'Mes factures';$('editorTitle').textContent=isQuote?'Préparer le devis':'Préparer la facture';$('pTitle').textContent=isQuote?'DEVIS ✦':'FACTURE ✦';$('issue').textContent=isQuote?'🔒 Finaliser le devis':'🔒 Émettre et numéroter';$('paid').hidden=isQuote;$('notesLabel').textContent=isQuote?'Notes visibles sur le devis':'Note facultative';$('notes').placeholder=isQuote?'Ex. Personnages présents, durée, conditions, détail de la prestation…':'Référence, acompte déjà versé…';$('dueLabel').textContent=isQuote?'Valable jusqu’au':'Date d’échéance';$('pDueLabel').textContent=isQuote?'Devis valable jusqu’au':'Échéance';$('lockNote').textContent=isQuote?'Les devis finalisés sont conservés avec leur numéro, mais peuvent être annulés. Les brouillons peuvent être supprimés.':'Les factures émises sont conservées pour la comptabilité ; seuls les brouillons sont supprimables. Pour le PDF, utilise Imprimer / PDF.';}
  $('issuerIban').value=config.IBAN||'';
  const settingsIds=['issuerName','issuerTva','issuerIban','issuerAddress','issuerContact','regime'];
  try{const saved=JSON.parse(localStorage.getItem('fk_factures_emetteur')||'null');if(saved)for(const id of settingsIds)if(saved[id]!=null)$(id).value=saved[id];}catch(_){ }
@@ -118,19 +141,19 @@ fantasykidsevents@gmail.com</textarea>
   row.querySelector('button').onclick=()=>{row.remove();preview();};row.querySelectorAll('input,textarea').forEach(x=>x.addEventListener('input',preview));$('lines').append(row);preview();}
  function preview(){if(!$('lines').children.length)return;const d=getForm();const shown=selected?.statut!=='brouillon'&&selected?selected.contenu:d;
   $('pClient').textContent=shown.client?.nom||'Nom du client';$('pClientAddress').textContent=shown.client?.adresse||'Adresse du client';$('pClientTva').textContent=shown.client?.tva?`T.V.A. : ${shown.client.tva}`:'';
-  $('pNumber').textContent=selected?.numero||'BROUILLON';$('pDate').textContent=dateFR(shown.date_emission)||dateFR(today());$('pDue').textContent=dateFR(shown.echeance)||'À préciser';
+  $('pNumber').textContent=selected?.numero||'À numéroter';$('pTitle').textContent=selected?.statut==='annule'?'DEVIS ANNULÉ':(mode==='devis'?'DEVIS ✦':'FACTURE ✦');$('pDate').textContent=dateFR(shown.date_emission)||dateFR(today());$('pDue').textContent=dateFR(shown.echeance)||'À préciser';
   $('pLines').innerHTML=(shown.lignes||[]).map(l=>`<tr><td>${h(l.description)}</td><td>${h(l.quantite)}</td><td>${money((Number(l.prix)||0)*(Number(l.quantite)||0))}</td></tr>`).join('');
   const total=(shown.lignes||[]).reduce((sum,l)=>sum+(Number(l.prix)||0)*(Number(l.quantite)||0),0);
   $('pSubtotal').textContent=money(total);$('pTotal').textContent=`Total : ${money(total)}`;$('pIban').textContent=shown.emetteur?.iban||'';$('pNote').textContent=mode==='facture'&&shown.note?`• ${shown.note}`:'';$('pDetails').textContent=mode==='devis'&&shown.note?`Précisions sur la prestation :\n${shown.note}`:'';
   $('pIssuer').textContent=[shown.emetteur?.nom,shown.emetteur?.adresse,shown.emetteur?.contact,shown.emetteur?.iban?`IBAN : ${shown.emetteur.iban}`:''].filter(Boolean).join('\n');
   $('pRegime').textContent=shown.regime_tva||'';$('pLegal').textContent=`${shown.emetteur?.nom||''} · N° d'entreprise / TVA : ${shown.emetteur?.tva||''}`;
-  $('docStatus').textContent=selected?(selected.statut==='brouillon'?'Brouillon (non émis)':selected.numero+' · '+(selected.statut==='payee'?'payée':mode==='devis'?'finalisé':'émise')):'Nouveau brouillon';}
+  $('docStatus').textContent=selected?(selected.statut==='brouillon'?'Aperçu non finalisé':selected.numero+' · '+(selected.statut==='payee'?'payée':selected.statut==='annule'?'annulé':mode==='devis'?'finalisé':'émise')):'Aperçu non finalisé';}
  function editable(yes){readonly=!yes;document.querySelectorAll('#app input,#app textarea').forEach(x=>x.disabled=!yes);$('priceType').disabled=!yes;$('event').disabled=!yes;$('addLine').disabled=!yes;for(const b of $('lines').querySelectorAll('button'))b.disabled=!yes;
-  $('save').disabled=!yes;$('issue').disabled=!yes;$('paid').disabled=mode==='devis'||!selected||selected.statut!=='emise';}
+  $('save').disabled=!yes;$('issue').disabled=!yes;$('paid').disabled=mode==='devis'||!selected||selected.statut!=='emise';$('deleteDraft').hidden=!selected||selected.statut!=='brouillon';$('archiveDoc').hidden=!selected||selected.statut==='brouillon'||!!selected.archive_le;$('restoreDoc').hidden=!selected||!selected.archive_le;$('cancelQuote').hidden=mode!=='devis'||!selected||selected.statut!=='emis'||!!selected.archive_le;}
  function selectDoc(row){selected=row;const d=row?.contenu||{};setForm(d);$('event').value=row?.source_evenement_id||'';editable(!row||row.statut==='brouillon');$('save').textContent=row?'💾 Enregistrer les modifications':'💾 Enregistrer le brouillon';preview();renderList();}
- function renderList(){$('list').innerHTML=docs.length?docs.map(x=>`<button class="entry ${selected?.id===x.id?'selected':''}" data-id="${h(x.id)}"><span><b>${h(x.numero||'Brouillon')}</b><br><small>${h(x.contenu?.client?.nom||'Client non renseigné')}</small></span><span class="tag">${x.statut==='payee'?'Payée':['emise','emis'].includes(x.statut)?mode==='devis'?'Finalisé':'Émise':'Brouillon'}</span></button>`).join(''):(mode==='devis'?'Aucun devis créé.':'Aucune facture créée.');
+ function renderList(){$('list').innerHTML=docs.length?docs.map(x=>`<button class="entry ${selected?.id===x.id?'selected':''}" data-id="${h(x.id)}"><span><b>${h(x.numero||'En préparation')}</b><br><small>${h(x.contenu?.client?.nom||'Client non renseigné')}</small></span><span class="tag">${x.archive_le?'Retiré':x.statut==='annule'?'Annulé':x.statut==='payee'?'Payée':['emise','emis'].includes(x.statut)?mode==='devis'?'Finalisé':'Émise':'Brouillon'}</span></button>`).join(''):(showArchived?'Aucun document retiré.':mode==='devis'?'Aucun devis créé.':'Aucune facture créée.');
   $('list').querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>selectDoc(docs.find(d=>d.id===x.dataset.id)));}
- async function load(){const {data,error}=await sb.from(table()).select('*').order('created_at',{ascending:false});if(error)throw error;docs=data||[];renderList();}
+ async function load(){const {data,error}=await sb.from(table()).select('*').order('created_at',{ascending:false});if(error)throw error;docs=(data||[]).filter(x=>showArchived?!!x.archive_le:!x.archive_le);renderList();$('toggleArchive').textContent=showArchived?'← Documents actifs':'📂 Archives';$('listTitle').textContent=showArchived?'Documents retirés':mode==='devis'?'Mes devis':'Mes factures';}
  async function loadEvents(){const [{data,error},{data:priv, error:privateError},{data:fiches,error:ficheError}]=await Promise.all([sb.from('evenements').select('*').order('date',{ascending:false}).limit(500),sb.from('evenements_prive').select('*'),sb.from('fiches').select('evenement_id,reponses')]);if(error)throw error;if(privateError)throw privateError;if(ficheError)throw ficheError;
   const details=new Map((priv||[]).map(p=>[String(p.id),p]));const parFiche=new Map((fiches||[]).map(f=>[String(f.evenement_id),f.reponses||{}]));
   events=(data||[]).map(e=>{const p=details.get(String(e.id))||{},r=parFiche.get(String(e.id))||{};return {...e,...p,parent:p.parent||e.parent||r.client_nom||'',fiche_client_nom:r.client_nom||''};});
@@ -139,8 +162,9 @@ fantasykidsevents@gmail.com</textarea>
   $('notes').value=mode==='devis'?e.notes||'':'';
   const tarif=Number(e.prix||0)+Number(e.supplement||0);drawLines([{description:e.titre||e.theme||'Animation Fantasy Kids Events',quantite:1,prix:tarif}]);preview();status($('clientName').value?'Prestation reprise. Vérifie le client, le montant et les éventuels frais de déplacement avant de finaliser.':'Le nom du client est absent de l’agenda et de la fiche anniversaire : renseigne-le manuellement.',!$('clientName').value);};
  $('new').onclick=()=>{selected=null;$('clientName').value='';$('clientAddress').value='';$('clientTva').value='';$('date').value='';$('due').value='';$('notes').value='';$('event').value='';drawLines([{description:'Animation Fantasy Kids Events',quantite:1,prix:0}]);editable(true);renderList();preview();status('Nouveau brouillon prêt.');};
- $('kind').onchange=async()=>{mode=$('kind').value;selected=null;updateMode();try{await load();$('new').click();}catch(e){status('Pour activer les devis, exécute supabase_devis_contrats_pro.sql dans Supabase. '+e.message,true);}};
+ $('kind').onchange=async()=>{mode=$('kind').value;selected=null;showArchived=false;updateMode();try{await load();$('new').click();}catch(e){status('Pour activer les devis, exécute supabase_devis_contrats_pro.sql dans Supabase. '+e.message,true);}};
  $('refresh').onclick=async()=>{try{await load();status('Liste actualisée.');}catch(e){status(e.message,true)}};
+ $('toggleArchive').onclick=async()=>{showArchived=!showArchived;selected=null;try{await load();$('new').click();}catch(e){status(e.message,true);}};
  $('addLine').onclick=()=>addLine();document.querySelectorAll('#app input,#app textarea,#app select').forEach(x=>x.addEventListener('input',preview));
  function validate(d){if(!d.emetteur.nom||!d.emetteur.adresse||!d.emetteur.tva||!d.emetteur.iban||!d.regime_tva||!d.client.nom||!d.client.adresse)throw Error('Complète les coordonnées de l’émetteur, du client, l’IBAN et le régime TVA.');
   if(!d.lignes.length||d.lignes.some(l=>!l.description||!Number.isFinite(l.quantite)||l.quantite<=0||!Number.isFinite(l.prix)||l.prix<0))throw Error('Vérifie les lignes : description, quantité positive et prix valide.');}
@@ -153,6 +177,35 @@ fantasykidsevents@gmail.com</textarea>
   const row=await save();const {data,error}=await sb.rpc(quote?'fk_devis_emettre':'fk_factures_emettre',{p_id:row.id});if(error)throw error;selected=data;await load();selectDoc(data);status(`${quote?'Devis':'Facture'} ${data.numero} ${quote?'finalisé':'émise'} ✅`);}catch(e){status(e.message,true);}};
  $('paid').onclick=async()=>{if(!selected||selected.statut!=='emise')return;if(!confirm('Confirmer la réception du paiement de cette facture ?'))return;
   const {data,error}=await sb.rpc('fk_factures_marquer_payee',{p_id:selected.id,p_date:today()});if(error)return status(error.message,true);selected=data;await load();selectDoc(data);status('Facture marquée comme payée ✅');};
+ $('deleteDraft').onclick=async()=>{
+  if(!selected||selected.statut!=='brouillon')return;
+  if(!confirm(`Supprimer définitivement ce ${mode==='devis'?'devis':'facture'} en préparation ? Aucun numéro officiel n’a été attribué.`))return;
+  const id=selected.id;
+  const {data,error}=await sb.from(table()).delete().eq('id',id).eq('statut','brouillon').select('id');
+  if(error||!data?.length)return status(error?.message||'Suppression refusée : le document a peut-être déjà été finalisé.',true);
+  selected=null;await load();$('new').click();status('Brouillon supprimé ✅');
+ };
+ $('archiveDoc').onclick=async()=>{
+  if(!selected||selected.statut==='brouillon'||selected.archive_le)return;
+  const quote=mode==='devis';
+  if(!confirm(`Retirer ${quote?'ce devis':'cette facture'} ${selected.numero} de la liste ? Le document numéroté restera dans les archives et pourra être restauré.`))return;
+  const {error}=await sb.rpc(quote?'fk_devis_archiver':'fk_factures_archiver',{p_id:selected.id,p_archiver:true});
+  if(error)return status(error.message,true);
+  selected=null;await load();$('new').click();status('Document retiré de la liste. Tu peux le retrouver dans Archives ✅');
+ };
+ $('restoreDoc').onclick=async()=>{
+  if(!selected||!selected.archive_le)return;
+  const {error}=await sb.rpc(mode==='devis'?'fk_devis_archiver':'fk_factures_archiver',{p_id:selected.id,p_archiver:false});
+  if(error)return status(error.message,true);
+  selected=null;await load();$('new').click();status('Document restauré dans la liste active ✅');
+ };
+ $('cancelQuote').onclick=async()=>{
+  if(mode!=='devis'||!selected||selected.statut!=='emis')return;
+  if(!confirm(`Annuler le devis ${selected.numero} ? Son numéro restera dans l’historique et le document ne sera plus utilisable.`))return;
+  const {data,error}=await sb.rpc('fk_devis_annuler',{p_id:selected.id});
+  if(error)return status(error.message,true);
+  selected=data;await load();selectDoc(data);status(`Devis ${data.numero} annulé et conservé dans l’historique ✅`);
+ };
  $('pdf').onclick=()=>{if(!selected||selected.statut==='brouillon'){if(!confirm('Ceci est un brouillon sans numéro. Imprimer l’aperçu quand même ?'))return;}window.print();};
  (async()=>{if(!sb){$('blocked').textContent='Configuration Supabase indisponible.';return;}
   const {data:{user},error}=await sb.auth.getUser();if(error||!user?.email){$('blocked').innerHTML='Connecte-toi d’abord à <a href="index.html">l’application Fantasy</a>, puis reviens ici.';return;}

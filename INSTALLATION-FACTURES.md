@@ -14,6 +14,20 @@ dans Supabase SQL Editor pour installer le champ TVA privé et les devis.
 Ce second script ne touche pas aux compteurs de factures ; les devis ont
 leur propre numérotation, par exemple `DEV-2026/001`.
 
+## Brouillons, devis annulés et impression A4
+
+Après l'installation des devis, exécuter aussi
+[`supabase_documents_annulation.sql`](supabase_documents_annulation.sql).
+
+- Les brouillons non numérotés peuvent être supprimés.
+- Un devis finalisé peut être **annulé** : son numéro est conservé dans l'historique.
+- Un document numéroté peut être **retiré de la liste active** et retrouvé dans
+  **Archives**, avec possibilité de restauration.
+- Une facture émise ne peut pas être effacée définitivement comme un brouillon : sa correction
+  doit être gérée par un document comptable approprié (par exemple un avoir).
+- L'impression utilise une page A4 sans marges, avec uniquement le document
+  et une taille de police spécifique à l'impression.
+
 ## 1. Installer les tables Supabase
 
 1. Ouvrir le projet Supabase de l'agenda.
