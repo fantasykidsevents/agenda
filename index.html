@@ -5054,7 +5054,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if(evt&&isGest())renderEquipesTypes();
     $("themeBox").classList.toggle("hidden", type !== "evenement");
     if (!$("theme_app").value) $("theme_app").value = "auto";
-    $("driverRow").classList.toggle("evt-off", evt);
+    $("driverRow").classList.toggle("evt-off", evt && !pro);
+    $("driverRow").querySelector("label").textContent = pro ? "🚗 Qui conduit de Fantasy au client ?" : "🚗 Qui conduit ?";
     $("evForm").classList.toggle("mode-evt", evt);
     $("evForm").classList.toggle("mode-pro", pro);
     $("contratProPrix").value = $("prix").value;
@@ -5134,11 +5135,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function renderDriver() {
     const row = $("driverRow");
     if (picked.length < 1) { row.classList.add("hidden"); return; }
+    const pro = $("type_evenement").value === "contrat_pro";
+    const conducteurs = pro ? picked.filter(p => carDe(p.nom) === "conduit") : picked;
+    if (!conducteurs.length) { row.classList.add("hidden"); return; }
     row.classList.remove("hidden");
     let cur = $("conducteur").value;
-    if (!cur || !picked.some(p => normName(p.nom) === normName(cur))) cur = (picked.find(p => p.role === "acc") || picked[0]).nom;
+    if (!cur || !conducteurs.some(p => normName(p.nom) === normName(cur))) cur = (conducteurs.find(p => p.role === "acc") || conducteurs[0]).nom;
     $("conducteur").value = cur;
-    $("driverSel").innerHTML = picked.map(p => `<option ${normName(p.nom) === normName(cur) ? "selected" : ""}>${esc(p.nom)}</option>`).join("");
+    $("driverSel").innerHTML = conducteurs.map(p => `<option ${normName(p.nom) === normName(cur) ? "selected" : ""}>${esc(p.nom)}</option>`).join("");
     $("driverSel").disabled = !isResp();
   }
   $("driverSel").addEventListener("change", () => { $("conducteur").value = $("driverSel").value; kmCalc = null; $("kmBox").classList.add("hidden"); if(!estEvt())animTransportDirty=true; renderAnimTransports(); });
@@ -5336,7 +5340,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }).join("<br>");
     const pro = $("type_evenement").value === "contrat_pro";
     const facture = pro ? facturationDeplacementsPro(d) : null;
-    const modifiable = pro && kmCalc?.detail === d;
+    const trajetViaFantasy = pro && d.trajetPro === "via_fantasy";
+    const kmDomicileFantasy = trajetViaFantasy ? r2((d.equipe || []).filter(x => x.conducteur).reduce((t, x) => t + (+x.kmRdv || 0), 0)) : 0;
+    const modifiable = trajetViaFantasy && kmCalc?.detail === d;
     if (modifiable) {
       kmCalc.client = facture.total;
       d.kmClient = facture.km;
@@ -5345,7 +5351,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       d.parkingsClient = facture.parking;
     }
     $("kmBox").innerHTML = `${lignes}<div class="km-client">💸 <b>Total déplacements de l'équipe</b> : <b>${euro(tot)}</b>${estRepet() ? `<br><small>🎭 Jour de répétition : forfait max ${euro(+(reglages.forfait_repet || 22.5))} pour son propre trajet ; le conducteur en covoiturage touche en plus les km du détour pour prendre ses passagers</small>` : ""}</div>`
-      + (pro ? `<div class="km-client">🧾 <b>Déplacements à facturer au client</b> : ${facture.km.toFixed(1)} km × ${euro(facture.tarifClient)} + billets ${euro(facture.billets)} + parkings ${euro(facture.parking)} = <b>${euro(facture.total)}</b>`
+      + (pro && !trajetViaFantasy ? `<div class="trajet-warn">⚠️ Ancien calcul : il utilisait les trajets domicile ↔ client. Clique sur « Calculer les déplacements » pour passer par Fantasy.</div>` : "")
+      + (pro && trajetViaFantasy ? `<div class="km-client">🧾 <b>Déplacements à facturer au client</b> : ${facture.km.toFixed(1)} km × ${euro(facture.tarifClient)} + billets ${euro(facture.billets)} + parkings ${euro(facture.parking)} = <b>${euro(facture.total)}</b>`
+        + `<br><small>🏠 Domiciles ↔ Fantasy : ${kmDomicileFantasy.toFixed(1)} km · 🚗 Fantasy ↔ client (${esc(d.conducteurClient || "conducteur")}) : ${Number(d.kmFantasyClient || 0).toFixed(1)} km</small>`
         + (facture.manquants.length ? `<p class="km-route-warn">⚠️ Adresses manquantes pour ${esc(facture.manquants.join(", "))} : complète-les avant de facturer.</p>` : "")
         + (modifiable && !facture.manquants.length ? `<div class="after-btns" style="margin-top:8px"><button type="button" class="sig enc" id="kmAddPrix">➕ Ajouter ${euro(facture.total)} au montant du contrat</button></div>` : "") + `</div>` : "");
     $("kmBox").classList.remove("hidden");
@@ -5360,7 +5368,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const lieu = $("adresse").value.trim();
     if (!lieu) { toast("Indiquez l'adresse de l'événement"); return; }
     if (!picked.length) { toast("Ajoutez d'abord l'équipe"); return; }
-    const tarif = +(reglages.km_equipe ?? 0.15), L = await geocode(lieu), equipe = [], manquants = [];
+    const pro = $("type_evenement").value === "contrat_pro";
+    const fantasy = String(reglages.fantasy_adresse || "").trim();
+    if (pro && !fantasy) throw new Error("Renseigne d'abord l'adresse de Fantasy dans les réglages.");
+    const conducteurs = picked.filter(p => carDe(p.nom) === "conduit");
+    const conducteurClient = pro ? (conducteurs.find(p => normName(p.nom) === normName($("conducteur").value)) || conducteurs.find(p => p.role === "acc") || conducteurs[0]) : null;
+    if (pro && !conducteurClient) throw new Error("Choisis au moins un membre qui conduit pour le trajet Fantasy ↔ client.");
+    if (pro) $("conducteur").value = conducteurClient.nom;
+    const tarif = +(reglages.km_equipe ?? 0.15), L = await geocode(lieu), F = pro ? await geocode(fantasy) : L, equipe = [], manquants = [];
     for (const d of picked.filter(p => carDe(p.nom) === "conduit")) {
       const m = members.find(x => normName(x.prenom) === normName(d.nom));
       const pass = picked.filter(p => carDe(p.nom) === d.nom).map(p => p.nom);
@@ -5368,15 +5383,30 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const H = await geocode(m.adresse), arrets = [];
       for (const n of pass) { const pm = members.find(x => normName(x.prenom) === normName(n)); if (pm && pm.adresse) arrets.push({ n, g: await geocode(pm.adresse) }); else manquants.push(n); }
       const ordre = []; let cur = H; while (arrets.length) { arrets.sort((a, b) => distVol(cur, a.g) - distVol(cur, b.g)); const nx = arrets.shift(); ordre.push(nx); cur = nx.g; }
-      const aller = await kmRoute([H, ...ordre.map(o => o.g), L]), km = r2(2 * aller);
-      const kmDirect = ordre.length ? r2(2 * await kmRoute([H, L])) : km;   // son propre trajet, sans aller chercher personne
-      equipe.push({ prenom: d.nom, conducteur: true, km, montantKm: r2(km * tarif), kmDirect, montantDirect: r2(kmDirect * tarif), passagers: pass,
-        trajet: `domicile → ${ordre.length ? ordre.map(o => o.n).join(" → ") + " → " : ""}lieu, aller-retour` });
+      const aller = await kmRoute([H, ...ordre.map(o => o.g), F]);
+      const km = r2(pro ? aller + await kmRoute([F, ...ordre.slice().reverse().map(o => o.g), H]) : 2 * aller);
+      const kmDirect = ordre.length ? r2(pro ? await kmRoute([H, F]) + await kmRoute([F, H]) : 2 * await kmRoute([H, L])) : km;
+      equipe.push({ prenom: d.nom, conducteur: true, km, kmRdv: pro ? km : null, montantKm: r2(km * tarif), kmDirect, montantDirect: r2(kmDirect * tarif), passagers: pass,
+        trajet: `domicile → ${ordre.length ? ordre.map(o => o.n).join(" → ") + " → " : ""}${pro ? "Fantasy" : "lieu"}, aller-retour` });
     }
     picked.filter(p => carDe(p.nom) !== "conduit").forEach(p => { const c = carDe(p.nom);
       equipe.push({ prenom: p.nom, conducteur: false, km: 0, montantKm: 0, passagerDe: c === "aucune" || c === "transport" ? null : c, transport: c === "transport",
         trajet: c === "aucune" ? "sans voiture" : c === "transport" ? "train / bus" : `passager de ${c}` }); });
-    kmCalc = { client: null, detail: { mode: "evt", equipe, tarifEquipe: tarif, tarifClient: Number(reglages.km_client ?? 0.25), manquants: [...new Set(manquants)], parkings, repet: estRepet(), le: new Date().toISOString() } };
+    let kmFantasyClient = 0;
+    if (pro) {
+      kmFantasyClient = r2(await kmRoute([F, L]) + await kmRoute([L, F]));
+      const chauffeur = equipe.find(x => x.conducteur && normName(x.prenom) === normName(conducteurClient.nom));
+      if (chauffeur?.km != null) {
+        chauffeur.km = r2(chauffeur.km + kmFantasyClient);
+        chauffeur.montantKm = r2(chauffeur.km * tarif);
+        chauffeur.kmDirect = r2(chauffeur.kmDirect + kmFantasyClient);
+        chauffeur.montantDirect = r2(chauffeur.kmDirect * tarif);
+        chauffeur.trajet += " + Fantasy ↔ client";
+      }
+    }
+    kmCalc = { client: null, detail: { mode: "evt", equipe, tarifEquipe: tarif, tarifClient: Number(reglages.km_client ?? 0.25),
+      manquants: [...new Set(manquants)], trajetPro: pro ? "via_fantasy" : null, kmFantasyClient: pro ? kmFantasyClient : null,
+      conducteurClient: pro ? conducteurClient.nom : null, parkings, repet: estRepet(), le: new Date().toISOString() } };
     appliquerDeplEvt();
     toast(manquants.length ? "⚠️ Adresse manquante pour " + [...new Set(manquants)].join(", ") : "🧮 Déplacements calculés ✓");
   }
@@ -5401,7 +5431,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       </div>${estEvt() ? `<div class="hor">🕐 <input type="time" data-hd="${i}" value="${esc((horaires[normName(p.nom)] || {}).d || "")}" /> → <input type="time" data-hf="${i}" value="${esc((horaires[normName(p.nom)] || {}).f || "")}" />${(horaires[normName(p.nom)] || {}).d ? "" : `<small>toute la journée</small>`}${isResp() ? carSel(p, i) : ""}</div>` : ""}${swapIdx === i ? `<div class="warn-line" style="color:var(--violet-d)">🔄 Tapez le prénom du remplaçant ci-dessous…</div>` : ""}${conflitsDe(p.nom).map(w => `<div class="warn-line">${esc(w)}</div>`).join("")}`).join("");
   }
   $("pickList").addEventListener("change", (e) => {
-    if (e.target.dataset.car != null) { voitures[normName(picked[+e.target.dataset.car].nom)] = e.target.value; kmCalc = null; syncHoraires(); renderPicked(); return; }
+    if (e.target.dataset.car != null) { voitures[normName(picked[+e.target.dataset.car].nom)] = e.target.value; kmCalc = null; $("kmBox").classList.add("hidden"); syncHoraires(); renderPicked(); return; }
     const hd = e.target.dataset.hd, hf = e.target.dataset.hf, i = hd ?? hf; if (i == null) return;
     const k = normName(picked[+i].nom), h = horaires[k] || (horaires[k] = {});
     if (hd != null) h.d = e.target.value; else h.f = e.target.value;
