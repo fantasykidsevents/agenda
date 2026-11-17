@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex"><meta name="theme-color" content="#a020ff">
+  <title>Factures · Fantasy Kids Events</title>
+  <link rel="icon" href="icon-192.png"><script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#282138;background:#f6f1fc}
+    *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0}button,input,textarea,select{font:inherit}
+    button{cursor:pointer;border:0;border-radius:11px;padding:11px 14px;background:#ede1ff;color:#6024a1;font-weight:700}
+    button.primary{background:linear-gradient(100deg,#00b9ec,#a920ef);color:white}
+    button:disabled{opacity:.48;cursor:not-allowed}a{color:#712fba}h1{margin:0;font-size:24px}
+    .top{background:linear-gradient(100deg,#02bdd0,#a020ff);color:white;padding:16px 20px;display:flex;align-items:center;gap:15px}
+    .top a{color:white;text-decoration:none}.top p{margin:3px 0 0;font-size:13px;opacity:.9}
+    main{max-width:1250px;margin:20px auto;padding:0 16px;display:grid;grid-template-columns:minmax(300px,1fr) minmax(390px,1.05fr);gap:16px}
+    .panel{background:#fff;border:1px solid #eadcf7;border-radius:17px;padding:18px;margin-bottom:14px;box-shadow:0 7px 22px #5834860d}
+    h2{font-size:18px;margin:0 0 12px;color:#60219e}h3{font-size:15px;margin:8px 0}
+    label{display:block;font-size:13px;font-weight:700;color:#55476b;margin:8px 0 4px}
+    input,select,textarea{width:100%;border:1px solid #e2d5ed;border-radius:9px;background:#fff;padding:10px;color:#251e35}
+    textarea{min-height:62px;resize:vertical}.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .controls{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.note{font-size:12px;color:#776c84;line-height:1.5}
+    .error{border-radius:10px;padding:10px;margin:10px 0;background:#fff0f1;color:#a90035}.ok{background:#e9f9ed;color:#116a34}
+    .line-edit{display:grid;grid-template-columns:1fr 64px 96px 35px;gap:6px;align-items:end;margin:9px 0}
+    .line-edit label{margin:0}.line-edit button{padding:10px 5px;background:#ffe6f0;color:#9d1456}
+    .entry{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;margin:7px 0;background:#f9f5ff;border:1px solid #ebddfa}
+    .entry.selected{outline:2px solid #a020ff}.tag{font-size:11px;border-radius:20px;padding:5px 7px;background:#ddf2ff;color:#036796}
+    #paperWrap{position:sticky;top:10px;align-self:start}#paper{width:100%;min-height:760px;aspect-ratio:210/297;background:white;position:relative;overflow:hidden;box-shadow:0 10px 28px #28174522;color:#262233}
+    .wave1{position:absolute;left:-9%;right:-8%;top:-9%;height:25%;background:#b900ee;border-radius:0 0 54% 38%;transform:rotate(-7deg)}
+    .wave2{position:absolute;left:-8%;right:-8%;top:-6%;height:20%;background:#09b7f3;border-radius:0 0 52% 45%;transform:rotate(6deg)}
+    .waveBottom{position:absolute;bottom:-12%;left:-12%;width:60%;height:23%;border-radius:50%;background:#f83bc5;transform:rotate(22deg)}
+    .paper-head{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;padding:17% 8% 0;color:white}
+    .paper-head h2{color:white;font-size:25px;font-weight:400;letter-spacing:2px;margin:0}
+    .paper-head img{width:25%;filter:drop-shadow(0 0 7px #fff);margin-top:-20%}
+    .paper-content{position:relative;z-index:1;padding:8% 10% 15%;font-size:12px}
+    .paper-content h3{color:#02b7eb;font-size:15px;margin-bottom:7px}
+    .paper-client{display:grid;grid-template-columns:1fr auto;gap:10px;min-height:115px;line-height:1.55}
+    .paper-client p{white-space:pre-line;margin:8px 0}.paper-meta{margin-top:50px;white-space:nowrap}
+    .paper-meta b{color:#00b8ef}.bill-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:16px}
+    .bill-table th{background:#00b9f3;color:white;text-align:left;padding:9px}.bill-table th:first-child{border-radius:20px 0 0 20px}.bill-table th:last-child{border-radius:0 20px 20px 0;text-align:right}
+    .bill-table td{padding:10px 9px;vertical-align:top;white-space:pre-line}.bill-table td:nth-child(2){text-align:center;white-space:nowrap}.bill-table td:last-child{text-align:right;white-space:nowrap}
+    .bill-table tbody tr:nth-child(even){background:#f4f4f4}.bill-table tbody tr:nth-child(even) td:first-child{border-radius:20px 0 0 20px}.bill-table tbody tr:nth-child(even) td:last-child{border-radius:0 20px 20px 0}
+    .totals{text-align:right;margin:19px 0 15px;font-size:15px}.totals b{color:#00b5eb}.total-badge{display:inline-block;background:#01b7ef;color:white;border-radius:25px;padding:10px 15px;font-weight:800;font-size:17px}
+    .payment{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-top:20px;font-size:12px}.payment p{line-height:1.6;margin:0}
+    .paper-footer{position:absolute;z-index:1;right:9%;bottom:8%;font-size:10px;line-height:1.38;max-width:40%;white-space:pre-line}
+    .paper-footer .tax{display:block;border-top:2px solid #00b6ed;margin-top:9px;padding-top:5px;font-size:9px}
+    .bottom-text{position:absolute;bottom:3%;left:6%;right:6%;z-index:1;text-align:center;font-size:9px}
+    @media(max-width:900px){main{display:block}#paperWrap{position:static}#paper{max-width:700px;margin:auto}}
+    @media(max-width:540px){.row{grid-template-columns:1fr}.paper-content{font-size:9px}.paper-content h3{font-size:12px}.bill-table{font-size:9px}.paper-meta{margin-top:35px}.paper-head h2{font-size:19px}.paper-footer{font-size:8px}.total-badge{font-size:12px}.payment{font-size:9px}}
+    @page{size:A4;margin:0}
+    @media print{html,body{background:white;margin:0!important}body *{visibility:hidden!important}#paper,#paper *{visibility:visible!important}#paper{position:absolute;left:0;top:0;width:210mm;height:297mm;min-height:0;box-shadow:none;aspect-ratio:auto;print-color-adjust:exact;-webkit-print-color-adjust:exact}#paper .paper-content{font-size:12px}#paper .bill-table{font-size:12px}#paper .paper-head h2{font-size:25px}#paper .paper-footer{font-size:10px}#paper .payment{font-size:12px}}
+  </style>
+</head>
+<body>
+<header class="top"><a href="index.html">← Agenda</a><div><h1>🧾 Factures</h1><p>Fantasy Kids Events · réservé aux responsables</p></div></header>
+<main id="app" hidden>
+ <div>
+  <section class="panel"><div class="controls"><button class="primary" id="new">＋ Nouvelle facture</button><button id="refresh">↻ Actualiser</button></div><h2>Mes factures</h2><div id="list">Chargement…</div></section>
+  <section class="panel"><h2>Préparer la facture</h2><div id="message" role="status" aria-live="polite"></div>
+   <label for="event">Reprendre une prestation de l’agenda</label><select id="event"><option value="">Facture libre / choisir une prestation</option></select>
+   <p class="note">Le prix est repris de l'agenda et peut déjà comprendre les déplacements : vérifie toujours les lignes avant l’émission.</p>
+   <h3>Émetteur (coordonnées légales)</h3>
+   <label for="issuerName">Nom commercial / nom légal</label><input id="issuerName" value="Fantasy Kids Events · Mahin Jordan">
+   <div class="row"><div><label for="issuerTva">N° d'entreprise / TVA</label><input id="issuerTva" value="BE 0644.660.317"></div><div><label for="issuerIban">IBAN</label><input id="issuerIban"></div></div>
+   <label for="issuerAddress">Adresse complète</label><textarea id="issuerAddress">Route de Bambois, 15
+5070 Fosses-la-Ville</textarea>
+   <label for="issuerContact">Téléphone et e-mail</label><textarea id="issuerContact">0474/25.41.38
+fantasykidsevents@gmail.com</textarea>
+   <label for="regime">Mention / régime de TVA</label><input id="regime" value="Régime particulier de franchise des petites entreprises — TVA non applicable">
+   <h3>Destinataire</h3>
+   <label for="clientName">Nom du client *</label><input id="clientName" placeholder="Nom de la personne ou de l'entreprise">
+   <label for="clientAddress">Adresse complète *</label><textarea id="clientAddress" placeholder="Rue, numéro, code postal et ville"></textarea>
+   <label for="clientTva">N° de TVA du client (si applicable)</label><input id="clientTva">
+   <div class="row"><div><label for="date">Date prévue / prestation</label><input id="date" type="date"></div><div><label for="due">Date d’échéance</label><input id="due" type="date"></div></div>
+   <h3>Prestations facturées</h3><div id="lines"></div><button id="addLine">＋ Ajouter une ligne</button>
+   <div class="row"><div><label for="priceType">Prix indiqués</label><select id="priceType"><option value="ttc">Montants finaux (€)</option><option value="ht">Hors TVA (€)</option></select></div><div><label for="notes">Note facultative</label><input id="notes" placeholder="Référence, acompte déjà versé…"></div></div>
+   <div class="controls"><button id="save" class="primary">💾 Enregistrer le brouillon</button><button id="issue">🔒 Émettre et numéroter</button><button id="paid">✅ Marquer payée</button></div>
+   <p class="note">Une facture émise est définitive : ses montants et coordonnées ne peuvent plus être modifiés. Le bouton « PDF » utilise l'impression du navigateur, option « Enregistrer en PDF ».</p>
+  </section>
+ </div>
+ <aside id="paperWrap"><div class="controls"><button class="primary" id="pdf">🖨️ Imprimer / PDF</button><span class="note" id="docStatus">Aperçu du brouillon</span></div>
+  <div id="paper"><div class="wave1"></div><div class="wave2"></div><div class="waveBottom"></div>
+   <div class="paper-head"><h2>FACTURE ✦</h2><img src="logo.png" alt="Fantasy Kids Events"></div>
+   <div class="paper-content"><div class="paper-client"><div><h3>À l'attention de :</h3><b id="pClient"></b><p id="pClientAddress"></p><span id="pClientTva"></span></div><div class="paper-meta"><b>n° :</b> <span id="pNumber"></span><br><b>date :</b> <span id="pDate"></span></div></div>
+    <table class="bill-table"><thead><tr><th>Descriptif</th><th>Nb.</th><th>Tarif</th></tr></thead><tbody id="pLines"></tbody></table>
+    <div class="totals"><b>Sous-total : </b><span id="pSubtotal"></span></div><div class="payment"><p>• Mode de paiement : virement bancaire<br>• N° de compte : <span id="pIban"></span><br>• Échéance : <span id="pDue"></span><br><span id="pNote"></span></p><span class="total-badge" id="pTotal"></span></div>
+   </div><div class="paper-footer"><span id="pIssuer"></span><span class="tax" id="pRegime"></span></div><div class="bottom-text" id="pLegal"></div>
+  </div>
+ </aside>
+</main><div id="blocked" class="panel" style="max-width:650px;margin:30px auto">Vérification de ton accès…</div>
+<script>
+(()=>{
+ 'use strict';
+ const $=id=>document.getElementById(id), money=n=>Number(n||0).toLocaleString('fr-BE',{style:'currency',currency:'EUR'});
+ const h=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const today=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Brussels'});
+ const dateFR=s=>s?String(s).split('-').reverse().join('/'):'';
+ const config=window.APP_CONFIG||{}, sb=(window.supabase&&config.SUPABASE_URL&&config.SUPABASE_ANON_KEY)?window.supabase.createClient(config.SUPABASE_URL,config.SUPABASE_ANON_KEY):null;
+ let docs=[],events=[],selected=null,readonly=false,dirty=false;
+ let draft={lignes:[{description:'Prestation',quantite:1,prix:0}]};
+ $('issuerIban').value=config.IBAN||'';
+ const settingsIds=['issuerName','issuerTva','issuerIban','issuerAddress','issuerContact','regime'];
+ try{const saved=JSON.parse(localStorage.getItem('fk_factures_emetteur')||'null');if(saved)for(const id of settingsIds)if(saved[id]!=null)$(id).value=saved[id];}catch(_){ }
+ function status(msg,error=false){$('message').className=error?'error':'error ok';$('message').textContent=msg;}
+ function getForm(){return {emetteur:{nom:$('issuerName').value.trim(),tva:$('issuerTva').value.trim(),iban:$('issuerIban').value.trim(),adresse:$('issuerAddress').value.trim(),contact:$('issuerContact').value.trim()},client:{nom:$('clientName').value.trim(),adresse:$('clientAddress').value.trim(),tva:$('clientTva').value.trim()},regime_tva:$('regime').value.trim(),type_prix:$('priceType').value,lignes:[...$('lines').querySelectorAll('.line-edit')].map(row=>({description:row.querySelector('.desc').value.trim(),quantite:Number(row.querySelector('.qty').value),prix:Number(row.querySelector('.amount').value)})),date_prestation:$('date').value,echeance:$('due').value,note:$('notes').value.trim()};}
+ function setForm(doc={}){const issuer=doc.emetteur||{},client=doc.client||{};
+  for(const [id,v] of Object.entries({issuerName:issuer.nom,issuerTva:issuer.tva,issuerIban:issuer.iban,issuerAddress:issuer.adresse,issuerContact:issuer.contact,regime:doc.regime_tva,clientName:client.nom,clientAddress:client.adresse,clientTva:client.tva,date:doc.date_prestation,due:doc.echeance,notes:doc.note,priceType:doc.type_prix}))if(v!==undefined&&v!==null)$(id).value=v;
+  drawLines(doc.lignes?.length?doc.lignes:[{description:'Prestation',quantite:1,prix:0}]);preview();}
+ function drawLines(lines){$('lines').innerHTML='';for(const l of lines)addLine(l);}
+ function addLine(l={description:'',quantite:1,prix:0}){const row=document.createElement('div');row.className='line-edit';
+  row.innerHTML=`<label>Description<textarea class="desc" aria-label="Description de la prestation">${h(l.description)}</textarea></label><label>Nb.<input class="qty" aria-label="Quantité" type="number" step="0.01" min="0.01" value="${Number(l.quantite)||1}"></label><label>Tarif €<input class="amount" aria-label="Prix unitaire" type="number" min="0" step="0.01" value="${Number(l.prix)||0}"></label><button type="button" aria-label="Retirer la ligne">×</button>`;
+  row.querySelector('button').onclick=()=>{row.remove();preview();};row.querySelectorAll('input,textarea').forEach(x=>x.addEventListener('input',preview));$('lines').append(row);preview();}
+ function preview(){if(!$('lines').children.length)return;const d=getForm();const shown=selected?.statut!=='brouillon'&&selected?selected.contenu:d;
+  $('pClient').textContent=shown.client?.nom||'Nom du client';$('pClientAddress').textContent=shown.client?.adresse||'Adresse du client';$('pClientTva').textContent=shown.client?.tva?`T.V.A. : ${shown.client.tva}`:'';
+  $('pNumber').textContent=selected?.numero||'BROUILLON';$('pDate').textContent=dateFR(shown.date_emission)||dateFR(today());$('pDue').textContent=dateFR(shown.echeance)||'À préciser';
+  $('pLines').innerHTML=(shown.lignes||[]).map(l=>`<tr><td>${h(l.description)}</td><td>${h(l.quantite)}</td><td>${money((Number(l.prix)||0)*(Number(l.quantite)||0))}</td></tr>`).join('');
+  const total=(shown.lignes||[]).reduce((sum,l)=>sum+(Number(l.prix)||0)*(Number(l.quantite)||0),0);
+  $('pSubtotal').textContent=money(total);$('pTotal').textContent=`Total : ${money(total)}`;$('pIban').textContent=shown.emetteur?.iban||'';$('pNote').textContent=shown.note?`• ${shown.note}`:'';
+  $('pIssuer').textContent=[shown.emetteur?.nom,shown.emetteur?.adresse,shown.emetteur?.contact,shown.emetteur?.iban?`IBAN : ${shown.emetteur.iban}`:''].filter(Boolean).join('\n');
+  $('pRegime').textContent=shown.regime_tva||'';$('pLegal').textContent=`${shown.emetteur?.nom||''} · N° d'entreprise / TVA : ${shown.emetteur?.tva||''}`;
+  $('docStatus').textContent=selected?(selected.statut==='brouillon'?'Brouillon (non émis)':selected.numero+' · '+(selected.statut==='payee'?'payée':'émise')):'Nouveau brouillon';}
+ function editable(yes){readonly=!yes;document.querySelectorAll('#app input,#app textarea').forEach(x=>x.disabled=!yes);$('priceType').disabled=!yes;$('event').disabled=!yes;$('addLine').disabled=!yes;for(const b of $('lines').querySelectorAll('button'))b.disabled=!yes;
+  $('save').disabled=!yes;$('issue').disabled=!yes;$('paid').disabled=!selected||selected.statut!=='emise';}
+ function selectDoc(row){selected=row;const d=row?.contenu||{};setForm(d);$('event').value=row?.source_evenement_id||'';editable(!row||row.statut==='brouillon');$('save').textContent=row?'💾 Enregistrer les modifications':'💾 Enregistrer le brouillon';preview();renderList();}
+ function renderList(){$('list').innerHTML=docs.length?docs.map(x=>`<button class="entry ${selected?.id===x.id?'selected':''}" data-id="${h(x.id)}"><span><b>${h(x.numero||'Brouillon')}</b><br><small>${h(x.contenu?.client?.nom||'Client non renseigné')}</small></span><span class="tag">${x.statut==='payee'?'Payée':x.statut==='emise'?'Émise':'Brouillon'}</span></button>`).join(''):'Aucune facture créée.';
+  $('list').querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>selectDoc(docs.find(d=>d.id===x.dataset.id)));}
+ async function load(){const {data,error}=await sb.from('factures_fantasy').select('*').order('created_at',{ascending:false});if(error)throw error;docs=data||[];renderList();}
+ async function loadEvents(){const [{data,error},{data:priv, error:privateError}]=await Promise.all([sb.from('evenements').select('*').order('date',{ascending:false}).limit(500),sb.from('evenements_prive').select('*')]);if(error)throw error;if(privateError)throw privateError;
+  const details=new Map((priv||[]).map(p=>[String(p.id),p]));events=(data||[]).map(e=>({...e,...(details.get(String(e.id))||{})}));
+  $('event').innerHTML='<option value="">Facture libre / choisir une prestation</option>'+events.filter(e=>e.type_evenement==='animation'||e.type_evenement==='contrat_pro').map(e=>`<option value="${h(e.id)}">${h(dateFR(e.date))} · ${h(e.parent||e.titre||e.enfant||'Prestation')}</option>`).join('');}
+ $('event').onchange=()=>{const e=events.find(x=>String(x.id)===$('event').value);if(!e)return; $('clientName').value=e.parent||'';$('clientAddress').value=e.adresse||'';$('date').value=e.date||'';
+  const tarif=Number(e.prix||0)+Number(e.supplement||0);drawLines([{description:e.titre||e.theme||'Animation Fantasy Kids Events',quantite:1,prix:tarif}]);preview();status('Prestation reprise. Vérifie le client, le montant et les éventuels frais de déplacement avant de facturer.');};
+ $('new').onclick=()=>{selected=null;$('clientName').value='';$('clientAddress').value='';$('clientTva').value='';$('date').value='';$('due').value='';$('notes').value='';$('event').value='';drawLines([{description:'Animation Fantasy Kids Events',quantite:1,prix:0}]);editable(true);renderList();preview();status('Nouveau brouillon prêt.');};
+ $('refresh').onclick=async()=>{try{await load();status('Liste actualisée.');}catch(e){status(e.message,true)}};
+ $('addLine').onclick=()=>addLine();document.querySelectorAll('#app input,#app textarea,#app select').forEach(x=>x.addEventListener('input',preview));
+ function validate(d){if(!d.emetteur.nom||!d.emetteur.adresse||!d.emetteur.tva||!d.emetteur.iban||!d.regime_tva||!d.client.nom||!d.client.adresse)throw Error('Complète les coordonnées de l’émetteur, du client, l’IBAN et le régime TVA.');
+  if(!d.lignes.length||d.lignes.some(l=>!l.description||!Number.isFinite(l.quantite)||l.quantite<=0||!Number.isFinite(l.prix)||l.prix<0))throw Error('Vérifie les lignes : description, quantité positive et prix valide.');}
+ async function save(){if(readonly)throw Error('Cette facture est déjà émise.');const d=getForm();validate(d);localStorage.setItem('fk_factures_emetteur',JSON.stringify(Object.fromEntries(settingsIds.map(id=>[id,$(id).value]))));
+  const values={contenu:d,source_evenement_id:$('event').value||selected?.source_evenement_id||null};let result;
+  if(selected){result=await sb.from('factures_fantasy').update(values).eq('id',selected.id).select().single();}else{result=await sb.from('factures_fantasy').insert(values).select().single();}
+  if(result.error)throw result.error;selected=result.data;await load();selectDoc(selected);return selected;}
+ $('save').onclick=async()=>{try{await save();status('Brouillon enregistré ✅');}catch(e){status(e.message,true);}};
+ $('issue').onclick=async()=>{try{const d=getForm();validate(d);if(!confirm('Émettre la facture ? Un numéro définitif sera attribué et son contenu ne pourra plus être modifié.'))return;
+  const row=await save();const {data,error}=await sb.rpc('fk_factures_emettre',{p_id:row.id});if(error)throw error;selected=data;await load();selectDoc(data);status(`Facture ${data.numero} émise ✅`);}catch(e){status(e.message,true);}};
+ $('paid').onclick=async()=>{if(!selected||selected.statut!=='emise')return;if(!confirm('Confirmer la réception du paiement de cette facture ?'))return;
+  const {data,error}=await sb.rpc('fk_factures_marquer_payee',{p_id:selected.id,p_date:today()});if(error)return status(error.message,true);selected=data;await load();selectDoc(data);status('Facture marquée comme payée ✅');};
+ $('pdf').onclick=()=>{if(!selected||selected.statut==='brouillon'){if(!confirm('Ceci est un brouillon sans numéro. Imprimer l’aperçu quand même ?'))return;}window.print();};
+ (async()=>{if(!sb){$('blocked').textContent='Configuration Supabase indisponible.';return;}
+  const {data:{user},error}=await sb.auth.getUser();if(error||!user?.email){$('blocked').innerHTML='Connecte-toi d’abord à <a href="index.html">l’application Fantasy</a>, puis reviens ici.';return;}
+  const {data:roles,error:roleErr}=await sb.from('equipe').select('email,responsable').ilike('email',user.email).limit(1);
+  if(roleErr||!roles?.some(x=>x.responsable===true)){$('blocked').textContent='Accès réservé aux responsables Fantasy Kids Events.';return;}
+  $('blocked').hidden=true;$('app').hidden=false;try{await Promise.all([load(),loadEvents()]);$('new').click();}catch(e){status('Base de facturation pas encore installée dans Supabase : exécute supabase_facturation.sql dans SQL Editor. '+e.message,true);}
+ })();
+})();
+</script>
+</body></html>

@@ -62,6 +62,10 @@ create table if not exists public.factures_fantasy_compteurs (
 );
 revoke all on public.factures_fantasy_compteurs from public, anon, authenticated;
 
+-- IMPORTANT : si des factures papier ont déjà été émises cette année,
+-- initialiser le compteur à leur DERNIER numéro avant la première émission
+-- dans l'application (voir INSTALLATION-FACTURES.md).
+
 create or replace function public.fk_factures_proteger()
 returns trigger
 language plpgsql
@@ -152,7 +156,7 @@ begin
 
   perform set_config('fk_factures.autorise_rpc', 'oui', true);
   update public.factures_fantasy
-    set numero = 'FKE-' || a::text || '-' || lpad(n::text, 4, '0'),
+    set numero = a::text || '/' || lpad(n::text, 3, '0'),
         statut = 'emise',
         contenu = jsonb_set(doc, '{date_emission}', to_jsonb(v_jour::text), true)
   where id = p_id returning * into f;
