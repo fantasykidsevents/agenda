@@ -377,6 +377,19 @@
   .ev-actions{display:flex;justify-content:flex-end;margin-top:8px}
   .sig{border:0;background:#fff7ed;color:#c2410c;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;font-family:inherit}
   .alert-bar{background:#fff1f2;color:#be123c;border:1px solid #fecdd3;border-radius:14px;padding:10px 12px;margin-bottom:12px;font-weight:600;font-size:14px}
+  .alert-group{margin-bottom:12px}
+  .alert-group summary.alert-bar{list-style:none;cursor:pointer;margin-bottom:0;display:block;touch-action:manipulation}
+  .alert-group summary.alert-bar::-webkit-details-marker{display:none}
+  .alert-group summary.alert-bar:focus-visible{outline:3px solid #9860e6;outline-offset:2px}
+  .alert-voir{display:block;font-size:12px;font-weight:800;margin-top:5px;opacity:.8}
+  .alert-voir::after{content:" ▾"}
+  .alert-group[open] .alert-voir::after{content:" ▴"}
+  .alert-cibles{display:grid;gap:7px;padding:9px 4px 3px;max-height:320px;overflow:auto}
+  .alert-cible{display:flex;align-items:center;justify-content:space-between;gap:9px;width:100%;padding:11px 12px;background:#fff;border:1px solid #e9dcf5;border-radius:12px;color:#4d376b;text-align:left;font:inherit;cursor:pointer}
+  .alert-cible:hover,.alert-cible:focus-visible{background:#fbf6ff;border-color:#b984e8}
+  .alert-cible b{display:block;font-size:13px;overflow-wrap:anywhere}
+  .alert-cible small{display:block;margin-top:3px;font-size:12px;color:#827191}
+  .alert-cible .fleche{font-size:22px;color:#9963d5;flex:none}
   .warn-jbl{background:#fff7ed;color:#c2410c;border-radius:10px;padding:8px 10px;font-size:13px;margin-top:6px}
   .seg{display:flex;gap:6px}
   .seg label{flex:1;margin:0;cursor:pointer}
@@ -2744,22 +2757,28 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         : `<div class="stat"><b>${upcoming.filter(e => e.materiel_manquant).length}</b><span>matériel manquant</span></div>`}`;
     const nbMissing = upcoming.filter(e => e.materiel_manquant).length;
     const d14 = iso(new Date(Date.now() - 14*864e5)), in10 = iso(new Date(Date.now() + 10*864e5));
-    const nbPhotos = events.filter(e => e.date < t && e.date >= d14 && e.statut !== "annule" && !e.photos_envoyees).length;
+    const photosAEnvoyer = events.filter(e => e.date < t && e.date >= d14 && e.statut !== "annule" && estClient(e) && !e.photos_envoyees)
+      .sort((a,b) => b.date.localeCompare(a.date));
+    const nbPhotos = photosAEnvoyer.length;
     const in3 = iso(new Date(Date.now() + 3*864e5));
     const reste = events.some(e => e.statut !== "annule" && (e.materiel_manquant || "").trim());
     const nbSoon = isResp() && reste ? events.filter(e => e.statut !== "annule" && e.date >= t && e.date <= in3).length : 0;
     const in14 = iso(new Date(Date.now() + 14*864e5));
-    const nbFiche = isResp() ? events.filter(e => e.statut === "confirme" && e.date >= t && e.date <= in14 && estClient(e) && !(e.fiche && e.fiche.recue_le)).length : 0;
+    const fichesManquantes = isResp() ? events.filter(e => e.statut === "confirme" && e.date >= t && e.date <= in14 && estClient(e) && !(e.fiche && e.fiche.recue_le))
+      .sort((a,b) => a.date.localeCompare(b.date)) : [];
+    const nbFiche = fichesManquantes.length;
     const nbAcompte = isResp() ? events.filter(e => e.statut === "confirme" && e.date >= t && e.date <= in10 && +e.acompte && !e.acompte_paye).length : 0;
+    const alerteCliquable = (liste, type, couleur, message) => `<details class="alert-group"><summary class="alert-bar ${couleur}">${message}<span class="alert-voir">Afficher les ${liste.length} animation${liste.length > 1 ? "s" : ""} concernée${liste.length > 1 ? "s" : ""}</span></summary>
+      <div class="alert-cibles">${liste.map(e => `<button type="button" class="alert-cible" data-alert-ev="${esc(e.id)}" data-alert-type="${type}"><span><b>${esc(e.titre || e.enfant || "Animation")}</b><small>📅 ${esc(fmtLong(e.date))}</small></span><span class="fleche" aria-hidden="true">›</span></button>`).join("")}</div></details>`;
     let nbC = 0, nbP = 0;
     const bar = bandeauCK() + (nbMissing ? `<div class="alert-bar">⚠️ ${nbMissing} animation${nbMissing>1?"s":""} avec du matériel manquant</div>` : "")
       + (nbSoon ? `<div class="alert-bar">🚨 Matériel toujours manquant et ${nbSoon} animation${nbSoon>1?"s":""} dans les 3 prochains jours</div>` : "")
-      + (nbFiche ? `<div class="alert-bar gold">📝 ${nbFiche} fiche${nbFiche>1?"s":""} anniversaire pas encore remplie${nbFiche>1?"s":""} (animations dans les 14 jours)</div>` : "")
+      + (nbFiche ? alerteCliquable(fichesManquantes, "fiche", "gold", `📝 ${nbFiche} fiche${nbFiche>1?"s":""} anniversaire pas encore remplie${nbFiche>1?"s":""} (animations dans les 14 jours)`) : "")
       + (nbAcompte ? `<div class="alert-bar gold">💰 ${nbAcompte} acompte${nbAcompte>1?"s":""} pas encore reçu${nbAcompte>1?"s":""} à moins de 10 jours</div>` : "")
       + ((nbP = nbPasPrets()) ? `<div class="alert-bar" data-cost-open>🧺 ${nbP} costume${nbP > 1 ? "s" : ""}/perruque${nbP > 1 ? "s" : ""} à préparer (laver, recoiffer, réparer) pour une animation dans les ${+(reglages.costumes_jours ?? 7) || 7} jours</div>` : "")
       + ((nbC = nbConflitsCostumes()) ? `<div class="alert-bar" data-cost-open>⚠️ ${nbC} conflit${nbC > 1 ? "s" : ""} de costume/perruque dans les 30 jours (demandé plus de fois qu'il n'en existe le même jour)</div>` : "")
       + (isResp() && stockAAcheter().length ? `<div class="alert-bar gold" data-stock-open>🛒 ${stockAAcheter().length} consommable${stockAAcheter().length > 1 ? "s" : ""} à racheter (${esc(stockAAcheter().slice(0, 3).map(x => x.nom).join(", "))}${stockAAcheter().length > 3 ? "…" : ""})</div>` : "")
-      + (nbPhotos ? `<div class="alert-bar blue">📸 ${nbPhotos} animation${nbPhotos>1?"s":""} récente${nbPhotos>1?"s":""} : photos pas encore envoyées au client</div>` : "");
+      + (nbPhotos ? alerteCliquable(photosAEnvoyer, "photos", "blue", `📸 ${nbPhotos} animation${nbPhotos>1?"s":""} récente${nbPhotos>1?"s":""} : photos pas encore envoyées au client`) : "");
     const list = $("showPast").checked ? all : all.filter(e => e.date >= t);
     if (!list.length) { $("list").innerHTML = bar + `<div class="empty">🌙 Aucune animation à afficher.</div>`; return; }
     let html = bar, lastMonth = "";
@@ -4309,6 +4328,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     render();
   });
   document.addEventListener("click", (e) => {
+    const alerte = e.target.closest("[data-alert-ev]");
+    if (alerte) {
+      e.preventDefault(); e.stopPropagation();
+      const animation = events.find(x => String(x.id) === alerte.dataset.alertEv);
+      if (animation) openForm(animation);
+      else toast("Cette animation n'est plus disponible.");
+      return;
+    }
     const mode = e.target.closest("[data-mode-open]");
     if (mode) {
       e.preventDefault(); e.stopPropagation();
