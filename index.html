@@ -1136,10 +1136,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .g-makeup-viewer-head{position:sticky;top:-14px;background:#fff;z-index:4;padding:10px 0 12px}
   .g-makeup-viewer-bottom{display:block;width:100%;margin-top:14px;cursor:pointer}
   /* Onglets de la caisse : cinq rubriques lisibles aussi sur téléphone. */
-  #caisseBg #caisseTabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+  #caisseBg #caisseTabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
   #caisseBg #caisseTabs label{min-width:0}
   #caisseBg #caisseTabs span{font-size:12px;padding:10px 3px;white-space:normal;overflow-wrap:normal}
-  @media(max-width:480px){#caisseBg #caisseTabs span{font-size:11px;padding:9px 1px}}
+  @media(max-width:600px){#caisseBg #caisseTabs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media(max-width:480px){#caisseBg #caisseTabs span{font-size:12px;padding:9px 3px}}
 
 
 </style>
@@ -1909,6 +1910,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <label><input type="radio" name="caisseTab" value="vente" checked /><span>🛒 Vente</span></label>
       <label><input type="radio" name="caisseTab" value="tombola" /><span>🎟️ Tombola</span></label>
       <label><input type="radio" name="caisseTab" value="ventes" /><span>🧾 Ventes</span></label>
+      <label><input type="radio" name="caisseTab" value="suivi" /><span>📊 Suivi</span></label>
       <label><input type="radio" name="caisseTab" value="cloture" /><span>💶 Clôture</span></label>
       <label><input type="radio" name="caisseTab" value="produits" /><span>⚙️ Produits</span></label>
     </div>
@@ -6885,6 +6887,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const CASES = (cat) => cat === "boisson" || cat === "nourriture";   // cases à barrer sur le ticket
   const LS_CP = "fk_caisse_produits", LS_VD = "fk_ventes_demo", VCACHE = (id) => "fk_ventes_cache_" + id, VFILE = "fk_ventes_file", LS_IMP = "fk_imprimante";
   let produits = [], ventes = [], ventesTout = [], cxEv = null, caisseTab = "vente", panier = [], panierMode = "vente", clotureMode = "vente";
+  let caisseSuiviTimer = null, caisseSuiviChargement = false, caisseSuiviMaj = null;
   const estVenteTombola = (v) => !!((v.lignes || []).length && (v.lignes || []).every(l => l.cat === "tombola"));
   const caisseVentes = (tab) => ventes.filter(v => !v.annulee && (tab === "tombola" ? estVenteTombola(v) : !estVenteTombola(v)));
   function panelCaisse(ym, an) {   // 🛒 à part des rentrées (pas dans le CA ni le bénéfice)
@@ -6947,12 +6950,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const seuilBas = (p) => Math.max(3, Math.ceil((p.stock || 0) * 0.1));
   async function openCaisse(evId) {
     const ev = events.find(e => String(e.id) === String(evId)); if (!ev || !isResp()) return;
-    cxEv = ev; caisseTab = "vente"; panier = []; panierMode = "vente"; clotureMode = "vente";
+    arreterSuiviCaisse(); cxEv = ev; caisseTab = "vente"; panier = []; panierMode = "vente"; clotureMode = "vente"; caisseSuiviMaj = null;
     document.querySelectorAll('input[name="caisseTab"]').forEach(x => x.checked = x.value === "vente");
     produits = await caisseStore.produits(); ventes = await caisseStore.ventes(ev.id);
     renderCaisse(); $("caisseBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
   }
-  const closeCaisse = async () => { viderPhotoBrouillonCaisse(); $("caisseBg").classList.add("hidden"); document.body.style.overflow = ""; cxEv = null; try { ventesTout = await caisseStore.tout(); } catch (e) {} render(); };
+  const closeCaisse = async () => { arreterSuiviCaisse(); viderPhotoBrouillonCaisse(); $("caisseBg").classList.add("hidden"); document.body.style.overflow = ""; cxEv = null; try { ventesTout = await caisseStore.tout(); } catch (e) {} render(); };
   $("caisseClose").onclick = closeCaisse;
   $("evtCaisse").onclick = () => { if (editingId) { const id = editingId; closeForm(); openCaisse(id); } };
   document.addEventListener("click", (e) => { const b = e.target.closest("[data-caisse]"); if (b && !b.closest("#caisseBg")) { e.stopPropagation(); closeJour(); openCaisse(b.dataset.caisse); } }, true);
@@ -6964,7 +6967,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       }
       panier = []; panierMode = next;
     }
-    caisseTab = next; renderCaisse();
+    caisseTab = next; renderCaisse(); lancerSuiviCaisse();
   });
   const totPanier = () => r2(panier.reduce((t, l) => t + l.prix * l.qte, 0));
   function renderCaisse() {
@@ -6973,6 +6976,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const tot = ok.reduce((t, v) => t + +v.total, 0), cash = ok.filter(v => v.mode === "cash").reduce((t, v) => t + +v.total, 0);
     $("caisseTitre").innerHTML = `${caisseTab === "tombola" ? "🎟️ Tombola" : "🛒 " + esc(ev.titre || "Caisse")} <small style="font-size:13px;color:var(--muted);font-weight:600">· ${ok.length} vente${ok.length > 1 ? "s" : ""} · ${euro(tot)} (💶 ${euro(cash)} · 💳 ${euro(r2(tot - cash))})</small>`;
     if (caisseTab === "ventes") return renderVentes();
+    if (caisseTab === "suivi") return renderSuiviCaisse();
     if (caisseTab === "produits") return renderProduits();
     if (caisseTab === "cloture") return renderCloture();
     const P = produitsEv(ev).filter(p => caisseTab === "tombola" ? p.categorie === "tombola" : p.categorie !== "tombola");
@@ -6986,6 +6990,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   $("caisseBody").addEventListener("click", async (e) => {
     if (!cxEv) return;
+    if (e.target.closest("[data-bilan-pdf]")) { await telechargerBilanCaisse(); return; }
+    if (e.target.closest("[data-suivi-refresh]")) { await actualiserSuiviCaisse(true); return; }
     if (e.target.closest("[data-goclo]")) { clotureMode = caisseTab === "tombola" ? "tombola" : "vente"; caisseTab = "cloture"; document.querySelectorAll('input[name="caisseTab"]').forEach(x => x.checked = x.value === "cloture"); renderCaisse(); return; }
     const pr = e.target.closest("[data-prod]");
     if (pr) { const p = produitsEv(cxEv).find(x => String(x.id) === pr.dataset.prod); if (!p || (caisseTab === "tombola" ? p.categorie !== "tombola" : p.categorie === "tombola")) return;
@@ -7028,6 +7034,236 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     };
   }
   $("caissePayBg").addEventListener("click", (e) => { if (e.target.id === "caissePayBg") $("caissePayBg").classList.add("hidden"); });
+  // ---------- 📊 Suivi de caisse en temps réel et bilan par article ----------
+  const libellesCaisse = { boisson: "🥤 Boissons", nourriture: "🍭 Nourriture", photo: "📸 Photos", tombola: "🎟️ Tombola", boutique: "🛍️ Boutique", autre: "📦 Autres" };
+  const ordreCategoriesCaisse = ["boisson", "nourriture", "photo", "tombola", "boutique", "autre"];
+  function bilanDonneesCaisse(liste = ventes) {
+    const ok = (liste || []).filter(v => !v.annulee), produitsParId = new Map(produits.map(p => [String(p.id), p]));
+    const totaux = { vente: { total: 0, cash: 0, sumup: 0, n: 0 }, tombola: { total: 0, cash: 0, sumup: 0, n: 0 } };
+    const groupes = new Map(), categories = new Map();
+    let articles = 0;
+    for (const v of ok) {
+      const caisse = estVenteTombola(v) ? "tombola" : "vente", o = totaux[caisse], total = +v.total || 0;
+      o.total += total; o.n++;
+      if (v.mode === "cash") o.cash += total; else o.sumup += total;
+      for (const l of v.lignes || []) {
+        const nom = String(l.nom || "Article"), cat = String(l.cat || produitsParId.get(String(l.id))?.categorie || "autre");
+        const qte = Math.max(0, +l.qte || 0), montant = qte * (+l.prix || 0);
+        if (!qte) continue; articles += qte;
+        const cle = cat + "|" + nom.toLocaleLowerCase("fr-BE");
+        if (!groupes.has(cle)) groupes.set(cle, { nom, cat, qte: 0, montant: 0 });
+        const g = groupes.get(cle); g.qte += qte; g.montant += montant;
+        if (!categories.has(cat)) categories.set(cat, { cat, qte: 0, montant: 0 });
+        const c = categories.get(cat); c.qte += qte; c.montant += montant;
+      }
+    }
+    const catOrdre = (cat) => { const i = ordreCategoriesCaisse.indexOf(cat); return i < 0 ? 99 : i; };
+    const parProduit = [...groupes.values()].sort((a, b) => catOrdre(a.cat) - catOrdre(b.cat) || a.nom.localeCompare(b.nom, "fr-BE"));
+    const parCategorie = [...categories.values()].sort((a, b) => catOrdre(a.cat) - catOrdre(b.cat));
+    return {
+      ventes: ok.length, articles, parProduit, parCategorie, totaux,
+      total: r2(totaux.vente.total + totaux.tombola.total),
+      cash: r2(totaux.vente.cash + totaux.tombola.cash),
+      sumup: r2(totaux.vente.sumup + totaux.tombola.sumup)
+    };
+  }
+  function arreterSuiviCaisse() {
+    if (caisseSuiviTimer) clearInterval(caisseSuiviTimer);
+    caisseSuiviTimer = null;
+  }
+  function lancerSuiviCaisse() {
+    arreterSuiviCaisse();
+    if (!cxEv || caisseTab !== "suivi") return;
+    actualiserSuiviCaisse();
+    caisseSuiviTimer = setInterval(() => actualiserSuiviCaisse(), 15000);
+  }
+  async function actualiserSuiviCaisse(manuel = false) {
+    if (!cxEv || caisseTab !== "suivi" || caisseSuiviChargement || (document.hidden && !manuel)) return;
+    const ev = cxEv; caisseSuiviChargement = true;
+    try {
+      const nouvelles = await caisseStore.ventes(ev.id);
+      if (cxEv !== ev || caisseTab !== "suivi") return;
+      ventes = nouvelles; caisseSuiviMaj = new Date(); renderCaisse();
+      if (manuel) toast("📊 Tableau de bord actualisé");
+    } catch (err) {
+      if (manuel) toast("Impossible d'actualiser : " + (err.message || err));
+    } finally { caisseSuiviChargement = false; }
+  }
+  function renderSuiviCaisse() {
+    const D = bilanDonneesCaisse(), max = Math.max(1, ...D.parCategorie.map(c => c.montant));
+    const libelle = cat => libellesCaisse[cat] || "📦 " + cat;
+    const maj = caisseSuiviMaj ? caisseSuiviMaj.toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "en cours";
+    $("caisseBody").innerHTML = `<div class="panel" style="margin:0 0 10px">
+      <h3>📊 Tableau de bord · ${esc(cxEv.titre)}</h3>
+      <p class="hint" style="margin:3px 0 12px">Actualisation automatique toutes les 15 secondes pendant que cet écran est ouvert. Dernière lecture : ${maj}${navigator.onLine ? "" : " · 📶 hors ligne (données en cache)"}.</p>
+      <div class="pt-pts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px">
+        <div><b>${euro(D.total)}</b><small>💰 Total encaissé</small></div>
+        <div><b>${euro(D.cash)}</b><small>💶 Espèces</small></div>
+        <div><b>${euro(D.sumup)}</b><small>💳 SumUp</small></div>
+        <div><b>${D.ventes}</b><small>🧾 Transactions</small></div>
+        <div><b>${D.articles}</b><small>📦 Articles vendus</small></div>
+      </div>
+      <div class="actions" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+        <button type="button" class="btn ghost" data-suivi-refresh>🔄 Actualiser</button>
+        <button type="button" class="btn primary" data-bilan-pdf>📄 Télécharger le bilan PDF</button>
+      </div>
+    </div>
+    <div class="panel" style="margin:0 0 10px"><h3>🛒 Ventes et 🎟️ Tombola</h3>
+      ${[["vente","🛒 Ventes"],["tombola","🎟️ Tombola"]].map(([cat, nom]) => {
+        const v = D.totaux[cat];
+        return `<div class="gains-l"><span><b>${nom}</b><small>${v.n} transactions · espèces ${euro(r2(v.cash))} · SumUp ${euro(r2(v.sumup))}</small></span><b>${euro(r2(v.total))}</b></div>`;
+      }).join("")}
+    </div>
+    <div class="panel" style="margin:0 0 10px"><h3>📈 Recettes par catégorie</h3>
+      ${D.parCategorie.length ? D.parCategorie.map(c => `<div style="margin:10px 0">
+        <div class="gains-l" style="border:0;padding:4px 0"><span>${esc(libelle(c.cat))} · ${c.qte} article${c.qte > 1 ? "s" : ""}</span><b>${euro(r2(c.montant))}</b></div>
+        <div style="height:9px;border-radius:9px;background:#eee5f7;overflow:hidden"><div style="width:${Math.max(0,Math.min(100,c.montant/max*100))}%;height:100%;background:linear-gradient(90deg,#8542c7,#cf8ef3);border-radius:9px"></div></div>
+      </div>`).join("") : '<p class="hint">Aucune vente pour le moment.</p>'}
+    </div>
+    <div class="panel" style="margin:0 0 8px"><h3>📦 Quantités vendues par article</h3>
+      ${D.parProduit.length ? D.parCategorie.map(c => `<h4 style="margin:14px 0 6px;color:var(--ink)">${esc(libelle(c.cat))}</h4>
+        ${D.parProduit.filter(p => p.cat === c.cat).map(p => `<div class="gains-l"><span><b>${p.qte} × ${esc(p.nom)}</b></span><b>${euro(r2(p.montant))}</b></div>`).join("")}`).join("") : '<p class="hint">Les quantités apparaîtront après les premières ventes.</p>'}
+    </div>`;
+  }
+  let chargementPdfCaisse = null;
+  async function chargerPdfCaisse() {
+    if (window.jspdf?.jsPDF) return window.jspdf.jsPDF;
+    if (!chargementPdfCaisse) {
+      chargementPdfCaisse = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js";
+        script.async = true;
+        script.onload = () => window.jspdf?.jsPDF ? resolve(window.jspdf.jsPDF) : reject(new Error("Bibliothèque PDF indisponible"));
+        script.onerror = () => reject(new Error("Connexion nécessaire pour télécharger le PDF"));
+        document.head.appendChild(script);
+      }).catch(err => { chargementPdfCaisse = null; throw err; });
+    }
+    return chargementPdfCaisse;
+  }
+  async function telechargerBilanCaisse() {
+    const ev = cxEv; if (!ev) return;
+    const bouton = $("caisseBody").querySelector("[data-bilan-pdf]");
+    if (bouton) { bouton.disabled = true; bouton.textContent = "⏳ Création du bilan…"; }
+    try {
+      // Actualisation avant l'export : le PDF reprend les dernières ventes enregistrées.
+      const L = await caisseStore.ventes(ev.id);
+      if (cxEv === ev) ventes = L;  // aligner aussi le calcul des espèces attendues sur les ventes fraîchement relues
+      const D = bilanDonneesCaisse(L), jsPDF = await chargerPdfCaisse();
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const clair = v => r2(v).toFixed(2).replace(".", ",") + " EUR";
+      const propre = v => String(v == null ? "" : v).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, "").replace(/[\u200D\uFE0F]/g, "").trim();
+      const libelle = cat => propre(libellesCaisse[cat] || cat).replace(/^[^\p{L}\p{N}]+/u, "");
+      const gauche = 15, droite = 195, largeur = droite - gauche;
+      let y = 15;
+      const suite = () => {
+        pdf.addPage(); y = 18;
+        pdf.setFont("helvetica", "bold"); pdf.setFontSize(13); pdf.setTextColor(84, 43, 130);
+        pdf.text("FANTASY KIDS EVENTS  -  BILAN (SUITE)", gauche, y); y += 12;
+        pdf.setTextColor(35, 30, 45);
+      };
+      const assurer = h => { if (y + h > 280) suite(); };
+      const ligneSimple = (texte, opts = {}) => {
+        const taille = opts.taille || 10, gras = !!opts.gras, espace = opts.espace || 1.5;
+        pdf.setFont("helvetica", gras ? "bold" : "normal"); pdf.setFontSize(taille);
+        pdf.setTextColor(opts.gris ? 105 : 39, opts.gris ? 100 : 34, opts.gris ? 110 : 52);
+        const morceaux = pdf.splitTextToSize(propre(texte), largeur);
+        assurer(morceaux.length * 5 + espace + 1);
+        pdf.text(morceaux, gauche, y); y += morceaux.length * 5 + espace;
+      };
+      const section = titre => {
+        assurer(16); y += 4; pdf.setFillColor(240, 231, 249);
+        pdf.roundedRect(gauche, y - 5, largeur, 10, 2, 2, "F");
+        pdf.setFont("helvetica", "bold"); pdf.setFontSize(11); pdf.setTextColor(88, 41, 135);
+        pdf.text(propre(titre), gauche + 4, y + 1.5); y += 11;
+      };
+      const montant = (lib, valeur, bold = false) => {
+        assurer(8); pdf.setFont("helvetica", bold ? "bold" : "normal"); pdf.setFontSize(10); pdf.setTextColor(39, 34, 52);
+        const nom = pdf.splitTextToSize(propre(lib), 128);
+        pdf.text(nom, gauche + 2, y); pdf.text(clair(valeur), droite - 2, y, { align: "right" });
+        y += Math.max(1, nom.length) * 5 + 2;
+      };
+      const enteteTableau = () => {
+        assurer(9); pdf.setFont("helvetica", "bold"); pdf.setFontSize(9); pdf.setTextColor(92, 78, 110);
+        pdf.text("ARTICLE", gauche + 2, y);
+        pdf.text("QUANTITE", 156, y, { align: "right" });
+        pdf.text("RECETTES", droite - 2, y, { align: "right" }); y += 6;
+      };
+      const article = p => {
+        pdf.setFont("helvetica", "normal"); pdf.setFontSize(9.5); pdf.setTextColor(39, 34, 52);
+        const nom = pdf.splitTextToSize(propre(p.nom), 112);
+        assurer(Math.max(1, nom.length) * 5 + 4);
+        pdf.text(nom, gauche + 2, y);
+        pdf.text(String(p.qte), 156, y, { align: "right" });
+        pdf.text(clair(p.montant), droite - 2, y, { align: "right" });
+        y += Math.max(1, nom.length) * 5 + 3;
+      };
+      // En-tête du PDF
+      pdf.setFillColor(89, 40, 143); pdf.rect(0, 0, 210, 39, "F");
+      pdf.setTextColor(255, 255, 255); pdf.setFont("helvetica", "bold"); pdf.setFontSize(17);
+      pdf.text("FANTASY KIDS EVENTS", gauche, 17);
+      pdf.setFontSize(11); pdf.text("Bilan des ventes et de la tombola", gauche, 26);
+      pdf.setFontSize(9); pdf.text("Edite le " + new Date().toLocaleString("fr-BE"), gauche, 33);
+      y = 47; pdf.setTextColor(39, 34, 52);
+      ligneSimple(propre(ev.titre || "Evenement"), { taille: 14, gras: true, espace: 3 });
+      if (ev.date) ligneSimple("Date de l'evenement : " + String(ev.date).slice(0, 10), { gris: true });
+
+      section("RECAPITULATIF GENERAL");
+      montant("Total des recettes de caisse", D.total, true);
+      montant("Paiements en especes", D.cash);
+      montant("Paiements SumUp", D.sumup);
+      ligneSimple(D.ventes + " transactions  -  " + D.articles + " articles vendus", { gris: true });
+
+      section("DETAIL PAR CAISSE");
+      for (const [type, titre] of [["vente", "Ventes (hors tombola)"], ["tombola", "Tombola"]]) {
+        const v = D.totaux[type];
+        montant(titre + " - " + v.n + " ventes", v.total, true);
+        ligneSimple("Especes : " + clair(v.cash) + "   |   SumUp : " + clair(v.sumup), { gris: true, taille: 9 });
+      }
+
+      section("ARTICLES VENDUS - DETAIL DES QUANTITES");
+      if (!D.parProduit.length) ligneSimple("Aucune vente enregistree.");
+      for (const c of D.parCategorie) {
+        assurer(22);
+        ligneSimple(libelle(c.cat) + "  -  " + c.qte + " articles  -  " + clair(c.montant), { gras: true });
+        enteteTableau();
+        D.parProduit.filter(p => p.cat === c.cat).forEach(article);
+      }
+      section("TOTAL DES ARTICLES");
+      montant(D.articles + " articles vendus", D.total, true);
+
+      const clo = clotureDe(ev), A = await attenduCash(ev);
+      section("CLOTURES DE CAISSE");
+      for (const [type, titre] of [["vente", "Caisse ventes"], ["tombola", "Caisse tombola"]]) {
+        const etat = type === "tombola" ? (clo.tombola || {}) : clo;
+        const hasFond = etat.fondDetail != null || etat.fond != null, hasCompte = Object.keys(etat.comptage || {}).length > 0;
+        assurer(25); ligneSimple(titre, { gras: true });
+        if (!hasFond && !hasCompte) { ligneSimple("Fond et comptage non renseignes.", { gris: true }); continue; }
+        const fond = fondCaisseDe(etat), compte = sommeCoupures(etat.comptage || {});
+        const encaisses = type === "tombola" ? A.cashTombola : A.cashVentes;
+        const accueil = type === "vente" && etat.accueil !== false ? A.cashAccueil : 0;
+        if (hasFond) montant("Fond de caisse", fond);
+        montant("Especes encaissees" + (accueil ? " (+ accueil)" : ""), encaisses + accueil);
+        if (hasCompte) {
+          montant("Comptage final", compte);
+          montant("Ecart de caisse", compte - fond - encaisses - accueil, true);
+        } else ligneSimple("Comptage final non renseigne.", { gris: true });
+      }
+      const pages = pdf.internal.getNumberOfPages();
+      for (let n = 1; n <= pages; n++) {
+        pdf.setPage(n); pdf.setDrawColor(222, 211, 231); pdf.line(gauche, 285, droite, 285);
+        pdf.setFont("helvetica", "normal"); pdf.setFontSize(8); pdf.setTextColor(128, 117, 140);
+        pdf.text("Fantasy Kids Events - Bilan de caisse", gauche, 291);
+        pdf.text(n + " / " + pages, droite, 291, { align: "right" });
+      }
+      const nom = propre(ev.titre || "evenement").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-|-$/g, "").slice(0, 45);
+      pdf.save("bilan-fantasy-" + String(ev.date || "").slice(0, 10) + "-" + (nom || "evenement") + ".pdf");
+      if (cxEv === ev && caisseTab === "suivi") { ventes = L; caisseSuiviMaj = new Date(); renderCaisse(); }
+      toast("📄 Bilan PDF généré");
+    } catch (err) {
+      toast("PDF indisponible : " + (err.message || err));
+      if (bouton && bouton.isConnected) { bouton.disabled = false; bouton.textContent = "📄 Télécharger le bilan PDF"; }
+    }
+  }
   function renderVentes() {
     const L = [...ventes].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))), ok = ventes.filter(v => !v.annulee);
     const parProd = {}; ok.forEach(v => (v.lignes || []).forEach(l => { const k = l.nom; (parProd[k] ||= { q: 0, t: 0 }); parProd[k].q += l.qte; parProd[k].t += l.qte * l.prix; }));
