@@ -797,9 +797,24 @@ async function anniversairesEquipe() {
   const { data: deja } = await sb.from("parametres").select("cle").eq("cle", cle).maybeSingle();
   if (deja) return;
   await sb.from("parametres").upsert({ cle, valeur: new Date().toISOString() });
-  const { data: n } = await sb.from("naissances").select("prenom,date");
   const md = auj.slice(5);
-  const fetes = (n || []).filter((x) => String(x.date).slice(5, 10) === md);
+  // Anniversaires déclarés volontairement par les membres dans leur profil.
+  // Ne jamais publier les anciennes dates saisies par un admin dans « naissances » :
+  // aucun accord de diffusion n'y est associé.
+  const [{ data: preferences, error: erreurPrefs }, { data: equipe, error: erreurEquipe }] = await Promise.all([
+    sb.from("preferences_notifications").select("email,choix"),
+    sb.from("equipe").select("prenom,email"),
+  ]);
+  if (erreurPrefs || erreurEquipe) {
+    console.error("Anniversaires : lecture des accords impossible", erreurPrefs || erreurEquipe);
+  }
+  const prenomParEmail = new Map((equipe || []).filter(x => x.email && x.prenom)
+    .map(x => [String(x.email).trim().toLowerCase(), x.prenom]));
+  const fetes = (preferences || []).filter(x => {
+    const anniversaire = x.choix?.anniversaire;
+    return anniversaire?.partager === true && /^\d{4}-\d{2}-\d{2}$/.test(anniversaire.date || "") &&
+      anniversaire.date.slice(5) === md && prenomParEmail.has(String(x.email || "").trim().toLowerCase());
+  }).map(x => ({ prenom: prenomParEmail.get(String(x.email).trim().toLowerCase()) }));
   // 🎨 Jour de spectacle / d'événement à thème -> message de fête dans le salon
   const { data: duJour } = await sb.from("evenements").select("titre,theme,theme_app,type_evenement,message_jour").eq("date", auj).neq("statut", "annule");
   const MSG = {
