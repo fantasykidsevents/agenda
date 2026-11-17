@@ -27,29 +27,31 @@
     .entry{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;margin:7px 0;background:#f9f5ff;border:1px solid #ebddfa}
     .entry.selected{outline:2px solid #a020ff}.tag{font-size:11px;border-radius:20px;padding:5px 7px;background:#ddf2ff;color:#036796}
     #paperWrap{position:sticky;top:10px;align-self:start}#paper{width:100%;min-height:760px;aspect-ratio:210/297;background:white;position:relative;overflow:hidden;box-shadow:0 10px 28px #28174522;color:#262233}
-    .wave1{position:absolute;left:-9%;right:-8%;top:-9%;height:25%;background:#b900ee;border-radius:0 0 54% 38%;transform:rotate(-7deg)}
-    .wave2{position:absolute;left:-8%;right:-8%;top:-6%;height:20%;background:#09b7f3;border-radius:0 0 52% 45%;transform:rotate(6deg)}
-    .waveBottom{position:absolute;bottom:-12%;left:-12%;width:60%;height:23%;border-radius:50%;background:#f83bc5;transform:rotate(22deg)}
-    .paper-head{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;padding:17% 8% 0;color:white}
-    .paper-head h2{color:white;font-size:25px;font-weight:400;letter-spacing:2px;margin:0}
-    .paper-head img{width:25%;filter:drop-shadow(0 0 7px #fff);margin-top:-20%}
-    .paper-content{position:relative;z-index:1;padding:8% 10% 15%;font-size:12px}
-    .paper-content h3{color:#02b7eb;font-size:15px;margin-bottom:7px}
-    .paper-client{display:grid;grid-template-columns:1fr auto;gap:10px;min-height:115px;line-height:1.55}
-    .paper-client p{white-space:pre-line;margin:8px 0}.paper-meta{margin-top:50px;white-space:nowrap}
-    .paper-meta b{color:#00b8ef}.bill-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:16px}
+    #paper::before{content:"";position:absolute;inset:0 0 auto;height:18%;background:#00b5eb}
+    .wave1{position:absolute;left:-29%;top:-5%;width:105%;height:24%;background:#a416ea;border-radius:0 0 55% 40%;transform:rotate(-7deg)}
+    .wave2{position:absolute;right:-18%;top:-8%;width:79%;height:27%;background:#00b5eb;border-radius:0 0 30% 65%;transform:rotate(7deg)}
+    .waveBottom{position:absolute;bottom:0;left:0;width:100%;height:1.5%;background:#a416ea}
+    .paper-head{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;padding:7% 8% 0;height:19%;color:white}
+    .paper-head h2{color:white;font-size:27px;font-weight:750;letter-spacing:2px;margin:0;text-shadow:0 1px 3px #4d177532}
+    .paper-head img{width:30%;padding:8px;background:white;border-radius:13px;box-shadow:0 4px 15px #4a207e18}
+    .paper-content{position:relative;z-index:1;padding:3% 9% 14%;font-size:12px}
+    .paper-content h3{color:#00aee8;font-size:13px;margin:0 0 7px;letter-spacing:.3px}
+    .paper-client{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);gap:10px;min-height:115px;line-height:1.55}
+    .paper-client>div{min-width:0;padding:15px;background:#f8f4fd;border-radius:13px;overflow-wrap:anywhere}.paper-client>div:last-child{background:#eefaff}
+    .paper-client p{white-space:pre-line;margin:8px 0}.paper-meta{margin-top:0;white-space:normal}
+    .paper-meta b{color:#00b8ef}.bill-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:26px}
     .bill-table th{background:#00b9f3;color:white;text-align:left;padding:9px}.bill-table th:first-child{border-radius:20px 0 0 20px}.bill-table th:last-child{border-radius:0 20px 20px 0;text-align:right}
     .bill-table td{padding:10px 9px;vertical-align:top;white-space:pre-line}.bill-table td:nth-child(2){text-align:center;white-space:nowrap}.bill-table td:last-child{text-align:right;white-space:nowrap}
     .bill-table tbody tr:nth-child(even){background:#f4f4f4}.bill-table tbody tr:nth-child(even) td:first-child{border-radius:20px 0 0 20px}.bill-table tbody tr:nth-child(even) td:last-child{border-radius:0 20px 20px 0}
-    .totals{text-align:right;margin:19px 0 15px;font-size:15px}.totals b{color:#00b5eb}.total-badge{display:inline-block;background:#01b7ef;color:white;border-radius:25px;padding:10px 15px;font-weight:800;font-size:17px}
+    .totals{text-align:right;margin:19px 0 15px;font-size:15px}.totals b{color:#00b5eb}.total-badge{display:inline-block;background:#a416ea;color:white;border-radius:12px;padding:10px 15px;font-weight:800;font-size:17px;white-space:nowrap}
     .payment{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-top:20px;font-size:12px}.payment p{line-height:1.6;margin:0}
-    .quote-note{margin:14px 0;font-size:12px;line-height:1.6;white-space:pre-line;border-left:3px solid #00b8ef;padding:4px 12px}
+    .quote-note{margin:14px 0;font-size:12px;line-height:1.6;white-space:pre-line;border-left:3px solid #00b8ef;background:#eefaff;border-radius:0 10px 10px 0;padding:10px 12px}
     .quote-note:empty{display:none}
-    .paper-footer{position:absolute;z-index:1;right:9%;bottom:8%;font-size:10px;line-height:1.38;max-width:40%;white-space:pre-line}
-    .paper-footer .tax{display:block;border-top:2px solid #00b6ed;margin-top:9px;padding-top:5px;font-size:9px}
-    .bottom-text{position:absolute;bottom:3%;left:6%;right:6%;z-index:1;text-align:center;font-size:9px}
+    .paper-footer{position:absolute;z-index:1;right:0;left:0;bottom:1.5%;font-size:10px;line-height:1.45;white-space:pre-line;background:#f8f4fd;border-top:3px solid #00b6ed;padding:22px 9% 28px;display:grid;grid-template-columns:1fr 1fr;gap:15px}
+    .paper-footer .tax{display:block;border-top:2px solid #00b6ed;padding-top:6px;font-size:9px;align-self:start;overflow-wrap:anywhere}
+    .bottom-text{position:absolute;bottom:.2%;left:6%;right:6%;z-index:2;text-align:center;font-size:9px;color:white}
     @media(max-width:900px){main{display:block}#paperWrap{position:static}#paper{max-width:700px;margin:auto}}
-    @media(max-width:540px){.row{grid-template-columns:1fr}.paper-content{font-size:9px}.paper-content h3{font-size:12px}.bill-table{font-size:9px}.paper-meta{margin-top:35px}.paper-head h2{font-size:19px}.paper-footer{font-size:8px}.total-badge{font-size:12px}.payment{font-size:9px}}
+    @media(max-width:540px){.row{grid-template-columns:1fr}.paper-content{font-size:9px}.paper-content h3{font-size:10px}.bill-table{font-size:9px}.paper-client>div{padding:7px}.paper-head h2{font-size:19px}.paper-footer{font-size:8px;padding:10px 9% 22px}.total-badge{font-size:12px}.payment{font-size:9px}}
     @page{size:A4;margin:0}
     @media print{
       @page{size:A4;margin:0}
@@ -59,17 +61,17 @@
       #paperWrap{display:block!important;position:static!important;width:210mm!important;margin:0!important;padding:0!important}
       #paper{display:block!important;position:relative!important;left:auto!important;top:auto!important;width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;margin:0!important;padding:0!important;aspect-ratio:auto!important;box-shadow:none!important;overflow:hidden!important;break-inside:avoid;page-break-inside:avoid;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
       #paper,#paper *{visibility:visible!important;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
-      #paper .paper-head{padding-top:17%!important}
+      #paper .paper-head{padding-top:7%!important}
       #paper .paper-head h2{font-size:28px!important}
-      #paper .paper-content{padding:8% 10% 15%!important;font-size:14px!important}
-      #paper .paper-content h3{font-size:17px!important}
-      #paper .bill-table{font-size:14px!important}
+      #paper .paper-content{padding:3% 9% 14%!important;font-size:13px!important}
+      #paper .paper-content h3{font-size:14px!important}
+      #paper .bill-table{font-size:13px!important}
       #paper .bill-table th{padding:10px!important}
       #paper .bill-table td{padding:11px 9px!important}
       #paper .paper-client{min-height:120px!important}
-      #paper .paper-meta{margin-top:48px!important}
+      #paper .paper-meta{margin-top:0!important}
       #paper .totals{font-size:16px!important}
-      #paper .quote-note,#paper .payment{font-size:13px!important}
+      #paper .quote-note,#paper .payment{font-size:12px!important}
       #paper .paper-footer{font-size:11px!important;line-height:1.5!important}
       #paper .paper-footer .tax{font-size:10px!important}
       #paper .bottom-text{font-size:9.5px!important}
@@ -101,19 +103,20 @@ fantasykidsevents@gmail.com</textarea>
    <h3>Prestations facturées</h3><div id="lines"></div><button id="addLine">＋ Ajouter une ligne</button>
    <div class="row"><div><label for="priceType">Prix indiqués</label><select id="priceType"><option value="ttc">Montants finaux (€)</option><option value="ht">Hors TVA (€)</option></select></div><div><label for="notes" id="notesLabel">Note facultative</label><textarea id="notes" placeholder="Référence, acompte déjà versé…"></textarea></div></div>
    <div class="controls"><button id="save" class="primary">💾 Enregistrer le brouillon</button><button id="issue">🔒 Émettre et numéroter</button><button id="paid">✅ Marquer payée</button><button id="deleteDraft" type="button" hidden>🗑️ Supprimer le brouillon</button><button id="archiveDoc" type="button" hidden>🗑️ Retirer de la liste</button><button id="restoreDoc" type="button" hidden>↩️ Restaurer</button><button id="cancelQuote" type="button" hidden>🚫 Annuler ce devis</button></div>
-   <p class="note" id="lockNote">Une facture émise est définitive : ses montants et coordonnées ne peuvent plus être modifiés. Le bouton « PDF » utilise l'impression du navigateur, option « Enregistrer en PDF ».</p>
+   <p class="note" id="lockNote">Une facture émise est définitive : ses montants et coordonnées ne peuvent plus être modifiés. Le bouton « Télécharger PDF » crée directement un fichier au format A4.</p>
   </section>
  </div>
- <aside id="paperWrap"><div class="controls"><button class="primary" id="pdf">🖨️ Imprimer / PDF</button><span class="note" id="docStatus">Aperçu du brouillon</span></div>
+ <aside id="paperWrap"><div class="controls"><button class="primary" id="pdf">📄 Télécharger PDF A4</button><button id="printPdf">🖨️ Ouvrir pour imprimer</button><span class="note" id="docStatus">Aperçu du brouillon</span></div>
   <div id="paper"><div class="wave1"></div><div class="wave2"></div><div class="waveBottom"></div>
    <div class="paper-head"><h2 id="pTitle">FACTURE ✦</h2><img src="logo.png" alt="Fantasy Kids Events"></div>
-   <div class="paper-content"><div class="paper-client"><div><h3>À l'attention de :</h3><b id="pClient"></b><p id="pClientAddress"></p><span id="pClientTva"></span></div><div class="paper-meta"><b>n° :</b> <span id="pNumber"></span><br><b>date :</b> <span id="pDate"></span></div></div>
+   <div class="paper-content"><div class="paper-client"><div><h3>À l'attention de :</h3><b id="pClient"></b><p id="pClientAddress"></p><span id="pClientTva"></span></div><div class="paper-meta"><b>n° :</b> <span id="pNumber"></span><br><b>date :</b> <span id="pDate"></span></div></div><p id="pServiceDate" class="note"></p>
     <table class="bill-table"><thead><tr><th>Descriptif</th><th>Nb.</th><th>Tarif</th></tr></thead><tbody id="pLines"></tbody></table>
     <div class="totals"><b>Sous-total : </b><span id="pSubtotal"></span></div><div id="pDetails" class="quote-note"></div><div class="payment"><p>• Mode de paiement : virement bancaire<br>• N° de compte : <span id="pIban"></span><br>• <span id="pDueLabel">Échéance</span> : <span id="pDue"></span><br><span id="pNote"></span></p><span class="total-badge" id="pTotal"></span></div>
    </div><div class="paper-footer"><span id="pIssuer"></span><span class="tax" id="pRegime"></span></div><div class="bottom-text" id="pLegal"></div>
   </div>
  </aside>
 </main><div id="blocked" class="panel" style="max-width:650px;margin:30px auto">Vérification de ton accès…</div>
+<script src="factures-pdf.js"></script>
 <script>
 (()=>{
  'use strict';
@@ -126,7 +129,7 @@ fantasykidsevents@gmail.com</textarea>
  let mode=params.get('mode')==='devis'?'devis':'facture';
  let docs=[],events=[],selected=null,readonly=false,showArchived=false;
  const table=()=>mode==='devis'?'devis_fantasy':'factures_fantasy';
- function updateMode(){const isQuote=mode==='devis';$('kind').value=mode;$('new').textContent=isQuote?'＋ Nouveau devis':'＋ Nouvelle facture';$('listTitle').textContent=isQuote?'Mes devis':'Mes factures';$('editorTitle').textContent=isQuote?'Préparer le devis':'Préparer la facture';$('pTitle').textContent=isQuote?'DEVIS ✦':'FACTURE ✦';$('issue').textContent=isQuote?'🔒 Finaliser le devis':'🔒 Émettre et numéroter';$('paid').hidden=isQuote;$('notesLabel').textContent=isQuote?'Notes visibles sur le devis':'Note facultative';$('notes').placeholder=isQuote?'Ex. Personnages présents, durée, conditions, détail de la prestation…':'Référence, acompte déjà versé…';$('dueLabel').textContent=isQuote?'Valable jusqu’au':'Date d’échéance';$('pDueLabel').textContent=isQuote?'Devis valable jusqu’au':'Échéance';$('lockNote').textContent=isQuote?'Les devis finalisés sont conservés avec leur numéro, mais peuvent être annulés. Les brouillons peuvent être supprimés.':'Les factures émises sont conservées pour la comptabilité ; seuls les brouillons sont supprimables. Pour le PDF, utilise Imprimer / PDF.';}
+ function updateMode(){const isQuote=mode==='devis';$('kind').value=mode;$('new').textContent=isQuote?'＋ Nouveau devis':'＋ Nouvelle facture';$('listTitle').textContent=isQuote?'Mes devis':'Mes factures';$('editorTitle').textContent=isQuote?'Préparer le devis':'Préparer la facture';$('pTitle').textContent=isQuote?'DEVIS ✦':'FACTURE ✦';$('issue').textContent=isQuote?'🔒 Finaliser le devis':'🔒 Émettre et numéroter';$('paid').hidden=isQuote;$('notesLabel').textContent=isQuote?'Notes visibles sur le devis':'Note facultative';$('notes').placeholder=isQuote?'Ex. Personnages présents, durée, conditions, détail de la prestation…':'Référence, acompte déjà versé…';$('dueLabel').textContent=isQuote?'Valable jusqu’au':'Date d’échéance';$('pDueLabel').textContent=isQuote?'Devis valable jusqu’au':'Échéance';$('lockNote').textContent=isQuote?'Les devis finalisés sont conservés avec leur numéro. Les brouillons peuvent être supprimés. Le PDF est généré directement en A4.':'Les factures émises sont conservées pour la comptabilité ; seuls les brouillons sont supprimables. Le PDF est généré directement en A4.';}
  $('issuerIban').value=config.IBAN||'';
  const settingsIds=['issuerName','issuerTva','issuerIban','issuerAddress','issuerContact','regime'];
  try{const saved=JSON.parse(localStorage.getItem('fk_factures_emetteur')||'null');if(saved)for(const id of settingsIds)if(saved[id]!=null)$(id).value=saved[id];}catch(_){ }
@@ -141,7 +144,7 @@ fantasykidsevents@gmail.com</textarea>
   row.querySelector('button').onclick=()=>{row.remove();preview();};row.querySelectorAll('input,textarea').forEach(x=>x.addEventListener('input',preview));$('lines').append(row);preview();}
  function preview(){if(!$('lines').children.length)return;const d=getForm();const shown=selected?.statut!=='brouillon'&&selected?selected.contenu:d;
   $('pClient').textContent=shown.client?.nom||'Nom du client';$('pClientAddress').textContent=shown.client?.adresse||'Adresse du client';$('pClientTva').textContent=shown.client?.tva?`T.V.A. : ${shown.client.tva}`:'';
-  $('pNumber').textContent=selected?.numero||'À numéroter';$('pTitle').textContent=selected?.statut==='annule'?'DEVIS ANNULÉ':(mode==='devis'?'DEVIS ✦':'FACTURE ✦');$('pDate').textContent=dateFR(shown.date_emission)||dateFR(today());$('pDue').textContent=dateFR(shown.echeance)||'À préciser';
+  $('pNumber').textContent=selected?.numero||'À numéroter';$('pTitle').textContent=selected?.statut==='annule'?'DEVIS ANNULÉ':(mode==='devis'?'DEVIS ✦':'FACTURE ✦');$('pDate').textContent=dateFR(shown.date_emission)||dateFR(today());$('pDue').textContent=dateFR(shown.echeance)||'À préciser';$('pServiceDate').textContent=shown.date_prestation?`Date de la prestation : ${dateFR(shown.date_prestation)}`:'';
   $('pLines').innerHTML=(shown.lignes||[]).map(l=>`<tr><td>${h(l.description)}</td><td>${h(l.quantite)}</td><td>${money((Number(l.prix)||0)*(Number(l.quantite)||0))}</td></tr>`).join('');
   const total=(shown.lignes||[]).reduce((sum,l)=>sum+(Number(l.prix)||0)*(Number(l.quantite)||0),0);
   $('pSubtotal').textContent=money(total);$('pTotal').textContent=`Total : ${money(total)}`;$('pIban').textContent=shown.emetteur?.iban||'';$('pNote').textContent=mode==='facture'&&shown.note?`• ${shown.note}`:'';$('pDetails').textContent=mode==='devis'&&shown.note?`Précisions sur la prestation :\n${shown.note}`:'';
@@ -206,7 +209,19 @@ fantasykidsevents@gmail.com</textarea>
   if(error)return status(error.message,true);
   selected=data;await load();selectDoc(data);status(`Devis ${data.numero} annulé et conservé dans l’historique ✅`);
  };
- $('pdf').onclick=()=>{if(!selected||selected.statut==='brouillon'){if(!confirm('Ceci est un brouillon sans numéro. Imprimer l’aperçu quand même ?'))return;}window.print();};
+ async function exportPdf(action){
+  if(!selected||selected.statut==='brouillon')if(!confirm('Ceci est un document non finalisé, sans numéro. Continuer ?'))return;
+  const data=selected&&selected.statut!=='brouillon'?selected.contenu:getForm();
+  const popup=action==='print'?window.open('','_blank'):null;
+  const button=$(action==='print'?'printPdf':'pdf');
+  button.disabled=true;const former=button.textContent;button.textContent='⏳ Préparation du PDF…';
+  try{
+   await window.fkExporterFacturePdf({kind:mode,data:{...data,date_emission:data.date_emission||today()},number:selected?.numero||'',cancelled:selected?.statut==='annule'},action,popup);
+   status(action==='print'&&popup?'PDF A4 ouvert : utilise le bouton Imprimer du lecteur PDF. ✅':'PDF A4 téléchargé ✅');
+  }catch(e){status('Impossible de générer le PDF : '+e.message,true);}
+  finally{button.disabled=false;button.textContent=former;}
+ }
+ $('pdf').onclick=()=>exportPdf('download');$('printPdf').onclick=()=>exportPdf('print');
  (async()=>{if(!sb){$('blocked').textContent='Configuration Supabase indisponible.';return;}
   const {data:{user},error}=await sb.auth.getUser();if(error||!user?.email){$('blocked').innerHTML='Connecte-toi d’abord à <a href="index.html">l’application Fantasy</a>, puis reviens ici.';return;}
   const {data:roles,error:roleErr}=await sb.from('equipe').select('email,responsable').ilike('email',user.email).limit(1);
