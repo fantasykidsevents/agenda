@@ -4264,9 +4264,19 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if(kmAjouteDansPrix===null && !confirm("Les déplacements ont été calculés mais pas ajoutés au prix de l’animation. Enregistrer quand même sans modifier le prix ?"))
         return;
     }
+    if (ev.type_evenement === "contrat_pro" && kmCalc?.detail?.mode === "evt" && kmAjouteDansPrix !== null
+        && Math.abs(kmAjouteDansPrix - kmCalc.client) > 0.009) {
+      $("formErr").textContent = "💶 Les frais ont changé depuis leur ajout au montant du contrat. Clique de nouveau sur « Ajouter au montant du contrat » avant d'enregistrer.";
+      return;
+    }
     const orig = events.find(x => x.id === editingId) || {};
     ev.deplacement_client = kmCalc ? kmCalc.client : (orig.deplacement_client ?? null);
     ev.km_detail = kmCalc ? kmCalc.detail : (orig.km_detail ?? null);
+    if (ev.type_evenement === "contrat_pro" && kmCalc?.detail?.mode === "evt") {
+      // Un calcul de remboursement ne signifie pas forcément que les frais ont été facturés.
+      ev.km_detail.fraisInclusPrix = kmAjouteDansPrix !== null;
+      if (kmAjouteDansPrix === null) ev.deplacement_client = null;
+    }
     // Choix de transport conservés même avant le premier calcul.
     // Si un ancien calcul existe, il faut recalculer après toute modification
     // afin de ne pas sauvegarder des frais incohérents.
@@ -5117,6 +5127,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
   const autoSolde = () => { const p = +$("prix").value || 0, a = +$("acompte").value || 0; return p ? Math.round(Math.max(0, p - ($("acompte_paye").checked ? a : 0)) * 100) / 100 : null; };
   $("contratProPrix").addEventListener("input", () => { $("prix").value = $("contratProPrix").value; $("prix").dispatchEvent(new Event("input")); });
+  $("prix").addEventListener("input", () => { if ($("type_evenement").value === "contrat_pro") $("contratProPrix").value = $("prix").value; });
   ["prix","acompte","acompte_paye"].forEach(id => $(id).addEventListener(id === "acompte_paye" ? "change" : "input", () => { if (!soldeTouched) { const v = autoSolde(); $("solde").value = v ?? ""; } }));
   $("solde").addEventListener("input", () => { soldeTouched = $("solde").value !== ""; });
 
@@ -5303,6 +5314,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     });
     renderPaie(); if (detail && detail.mode === "evt") showKmEvt(detail);
   }
+  function facturationDeplacementsPro(d) {
+    const tarifClient = Number(d.tarifClient ?? reglages.km_client ?? 0.25);
+    if (!Number.isFinite(tarifClient) || tarifClient < 0) throw new Error("Tarif client invalide dans les réglages.");
+    const conducteurs = (d.equipe || []).filter(x => x.conducteur);
+    const manquants = [...new Set([...conducteurs.filter(x => x.km == null).map(x => x.prenom), ...(d.manquants || [])])];
+    const km = r2(conducteurs.reduce((t, x) => t + (Number(x.km) || 0), 0));
+    const billets = r2(parkings.filter(p => p.type === "billet").reduce((t, p) => t + (+p.montant || 0), 0));
+    const parking = r2(parkings.filter(p => p.type !== "billet").reduce((t, p) => t + (+p.montant || 0), 0));
+    return { km, tarifClient, billets, parking, manquants, total: r2(km * tarifClient + billets + parking) };
+  }
   function showKmEvt(d) {
     let tot = 0;
     const lignes = (d.equipe || []).map(x => {
@@ -5313,7 +5334,20 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
             : `${x.km.toFixed(1)} km × ${euro(d.tarifEquipe)} = ${euro(x.montantKm)}${r.plafonne ? ` → <b>forfait ${euro(r.km)}</b>` : ""}`) : (x.trajet || "");
       return `${x.conducteur ? "🚗" : x.passagerDe ? "🧍" : x.transport ? "🚆" : "🚶"} <b>${esc(x.prenom)}</b> : ${base}${r.billet ? ` 🚆 billet ${euro(r.billet)}${r.billetPlaf ? " (forfait)" : ""}` : ""}${r.park ? ` + 🅿️ ${euro(r.park)}` : ""}${r.park || r.billet ? ` = <b>${euro(r.total)}</b>` : ""}${x.conducteur && x.trajet ? `<br><small>${esc(x.trajet)}</small>` : ""}`;
     }).join("<br>");
-    $("kmBox").innerHTML = `${lignes}<div class="km-client">💸 <b>Total déplacements de l'équipe</b> : <b>${euro(tot)}</b>${estRepet() ? `<br><small>🎭 Jour de répétition : forfait max ${euro(+(reglages.forfait_repet || 22.5))} pour son propre trajet ; le conducteur en covoiturage touche en plus les km du détour pour prendre ses passagers</small>` : ""}</div>`;
+    const pro = $("type_evenement").value === "contrat_pro";
+    const facture = pro ? facturationDeplacementsPro(d) : null;
+    const modifiable = pro && kmCalc?.detail === d;
+    if (modifiable) {
+      kmCalc.client = facture.total;
+      d.kmClient = facture.km;
+      d.tarifClient = facture.tarifClient;
+      d.billets = facture.billets;
+      d.parkingsClient = facture.parking;
+    }
+    $("kmBox").innerHTML = `${lignes}<div class="km-client">💸 <b>Total déplacements de l'équipe</b> : <b>${euro(tot)}</b>${estRepet() ? `<br><small>🎭 Jour de répétition : forfait max ${euro(+(reglages.forfait_repet || 22.5))} pour son propre trajet ; le conducteur en covoiturage touche en plus les km du détour pour prendre ses passagers</small>` : ""}</div>`
+      + (pro ? `<div class="km-client">🧾 <b>Déplacements à facturer au client</b> : ${facture.km.toFixed(1)} km × ${euro(facture.tarifClient)} + billets ${euro(facture.billets)} + parkings ${euro(facture.parking)} = <b>${euro(facture.total)}</b>`
+        + (facture.manquants.length ? `<p class="km-route-warn">⚠️ Adresses manquantes pour ${esc(facture.manquants.join(", "))} : complète-les avant de facturer.</p>` : "")
+        + (modifiable && !facture.manquants.length ? `<div class="after-btns" style="margin-top:8px"><button type="button" class="sig enc" id="kmAddPrix">➕ Ajouter ${euro(facture.total)} au montant du contrat</button></div>` : "") + `</div>` : "");
     $("kmBox").classList.remove("hidden");
   }
   async function kmRoute(pts) {
@@ -5342,7 +5376,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     picked.filter(p => carDe(p.nom) !== "conduit").forEach(p => { const c = carDe(p.nom);
       equipe.push({ prenom: p.nom, conducteur: false, km: 0, montantKm: 0, passagerDe: c === "aucune" || c === "transport" ? null : c, transport: c === "transport",
         trajet: c === "aucune" ? "sans voiture" : c === "transport" ? "train / bus" : `passager de ${c}` }); });
-    kmCalc = { client: null, detail: { mode: "evt", equipe, tarifEquipe: tarif, parkings, repet: estRepet(), le: new Date().toISOString() } };
+    kmCalc = { client: null, detail: { mode: "evt", equipe, tarifEquipe: tarif, tarifClient: Number(reglages.km_client ?? 0.25), manquants: [...new Set(manquants)], parkings, repet: estRepet(), le: new Date().toISOString() } };
     appliquerDeplEvt();
     toast(manquants.length ? "⚠️ Adresse manquante pour " + [...new Set(manquants)].join(", ") : "🧮 Déplacements calculés ✓");
   }
