@@ -1135,95 +1135,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .g-idee-reponse{margin:12px 0 3px;padding:12px;border-radius:13px;background:#e9f8ef;color:#21583f;border-left:3px solid #4bcb82}
   .g-makeup-viewer-head{position:sticky;top:-14px;background:#fff;z-index:4;padding:10px 0 12px}
   .g-makeup-viewer-bottom{display:block;width:100%;margin-top:14px;cursor:pointer}
+  /* Onglets de la caisse : cinq rubriques lisibles aussi sur téléphone. */
+  #caisseBg #caisseTabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+  #caisseBg #caisseTabs label{min-width:0}
+  #caisseBg #caisseTabs span{font-size:12px;padding:10px 3px;white-space:normal;overflow-wrap:normal}
+  @media(max-width:480px){#caisseBg #caisseTabs span{font-size:11px;padding:9px 1px}}
 
-  /* 🐸 Caisse Lilypad : grand écran bleu encadré de vert, boutons nénuphars. */
-  #caisseBg .caisse-sheet{
-    box-sizing:border-box;
-    background:radial-gradient(ellipse at 20% 5%,rgba(53,199,232,.42),transparent 42%),
-               radial-gradient(ellipse at 92% 80%,rgba(25,137,224,.42),transparent 38%),
-               linear-gradient(145deg,#217fc7,#13518e 62%,#102f68);
-    border:8px solid #39bc40;border-top:12px solid #42ce45;
-    border-radius:30px 30px 0 0;box-shadow:inset 0 0 0 3px #168637,0 -6px 36px rgba(13,68,117,.28);
-    color:#fff;
-  }
-  #caisseBg .grab{background:#9bea70}
-  #caisseBg .lily-face{display:flex;align-items:center;justify-content:center;gap:13px;height:47px;margin:-5px auto 3px;pointer-events:none}
-  #caisseBg .lily-eye{width:51px;height:51px;position:relative;border-radius:50%;background:#fff;border:8px solid #45cf43;box-shadow:inset 1px 3px 5px #c5e5ee,0 3px 0 #176d31}
-  #caisseBg .lily-eye:after{content:"";position:absolute;width:21px;height:25px;top:9px;left:9px;background:#263645;border-radius:50%;box-shadow:4px -5px 0 -3px white}
-  #caisseBg .lily-mouth{width:43px;height:23px;border-bottom:5px solid #1e8a42;border-radius:0 0 50% 50%;margin-top:-16px}
-  #caisseBg #caisseTitre{color:white;font-weight:900;line-height:1.25;text-align:center;text-shadow:0 3px 0 rgba(9,55,112,.45);margin:8px auto 12px}
-  #caisseBg #caisseTitre small{display:block;margin-top:6px;color:#daefff!important;text-shadow:none}
-  #caisseBg #caisseTabs{background:#0b447f;padding:5px;border-radius:20px;border:3px solid #42ce45;display:flex;gap:4px;box-shadow:inset 0 2px 7px rgba(0,20,66,.35)}
-  #caisseBg #caisseTabs label{flex:1;min-width:0}
-  #caisseBg #caisseTabs label span{display:block;border:0;border-radius:14px;background:linear-gradient(145deg,#9aee69,#43c944);color:#174b3e;font-size:13px;font-weight:900;padding:10px 3px;text-align:center;box-shadow:inset 0 2px rgba(255,255,255,.65),0 3px 0 #187636}
-  #caisseBg #caisseTabs label:has(input:checked) span{background:linear-gradient(145deg,#fff8a8,#f4cb48);color:#54330d;box-shadow:inset 0 2px white,0 3px 0 #a37f17}
-  #caisseBg #caisseBody>.hint{color:#dceeff}
-  #caisseBg #caisseBody>.sec{color:#fff}
-  #caisseBg .caisse-grid{gap:11px}
-  #caisseBg .prod{
-    background:linear-gradient(155deg,#a6f273,#63d44f 55%,#28ae41);
-    border:4px solid #1a973c;border-radius:34px;
-    min-height:142px;padding:12px 7px;position:relative;overflow:hidden;
-    box-shadow:inset 0 3px 0 rgba(255,255,255,.68),inset 0 -5px 0 rgba(10,101,34,.21),0 5px 0 #146b38,0 9px 15px rgba(5,30,74,.3);
-    color:#114d35;transition:transform .13s,box-shadow .13s;
-  }
-  #caisseBg .prod:active{transform:translateY(4px) scale(.98);box-shadow:inset 0 3px 0 rgba(255,255,255,.68),0 1px 0 #146b38}
-  #caisseBg .prod:focus-visible{outline:4px solid #ffed88;outline-offset:3px}
-  #caisseBg .prod .e{
-    width:78px;height:76px;min-height:76px;margin:0 auto 8px;
-    background:linear-gradient(145deg,#84d2ff,#2462cb);
-    border:4px solid rgba(255,255,255,.65);border-radius:26px;
-    box-shadow:inset 0 2px 6px rgba(255,255,255,.35),0 3px 5px rgba(0,60,102,.25);
-    color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.13);font-size:35px;
-  }
-  #caisseBg .prod.cat-nourriture .e{background:linear-gradient(145deg,#ffcb77,#f3842e)}
-  #caisseBg .prod.cat-photo .e{background:linear-gradient(145deg,#e29af8,#9353df)}
-  #caisseBg .prod.cat-tombola .e{background:linear-gradient(145deg,#ffacd7,#e95397)}
-  #caisseBg .prod.cat-boutique .e{background:linear-gradient(145deg,#8fe8de,#1caaa4)}
-  #caisseBg .prod .e .caisse-prod-photo{width:64px;height:64px;object-fit:contain;border-radius:20px}
-  #caisseBg .prod b{font-size:15px;line-height:1.24;color:#114d35;font-weight:900;overflow-wrap:anywhere}
-  #caisseBg .prod small{color:#195646;font-size:12px;font-weight:800}
-  #caisseBg .prod .tag{border-radius:99px;background:#fff9d9;color:#875000;box-shadow:none}
-  #caisseBg .panier{background:#f5fcff;color:#183f64;border:5px solid #58cf59;border-radius:26px;padding:13px;box-shadow:0 8px 22px rgba(0,31,78,.33)}
-  #caisseBg .panier .hint{color:#51718e}
-  #caisseBg .panier .tot{color:#155e4a;border-top:2px dashed #78ceaa}
-  #caisseBg .panier .l button{background:#dcf7c9;border:2px solid #5ec54f;color:#246c3a;font-weight:900}
-  #caisseBg #payCash,#caisseBg #paySumup{border:3px solid #fff;border-radius:18px;font-weight:900;box-shadow:0 4px 0 #12643c}
-  #caisseBg #payCash{background:linear-gradient(135deg,#72d947,#2ca448);color:white}
-  #caisseBg #paySumup{background:linear-gradient(135deg,#64cfff,#197ec8);color:white}
-  #caisseBg .panel{background:#f7fbff;color:#203d59;border-radius:20px;border:3px solid #6bd65d}
-  #caisseBg .stk-row{background:rgba(255,255,255,.15);border:1px solid rgba(190,230,255,.3);border-radius:15px;padding:10px;margin:7px 0;color:#fff}
-  #caisseBg .stk-row .tx small{color:#cde7ff}
-  #caisseBg .stk-row .tag{color:#164570;background:#e1f6fb}
-  #caisseBg .caisse-photo-btn{background:linear-gradient(135deg,#e3ffb8,#82e877);color:#134d34;border:2px solid #3aab51!important}
-  #caisseBg #npPhotoBtn{background:#e3f7ff;color:#1165a0;border:2px dashed #6cc7f3;border-radius:16px}
-  #caisseBg #npPhotoPreview{color:#eef9ff}
-  #caisseBg #caisseImp,#caisseBg #caisseClose{border:2px solid rgba(255,255,255,.75);border-radius:16px;font-weight:800}
-  #caisseBg #caisseClose{background:linear-gradient(145deg,#a4f470,#45c54c);color:#164d35}
-  #caisseBg #caisseImp{background:#dceeff;color:#165a87}
-  #caissePayBg .sheet{border:7px solid #47cb4c;background:#f4fbff}
-  @media (min-width:760px){
-    #caisseBg .caisse-sheet{border-radius:0;padding-top:14px}
-    #caisseBg #caisseTabs label span{font-size:17px;padding:12px 5px}
-    #caisseBg .prod{min-height:165px}
-    #caisseBg .prod b{font-size:18px}
-    #caisseBg .prod small{font-size:15px}
-  }
-  @media (max-width:480px){
-    #caisseBg .caisse-sheet{border-width:5px;border-top-width:9px;padding-left:10px;padding-right:10px}
-    #caisseBg .lily-face{height:34px;gap:8px;margin:0 auto 2px}
-    #caisseBg .lily-eye{width:41px;height:41px;border-width:6px}
-    #caisseBg .lily-eye:after{width:17px;height:21px;top:7px;left:7px}
-    #caisseBg #caisseTitre{font-size:20px;margin:5px auto 8px}
-    #caisseBg #caisseTabs label span{font-size:11px;padding:8px 1px}
-    #caisseBg .caisse-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-    #caisseBg .prod{min-height:140px;padding:8px 4px;border-width:3px;border-radius:25px}
-    #caisseBg .prod .e{width:63px;height:63px;min-height:63px;border-radius:20px;font-size:30px}
-    #caisseBg .prod .e .caisse-prod-photo{width:54px;height:54px}
-    #caisseBg .prod b{font-size:13px}
-    #caisseBg .prod small{font-size:11px}
-    #caisseBg .panier{padding:9px;border-width:4px}
-  }
+
 </style>
 </head>
 <body>
@@ -1985,11 +1903,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 <div id="caisseBg" class="sheet-bg hidden">
   <div class="sheet caisse-sheet">
     <div class="grab"></div>
-    <div class="lily-face" aria-hidden="true"><span class="lily-eye"></span><span class="lily-mouth"></span><span class="lily-eye"></span></div>
     <h2 id="caisseTitre">🛒 Caisse</h2>
     <div id="caisseHL" class="alert-bar blue hidden"></div>
     <div class="seg" id="caisseTabs" style="margin:6px 0">
       <label><input type="radio" name="caisseTab" value="vente" checked /><span>🛒 Vente</span></label>
+      <label><input type="radio" name="caisseTab" value="tombola" /><span>🎟️ Tombola</span></label>
       <label><input type="radio" name="caisseTab" value="ventes" /><span>🧾 Ventes</span></label>
       <label><input type="radio" name="caisseTab" value="cloture" /><span>💶 Clôture</span></label>
       <label><input type="radio" name="caisseTab" value="produits" /><span>⚙️ Produits</span></label>
@@ -6966,7 +6884,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     ["Boutique", null, "boutique", "🛍️"]];
   const CASES = (cat) => cat === "boisson" || cat === "nourriture";   // cases à barrer sur le ticket
   const LS_CP = "fk_caisse_produits", LS_VD = "fk_ventes_demo", VCACHE = (id) => "fk_ventes_cache_" + id, VFILE = "fk_ventes_file", LS_IMP = "fk_imprimante";
-  let produits = [], ventes = [], ventesTout = [], cxEv = null, caisseTab = "vente", panier = [];
+  let produits = [], ventes = [], ventesTout = [], cxEv = null, caisseTab = "vente", panier = [], panierMode = "vente", clotureMode = "vente";
+  const estVenteTombola = (v) => !!((v.lignes || []).length && (v.lignes || []).every(l => l.cat === "tombola"));
+  const caisseVentes = (tab) => ventes.filter(v => !v.annulee && (tab === "tombola" ? estVenteTombola(v) : !estVenteTombola(v)));
   function panelCaisse(ym, an) {   // 🛒 à part des rentrées (pas dans le CA ni le bénéfice)
     const V = ventesTout.filter(v => !v.annulee && String(v.created_at).slice(0, an ? 5 : 7) === (an ? ym : ym.slice(0, 7)));
     if (!V.length) return "";
@@ -7027,7 +6947,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const seuilBas = (p) => Math.max(3, Math.ceil((p.stock || 0) * 0.1));
   async function openCaisse(evId) {
     const ev = events.find(e => String(e.id) === String(evId)); if (!ev || !isResp()) return;
-    cxEv = ev; caisseTab = "vente"; panier = [];
+    cxEv = ev; caisseTab = "vente"; panier = []; panierMode = "vente"; clotureMode = "vente";
     document.querySelectorAll('input[name="caisseTab"]').forEach(x => x.checked = x.value === "vente");
     produits = await caisseStore.produits(); ventes = await caisseStore.ventes(ev.id);
     renderCaisse(); $("caisseBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
@@ -7036,18 +6956,28 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("caisseClose").onclick = closeCaisse;
   $("evtCaisse").onclick = () => { if (editingId) { const id = editingId; closeForm(); openCaisse(id); } };
   document.addEventListener("click", (e) => { const b = e.target.closest("[data-caisse]"); if (b && !b.closest("#caisseBg")) { e.stopPropagation(); closeJour(); openCaisse(b.dataset.caisse); } }, true);
-  $("caisseTabs").addEventListener("change", (e) => { caisseTab = e.target.value; renderCaisse(); });
+  $("caisseTabs").addEventListener("change", (e) => {
+    const next = e.target.value;
+    if ((next === "vente" || next === "tombola") && next !== panierMode) {
+      if (panier.length && !confirm("Changer de caisse ? Le panier en cours sera vidé.")) {
+        document.querySelectorAll('input[name="caisseTab"]').forEach(x => x.checked = x.value === caisseTab); return;
+      }
+      panier = []; panierMode = next;
+    }
+    caisseTab = next; renderCaisse();
+  });
   const totPanier = () => r2(panier.reduce((t, l) => t + l.prix * l.qte, 0));
   function renderCaisse() {
     const ev = cxEv; if (!ev) return; majBarreCaisse();
-    const ok = ventes.filter(v => !v.annulee), tot = ok.reduce((t, v) => t + +v.total, 0), cash = ok.filter(v => v.mode === "cash").reduce((t, v) => t + +v.total, 0);
-    $("caisseTitre").innerHTML = `🛒 ${esc(ev.titre || "Caisse")} <small style="font-size:13px;color:var(--muted);font-weight:600">· ${ok.length} vente${ok.length > 1 ? "s" : ""} · ${euro(tot)} (💶 ${euro(cash)} · 💳 ${euro(r2(tot - cash))})</small>`;
+    const ok = (caisseTab === "vente" || caisseTab === "tombola") ? caisseVentes(caisseTab) : ventes.filter(v => !v.annulee);
+    const tot = ok.reduce((t, v) => t + +v.total, 0), cash = ok.filter(v => v.mode === "cash").reduce((t, v) => t + +v.total, 0);
+    $("caisseTitre").innerHTML = `${caisseTab === "tombola" ? "🎟️ Tombola" : "🛒 " + esc(ev.titre || "Caisse")} <small style="font-size:13px;color:var(--muted);font-weight:600">· ${ok.length} vente${ok.length > 1 ? "s" : ""} · ${euro(tot)} (💶 ${euro(cash)} · 💳 ${euro(r2(tot - cash))})</small>`;
     if (caisseTab === "ventes") return renderVentes();
     if (caisseTab === "produits") return renderProduits();
     if (caisseTab === "cloture") return renderCloture();
-    const P = produitsEv(ev);
-    const clo = clotureDe(ev);
-    $("caisseBody").innerHTML = (clo.fond == null ? `<div class="alert-bar gold" data-goclo style="cursor:pointer">💶 Fond de caisse pas encore indiqué → touchez ici</div>` : "") + `<div class="caisse-grid">${P.map(p => { const r = resteDe(p); return `<button type="button" class="prod cat-${esc(p.categorie)}" data-prod="${esc(p.id)}"><span class="e">${caisseVisuel(p)}</span><b>${esc(p.nom)}</b><small>${p.prix == null ? "prix libre" : euro(p.prix)}${p.note ? " · " + esc(p.note) : ""}</small>${r != null ? `<span class="tag ${r <= 0 ? "ko" : r <= seuilBas(p) ? "or" : ""}" style="display:table;margin:3px auto 0">${r <= 0 ? "épuisé" : "reste " + r}</span>` : ""}</button>`; }).join("")}</div>
+    const P = produitsEv(ev).filter(p => caisseTab === "tombola" ? p.categorie === "tombola" : p.categorie !== "tombola");
+    const clo = clotureDe(ev), fondCaisse = caisseTab === "tombola" ? (clo.tombola || {}) : clo;
+    $("caisseBody").innerHTML = (fondCaisse.fond == null && fondCaisse.fondDetail == null ? `<div class="alert-bar gold" data-goclo style="cursor:pointer">💶 Fond de caisse pas encore indiqué → touchez ici</div>` : "") + `<div class="caisse-grid">${P.map(p => { const r = resteDe(p); return `<button type="button" class="prod cat-${esc(p.categorie)}" data-prod="${esc(p.id)}"><span class="e">${caisseVisuel(p)}</span><b>${esc(p.nom)}</b><small>${p.prix == null ? "prix libre" : euro(p.prix)}${p.note ? " · " + esc(p.note) : ""}</small>${r != null ? `<span class="tag ${r <= 0 ? "ko" : r <= seuilBas(p) ? "or" : ""}" style="display:table;margin:3px auto 0">${r <= 0 ? "épuisé" : "reste " + r}</span>` : ""}</button>`; }).join("")}</div>
       <div class="panier">${panier.length ? panier.map((l, i) => `<div class="l"><span>${esc(l.nom)} <small>${euro(l.prix)}</small></span><button type="button" data-pm="${i}">−</button><b style="min-width:26px;text-align:center">${l.qte}</b><button type="button" data-pp="${i}">+</button><b style="min-width:70px;text-align:right">${euro(r2(l.prix * l.qte))}</b></div>`).join("") : `<p class="hint" style="margin:4px 0">Touchez les produits pour remplir le panier.</p>`}
         <div class="tot"><span>Total</span><span>${euro(totPanier())}</span></div>
         <div class="pay-btns"><button type="button" class="btn primary" id="payCash" ${panier.length ? "" : "disabled"}>💶 Cash</button><button type="button" class="btn primary" id="paySumup" ${panier.length ? "" : "disabled"}>💳 SumUp</button></div>
@@ -7056,9 +6986,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   $("caisseBody").addEventListener("click", async (e) => {
     if (!cxEv) return;
-    if (e.target.closest("[data-goclo]")) { caisseTab = "cloture"; document.querySelectorAll('input[name="caisseTab"]').forEach(x => x.checked = x.value === "cloture"); renderCaisse(); return; }
+    if (e.target.closest("[data-goclo]")) { clotureMode = caisseTab === "tombola" ? "tombola" : "vente"; caisseTab = "cloture"; document.querySelectorAll('input[name="caisseTab"]').forEach(x => x.checked = x.value === "cloture"); renderCaisse(); return; }
     const pr = e.target.closest("[data-prod]");
-    if (pr) { const p = produitsEv(cxEv).find(x => String(x.id) === pr.dataset.prod); if (!p) return;
+    if (pr) { const p = produitsEv(cxEv).find(x => String(x.id) === pr.dataset.prod); if (!p || (caisseTab === "tombola" ? p.categorie !== "tombola" : p.categorie === "tombola")) return;
       if (p.prix == null) { const v = num(prompt(`${p.nom} : prix (€) ?`) || ""); if (!(v > 0)) return; panier.push({ id: p.id, nom: p.nom, prix: v, qte: 1, cat: p.categorie, note: p.note || null }); }
       else { if (p.stock != null && resteDe(p) <= 0 && !confirm(`${p.nom} : plus rien en stock d'après l'app. Vendre quand même ?`)) return;
         const l = panier.find(x => x.id === p.id && x.prix === p.prix); if (l) l.qte++; else panier.push({ id: p.id, nom: p.nom, prix: +p.prix, qte: 1, cat: p.categorie, note: p.note || null }); }
@@ -7101,13 +7031,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function renderVentes() {
     const L = [...ventes].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))), ok = ventes.filter(v => !v.annulee);
     const parProd = {}; ok.forEach(v => (v.lignes || []).forEach(l => { const k = l.nom; (parProd[k] ||= { q: 0, t: 0 }); parProd[k].q += l.qte; parProd[k].t += l.qte * l.prix; }));
+    const bilan = (type) => { const list = ok.filter(v => estVenteTombola(v) === (type === "tombola")); return { total: r2(list.reduce((a, v) => a + +v.total, 0)), cash: r2(list.filter(v => v.mode === "cash").reduce((a, v) => a + +v.total, 0)) }; };
+    const bar = bilan("vente"), tombola = bilan("tombola");
     const avecStock = produitsEv(cxEv).filter(p => p.stock != null);
     const stockHtml = avecStock.length ? `<div class="panel" style="margin:0 0 8px"><h3>🍾 Stock du bar</h3>${avecStock.map(p => { const v = vendusDe(p.id), r = p.stock - v;
       return `<div class="gains-l"><span>${esc(p.nom)}<small>emporté ${p.stock} · vendu ${v}</small></span><b style="color:${r <= 0 ? "#b4123c" : r <= seuilBas(p) ? "#9a5b00" : "#17714f"}">${r <= 0 ? "épuisé" : "reste " + r}</b></div>`; }).join("")}
       <p class="hint" style="margin:6px 0 0">🛒 Pour le prochain événement : prévoir au moins ${avecStock.map(p => `${Math.ceil(vendusDe(p.id) * 1.1)} ${esc(p.nom)}`).join(", ")} (ventes + 10 %).</p></div>` : "";
-    $("caisseBody").innerHTML = stockHtml + `<div class="panel" style="margin:0 0 8px"><h3>📊 Récap de l'événement</h3>${Object.entries(parProd).sort((a, b) => b[1].t - a[1].t).map(([k, x]) => `<div class="gains-l"><span>${esc(k)} × ${x.q}</span><b>${euro(r2(x.t))}</b></div>`).join("") || `<p class="hint">Aucune vente.</p>`}</div>
+    $("caisseBody").innerHTML = stockHtml + `<div class="panel" style="margin:0 0 8px"><h3>💰 Totaux par caisse</h3>
+      <div class="gains-l"><span>🛒 Ventes · cash ${euro(bar.cash)} / SumUp ${euro(r2(bar.total - bar.cash))}</span><b>${euro(bar.total)}</b></div>
+      <div class="gains-l"><span>🎟️ Tombola · cash ${euro(tombola.cash)} / SumUp ${euro(r2(tombola.total - tombola.cash))}</span><b>${euro(tombola.total)}</b></div></div><div class="panel" style="margin:0 0 8px"><h3>📊 Récap de l'événement</h3>${Object.entries(parProd).sort((a, b) => b[1].t - a[1].t).map(([k, x]) => `<div class="gains-l"><span>${esc(k)} × ${x.q}</span><b>${euro(r2(x.t))}</b></div>`).join("") || `<p class="hint">Aucune vente.</p>`}</div>
       ${L.map(v => `<div class="resa-row ${v.annulee ? "annul" : ""}"><div class="tx"><b>N° ${v.numero} · ${euro(+v.total)}</b> <span class="tag ${v.mode === "cash" ? "ok" : ""}">${v.mode === "cash" ? "💶 cash" : "💳 SumUp"}</span>${v.annulee ? ` <span class="tag ko">annulée</span>` : ""}
-        <small>${new Date(v.created_at).toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit" })} · ${esc((v.lignes || []).map(l => `${l.qte} × ${l.nom}`).join(", "))}</small></div>
+        <small>${estVenteTombola(v) ? "🎟️ Tombola" : "🛒 Vente"} · ${new Date(v.created_at).toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit" })} · ${esc((v.lignes || []).map(l => `${l.qte} × ${l.nom}`).join(", "))}</small></div>
         <div class="rt"><button type="button" class="tag" data-reimp="${esc(v.id)}" style="border:0;cursor:pointer">🖨️</button>${v.annulee ? "" : ` <button type="button" class="tag ko" data-vannul="${esc(v.id)}" style="border:0;cursor:pointer">annuler</button>`}</div></div>`).join("")}`;
   }
   function renderProduits() {
@@ -7293,7 +7227,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
 
   // ---------- 💶 Clôture de caisse : fond + comptage des billets et pièces → écart ----------
-  const COUPURES = [200, 100, 50, 20, 10, 5, 2, 1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01];
+  const COUPURES = [500, 200, 100, 50, 20, 10, 5, 2, 1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01];
   const LS_CLO = (id) => "fk_cloture_" + id;
   function clotureDe(ev) { const c = cfgCaisse(ev)._cloture || {}; const l = lsJ(LS_CLO(ev.id), null); return l && (!c.maj || l.maj > c.maj) ? l : c; }
   async function sauverCloture(o) {
@@ -7306,36 +7240,91 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     for (const ev of events) { const l = lsJ(LS_CLO(ev.id), null), c = cfgCaisse(ev)._cloture || {};
       if (l && (!c.maj || l.maj > c.maj)) { try { const cc = { ...cfgCaisse(ev), _cloture: l }; await store.patch(ev.id, { caisse_config: cc }); ev.caisse_config = cc; } catch (e) {} } }
   });
+  const sommeCoupures = (detail) => r2(COUPURES.reduce((t, c) => t + c * Math.max(0, +((detail || {})[c]) || 0), 0));
+  const fondCaisseDe = (etat) => etat.fondDetail != null ? sommeCoupures(etat.fondDetail) : r2(+etat.fond || 0);
   async function attenduCash(ev) {
-    const cashVentes = ventes.filter(v => !v.annulee && v.mode === "cash").reduce((t, v) => t + +v.total, 0);
-    let cashAccueil = 0; try { cashAccueil = (await resaStore.list(ev.id)).filter(r => r.mode_paiement === "cash").reduce((t, r) => t + (+r.paye_jour || 0), 0); } catch (e) {}
-    return { cashVentes: r2(cashVentes), cashAccueil: r2(cashAccueil) };
+    const cash = ventes.filter(v => !v.annulee && v.mode === "cash");
+    const cashVentes = cash.filter(v => !estVenteTombola(v)).reduce((t, v) => t + +v.total, 0);
+    const cashTombola = cash.filter(estVenteTombola).reduce((t, v) => t + +v.total, 0);
+    let cashAccueil = 0;
+    try { cashAccueil = (await resaStore.list(ev.id)).filter(r => r.mode_paiement === "cash").reduce((t, r) => t + (+r.paye_jour || 0), 0); } catch (e) {}
+    return { cashVentes: r2(cashVentes), cashTombola: r2(cashTombola), cashAccueil: r2(cashAccueil) };
   }
   async function renderCloture() {
-    const ev = cxEv, clo = clotureDe(ev), n = clo.comptage || {}, A = await attenduCash(ev);
-    const inclAcc = clo.accueil !== false;
-    const compte = r2(COUPURES.reduce((t, c) => t + c * (+n[c] || 0), 0));
-    const attendu = r2((+clo.fond || 0) + A.cashVentes + (inclAcc ? A.cashAccueil : 0)), ecart = r2(compte - attendu);
-    const lig = (c) => `<div class="stk-row" style="padding:5px 0"><span class="tx" style="min-width:70px"><b>${c >= 5 ? "💶" : "🪙"} ${c >= 1 ? c + " €" : Math.round(c * 100) + " c"}</b></span>
-      <span class="et"><button type="button" data-cm="${c}">−</button><input type="number" min="0" data-cn="${c}" value="${+n[c] || ""}" placeholder="0" style="width:64px;text-align:center" /><button type="button" data-cp="${c}">+</button></span><b style="min-width:76px;text-align:right">${euro(r2(c * (+n[c] || 0)))}</b></div>`;
-    $("caisseBody").innerHTML = `<div class="panel" style="margin:0 0 8px"><h3>1️⃣ Fond de caisse (au début)</h3>
-        <div class="row" style="align-items:center"><div><input id="cloFond" type="text" inputmode="decimal" value="${clo.fond != null ? String(clo.fond).replace(".", ",") : ""}" placeholder="ex. 100" class="big-money" /></div><div><small class="hint">la monnaie mise dans la caisse avant la première vente</small></div></div></div>
-      <div class="panel" style="margin:0 0 8px"><h3>2️⃣ Comptage à la fin</h3>${COUPURES.map(lig).join("")}
-        <div class="gains-l"><span><b>Total compté</b></span><b>${euro(compte)}</b></div></div>
-      <div class="panel" style="margin:0 0 8px"><h3>3️⃣ Résultat</h3>
-        <div class="gains-l"><span>Fond de caisse</span><b>${euro(+clo.fond || 0)}</b></div>
-        <div class="gains-l"><span>Ventes en cash (caisse)</span><b>${euro(A.cashVentes)}</b></div>
-        ${A.cashAccueil ? `<div class="gains-l"><span><label class="chk" style="display:inline-flex;gap:6px"><input type="checkbox" id="cloAcc" ${inclAcc ? "checked" : ""} /> Soldes payés en cash à l'accueil</label></span><b>${euro(A.cashAccueil)}</b></div>` : ""}
-        <div class="gains-l"><span><b>Il devrait y avoir</b></span><b>${euro(attendu)}</b></div>
-        <div class="rendu" style="color:${Math.abs(ecart) < 0.005 ? "#17714f" : ecart > 0 ? "#9a5b00" : "#b4123c"}">${Math.abs(ecart) < 0.005 ? "✅ La caisse est juste !" : ecart > 0 ? `➕ ${euro(ecart)} en trop` : `➖ il manque ${euro(-ecart)}`}</div>
-        ${compte ? `<p class="hint" style="text-align:center;margin:0">À garder comme fond pour la prochaine fois : ${euro(+clo.fond || 0)} · à déposer : <b>${euro(r2(Math.max(0, compte - (+clo.fond || 0))))}</b></p>` : ""}
-        ${clo.maj ? `<p class="hint" style="text-align:center">Enregistré par ${esc(clo.par || "?")} le ${new Date(clo.maj).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>` : ""}</div>`;
-    const maj = async (o) => { await sauverCloture({ ...clotureDe(ev), ...o }); renderCloture(); };
-    $("cloFond").onchange = () => maj({ fond: $("cloFond").value.trim() === "" ? null : num($("cloFond").value) });
-    if ($("cloAcc")) $("cloAcc").onchange = () => maj({ accueil: $("cloAcc").checked });
-    $("caisseBody").querySelectorAll("[data-cn]").forEach(i => i.onchange = () => maj({ comptage: { ...(clotureDe(ev).comptage || {}), [i.dataset.cn]: Math.max(0, parseInt(i.value, 10) || 0) } }));
-    $("caisseBody").querySelectorAll("[data-cm],[data-cp]").forEach(b => b.onclick = () => { const c = b.dataset.cm || b.dataset.cp, cur = +(clotureDe(ev).comptage || {})[c] || 0;
-      maj({ comptage: { ...(clotureDe(ev).comptage || {}), [c]: Math.max(0, cur + (b.dataset.cp ? 1 : -1)) } }); });
+    const ev = cxEv, clo = clotureDe(ev), type = clotureMode;
+    const etat = type === "tombola" ? (clo.tombola || {}) : clo;
+    const n = etat.comptage || {}, fondDetail = etat.fondDetail || {}, A = await attenduCash(ev);
+    if (cxEv !== ev || caisseTab !== "cloture" || clotureMode !== type) return;
+    const inclAcc = type === "vente" && etat.accueil !== false;
+    const fond = fondCaisseDe(etat), compte = sommeCoupures(n);
+    const recettes = type === "tombola" ? A.cashTombola : A.cashVentes;
+    const attendu = r2(fond + recettes + (inclAcc ? A.cashAccueil : 0)), ecart = r2(compte - attendu);
+    const ligne = (c, champ) => {
+      const debut = champ === "fond", data = debut ? "f" : "c", valeurs = debut ? fondDetail : n;
+      return `<div class="stk-row" style="padding:6px 8px;margin:4px 0;display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        <span style="min-width:66px;flex:1"><b>${c >= 5 ? "💶" : "🪙"} ${c >= 1 ? c + " €" : Math.round(c * 100) + " c"}</b></span>
+        <span class="et" style="display:flex;align-items:center;gap:4px">
+          <button type="button" data-${data}m="${c}" aria-label="Retirer une coupure de ${c}">−</button>
+          <input type="number" min="0" step="1" data-${data}n="${c}" value="${+valeurs[c] || ""}" placeholder="0" style="width:62px;text-align:center" />
+          <button type="button" data-${data}p="${c}" aria-label="Ajouter une coupure de ${c}">+</button>
+        </span><b style="min-width:74px;text-align:right">${euro(r2(c * (+valeurs[c] || 0)))}</b></div>`;
+    };
+    const detail = (champ) => `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px">
+      <div><h4 style="margin:10px 0 7px">💶 Billets</h4>${COUPURES.filter(c => c >= 5).map(c => ligne(c, champ)).join("")}</div>
+      <div><h4 style="margin:10px 0 7px">🪙 Pièces</h4>${COUPURES.filter(c => c < 5).map(c => ligne(c, champ)).join("")}</div>
+    </div>`;
+    const ancien = etat.fondDetail == null && etat.fond != null;
+    $("caisseBody").innerHTML = `<div class="seg" style="margin:0 0 12px">
+      <button type="button" class="btn ${type === "vente" ? "primary" : "ghost"}" data-cloture-mode="vente" style="flex:1">🛒 Caisse ventes</button>
+      <button type="button" class="btn ${type === "tombola" ? "primary" : "ghost"}" data-cloture-mode="tombola" style="flex:1">🎟️ Caisse tombola</button>
+    </div>
+    <p class="hint" style="margin:0 0 12px">${type === "tombola" ? "Cette caisse contient uniquement les ventes de tickets tombola. Son fond et son comptage sont indépendants." : "Caisse des ventes hors tombola. Les espèces encaissées à l’accueil peuvent être ajoutées si elles sont dans cette caisse."}</p>
+    <div class="panel" style="margin:0 0 8px"><h3>1️⃣ Fond de caisse au début : ${euro(fond)}</h3>
+      <p class="hint">Indique le nombre de billets et de pièces mis dans cette caisse avant les ventes. Le total se calcule automatiquement.</p>
+      ${ancien ? `<div class="alert-bar gold">Ancien fond enregistré : <b>${euro(+etat.fond || 0)}</b>. Dès que tu modifies une coupure ci-dessous, le détail remplacera cet ancien montant.</div>` : ""}
+      ${detail("fond")}
+      <div class="gains-l"><span><b>Total du fond de caisse</b></span><b>${euro(fond)}</b></div>
+    </div>
+    <div class="panel" style="margin:0 0 8px"><h3>2️⃣ Comptage à la fin : ${euro(compte)}</h3>
+      <p class="hint">Compte toutes les espèces restant physiquement dans cette caisse.</p>
+      ${detail("comptage")}
+      <div class="gains-l"><span><b>Total compté</b></span><b>${euro(compte)}</b></div>
+    </div>
+    <div class="panel" style="margin:0 0 8px"><h3>3️⃣ Résultat · ${type === "tombola" ? "🎟️ Tombola" : "🛒 Ventes"}</h3>
+      <div class="gains-l"><span>Fond de caisse</span><b>${euro(fond)}</b></div>
+      <div class="gains-l"><span>Ventes en cash ${type === "tombola" ? "(tombola)" : "(hors tombola)"}</span><b>${euro(recettes)}</b></div>
+      ${type === "vente" && A.cashAccueil ? `<div class="gains-l"><span><label class="chk" style="display:inline-flex;gap:6px"><input type="checkbox" id="cloAcc" ${inclAcc ? "checked" : ""} /> Soldes payés en cash à l'accueil</label></span><b>${euro(A.cashAccueil)}</b></div>` : ""}
+      <div class="gains-l"><span><b>Il devrait y avoir</b></span><b>${euro(attendu)}</b></div>
+      <div class="rendu" style="color:${Math.abs(ecart) < 0.005 ? "#17714f" : ecart > 0 ? "#9a5b00" : "#b4123c"}">${Math.abs(ecart) < 0.005 ? "✅ La caisse est juste !" : ecart > 0 ? `➕ ${euro(ecart)} en trop` : `➖ il manque ${euro(-ecart)}`}</div>
+      ${compte ? `<p class="hint" style="text-align:center;margin:0">À garder comme fond : ${euro(fond)} · à déposer : <b>${euro(r2(Math.max(0, compte - fond)))}</b></p>` : ""}
+      ${clo.maj ? `<p class="hint" style="text-align:center">Dernière modification : ${esc(clo.par || "?")} · ${new Date(clo.maj).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>` : ""}
+    </div>`;
+
+    const majEtat = async (o) => {
+      const actuel = clotureDe(ev);
+      if (type === "tombola") await sauverCloture({ ...actuel, tombola: { ...(actuel.tombola || {}), ...o } });
+      else await sauverCloture({ ...actuel, ...o });
+      if (cxEv === ev && caisseTab === "cloture" && clotureMode === type) renderCloture();
+    };
+    $("caisseBody").querySelectorAll("[data-cloture-mode]").forEach(b => b.onclick = () => {
+      clotureMode = b.dataset.clotureMode; renderCloture();
+    });
+    if ($("cloAcc")) $("cloAcc").onchange = () => majEtat({ accueil: $("cloAcc").checked });
+    const changer = (champ, coupure, val) => {
+      const actuel = clotureDe(ev), obj = type === "tombola" ? (actuel.tombola || {}) : actuel;
+      const nom = champ === "fond" ? "fondDetail" : "comptage";
+      majEtat({ [nom]: { ...(obj[nom] || {}), [coupure]: Math.max(0, Math.floor(Number(val) || 0)) } });
+    };
+    $("caisseBody").querySelectorAll("[data-fn],[data-cn]").forEach(i => i.onchange = () => {
+      changer(i.dataset.fn != null ? "fond" : "comptage", i.dataset.fn ?? i.dataset.cn, i.value);
+    });
+    $("caisseBody").querySelectorAll("[data-fm],[data-fp],[data-cm],[data-cp]").forEach(b => b.onclick = () => {
+      const champ = b.dataset.fm != null || b.dataset.fp != null ? "fond" : "comptage";
+      const coupure = b.dataset.fm ?? b.dataset.fp ?? b.dataset.cm ?? b.dataset.cp;
+      const actuel = clotureDe(ev), obj = type === "tombola" ? (actuel.tombola || {}) : actuel;
+      const valeur = +(obj[champ === "fond" ? "fondDetail" : "comptage"] || {})[coupure] || 0;
+      changer(champ, coupure, valeur + (b.dataset.fp != null || b.dataset.cp != null ? 1 : -1));
+    });
   }
 
   // ---------- 🔄 Tournante : 2 tables au photo + 2 au buffet, au hasard, chaque table une fois à chaque poste ----------
