@@ -1397,8 +1397,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue Chiffres (responsables) -->
     <section id="viewStats" class="hidden">
-      <div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
+      <div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
       <a href="factures.html" class="mine-head" style="display:block;text-decoration:none;color:#653090;font-weight:800;text-align:center">🧾 Factures & devis · Créer, consulter et imprimer</a>
+      <section id="gPaiesPanel" class="panel hidden" aria-label="Paiements de l'équipe">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <h3 style="margin:0">👛 Paiements de l'équipe</h3>
+          <button type="button" class="sig" id="gPaiesClose">✕ Fermer</button>
+        </div>
+        <p class="hint">Prestations confirmées et effectuées. La validation enregistre le paiement et prévient le membre, mais ne fait pas de virement.</p>
+        <label class="check"><input type="checkbox" id="gPaiesHistory" /> Afficher aussi les paiements déjà effectués</label>
+        <div id="gPaiesBody"></div>
+      </section>
       <div class="group-title" id="gFinT">💶 Finances</div>
       <div class="seg" id="sCaisseSeg" style="margin-bottom:8px">
         <label><input type="radio" name="sCaisse" value="fantasy" checked /><span>💼 Fantasy</span></label>
@@ -5901,6 +5910,64 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const closeRg = () => { $("rgBg").classList.add("hidden"); document.body.style.overflow = ""; };
   $("rgClose").onclick = closeRg; $("rgBg").addEventListener("click", (e) => { if (e.target.id === "rgBg") closeRg(); });
   $("gReglages").onclick = openRg;
+  function renderGestionPaies() {
+    if (!isResp()) return;
+    const historique=$("gPaiesHistory").checked, auj=todayISO();
+    const parPersonne=new Map();
+    for (const e of events) {
+      if (!["confirme","termine"].includes(e.statut) || e.date>auj) continue;
+      for (const p of e.paies||[]) {
+        const montant=r2((+p.prestation||0)+(+p.deplacement||0));
+        if (montant<=0 || (p.paye && !historique)) continue;
+        const k=normName(p.prenom);
+        const groupe=parPersonne.get(k)||{nom:p.prenom,lignes:[],du:0};
+        groupe.lignes.push({evId:e.id,prenom:p.prenom,paye:!!p.paye,montant,date:e.date,titre:e.titre||e.theme||e.enfant||"Prestation",depl:+p.deplacement||0,prest:+p.prestation||0,payeLe:p.paye_le});
+        if (!p.paye) groupe.du=r2(groupe.du+montant);
+        parPersonne.set(k,groupe);
+      }
+    }
+    const groupes=[...parPersonne.values()].sort((a,b)=>b.du-a.du||a.nom.localeCompare(b.nom,"fr"));
+    const total=groupes.reduce((n,g)=>n+g.du,0);
+    $("gPaiesBody").innerHTML=`<div class="mine-head" style="margin:10px 0"><b>💶 Reste à verser : ${euro(total)}</b><small>La validation signifie que l'argent a réellement été remis ou viré.</small></div>`
+      +(groupes.map(g=>{
+        const impayees=g.lignes.filter(l=>!l.paye);
+        return `<div class="mine-head" style="margin:12px 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:9px"><b>${esc(g.nom)}</b><b style="color:var(--violet-d)">${euro(g.du)} à payer</b></div>
+          ${g.lignes.sort((a,b)=>a.date.localeCompare(b.date)).map(l=>`<div class="pay-row" style="margin-top:8px"><span class="who">${esc(l.titre)}<small>${esc(l.date.split("-").reverse().join("/"))} · prestation ${euro(l.prest)} + déplacement ${euro(l.depl)}${l.payeLe?" · payé le "+esc(l.payeLe.split("-").reverse().join("/")):""}</small></span><b>${euro(l.montant)}</b><button type="button" class="${l.paye?"done":""}" data-g-paie-id="${esc(l.evId)}" data-g-paie-nom="${esc(l.prenom)}" data-g-paie-to="${l.paye?0:1}">${l.paye?"↩ Annuler":"✅ Payé"}</button></div>`).join("")}
+          ${impayees.length>1?`<button type="button" class="btn primary" style="margin-top:9px" data-g-paie-tous="${esc(g.nom)}">✅ Tout marquer payé pour ${esc(g.nom)} (${euro(g.du)})</button>`:""}
+        </div>`;
+      }).join("")||'<p class="hint">✅ Aucun paiement en attente pour les prestations effectuées.</p>');
+  }
+  $("gPaies").onclick=()=>{ $("gPaiesPanel").classList.remove("hidden");renderGestionPaies();$("gPaiesPanel").scrollIntoView({behavior:"smooth",block:"start"}); };
+  $("gPaiesClose").onclick=()=>$("gPaiesPanel").classList.add("hidden");
+  $("gPaiesHistory").onchange=renderGestionPaies;
+  $("gPaiesBody").addEventListener("click",async e=>{
+    const un=e.target.closest("[data-g-paie-id]"),tous=e.target.closest("[data-g-paie-tous]");
+    if(!un&&!tous)return;
+    let lignes=[],montant=0,prenom="";
+    if(un){
+      prenom=un.dataset.gPaieNom;
+      const ev=events.find(x=>String(x.id)===un.dataset.gPaieId);
+      const p=ev?.paies?.find(x=>normName(x.prenom)===normName(prenom));
+      if(!ev||!p)return toast("Ligne introuvable : actualise l'agenda.");
+      lignes=[{evId:ev.id,prenom:p.prenom}];montant=totPaie(p);
+    }else{
+      prenom=tous.dataset.gPaieTous;
+      for(const ev of events)if(["confirme","termine"].includes(ev.statut)&&ev.date<=todayISO())
+        for(const p of ev.paies||[])if(!p.paye&&normName(p.prenom)===normName(prenom)&&totPaie(p)>0){
+          lignes.push({evId:ev.id,prenom:p.prenom});montant+=totPaie(p);
+        }
+    }
+    const paye=!!tous||un.dataset.gPaieTo==="1";
+    if(!lignes.length)return;
+    if(!confirm(paye?`Confirmer que ${euro(montant)} ont bien été versés à ${prenom} ? Cette action informe le membre.`:`Annuler l'enregistrement du paiement de ${euro(montant)} à ${prenom} ?`))return;
+    const btn=un||tous;btn.disabled=true;
+    try {
+      const resultat=await store.setPaid(lignes,paye);
+      await reload();renderGestionPaies();
+      toast(resultat?.notifError?"⚠️ Paiement enregistré, mais notification non envoyée : "+resultat.notifError:paye?"✅ Paiement enregistré et membre prévenu":"↩ Paiement remis en attente");
+    }catch(err){toast("Erreur de paiement : "+(err.message||err));btn.disabled=false;}
+  });
   $("gFin").onclick = () => $("gFinT").scrollIntoView({ behavior: "smooth", block: "start" });
   $("gCaissePresta").onclick = ouvrirCaissePresta;
   $("gExport").onclick = () => $("expMonth").scrollIntoView({ behavior: "smooth", block: "center" });
