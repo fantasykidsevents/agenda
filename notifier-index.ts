@@ -610,7 +610,7 @@ const texteVirement = (montant, comm, titre) => { const IBAN = env("IBAN"), BENE
 async function lirePrive(id) {
   let pv = null;
   for (let i = 0; i < 3 && !pv; i++) {
-    ({ data: pv } = await sb.from("evenements_prive").select("prix,acompte,acompte_paye").eq("id", id).maybeSingle());
+    ({ data: pv } = await sb.from("evenements_prive").select("prix,acompte,acompte_paye,deplacement_client,km_detail,notes_privees").eq("id", id).maybeSingle());
     if (!pv) await new Promise((r) => setTimeout(r, 1500));
   }
   return pv || {};
@@ -725,7 +725,7 @@ async function mailsReservation(type, r, avant) {
 }
 
 // ---------- 📨 Devis au client (à accepter en ligne) ----------
-const OPTIONS_PRIX = { enfant: ["👧 Enfant supplémentaire", 7], tatouage: ["🦋 Atelier tatouage paillettes (payé le jour même)", 2],
+const OPTIONS_PRIX = { hors_zone: ["🚗 Forfait hors zone", 25], enfant: ["👧 Enfant supplémentaire", 7], tatouage: ["🦋 Atelier tatouage paillettes (payé le jour même)", 2],
   perso_flash: ["🎭 Personnage supplémentaire · Flash (30 min)", 40], perso_magic: ["🎭 Personnage supplémentaire · Magic (1 h)", 65],
   perso_fantastic: ["🎭 Personnage supplémentaire · Fantastic (1 h 30)", 80], perso_celebration: ["🎭 Personnage supplémentaire · Célébration (2 h)", 90],
   mascotte: ["🐭 Mascotte surprise (30 min)", 100], perso_30: ["🎤 Personnage supplémentaire · 30 min", 40], perso_1h: ["🎤 Personnage supplémentaire · 1 h", 45] };
@@ -734,6 +734,10 @@ async function envoyerDevis(ev) {
   let { data: d } = await sb.from("devis").select("*").eq("evenement_id", ev.id).maybeSingle();
   if (!d) { const r = await sb.from("devis").insert({ evenement_id: ev.id, token: jeton() }).select().single(); if (r.error) throw r.error; d = r.data; }
   const pv = await lirePrive(ev.id), prix = +(pv.prix || 0), acompte = +(pv.acompte || 0);
+  const optionsFacturees = Object.entries(ev.options || {}).reduce((t,[k,n]) => t + (k === "tatouage" ? 0 : (OPTIONS_PRIX[k]?.[1] || 0) * (+n || 0)),0);
+  const kmInclus = pv.km_detail?.fraisInclusPrix === true || (pv.km_detail?.fraisInclusPrix == null && String(pv.notes_privees || "").includes("Déplacement client : "));
+  const deplacement = kmInclus ? Math.max(0, +(pv.deplacement_client || 0)) : 0;
+  const formule = Math.max(0,Math.round((prix-optionsFacturees-deplacement)*100)/100);
   const lien = `${APP_URL}/devis.html?t=${d.token}`, enfant = ev.enfant ? ` de ${ev.enfant}` : "";
   const lignesOpt = Object.entries(ev.options || {}).filter(([, n]) => +n > 0).map(([k, n]) => { const o = OPTIONS_PRIX[k]; return o ? `<tr><td style="padding:3px 0">${esc(o[0])}${+n > 1 ? ` × ${n}` : ""}</td><td style="text-align:right;padding:3px 0">${k === "tatouage" ? `${euros0(o[1])} / enfant` : euros0(o[1] * n)}</td></tr>` : ""; }).join("");
   const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1f1735">${BANDE}
@@ -742,7 +746,8 @@ async function envoyerDevis(ev) {
     <p style="font-size:16px">Merci pour votre demande 💖 Voici le détail de l'animation que nous avons préparée${ev.enfant ? ` pour <b>${esc(ev.enfant)}</b>` : ""}. Prenez le temps de tout regarder ✨</p>
     ${recapAnim(ev)}
     <table style="width:100%;font-size:15px;border-collapse:collapse;background:#f8f2ff;border-radius:12px;padding:10px">
-      ${ev.theme ? `<tr><td style="padding:3px 0">✨ ${esc(ev.theme)}</td><td></td></tr>` : ""}${lignesOpt}
+      <tr><td style="padding:3px 0">✨ ${esc(ev.theme || "Animation")} · formule</td><td style="text-align:right;padding:3px 0">${euros0(formule)}</td></tr>${lignesOpt}
+      ${deplacement ? `<tr><td style="padding:3px 0">🚗 Frais de déplacement</td><td style="text-align:right;padding:3px 0">${euros0(deplacement)}</td></tr>` : ""}
       ${prix ? `<tr><td style="padding:8px 0 3px;border-top:1px solid #dcc6ff"><b>Total</b></td><td style="text-align:right;padding:8px 0 3px;border-top:1px solid #dcc6ff"><b>${euros0(prix)}</b></td></tr>` : ""}
       ${acompte ? `<tr><td style="padding:3px 0;color:#6b6385">dont acompte à la réservation</td><td style="text-align:right;color:#6b6385">${euros0(acompte)}</td></tr>` : ""}
     </table>
@@ -750,7 +755,8 @@ async function envoyerDevis(ev) {
     <p><a href="${lien}" style="display:inline-block;background:linear-gradient(110deg,#00b4ff,#a020ff,#d63fd0);color:#fff;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:16px">✅ Voir et accepter mon devis</a></p>
     <p style="font-size:14px;color:#6b6385">Dès votre accord, nous vous envoyons les infos pour l'acompte afin de bloquer la date rien que pour vous 🔒 Une modification à faire ? Répondez simplement à ce mail.</p>
     ${SIGNATURE}</div>`;
-  const texte = `Bonjour,\n\nVoici votre devis pour l'animation${enfant} : ${quand(ev)}.\n${ev.theme ? ev.theme + "\n" : ""}${prix ? `Total : ${euros0(prix)}${acompte ? ` (dont acompte ${euros0(acompte)})` : ""}\n` : ""}\nPour l'accepter en un clic :\n${lien}\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
+  const detailTexte = [`Formule ${ev.theme || "Animation"} : ${euros0(formule)}`, ...Object.entries(ev.options || {}).filter(([k,n]) => +n>0 && OPTIONS_PRIX[k]).map(([k,n]) => `${OPTIONS_PRIX[k][0]}${+n>1 ? " × "+n : ""} : ${k === "tatouage" ? euros0(OPTIONS_PRIX[k][1])+" / enfant (payé sur place)" : euros0(OPTIONS_PRIX[k][1]*n)}`), ...(deplacement ? [`Frais de déplacement : ${euros0(deplacement)}`] : [])].join("\n");
+  const texte = `Bonjour,\n\nVoici votre devis pour l'animation${enfant} : ${quand(ev)}.\n\n${detailTexte}\nTotal : ${euros0(prix)}${acompte ? `\nAcompte : ${euros0(acompte)}` : ""}\n\nPour l'accepter en un clic :\n${lien}\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
   await envoyerEmail(ev.email, `📜 Votre devis Fantasy Kids Events${enfant}`, html, texte, [],
     { canal: "client" });
   await sb.from("devis").update({ envoye_le: new Date().toISOString() }).eq("evenement_id", ev.id);
