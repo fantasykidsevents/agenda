@@ -3209,6 +3209,21 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("clocheBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
   }
   const closeCloche = () => { $("clocheBg").classList.add("hidden"); document.body.style.overflow = ""; };
+  let clocheAutoPour = null;
+  function ouvrirClocheAuDemarrage(utilisateur) {
+    const cle = String(utilisateur?.email || (DEMO ? "demo" : "")).trim().toLowerCase();
+    if (!cle || clocheAutoPour === cle) return;
+    clocheAutoPour = cle;  // bloquer aussi les chargements simultanés de la session
+    setTimeout(() => {
+      if ($("app").classList.contains("hidden") || document.visibilityState === "hidden" ||
+          String(currentUser?.email || (DEMO ? "demo" : "")).trim().toLowerCase() !== cle) return;
+      const nonLues = notificationsApp.some(n => !n.lue_le && n.type !== "chat" && !notificationsVuesIci.has(String(n.id)));
+      if (!nonLues && !(isGest() && resaSite.length)) return;
+      // Un lien direct peut avoir ouvert une fiche ou une discussion : ne pas la recouvrir.
+      if (document.querySelector(".sheet-bg:not(.hidden)")) return;
+      openCloche();
+    }, 650);
+  }
   // App rouverte : la pastille de l'icône = demandes à traiter (👑/⭐), sinon effacée ; on range les notifications déjà vues
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { chargerNotifications().catch(console.warn);
     try { navigator.serviceWorker?.getRegistration().then(r => r && r.getNotifications().then(L => L.forEach(x => x.close()))); } catch (_) {} } });
@@ -9995,6 +10010,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("logoutBtn").classList.toggle("hidden", DEMO);
     $("demoBar").classList.toggle("hidden", !DEMO);
     await reload();
+    ouvrirClocheAuDemarrage(user);
     await chatReload();
     await ptReload();
     if (isResp()) { try { ventesTout = await caisseStore.tout(); } catch (e) { ventesTout = []; } }
@@ -10015,6 +10031,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   function showLogin() {
     $("app").classList.add("hidden"); $("loginScreen").classList.remove("hidden");
+    clocheAutoPour = null;
     notificationsApp = [];
     if (channel) { sb.removeChannel(channel); channel = null; }
   }
