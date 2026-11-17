@@ -1,7 +1,7 @@
 // Service worker : permet l'installation et l'ouverture hors connexion.
 // Stratégie « réseau d'abord » : on prend toujours la version la plus
 // récente, et on retombe sur le cache si pas de réseau.
-const CACHE = "fk-agenda-v84";
+const CACHE = "fk-agenda-v85";
 const FICHIERS = [
   "./", "./index.html", "./config.js", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./logo.png", "./nuit-magique.png",
@@ -25,7 +25,9 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   // fichiers de l'app + bibliothèques/polices externes : copie gardée pour le hors-ligne
   const externe = /(^|\.)(cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com)$/.test(url.hostname);
-  if (e.request.method !== "GET" || (url.origin !== self.location.origin && !externe)) return;
+  // Photos de produits : les garder hors ligne après un premier affichage.
+  const photoProduit = url.hostname.endsWith(".supabase.co") && url.pathname.startsWith("/storage/v1/object/public/chat/caisse-produits/");
+  if (e.request.method !== "GET" || (url.origin !== self.location.origin && !externe && !photoProduit)) return;
   if (/tesseract|pdf\.worker|pdfjs|traineddata/i.test(url.href)) return;   // gros fichiers de lecture de tickets : pas en cache
   e.respondWith(
     fetch(e.request)
