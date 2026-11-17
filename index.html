@@ -1142,6 +1142,33 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   @media(max-width:600px){#caisseBg #caisseTabs{grid-template-columns:repeat(3,minmax(0,1fr))}}
   @media(max-width:480px){#caisseBg #caisseTabs span{font-size:12px;padding:9px 3px}}
 
+  /* 🎂 Anniversaire : une surprise discrète, visible seulement pour la personne concernée. */
+  .bday-surprise{margin:0 0 13px;padding:16px;border:1px solid #f8c6e0;border-radius:17px;background:linear-gradient(110deg,#fff0f8,#f3e9ff 55%,#fff6de);box-shadow:0 5px 20px #9d3bbb16;overflow:hidden;position:relative}
+  .bday-surprise b{display:block;color:#7433a4;font-size:18px;margin-bottom:4px}
+  .bday-surprise p{margin:0;color:#69547e;font-size:13px}
+  .bday-surprise .bday-spark{display:block;font-size:28px;letter-spacing:9px;animation:bday-pop 1.8s ease-in-out infinite alternate}
+  @keyframes bday-pop{from{transform:translateY(2px) scale(.99);filter:saturate(1)}to{transform:translateY(-4px) scale(1.05);filter:saturate(1.3)}}
+  @media(prefers-reduced-motion:reduce){.bday-surprise .bday-spark{animation:none}}
+  /* 🧭 Les actions à traiter se trouvent dès l'accueil de l'agenda admin. */
+  .centre-controle{margin:0 0 14px;padding:14px;border:1px solid #e5d8f3;border-radius:17px;background:linear-gradient(125deg,#fff,#faf5ff);box-shadow:0 4px 20px #4932770c}
+  .cc-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .cc-head h2{font-size:17px;line-height:1.25;margin:0;color:#56317e}
+  .cc-summary{font-size:12px;color:#725c8b;margin:5px 0 10px}
+  .cc-count{display:inline-block;border-radius:20px;padding:3px 9px;background:#f5dded;color:#8b2869;font-size:12px;font-weight:800}
+  .cc-count.ok{background:#e4f7e8;color:#287447}
+  .cc-refresh{border:1px solid #dfc8f5;background:#fff;color:#684093;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer}
+  .cc-items{display:grid;gap:7px}
+  .cc-action{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#fff;border:1px solid #efe5fa;border-radius:12px;padding:10px;font:inherit;cursor:pointer;color:#513d64}
+  .cc-action:hover,.cc-action:focus-visible{border-color:#c68fea;background:#fdf8ff}
+  .cc-action .cc-icon{font-size:21px;flex:0 0 26px}
+  .cc-action span:nth-child(2){flex:1;min-width:0}
+  .cc-action b{display:block;font-size:13px}
+  .cc-action small{display:block;font-size:11px;color:#88799b;margin-top:3px;overflow-wrap:anywhere}
+  .cc-action .cc-arrow{color:#a36bd6;font-size:20px}
+  .cc-more{margin-top:8px;color:#70419e;font-weight:700;font-size:13px}
+  .cc-more summary{cursor:pointer}
+  .cc-empty{padding:10px;border-radius:11px;background:#eff9f1;color:#23693c;font-size:13px;font-weight:700}
+
 
 </style>
 </head>
@@ -1197,6 +1224,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   <div id="demoBar" class="demo hidden">Mode démo : les événements restent sur cet appareil. Ajoutez vos clés Supabase dans <b>config.js</b> pour partager avec l'équipe.</div>
 
   <main>
+    <div id="bdaySurprise" class="bday-surprise hidden" role="status" aria-live="polite"></div>
     <button type="button" id="nextMagic" class="next-magic hidden"></button>
     <div class="filters">
       <input id="fSearch" type="search" placeholder="🔎 Rechercher" />
@@ -1213,6 +1241,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <!-- Vue calendrier -->
     <section id="viewCal">
       <div id="modeAccueil" class="mode-accueil hidden" aria-label="Mes prestations du jour"></div>
+      <div id="centreControle" class="centre-controle hidden" aria-label="Mon centre de contrôle"></div>
       <div class="seg vue-seg"><label><input type="radio" name="vueAg" value="cal"><span>📅 Calendrier</span></label><label><input type="radio" name="vueAg" value="list"><span>📋 Liste</span></label></div>
       <div class="cal">
         <div class="cal-nav">
@@ -1633,6 +1662,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <h2 id="teamSheetTitle">👤 Mon profil</h2>
     <div id="profileSelf"></div>
     <div id="profilePrefs">
+    <div class="sec">🎂 Mon anniversaire</div>
+    <p class="hint" style="margin-top:0">Indique ta date si tu veux une petite surprise magique dans l'app le jour J. C'est facultatif.</p>
+    <label for="myBirthday">Date de naissance (facultative)</label>
+    <input id="myBirthday" type="date" autocomplete="bday" style="max-width:280px" />
+    <label class="chk" style="margin:9px 0 8px"><input type="checkbox" id="myBirthdayShare" /> 🎉 J'accepte qu'un message d'anniversaire soit publié dans le chat « Équipe Fantasy » le jour J.</label>
+    <p class="hint" style="margin:0 0 8px">Ton année de naissance n'apparaît jamais dans le message. Tu peux retirer cet accord à tout moment.</p>
+    <button type="button" class="btn ghost" id="myBirthdaySave">💾 Enregistrer mon anniversaire</button>
+    <p id="myBirthdayStatus" class="hint" role="status" aria-live="polite"></p>
     <div class="sec">📍 Mon adresse</div>
     <p class="hint" style="margin-top:0">Pour calculer tes déplacements depuis ton domicile.</p>
     <div class="row" style="align-items:flex-end;margin-bottom:12px">
@@ -2568,6 +2605,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     try { depenses = await depStore.list(); } catch (e) { depenses = []; }
     try { naissances = await naissStore.list(); } catch (e) { naissances = {}; }
     applyRole();
+    try { await chargerMesChoixNotif(); } catch (e) { console.warn("Anniversaire et préférences :", e); }
     try { await chargerNotifications(); } catch (e) { console.warn("Boîte de notifications :", e); }
     try { detecterNouvelles(); } catch (e) {}
     openFromLink();
@@ -3218,7 +3256,46 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   });
 
-  function render() { majWho(); majCloche(); modeNuit(); renderNext(); renderModeAccueil(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
+  function render() { majWho(); majCloche(); modeNuit(); renderBirthdaySurprise(); renderNext(); renderModeAccueil(); renderCentreControle(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
+
+  // 🧭 Centre de contrôle : uniquement des actions déduites des données réelles.
+  function renderCentreControle() {
+    const box = $("centreControle"); if (!box) return;
+    if (!isResp() || view !== "cal") { box.classList.add("hidden"); return; }
+    const auj = todayISO(), in14 = parseISO(auj); in14.setDate(in14.getDate() + 14);
+    const limiteFiche = iso(in14);
+    const prochaines = events.filter(e => e.date >= auj && e.statut !== "annule" && e.statut !== "termine");
+    const actions = [];
+    const ajouter = (ev, icone, nom, detail, priorite) => actions.push({ id: String(ev.id), date: ev.date, icone, nom, detail, priorite, cible: "fiche" });
+    prochaines.forEach(e => {
+      const titre = e.titre || e.enfant || "Animation";
+      const date = fmtLong(e.date);
+      if (estClient(e) && e.statut === "en_attente") ajouter(e, "📨", "Demande à traiter · " + titre, date + " · Confirmer ou mettre en attente depuis la fiche", 0);
+      if (estClient(e) && e.statut === "confirme" && !anims(e).length) ajouter(e, "🎭", "Équipe à attribuer · " + titre, date + " · Aucun membre affecté", 0);
+      if (estClient(e) && e.statut === "confirme" && +e.acompte > 0 && !e.acompte_paye) ajouter(e, "💶", "Acompte à vérifier · " + titre, date + " · " + euro(e.acompte), 1);
+      if (estClient(e) && e.statut === "confirme" && e.date <= limiteFiche && !(e.fiche && e.fiche.recue_le)) ajouter(e, "📝", "Fiche client à vérifier · " + titre, date + " · À contrôler avant l'animation", 1);
+      if (String(e.materiel_manquant || "").trim()) ajouter(e, "🎒", "Matériel manquant · " + titre, date + " · " + String(e.materiel_manquant).trim().slice(0, 95), 1);
+    });
+    (resaSite || []).forEach(r => {
+      const e = events.find(x => String(x.id) === String(r.evenement_id)); if (!e) return;
+      actions.push({ id: String(e.id), date: e.date, icone: "🎟️", nom: "Réservation du site · " + (r.nom || "Client"), detail: (e.titre || "Événement") + " · " + fmtLong(e.date) + " · " + (r.places || 0) + " place(s)", priorite: 0, cible: "resa" });
+    });
+    actions.sort((a,b) => a.priorite - b.priorite || a.date.localeCompare(b.date) || a.nom.localeCompare(b.nom,"fr"));
+    const ligne = a => `<button class="cc-action" type="button" data-cc-event="${esc(a.id)}" data-cc-cible="${a.cible}"><span class="cc-icon" aria-hidden="true">${a.icone}</span><span><b>${esc(a.nom)}</b><small>${esc(a.detail)}</small></span><span class="cc-arrow" aria-hidden="true">›</span></button>`;
+    box.classList.remove("hidden");
+    box.innerHTML = `<div class="cc-head"><h2>🧭 Mon centre de contrôle <span class="cc-count ${actions.length ? "" : "ok"}">${actions.length ? actions.length + " à traiter" : "Tout est à jour"}</span></h2><button type="button" class="cc-refresh" id="ccRefresh" title="Recharger les données de l'agenda">↻ Actualiser</button></div>
+      <p class="cc-summary">Demandes, équipes, acomptes, fiches clients, matériel et réservations du site · ouvre chaque fiche en un clic.</p>
+      ${actions.length ? `<div class="cc-items">${actions.slice(0,5).map(ligne).join("")}</div>${actions.length > 5 ? `<details class="cc-more"><summary>Voir les ${actions.length - 5} autres actions</summary><div class="cc-items" style="margin-top:9px">${actions.slice(5).map(ligne).join("")}</div></details>` : ""}` : `<div class="cc-empty">✅ Rien d'urgent dans les informations enregistrées. Profite de ce moment !</div>`}`;
+  }
+  $("centreControle").addEventListener("click", async ev => {
+    const b = ev.target.closest("[data-cc-event]");
+    if (b) { const e = events.find(x => String(x.id) === b.dataset.ccEvent); if (!e) { toast("Cette fiche n'est plus disponible."); return; } b.dataset.ccCible === "resa" ? openResa(e.id) : openForm(e); return; }
+    if (ev.target.closest("#ccRefresh")) {
+      const btn = $("ccRefresh"); if (btn) { btn.disabled = true; btn.textContent = "Actualisation…"; }
+      try { await reload(); toast("🧭 Centre de contrôle actualisé"); }
+      catch (err) { toast("Actualisation impossible : " + (err.message || err)); }
+    }
+  });
 
   // ================= Formulaire =================
   // ✨ Options (tarifs du site) — quantité par option ; les tatouages se paient le jour même (pas ajoutés au prix)
@@ -5386,6 +5463,53 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     ["autres", "✨ Autres alertes", "Informations diverses de l'application", false],
   ];
   let mesChoixNotif = {};
+  function afficherChoixAnniversaire() {
+    const a = mesChoixNotif.anniversaire || {};
+    $("myBirthday").value = /^\d{4}-\d{2}-\d{2}$/.test(a.date || "") ? a.date : "";
+    $("myBirthdayShare").checked = a.partager === true;
+    $("myBirthdayShare").disabled = !$("myBirthday").value;
+    renderBirthdaySurprise();
+  }
+  function renderBirthdaySurprise() {
+    const box = $("bdaySurprise"); if (!box) return;
+    const d = mesChoixNotif.anniversaire?.date || "";
+    const morceaux = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Brussels", day: "2-digit", month: "2-digit" }).formatToParts(new Date());
+    const jour = morceaux.find(x => x.type === "day")?.value, mois = morceaux.find(x => x.type === "month")?.value;
+    const fete = !!(currentUser || DEMO) && /^\d{4}-\d{2}-\d{2}$/.test(d) && d.slice(5) === `${mois}-${jour}`;
+    box.classList.toggle("hidden", !fete);
+    if (!fete) { box.innerHTML = ""; return; }
+    const prenom = myMember()?.prenom || "";
+    box.innerHTML = `<span class="bday-spark" aria-hidden="true">🎈✨🎁🎉</span><b>Joyeux anniversaire${prenom ? ", " + esc(prenom) : ""} ! 🥳</b><p>Toute la magie de Fantasy t'accompagne aujourd'hui. Profite de ta journée ! 💜</p>`;
+    const cle = "fk_bday_surprise_" + (currentUser?.email || "demo") + "_" + todayISO();
+    try { if (localStorage.getItem(cle) !== "1") { localStorage.setItem(cle, "1"); setTimeout(() => magicBurst(), 250); } } catch (_) {}
+  }
+  async function sauvegarderMesChoix(choix) {
+    if (DEMO) { localStorage.setItem("fk_notif_pref_demo", JSON.stringify(choix)); return; }
+    if (!currentUser?.email) throw new Error("Connecte-toi d'abord.");
+    const { error } = await sb.from("preferences_notifications").upsert({
+      email: currentUser.email.trim().toLowerCase(), choix,
+      modifie_le: new Date().toISOString(),
+    }, { onConflict: "email" });
+    if (error) throw error;
+  }
+  $("myBirthday").addEventListener("change", () => {
+    if (!$("myBirthday").value) $("myBirthdayShare").checked = false;
+    $("myBirthdayShare").disabled = !$("myBirthday").value;
+  });
+  $("myBirthdaySave").onclick = async () => {
+    const bouton = $("myBirthdaySave"); bouton.disabled = true;
+    $("myBirthdayStatus").textContent = "Enregistrement…";
+    const date = $("myBirthday").value;
+    const choix = { ...mesChoixNotif, anniversaire: { date: date || "", partager: !!date && $("myBirthdayShare").checked } };
+    try {
+      await sauvegarderMesChoix(choix);
+      mesChoixNotif = choix;
+      $("myBirthdayStatus").textContent = date ? "✅ Ton anniversaire est enregistré. Tu peux modifier ton accord quand tu veux." : "✅ Ta date d'anniversaire a été effacée.";
+      afficherChoixAnniversaire();
+      toast(date ? "🎂 Anniversaire enregistré !" : "✅ Date d'anniversaire retirée");
+    } catch (err) { $("myBirthdayStatus").textContent = "❌ Impossible d'enregistrer : " + (err?.message || err); }
+    finally { bouton.disabled = false; }
+  };
   function rendreChoixNotif() {
     $("prefNotifBox").innerHTML = `<div class="np-table">
       <div class="np-head"><span>Type d'alerte</span><span>📧<br>E-mail</span><span>📱<br>Téléphone</span></div>
@@ -5405,18 +5529,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (DEMO) {
       try { mesChoixNotif = JSON.parse(localStorage.getItem("fk_notif_pref_demo") || "{}"); }
       catch (_) { mesChoixNotif = {}; }
-      rendreChoixNotif(); return;
+      rendreChoixNotif(); afficherChoixAnniversaire(); return;
     }
     if (!currentUser?.email) { $("prefNotifStatus").textContent = "Connecte-toi pour régler les notifications."; return; }
     const { data, error } = await sb.from("preferences_notifications").select("choix")
       .eq("email", currentUser.email.trim().toLowerCase()).maybeSingle();
     if (error) {
       $("prefNotifStatus").textContent = "⚠️ Préférences indisponibles : " + error.message;
-      $("prefNotifSave").disabled = true; return;
+      $("prefNotifSave").disabled = true; $("myBirthdaySave").disabled = true; return;
     }
-    $("prefNotifSave").disabled = false;
+    $("prefNotifSave").disabled = false; $("myBirthdaySave").disabled = false;
     mesChoixNotif = data?.choix || {};
-    rendreChoixNotif();
+    rendreChoixNotif(); afficherChoixAnniversaire();
   }
   $("prefNotifSave").onclick = async () => {
     const bouton = $("prefNotifSave"); bouton.disabled = true;
@@ -5427,14 +5551,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       choix[k] = { ...(choix[k] || {}), [canal]: el.checked };
     });
     try {
-      if (DEMO) localStorage.setItem("fk_notif_pref_demo", JSON.stringify(choix));
-      else {
-        const { error } = await sb.from("preferences_notifications").upsert({
-          email: currentUser.email.trim().toLowerCase(), choix,
-          modifie_le: new Date().toISOString(),
-        }, { onConflict: "email" });
-        if (error) throw error;
-      }
+      await sauvegarderMesChoix(choix);
       mesChoixNotif = choix;
       $("prefNotifStatus").textContent = "✅ Préférences enregistrées. Ta cloche reste toujours active !";
       toast("✅ Préférences de notifications enregistrées");
@@ -5891,7 +6008,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <button type="button" class="btn primary" data-recap="${sY}" style="width:100%">✨ Préparer / voir le récap ${sY}</button></div>
       <div class="panel"><h3>👛 Paie ${an ? "de l'année" : "du mois"}</h3>${paieHtml || `<p class="hint">Aucune paie encodée ${an ? "cette année" : "ce mois-ci"}.</p>`}
         ${sansPaie ? `<p class="hint">⚠️ ${sansPaie} animation${sansPaie > 1 ? "s" : ""} passée${sansPaie > 1 ? "s" : ""} sans paie encodée.</p>` : ""}</div>
-      ${(() => { const b = prochainsAnnivs(30); return b.length ? `<div class="panel"><h3>🎂 Anniversaires de l'équipe (30 jours)</h3><div class="bday">${b.map(x => `<span>${x.dans === 0 ? "🎉 Aujourd'hui" : x.dans === 1 ? "Demain" : "Dans " + x.dans + " j"} · <b>${esc(x.prenom)}</b> (${x.age} ans)</span>`).join("")}</div><p class="hint" style="margin:8px 0 0">Un message de fête est posté automatiquement dans le salon « Équipe Fantasy » le jour J.</p></div>` : ""; })()}
+      ${(() => { const b = prochainsAnnivs(30); return b.length ? `<div class="panel"><h3>🎂 Dates d'anniversaire saisies dans la gestion (30 jours)</h3><div class="bday">${b.map(x => `<span>${x.dans === 0 ? "🎉 Aujourd'hui" : x.dans === 1 ? "Demain" : "Dans " + x.dans + " j"} · <b>${esc(x.prenom)}</b> (${x.age} ans)</span>`).join("")}</div><p class="hint" style="margin:8px 0 0">Un message dans le chat n'est publié que si le membre a renseigné sa date et donné son accord dans son profil.</p></div>` : ""; })()}
       <div class="panel"><h3>🗺️ Carte des animations – ${an ? sY : esc($("sMonth").textContent)}</h3><div id="carteBox"><button type="button" class="btn ghost" id="carteBtn" style="width:100%">🗺️ Afficher la carte</button></div></div>
       <div class="panel"><h3>📈 Chiffre d'affaires – ${an ? "mois par mois " + sY : "12 mois"}</h3>${bars(caMois, (v) => v ? Math.round(v) + " €" : "–")}</div>
       <div class="panel"><h3>👑 Personnages les plus joués</h3>${bars(persos)}</div>
