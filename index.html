@@ -7128,9 +7128,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // 😀 Choix d'un emoji (produits de la caisse)
   const EMOJIS_CAISSE = ["🥤","🧃","🧋","💧","🫧","☕","🍫","🍵","🍺","🍷","🥂","🍾","🍹","🍭","🍬","🍿","🍩","🍪","🧁","🍰","🎂","🍦","🍧","🧇","🥞","🍕","🌭","🍔","🍟","🥪","🌮","🍓","🍎","🍌","🍉","🥨","🧀","📸","🖼️","🎟️","🎫","🎁","🛍️","🧸","🪄","👑","💎","💍","🎀","🦄","🌟","⭐","✨","🎈","🎉","🎊","🎄","🎅","❄️","☃️","🎃","👻","🦇","🐰","🥚","🌸","🦋","💄","💅","🎨","🖍️","🎵","🎤","🎧","🕯️","🧦","🧢","👕","📚","🛒"];
   // 📷 Photos des produits : le bucket public « chat » existe déjà.
-  // La référence courte im:xxxxxx tient dans le champ emoji existant :
+  // La référence courte ixxx tient dans le champ emoji existant :
   // aucun nouveau champ SQL, visible sur tous les appareils.
-  const CAISSE_IMAGE_RE=/^im:([a-z0-9]{6})$/;
+  const CAISSE_IMAGE_RE=/^i([a-z0-9]{3})$/;
   let caissePhotoBrouillon=null,caissePhotoBrouillonUrl="",caissePhotoPour=null;
   function caissePhotoUrl(p){
     const icone=String(p?.emoji||"");
@@ -7201,12 +7201,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(new Error("Fichier illisible"));r.readAsDataURL(blob);
     });
     if(!navigator.onLine)throw new Error("Connecte-toi à Internet pour enregistrer une photo.");
-    const token=Math.random().toString(36).slice(2,8).padEnd(6,"0");
     const id=String(p.id).replace(/[^a-z0-9_-]/gi,"_");
-    const path="caisse-produits/"+id+"-"+token+".jpg";
-    const {error}=await sb.storage.from("chat").upload(path,blob,{contentType:"image/jpeg",cacheControl:"86400"});
-    if(error)throw error;
-    return "im:"+token;
+    for(let essai=0;essai<5;essai++){
+      const token=Math.random().toString(36).slice(2,5).padEnd(3,"0");
+      const path="caisse-produits/"+id+"-"+token+".jpg";
+      const {error}=await sb.storage.from("chat").upload(path,blob,{contentType:"image/jpeg",cacheControl:"86400"});
+      if(!error)return "i"+token;
+      if(String(error.statusCode)==="409"||/already exists|duplicate/i.test(error.message||""))continue;
+      throw error;
+    }
+    throw new Error("Impossible de créer une image unique. Réessaie.");
   }
   function ouvrirGalerieProduit(id){
     caissePhotoPour=id||null;
