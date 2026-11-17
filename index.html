@@ -5921,22 +5921,38 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         if (montant<=0 || (p.paye && !historique)) continue;
         const k=normName(p.prenom);
         const groupe=parPersonne.get(k)||{nom:p.prenom,lignes:[],du:0};
-        groupe.lignes.push({evId:e.id,prenom:p.prenom,paye:!!p.paye,montant,date:e.date,titre:e.titre||e.theme||e.enfant||"Prestation",depl:+p.deplacement||0,prest:+p.prestation||0,payeLe:p.paye_le});
+        const personnage=parseTeam(e.animateurs).find(a=>normName(a.nom)===k)?.role || "—";
+        groupe.lignes.push({evId:e.id,prenom:p.prenom,paye:!!p.paye,montant,date:e.date,titre:e.titre||e.theme||e.enfant||"Prestation",type:e.type_evenement==="animation"?(e.theme||"Animation"):e.type_evenement==="contrat_pro"?"Contrat pro":e.type_evenement==="repetition"?"Répétition":"Événement",personnage,depl:+p.deplacement||0,prest:+p.prestation||0,payeLe:p.paye_le});
         if (!p.paye) groupe.du=r2(groupe.du+montant);
         parPersonne.set(k,groupe);
       }
     }
     const groupes=[...parPersonne.values()].sort((a,b)=>b.du-a.du||a.nom.localeCompare(b.nom,"fr"));
+    const lignes=groupes.flatMap(g=>g.lignes.map(l=>({...l,nom:g.nom}))).sort((a,b)=>b.date.localeCompare(a.date)||a.nom.localeCompare(b.nom,"fr"));
     const total=groupes.reduce((n,g)=>n+g.du,0);
-    $("gPaiesBody").innerHTML=`<div class="mine-head" style="margin:10px 0"><b>💶 Reste à verser : ${euro(total)}</b><small>La validation signifie que l'argent a réellement été remis ou viré.</small></div>`
-      +(groupes.map(g=>{
-        const impayees=g.lignes.filter(l=>!l.paye);
-        return `<div class="mine-head" style="margin:12px 0">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:9px"><b>${esc(g.nom)}</b><b style="color:var(--violet-d)">${euro(g.du)} à payer</b></div>
-          ${g.lignes.sort((a,b)=>a.date.localeCompare(b.date)).map(l=>`<div class="pay-row" style="margin-top:8px"><span class="who">${esc(l.titre)}<small>${esc(l.date.split("-").reverse().join("/"))} · prestation ${euro(l.prest)} + déplacement ${euro(l.depl)}${l.payeLe?" · payé le "+esc(l.payeLe.split("-").reverse().join("/")):""}</small></span><b>${euro(l.montant)}</b><button type="button" class="${l.paye?"done":""}" data-g-paie-id="${esc(l.evId)}" data-g-paie-nom="${esc(l.prenom)}" data-g-paie-to="${l.paye?0:1}">${l.paye?"↩ Annuler":"✅ Payé"}</button></div>`).join("")}
-          ${impayees.length>1?`<button type="button" class="btn primary" style="margin-top:9px" data-g-paie-tous="${esc(g.nom)}">✅ Tout marquer payé pour ${esc(g.nom)} (${euro(g.du)})</button>`:""}
-        </div>`;
-      }).join("")||'<p class="hint">✅ Aucun paiement en attente pour les prestations effectuées.</p>');
+    const dateFr=x=>x?x.split("-").reverse().join("/"):"—";
+    $("gPaiesBody").innerHTML=`<div class="mine-head" style="margin:10px 0"><b>💶 Reste à verser : ${euro(total)}</b><small>La date du virement est enregistrée automatiquement quand tu cliques sur « Payé ».</small></div>
+      <div style="overflow-x:auto;width:100%;margin-top:10px">
+      <table style="width:100%;min-width:850px;border-collapse:collapse;font-size:13px">
+        <thead><tr style="background:#f1e9ff;text-align:left"><th style="padding:10px 6px">Date</th><th>Type / animation</th><th>Personnage</th><th>Membre</th><th>Prestation</th><th>Déplacements</th><th>Total</th><th>Virement le</th><th>Action</th></tr></thead>
+        <tbody>${lignes.map(l=>`<tr style="border-bottom:1px solid #eadff9">
+          <td style="padding:9px 6px;white-space:nowrap">${esc(dateFr(l.date))}</td>
+          <td><b>${esc(l.type)}</b><br><small>${esc(l.titre)}</small></td>
+          <td>${esc(l.personnage)}</td><td><b>${esc(l.nom)}</b></td>
+          <td>${euro(l.prest)}</td><td>${euro(l.depl)}</td><td><b>${euro(l.montant)}</b></td>
+          <td>${l.paye?'<span style="color:#17714f">✅ '+esc(dateFr(l.payeLe))+'</span>':'⏳ En attente'}</td>
+          <td><button type="button" class="sig ${l.paye?"done":""}" data-g-paie-id="${esc(l.evId)}" data-g-paie-nom="${esc(l.prenom)}" data-g-paie-to="${l.paye?0:1}">${l.paye?"↩ Annuler":"✅ Payé"}</button></td>
+        </tr>`).join("")||'<tr><td colspan="9" style="padding:15px">✅ Aucun paiement à afficher.</td></tr>'}</tbody>
+      </table></div>
+      ${groupes.filter(g=>g.lignes.filter(l=>!l.paye).length>1).map(g=>`<button type="button" class="sig photo" style="width:100%;margin-top:8px" data-g-paie-tous="${esc(g.nom)}">✅ Tout marquer payé pour ${esc(g.nom)} (${euro(g.du)})</button>`).join("")}
+      <button type="button" class="sig" id="gPaiesExport" style="width:100%;margin-top:12px">📥 Exporter ce tableau (Excel/CSV)</button>`;
+    $("gPaiesExport").onclick=()=>{
+      const q=x=>'"'+String(x??"").replace(/"/g,'""')+'"';
+      const rows=[["Date","Type","Animation","Personnage","Membre","Prestation (€)","Déplacements (€)","Total (€)","Payé","Date du virement"],...lignes.map(l=>[dateFr(l.date),l.type,l.titre,l.personnage,l.nom,l.prest,l.depl,l.montant,l.paye?"oui":"non",l.paye?dateFr(l.payeLe):""])];
+      const csv=String.fromCharCode(0xFEFF)+rows.map(r=>r.map(q).join(";")).join(String.fromCharCode(13,10));
+      const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+      const a=document.createElement("a");a.href=url;a.download="fantasy-paiements-equipe.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    };
   }
   $("gPaies").onclick=()=>{ $("gPaiesPanel").classList.remove("hidden");renderGestionPaies();$("gPaiesPanel").scrollIntoView({behavior:"smooth",block:"start"}); };
   $("gPaiesClose").onclick=()=>$("gPaiesPanel").classList.add("hidden");
