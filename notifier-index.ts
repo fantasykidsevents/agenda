@@ -284,6 +284,9 @@ async function envoyerPush(email, payload, options = {}) {
 async function prevenir(email, prenom, type, ev, role) {
   if (!email) return { pushs: 0, mail: "pas d'e-mail" };
   const T = TEXTES[type];
+  const titresPro = { nouvelle: "Nouveau contrat pro", modifiee: "Contrat pro modifié", annulee: "Contrat pro annulé", retire: "Vous n'êtes plus sur ce contrat pro" };
+  const titreNotif = ev.type_evenement === "contrat_pro" ? (titresPro[type] || T.titre) : T.titre;
+  const emojiNotif = ev.type_evenement === "contrat_pro" && titresPro[type] ? "💼" : T.emoji;
   const titre = titreDe(ev);
   const estFicheDuJour = type === "fin" || type === "tatouages_milieu";
   const url = `${APP_URL || "."}/index.html?ev=${ev.id}${estFicheDuJour ? "&signal=1" : ""}`;
@@ -293,7 +296,7 @@ async function prevenir(email, prenom, type, ev, role) {
   if (type === "rappel_veille") {
     let h = "";
     try { const x = JSON.parse(ev.equipe_detail || "[]").find((y) => norm(y.prenom) === norm(prenom)); if (x && (x.debut || x.fin)) h = `${(x.debut || "…").slice(0, 5).replace(":", "h")} – ${(x.fin || "…").slice(0, 5).replace(":", "h")}`; } catch (_) { /* */ }
-    const evt = ev.type_evenement === "evenement";
+    const evt = ["evenement", "repetition", "contrat_pro"].includes(ev.type_evenement);
     body = `${titre}\n${quand(ev)}${role ? `\n${evt ? "Ton poste" : "Rôle"} : ${role === "acc" ? "accompagnateur" : role}` : ""}${evt ? (h ? `\n🕐 Tes horaires : ${h}` : "\n🕐 Toute la journée") : ""}${ev.adresse ? `\n📍 ${ev.adresse}` : ""}`;
   }
   if (type === "rappel") body = `${titre}\n${quand(ev)}${ev.adresse ? `\n📍 ${ev.adresse}` : ""}${enceinte ? `\n🔊 ${enceinte}` : ""}`;
@@ -322,14 +325,14 @@ async function prevenir(email, prenom, type, ev, role) {
   const lien = estFicheDuJour ? `./index.html?ev=${ev.id}&signal=1` : `./index.html?ev=${ev.id}`;
   // La cloche fonctionne même si la personne a refusé les notifications téléphone.
   // La clé évite d'envoyer deux fois le même avis de paiement (même prestation / même jour).
-  const boite = await garderDansCloche(email, { title: `${T.emoji} ${T.titre}`, body, url: lien },
+  const boite = await garderDansCloche(email, { title: `${emojiNotif} ${titreNotif}`, body, url: lien },
     type, ev.id, type === "paie" ? ev.__paiementCle : null);
   if (boite.deja && type === "paie")
     return { email, prenom, type, ignore: "notification de paiement déjà envoyée" };
   const categorie = categorieDe(type);
   const canaux = await canauxChoisis(email, categorie);
   const pushs = await envoyerPush(email, {
-    title: `${T.emoji} ${T.titre}`, body, url: lien, tag: `${type}-${ev.id}`,
+    title: `${emojiNotif} ${titreNotif}`, body, url: lien, tag: `${type}-${ev.id}`,
   }, { categorie, dejaEnCloche: true, autorisePush: canaux.push });
   // En pleine prestation, une alerte dans la cloche + un push suffit :
   // ne pas envoyer d'e-mail supplémentaire à l'accompagnateur.
@@ -371,7 +374,7 @@ async function prevenir(email, prenom, type, ev, role) {
   const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1f1735">
     <div style="height:6px;border-radius:3px;background:linear-gradient(90deg,#00b4ff,#a020ff,#d63fd0,#ff7f7f)"></div>
     <p style="font-size:16px">Bonjour ${esc(prenom)},</p>
-    <h2 style="margin:0 0 6px">${T.emoji} ${esc(T.titre)}</h2>
+    <h2 style="margin:0 0 6px">${emojiNotif} ${esc(titreNotif)}</h2>
     <h3 style="margin:0 0 14px;color:#8a3cf7">${esc(titre)}</h3>
     <table style="font-size:15px;border-collapse:collapse">
       ${lignes.map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0;color:#6b6385;white-space:nowrap;vertical-align:top">${k}</td><td style="padding:4px 0;white-space:pre-line">${esc(v)}</td></tr>`).join("")}
@@ -380,13 +383,13 @@ async function prevenir(email, prenom, type, ev, role) {
     ${APP_URL ? `<p><a href="${url}" style="display:inline-block;background:#8a3cf7;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:bold">${type === "fin" ? "Signaler le matériel manquant" : "Voir dans l'agenda"}</a></p><p style="color:#6b6385;font-size:13px;margin-top:6px">📱 Le plus simple : ouvre l’app <b>Fantasy</b> sur ton écran d’accueil (un lien dans un mail s’ouvre toujours dans le navigateur).</p>` : ""}
     <p style="color:#6b6385;font-size:13px">Fantasy Kids Events</p></div>`;
 
-  const texte = `Bonjour ${prenom},\n\n${T.titre}\n${titre}\n\n` +
+  const texte = `Bonjour ${prenom},\n\n${titreNotif}\n${titre}\n\n` +
     lignes.map(([k, v]) => `${k} : ${v}`).join("\n") + (APP_URL ? `\n\nVoir dans l'agenda : ${url}` : "");
 
   let mail = "envoyé";
   try {
     const boite = await adresseMailAdministration(email);
-    mail = (await envoyerEmail(boite, `${T.emoji} ${T.titre} – ${titre} (${quand(ev)})`, html, texte)) || "envoyé";
+    mail = (await envoyerEmail(boite, `${emojiNotif} ${titreNotif} – ${titre} (${quand(ev)})`, html, texte)) || "envoyé";
   }
   catch (e) { mail = "erreur : " + (e?.message || e); console.error("email", e); }
   return { email, prenom, type, pushs, mail };
@@ -1008,7 +1011,7 @@ async function resumeMatin(equipe) {
   const { data: co } = await sb.from("costumes").select("etat");
   const { data: stk } = await sb.from("stock").select("nom,etat");
   const P = new Map((pv || []).map((x) => [x.id, x])), F = new Map((fi || []).map((x) => [x.evenement_id, x]));
-  const client = (e) => e.type_evenement !== "evenement" && !/nuit magique/i.test(`${e.theme || ""} ${e.titre || ""}`) && !!(e.parent || e.telephone || e.email || e.enfant);
+  const client = (e) => e.type_evenement === "animation" && !/nuit magique/i.test(`${e.theme || ""} ${e.titre || ""}`) && !!(e.parent || e.telephone || e.email || e.enfant);
   const duJour = E.filter((e) => e.date === auj);
   const lignes = [];
   if (duJour.length) lignes.push(`🪄 Aujourd'hui : ${duJour.map((e) => `${e.heure_debut ? e.heure_debut.slice(0, 5).replace(":", "h") + " " : ""}${e.titre || "animation"}`).join(" · ")}`);
@@ -1029,7 +1032,7 @@ async function resumeMatin(equipe) {
   hier.forEach((e) => lignes.push(`📊 Bilan de « ${e.titre} » prêt dans l'app (événement → 📊 Bilan)`));
   const aRacheter = (stk || []).filter((x) => x.etat && x.etat !== "ok");
   if (aRacheter.length) lignes.push(`🛒 À racheter : ${aRacheter.slice(0, 4).map((x) => x.nom).join(", ")}${aRacheter.length > 4 ? "…" : ""}`);
-  const photos = E.filter((e) => e.date < auj && !e.photos_envoyees && e.type_evenement !== "evenement" && !/nuit magique/i.test(e.titre || "")).length;
+  const photos = E.filter((e) => e.date < auj && !e.photos_envoyees && e.type_evenement === "animation" && !/nuit magique/i.test(e.titre || "")).length;
   if (photos) lignes.push(`📸 ${photos} envoi${photos > 1 ? "s" : ""} de photos en retard`);
   if (lignes.length === 1) lignes.push("✨ Rien d'urgent, belle journée !");
   for (const m of (equipe || []).filter((x) => x.responsable))
@@ -1049,7 +1052,7 @@ async function relancerDemandesAnimation(equipe) {
     .eq("statut", "en_attente").gte("date", aujourd);
   if (error) throw error;
   const demandes = (enAttente || []).filter(ev =>
-    ev.type_evenement !== "evenement" && ev.type_evenement !== "repetition"
+    ev.type_evenement === "animation"
     && (ev.source === "site" || ev.parent || ev.email || ev.telephone));
   if (!demandes.length) return [];
 
@@ -1251,7 +1254,7 @@ async function recapLundi(equipe) {
   const { data: prives } = await sb.from("evenements_prive").select("*");
   const { data: fiches } = await sb.from("fiches").select("evenement_id,recue_le");
   const P = new Map((prives || []).map((x) => [x.id, x])), F = new Map((fiches || []).map((x) => [x.evenement_id, x]));
-  const client = (e) => (e.parent || e.telephone || e.email || e.enfant || P.get(e.id)?.prix) && !/nuit magique/i.test(e.theme || "");
+  const client = (e) => e.type_evenement === "animation" && (e.parent || e.telephone || e.email || e.enfant || P.get(e.id)?.prix) && !/nuit magique/i.test(e.theme || "");
   const semaine = (evs || []).filter((e) => e.date >= t && e.date <= fin);
   const fichesManq = (evs || []).filter((e) => e.date >= t && e.date <= d14 && e.statut === "confirme" && client(e) && !F.get(e.id)?.recue_le);
   const acomptes = (evs || []).filter((e) => e.date >= t && e.date <= d14 && e.statut === "confirme" && +P.get(e.id)?.acompte && !P.get(e.id)?.acompte_paye);
@@ -1696,7 +1699,7 @@ Deno.serve(async (req) => {
         .eq("date", aujourd).is("tatouages_rappel_milieu_envoye", null);
       if (eTat) throw eTat;
       for (const ev of auMilieu || []) {
-        if (ev.statut === "annule" || ev.type_evenement === "evenement" || !tatouagesACompleter(ev)
+        if (ev.statut === "annule" || ev.type_evenement !== "animation" || !tatouagesACompleter(ev)
           || !rappelTatouagesMilieuEligible(ev, maintenantMs)) continue;
         const accompagnateurs = equipeDe(ev).filter((a) => estAccompagnateur(a.role))
           .map((a) => ({ ...a, membre: parNom.get(norm(a.nom)) })).filter((a) => !!a.membre?.email);
@@ -1717,7 +1720,7 @@ Deno.serve(async (req) => {
       const { data: finies, error: e2 } = await sb.from("evenements").select("*")
         .gte("date", hier).lte("date", aujourd).is("fin_envoye", null);
       if (e2) throw e2;
-      const eligibles = (finies || []).filter((ev) => ev.statut !== "annule" && ev.type_evenement !== "evenement" && rappelFinEligible(ev, maintenantMs));
+      const eligibles = (finies || []).filter((ev) => ev.statut !== "annule" && ev.type_evenement === "animation" && rappelFinEligible(ev, maintenantMs));
       const ids = eligibles.map((ev) => ev.id);
       let bilansEnvoyes = new Set();
       if (ids.length) {
