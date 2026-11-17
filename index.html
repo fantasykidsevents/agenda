@@ -449,6 +449,11 @@
   .day{background:rgba(250,247,255,.9);transition:transform .15s}
   .day:active{transform:scale(.92)}
   .day.has{background:linear-gradient(160deg,#f0f8ff,#f6ebff 60%,#ffeef8)}
+  .day.has:not(.spect){background:linear-gradient(150deg,#e6d4ff,#f3e9ff);border:2px solid #9651df;padding:3px 0}
+  .day.has:not(.spect) .n{background:#7936ce;color:#fff;text-shadow:none}
+  .day.has .day-count{position:absolute;right:3px;bottom:2px;min-width:15px;height:15px;padding:1px 3px;
+    border-radius:9px;background:#ffd966;color:#593110;font-size:10px;line-height:13px;font-weight:800;box-shadow:0 1px 4px #0002}
+  .day.has .dots{margin-right:10px}
   .day.today .n{background:var(--grad);box-shadow:0 0 0 3px rgba(255,255,255,.9),0 0 14px rgba(160,32,255,.6)}
   .day.sel{outline:2px solid transparent;box-shadow:0 0 0 2px #a020ff,0 0 16px rgba(160,32,255,.35)}
   .dot{width:auto;height:auto;background:none!important;font-size:10px;line-height:1;color:var(--c);text-shadow:0 0 6px var(--c)}
@@ -2859,8 +2864,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if (i >= 35 && d.getMonth() !== curM) break;
       const dots = evs.slice(0, 4).map(e => `<span class="dot" style="background:${(STATUTS[e.statut]||STATUTS.en_attente).color}"></span>`).join("");
       const thj = (evs.find(themeDe) || null), spect = thj ? themeDe(thj) : "";
-      html += `<button class="day ${spect?"spect th-d-"+spect:""} ${evs.length?"has":""} ${d.getMonth()!==curM?"out":""} ${k===t?"today":""} ${k===selDay?"sel":""}" data-day="${k}">
-        <span class="n">${d.getDate()}</span>${spect ? `<span class="lune">${THEMES[spect].emoji}</span>` : ""}<span class="dots">${dots}</span>${evs.length>4?`<span class="count">+${evs.length-4}</span>`:""}</button>`;
+      html += `<button class="day ${spect?"spect th-d-"+spect:""} ${evs.length?"has":""} ${d.getMonth()!==curM?"out":""} ${k===t?"today":""} ${k===selDay?"sel":""}" data-day="${k}" aria-label="${esc(fmtLong(k))}${evs.length ? `, ${evs.length} activité${evs.length > 1 ? "s" : ""} prévue${evs.length > 1 ? "s" : ""}` : ", rien de prévu"}">
+        <span class="n">${d.getDate()}</span>${spect ? `<span class="lune">${THEMES[spect].emoji}</span>` : ""}<span class="dots">${dots}</span>${evs.length ? `<span class="day-count">${evs.length}</span>` : ""}</button>`;
     }
     $("grid").innerHTML = html;
     $("dayTitle").textContent = fmtLong(selDay);
@@ -4533,6 +4538,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     selDay = b.dataset.day; const d = parseISO(selDay);
     if (d.getMonth() !== curM) { curY = d.getFullYear(); curM = d.getMonth(); }
     render();
+    // Le détail du jour est sous le calendrier : l'amener directement à l'écran.
+    const cible = $("dayTitle"), header = document.querySelector("header");
+    const haut = window.scrollY + cible.getBoundingClientRect().top - (header?.getBoundingClientRect().height || 0) - 12;
+    window.scrollTo({ top: Math.max(0, haut), behavior: reduceMotion ? "auto" : "smooth" });
   });
   document.addEventListener("click", (e) => {
     const alerte = e.target.closest("[data-alert-ev]");
