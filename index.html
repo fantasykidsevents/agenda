@@ -135,6 +135,8 @@
   @media(min-width:700px){.sheet-bg{align-items:center}.sheet{border-radius:22px}}
   @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
   #evForm.mode-evt .anniv-only{display:none!important}
+  #typeSeg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  @media(min-width:650px){#typeSeg{grid-template-columns:repeat(4,minmax(0,1fr))}}
   #tpkBg{position:fixed;inset:0;z-index:150;background:rgba(20,10,40,.45);display:flex;align-items:flex-end;justify-content:center}
   #tpkBg.hidden{display:none}
   .tpk-box{background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:14px 16px calc(16px + var(--safe-b))}
@@ -1381,7 +1383,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div class="seg" id="typeSeg" style="margin-bottom:6px">
       <label><input type="radio" name="typeEv" value="animation" checked /><span>🎂 Animation</span></label>
       <label><input type="radio" name="typeEv" value="evenement" /><span>🎪 Événement</span></label>
-       <label><input type="radio" name="typeEv" value="repetition" /><span>🎭 Répétition</span></label>
+      <label><input type="radio" name="typeEv" value="repetition" /><span>🎭 Répétition</span></label>
+      <label><input type="radio" name="typeEv" value="contrat_pro" /><span>💼 Contrat pro</span></label>
     </div>
     <input type="hidden" id="type_evenement" />
     <div id="evtTools" class="hidden">
@@ -1707,6 +1710,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div class="sec">⚙️ Mes préférences de notifications</div>
     <p class="hint">Choisis les e-mails et les alertes sur ton téléphone. <b>La cloche 🔔 restera toujours active</b> pour que tu ne manques aucune information.</p>
     <div id="prefNotifBox"></div>
+    <label class="chk" style="margin:14px 0 6px"><input type="checkbox" id="prefPopupAccueil" checked /> 🔔 Afficher automatiquement mes notifications à l'ouverture de l'app</label>
+    <p class="hint" style="margin:0 0 10px">Si tu décoches cette option, tes notifications restent accessibles dans la cloche 🔔.</p>
     <div class="actions"><button type="button" class="btn primary" id="prefNotifSave">💾 Enregistrer mes choix</button></div>
     <p class="hint" id="prefNotifStatus" aria-live="polite"></p>
     <div class="actions" style="margin-top:8px">
@@ -2212,9 +2217,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     return manque;
   }
   function prestationACloturer(e) { return clotureManquante(e).length > 0; }
-  const estEvenementInterne = (e) => e?.type_evenement === "repetition" || /^(casting|r[ée]p[ée]tition|r[ée]union)\b/i.test((e?.titre || "").trim());
+  const estEvenementInterne = (e) => ["repetition", "contrat_pro"].includes(e?.type_evenement) || /^(casting|r[ée]p[ée]tition|r[ée]union)\b/i.test((e?.titre || "").trim());
   function modeDisponible(e) {
-    if (!e || e.type_evenement === "evenement" || e.type_evenement === "repetition" || e.statut === "annule" ||
+    if (!e || e.type_evenement !== "animation" || e.statut === "annule" ||
       (e.statut !== "confirme" && e.statut !== "termine")) return false;
     // Un casting, une répétition ou une réunion n'est pas une prestation client,
     // même si le type de l'ancienne fiche a été laissé sur « animation ».
@@ -2474,7 +2479,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const me = myMember(); if (!me) return;
     const t = todayISO(), ids = new Set(events.filter(e => e.date >= t && e.statut !== "annule" && anims(e).some(a => normName(a) === normName(me.prenom))).map(e => String(e.id)));
     if (mesAnimsAvant) { const nv = [...ids].filter(i => !mesAnimsAvant.has(i));
-      if (nv.length) { const e = events.find(x => String(x.id) === nv[0]); son("notif"); toast(`✨ Nouvelle ${e?.type_evenement === "repetition" ? "répétition" : e?.type_evenement === "evenement" ? "mission" : "animation"} pour toi : ${(e && (e.titre || e.enfant)) || ""}`.trim()); } }
+      if (nv.length) { const e = events.find(x => String(x.id) === nv[0]); son("notif"); toast(`✨ ${e?.type_evenement === "contrat_pro" ? "Nouveau contrat pro" : `Nouvelle ${e?.type_evenement === "repetition" ? "répétition" : e?.type_evenement === "evenement" ? "mission" : "animation"}`} pour toi : ${(e && (e.titre || e.enfant)) || ""}`.trim()); } }
     mesAnimsAvant = ids;
   }
   // ---------- 📶 Hors connexion : dernière copie des données sur le téléphone ----------
@@ -2677,16 +2682,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const client = estClient(e);
     if (client && e.fiche && e.fiche.recue_le) pay += `<span class="badge fiche-ok">📝 Fiche anniversaire reçue</span>`;
     else if (client && isResp() && e.date >= todayISO() && e.statut === "confirme") pay += `<span class="badge fiche-wait">📝 Fiche ${e.fiche ? "pas encore remplie" : "pas encore envoyée"}</span>`;
-    if(!interne)pay += badgeBilan(e);
+    if(!interne && e.type_evenement === "animation")pay += badgeBilan(e);
     if (e.options && optTexte(e.options)) pay += `<span class="badge">✨ ${esc(optTexte(e.options))}</span>`;
     if (e.photos_envoyees) pay += `<span class="badge solde-ok">📸 Photos envoyées${e.photos_envoyees_par ? " · " + esc(e.photos_envoyees_par) : ""} · ${new Date(e.photos_envoyees).toLocaleDateString("fr-BE", { day: "numeric", month: "short" })}</span>`;
-    const canPhotos = past && peutEnvoyerPhotos() && !interne; // photos : Jordan uniquement
-    const canEnc = past && !interne && e.type_evenement !== "evenement" && (e.solde || extras(e) || isResp()) && (!e.solde_encaisse || e.solde_encaisse === "non" || isResp());
-    const canTat = !interne && e.type_evenement !== "evenement" && e.date <= todayISO() && tatouagesDemandes(e) && peutGererTatouages(e);
+    const canPhotos = past && peutEnvoyerPhotos() && !interne && e.type_evenement === "animation"; // photos : Jordan uniquement
+    const canEnc = past && !interne && e.type_evenement === "animation" && (e.solde || extras(e) || isResp()) && (!e.solde_encaisse || e.solde_encaisse === "non" || isResp());
+    const canTat = !interne && e.type_evenement === "animation" && e.date <= todayISO() && tatouagesDemandes(e) && peutGererTatouages(e);
     const missing = e.materiel_manquant ? `<div class="missing">⚠️ Matériel manquant : ${esc(e.materiel_manquant)}</div>` : "";
     const mat = e.materiel ? `<span style="white-space:pre-line">🎒 ${esc(e.materiel)}</span>` : "";
     const weekAgo = iso(new Date(Date.now() - 7*864e5));
-    const canSignal = !interne && e.type_evenement !== "evenement" && e.date <= todayISO() && e.date >= weekAgo && e.statut !== "annule";
+    const canSignal = !interne && e.type_evenement === "animation" && e.date <= todayISO() && e.date >= weekAgo && e.statut !== "annule";
     const canMode = modeDisponible(e);
     const canCost = e.type_evenement !== "repetition" && e.statut !== "annule" && parseTeam(e.animateurs).some(p => estRoleCostume(p) && (isResp() || estMoi(p.nom)));
     const U = universOf(e);
@@ -2696,11 +2701,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <div class="ev-time">${showDate ? `<span style="text-transform:capitalize">${esc(fmtLong(e.date))}</span> · ` : ""}${h}</div>
         <span class="badge st" style="--c:${st.color}">${st.label}</span>
       </div>
-      <h3>${e.type_evenement === "repetition" ? "🎭 " : e.type_evenement === "evenement" ? "🎪 " : ""}${title}</h3>${kidLine}
+      <h3>${e.type_evenement === "repetition" ? "🎭 " : e.type_evenement === "evenement" ? "🎪 " : e.type_evenement === "contrat_pro" ? "💼 " : ""}${title}</h3>${kidLine}
       ${e.theme ? `<div class="theme">✨ ${esc(e.theme)}</div>` : ""}
       <div class="meta">
         ${e.adresse ? `<span>📍 <a href="${maps}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(e.adresse)}</a></span>` : ""}
-        ${["evenement", "repetition"].includes(e.type_evenement) ? evtLigne(e) : animsFull(e).length ? `<span>${parseTeam(e.animateurs).map(p => `${p.role ? roleEmoji(p.role) + " " : "🎭 "}${esc(p.nom)}${p.role ? ` <small style="opacity:.75">(${esc(p.role)})</small>` : ""}${p.role && estMoi(p.nom) && ficheDe(p.role) ? `<button type="button" class="g-lien" data-guide="${esc(ficheDe(p.role).nom)}">📖 ma fiche</button>` : ""}`).join(" · ")}</span>` : ""}
+        ${["evenement", "repetition", "contrat_pro"].includes(e.type_evenement) ? evtLigne(e) : animsFull(e).length ? `<span>${parseTeam(e.animateurs).map(p => `${p.role ? roleEmoji(p.role) + " " : "🎭 "}${esc(p.nom)}${p.role ? ` <small style="opacity:.75">(${esc(p.role)})</small>` : ""}${p.role && estMoi(p.nom) && ficheDe(p.role) ? `<button type="button" class="g-lien" data-guide="${esc(ficheDe(p.role).nom)}">📖 ma fiche</button>` : ""}`).join(" · ")}</span>` : ""}
         ${e.parent || e.telephone ? `<span>👤 ${esc(e.parent||"")} ${e.telephone ? `· <a href="tel:${esc(e.telephone.replace(/\s/g,""))}" onclick="event.stopPropagation()">${esc(e.telephone)}</a>` : ""}</span>` : ""}
         ${mat}
         ${costumes.length && e.type_evenement !== "repetition" ? costLigne(e) : ""}
@@ -3215,6 +3220,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!cle || clocheAutoPour === cle) return;
     clocheAutoPour = cle;  // bloquer aussi les chargements simultanés de la session
     setTimeout(() => {
+      if (mesChoixNotif.popupAccueil === false) return;
       if ($("app").classList.contains("hidden") || document.visibilityState === "hidden" ||
           String(currentUser?.email || (DEMO ? "demo" : "")).trim().toLowerCase() !== cle) return;
       const nonLues = notificationsApp.some(n => !n.lue_le && n.type !== "chat" && !notificationsVuesIci.has(String(n.id)));
@@ -3397,7 +3403,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("optFold").open = false;
     editingId = ev ? ev.id : null;
     document.querySelectorAll("#evForm details.fold-auto").forEach(d => d.open = !ev);   // nouvelle fiche : tout ouvert ; fiche existante : replié
-    $("formTitle").textContent = ev ? (ev.type_evenement === "evenement" ? "Modifier l'événement" : ev.type_evenement === "repetition" ? "Modifier la répétition" : "Modifier l'animation") : "Nouvelle animation";
+    $("formTitle").textContent = ev ? (ev.type_evenement === "evenement" ? "Modifier l'événement" : ev.type_evenement === "repetition" ? "Modifier la répétition" : ev.type_evenement === "contrat_pro" ? "Modifier le contrat pro" : "Modifier l'animation") : "Nouvelle animation";
     $("delBtn").classList.toggle("hidden", !ev);
     $("evChatBtn").classList.toggle("hidden", !ev || !jePeuxVoir(ev));
     $("evCostAssignBtn").classList.toggle("hidden", !ev || ev.type_evenement === "repetition" || !isResp() || !parseTeam(ev.animateurs).some(estRoleCostume));
@@ -3430,7 +3436,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       showKm({detail:ev.km_detail,client:ev.deplacement_client},false);
     // solde « à la main » seulement s'il ne correspond à aucun calcul automatique (prix, ou prix − acompte)
     soldeTouched = !!(ev && ev.solde != null && !(isResp() && +ev.prix && [+ev.prix, +ev.prix - (+ev.acompte || 0)].some(v => Math.abs(v - +ev.solde) < 0.01)));
-    $("type_evenement").value = ev && ["evenement", "repetition"].includes(ev.type_evenement) ? ev.type_evenement : "animation";
+    $("type_evenement").value = ev && ["evenement", "repetition", "contrat_pro"].includes(ev.type_evenement) ? ev.type_evenement : "animation";
     $("collerBox").classList.toggle("hidden", !!ev); $("collerBox").open = false; $("collerTxt").value = ""; $("collerRes").className = "lecture hidden";
     animTransports=ev?.km_detail?.transports && typeof ev.km_detail.transports==="object" ? JSON.parse(JSON.stringify(ev.km_detail.transports)) : {};
     animTransportDirty=false;
@@ -3450,20 +3456,20 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("addAnim").parentElement.classList.toggle("hidden", !gest);
     document.querySelectorAll("#pickList .x").forEach(b => b.classList.toggle("hidden", !gest));
     $("evtTools").classList.toggle("hidden", !(resp && ev && ev.type_evenement === "evenement"));
-    $("evtResa").classList.toggle("hidden", !(ev && estEvt() && !estNM(ev)));
-    $("evtCaisse").classList.toggle("hidden", !(ev && estEvt() && !estNM(ev)));
-    $("evtBilan").classList.toggle("hidden", !(ev && estEvt() && !estNM(ev)));
-    $("evtTourn").classList.toggle("hidden", !(ev && estEvt() && !estNM(ev)));
+    $("evtResa").classList.toggle("hidden", !(ev && ev.type_evenement === "evenement" && !estNM(ev)));
+    $("evtCaisse").classList.toggle("hidden", !(ev && ev.type_evenement === "evenement" && !estNM(ev)));
+    $("evtBilan").classList.toggle("hidden", !(ev && ev.type_evenement === "evenement" && !estNM(ev)));
+    $("evtTourn").classList.toggle("hidden", !(ev && ev.type_evenement === "evenement" && !estNM(ev)));
     if (!resp) $("delBtn").classList.add("hidden");
-    if (!gest) { $("delBtn").classList.add("hidden"); $("formTitle").textContent = $("type_evenement").value === "repetition" ? "Détails de la répétition" : estEvt() ? "Détails de l'événement" : "Détails de l'animation"; $("cancelBtn").textContent = "Fermer"; }
+    if (!gest) { $("delBtn").classList.add("hidden"); $("formTitle").textContent = $("type_evenement").value === "repetition" ? "Détails de la répétition" : $("type_evenement").value === "contrat_pro" ? "Détails du contrat pro" : estEvt() ? "Détails de l'événement" : "Détails de l'animation"; $("cancelBtn").textContent = "Fermer"; }
     else $("cancelBtn").textContent = "Annuler";
     renderFiche(ev); renderDevis(ev);
     renderMonTrajet(ev);
     if (ev) $("bilanBox").innerHTML = bilanHtml(ev);
-    $("jourBtnBox").classList.toggle("hidden", !ev || ev.statut === "annule" || ev.type_evenement === "repetition");
+    $("jourBtnBox").classList.toggle("hidden", !ev || ev.statut === "annule" || ev.type_evenement !== "animation");
     const passe = ev && ev.date <= todayISO() && ev.statut !== "annule";
-    $("afterBox").classList.toggle("hidden", !passe);
-    if (passe) {
+    $("afterBox").classList.toggle("hidden", !passe || ev.type_evenement !== "animation");
+    if (passe && ev.type_evenement === "animation") {
       ["fPhotos","fEnc","fSig"].forEach(id => $(id).disabled = false);
       const mailCli = !!(ev.email && ev.email.includes("@"));
       $("fPhotos").textContent = ev.photos_envoyees ? `✅ Photos envoyées${ev.photos_envoyees_par ? " par " + ev.photos_envoyees_par : ""} – toucher pour annuler` : mailCli ? "📨 Envoyer les photos au client" : "📸 Valider : photos envoyées au client";
@@ -4259,13 +4265,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if(ev.type_evenement==="animation"){
       ev.km_detail={...(ev.km_detail||{mode:"animation_prefs"}),transports:JSON.parse(JSON.stringify(animTransports))};
     }
-    if (["evenement", "repetition"].includes(ev.type_evenement)) ev.km_detail = { ...(ev.km_detail || { mode: "evt" }), parkings: parkings.filter(x => +x.montant > 0).map(x => ({ ...x, vu: true })), repet: estRepet(), team_ids: eventTeamIds.slice() };
+    if (["evenement", "repetition", "contrat_pro"].includes(ev.type_evenement)) ev.km_detail = { ...(ev.km_detail || { mode: "evt" }), parkings: parkings.filter(x => +x.montant > 0).map(x => ({ ...x, vu: true })), repet: estRepet(), team_ids: eventTeamIds.slice() };
     ev.paies = picked.map(p => paieMap.get(normName(p.nom)) || { prenom: p.nom, deplacement: 0, prestation: 0 })
       .map(p => ({ ...p, prenom: picked.find(x => normName(x.nom) === normName(p.prenom))?.nom || p.prenom }))
       .filter(p => (+p.deplacement || 0) + (+p.prestation || 0) > 0);
-    ev.options = ["evenement", "repetition"].includes(ev.type_evenement) || !Object.keys(optSel).length ? null : { ...optSel };
+    ev.options = ["evenement", "repetition", "contrat_pro"].includes(ev.type_evenement) || !Object.keys(optSel).length ? null : { ...optSel };
     // Sans membres effectivement ajoutés, personne ne recevra d'affectation.
-    if (["evenement", "repetition"].includes(ev.type_evenement) && eventTeamIds.length && !picked.length) {
+    if (["evenement", "repetition", "contrat_pro"].includes(ev.type_evenement) && eventTeamIds.length && !picked.length) {
       $("formErr").textContent = "Cette team ne contient aucun membre affecté. Vérifiez sa composition dans l'onglet Équipe.";
       return;
     }
@@ -4305,7 +4311,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       await store.save(ev);
       if (devisApres && editingId) { devisApres = false; envoyerDevis(editingId); }
       selDay = ev.date; const d = parseISO(ev.date); curY = d.getFullYear(); curM = d.getMonth();
-      closeForm(); toast(ev.type_evenement === "repetition" ? (editingId ? "🎭 Répétition modifiée !" : "🎭 Répétition ajoutée !") : ev.type_evenement === "evenement" ? (editingId ? "✨ Événement modifié !" : "🎪 Événement ajouté !") : editingId ? "✨ Animation modifiée !" : "🪄 Animation ajoutée !"); poof(editingId ? "✨ Magique !" : "🪄 Abracadabra !");  await reload();
+      closeForm(); toast(ev.type_evenement === "repetition" ? (editingId ? "🎭 Répétition modifiée !" : "🎭 Répétition ajoutée !") : ev.type_evenement === "evenement" ? (editingId ? "✨ Événement modifié !" : "🎪 Événement ajouté !") : ev.type_evenement === "contrat_pro" ? (editingId ? "💼 Contrat pro modifié !" : "💼 Contrat pro ajouté !") : editingId ? "✨ Animation modifiée !" : "🪄 Animation ajoutée !"); poof(editingId ? "✨ Magique !" : "🪄 Abracadabra !");  await reload();
     } catch (err) { $("formErr").textContent = "Erreur : " + (err.message || err); devisApres = false; }
     finally { $("saveBtn").disabled = false; }
   });
@@ -5019,18 +5025,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   // ---------- 🎪 Événement (beaucoup de personnel) ----------
   function appliquerType() {
-    const type = $("type_evenement").value, evt = estEvt(), repete = type === "repetition";
+    const type = $("type_evenement").value, evt = estEvt(), repete = type === "repetition", pro = type === "contrat_pro";
     document.querySelectorAll('input[name="typeEv"]').forEach(r => r.checked = r.value === type);
-    $("teamLabel").textContent = repete ? "👥 Équipe de la répétition" : evt ? "👥 Équipe de l'événement" : "Animateur(s)";
+    $("teamLabel").textContent = repete ? "👥 Équipe de la répétition" : pro ? "👥 Équipe du contrat pro" : evt ? "👥 Équipe de l'événement" : "Animateur(s)";
     $("teamPresetBox").classList.toggle("hidden",!(evt&&isGest()));
     if(evt&&isGest())renderEquipesTypes();
-    $("themeBox").classList.toggle("hidden", !evt || repete);
+    $("themeBox").classList.toggle("hidden", type !== "evenement");
     if (!$("theme_app").value) $("theme_app").value = "auto";
     $("driverRow").classList.toggle("evt-off", evt);
     $("evForm").classList.toggle("mode-evt", evt);
-    $("titre").placeholder = repete ? "Ex. Répétition La Nuit Magique" : evt ? "Ex. Le Bal de Noël" : "Ex. Anniversaire – Elsa & Rumi – Bierwart";
+    $("titre").placeholder = repete ? "Ex. Répétition La Nuit Magique" : pro ? "Ex. Prestation au centre commercial" : evt ? "Ex. Le Bal de Noël" : "Ex. Anniversaire – Elsa & Rumi – Bierwart";
     $("adresseLbl").textContent = evt ? "📍 Lieu (pour les trajets de l'équipe)" : "Adresse";
-    if (!editingId) $("formTitle").textContent = repete ? "Nouvelle répétition" : evt ? "Nouvel événement" : "Nouvelle animation";
+    if (!editingId) $("formTitle").textContent = repete ? "Nouvelle répétition" : pro ? "Nouveau contrat pro" : evt ? "Nouvel événement" : "Nouvelle animation";
     if (!editingId && repete && $("statut").value === "en_attente") $("statut").value = "confirme";
     $("evCostAssignBtn").classList.toggle("hidden", !editingId || !isResp() || repete || !parseTeam((events.find(x=>x.id===editingId)||{}).animateurs).some(estRoleCostume));
   }
@@ -5041,7 +5047,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (events.some(x => x.date === nd && x.titre === ev.titre)) { toast("Ce jour existe déjà pour cet événement"); return; }
     const copie = {}; CHAMPS.forEach(k => copie[k] = ev[k] ?? null);
     Object.assign(copie, { date: nd, materiel_manquant: null, solde: null, conducteur: null, prix: ev.prix ?? null, acompte: null, acompte_paye: false, notes_privees: ev.notes_privees ?? null, deplacement_client: null,
-      km_detail: ev.type_evenement === "evenement" ? { mode: "evt", team_ids: (ev.km_detail?.team_ids || []).slice() } : null, paies: [] });
+      km_detail: ["evenement", "contrat_pro"].includes(ev.type_evenement) ? { mode: "evt", team_ids: (ev.km_detail?.team_ids || []).slice() } : null, paies: [] });
     try { await store.save(copie); await reload(); const n = events.find(x => x.date === nd && x.titre === ev.titre); closeForm(); toast("📅 Jour suivant créé avec la même équipe"); if (n) setTimeout(() => openForm(n), 200); }
     catch (err) { $("formErr").textContent = "Erreur : " + (err.message || err); }
   };
@@ -5110,7 +5116,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   $("driverSel").addEventListener("change", () => { $("conducteur").value = $("driverSel").value; kmCalc = null; $("kmBox").classList.add("hidden"); if(!estEvt())animTransportDirty=true; renderAnimTransports(); });
   let horaires = {};   // prénom normalisé -> { d: "10:00", f: "14:00" } (événements)
-  const estEvt = () => ["evenement", "repetition"].includes($("type_evenement").value);
+  const estEvt = () => ["evenement", "repetition", "contrat_pro"].includes($("type_evenement").value);
   const syncHoraires = () => { $("equipe_detail").value = estEvt() ? JSON.stringify(picked.map(p => ({ prenom: p.nom, role: p.role || "", debut: (horaires[normName(p.nom)] || {}).d || "", fin: (horaires[normName(p.nom)] || {}).f || "", voiture: carDe(p.nom) }))) : ""; };
   // 🚗 Covoiturage (événements) : "conduit" | prénom du conducteur | "aucune"
   let voitures = {}, parkings = [], repetJour = null;
@@ -5170,7 +5176,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
 
   const REPET_RX = /r[ée]p[ée]t|g[ée]n[ée]rale/i;
-  const estRepet = () => $("type_evenement").value === "repetition" || (repetJour != null ? repetJour : REPET_RX.test($("titre") ? $("titre").value : ""));
+  const estRepet = () => $("type_evenement").value === "repetition" || ($("type_evenement").value !== "contrat_pro" && (repetJour != null ? repetJour : REPET_RX.test($("titre") ? $("titre").value : "")));
   // 🚗 L'équipe indique elle-même sa voiture et ses parkings (les responsables valident et calculent)
   const trajetStore = {
     async voiture(ev, prenom, v) {
@@ -5196,7 +5202,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   let mtPhoto = null;
   async function renderMonTrajet(ev) {
     const box = $("monTrajet"); box.classList.add("hidden"); mtPhoto = null;
-    if (!ev || isResp() || !["evenement", "repetition"].includes(ev.type_evenement)) return;
+    if (!ev || isResp() || !["evenement", "repetition", "contrat_pro"].includes(ev.type_evenement)) return;
     const me = myMember() || (DEMO && demoMe ? { prenom: demoMe } : null);
     const moi = me && picked.find(p => normName(p.nom) === normName(me.prenom)); if (!moi) return;
     const c = carDe(moi.nom), conds = picked.filter(p => normName(p.nom) !== normName(moi.nom) && carDe(p.nom) === "conduit");
@@ -5565,6 +5571,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           ${mailPossible ? caseChoix("email") : '<span class="np-no">—</span>'}
           ${caseChoix("push")}</div>`;
       }).join("")}</div>`;
+    $("prefPopupAccueil").checked = mesChoixNotif.popupAccueil !== false;
   }
   async function chargerMesChoixNotif() {
     $("prefNotifStatus").textContent = "";
@@ -5587,7 +5594,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("prefNotifSave").onclick = async () => {
     const bouton = $("prefNotifSave"); bouton.disabled = true;
     $("prefNotifStatus").textContent = "Enregistrement…";
-    const choix = { ...mesChoixNotif };
+    const choix = { ...mesChoixNotif, popupAccueil: $("prefPopupAccueil").checked };
     $("prefNotifBox").querySelectorAll("[data-pref-type]").forEach(el => {
       const k = el.dataset.prefType, canal = el.dataset.prefCanal;
       choix[k] = { ...(choix[k] || {}), [canal]: el.checked };
