@@ -3271,7 +3271,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const titre = e.titre || e.enfant || "Animation";
       const date = fmtLong(e.date);
       if (estClient(e) && e.statut === "en_attente") ajouter(e, "📨", "Demande à traiter · " + titre, date + " · Confirmer ou mettre en attente depuis la fiche", 0);
-      if (estClient(e) && e.statut === "confirme" && !anims(e).length) ajouter(e, "🎭", "Équipe à attribuer · " + titre, date + " · Aucun membre affecté", 0);
+      if (e.type_evenement === "animation" && e.statut === "confirme" && !anims(e).length) ajouter(e, "🎭", "Équipe à attribuer · " + titre, date + " · Aucun membre affecté", 0);
       if (estClient(e) && e.statut === "confirme" && +e.acompte > 0 && !e.acompte_paye) ajouter(e, "💶", "Acompte à vérifier · " + titre, date + " · " + euro(e.acompte), 1);
       if (estClient(e) && e.statut === "confirme" && e.date <= limiteFiche && !(e.fiche && e.fiche.recue_le)) ajouter(e, "📝", "Fiche client à vérifier · " + titre, date + " · À contrôler avant l'animation", 1);
       if (String(e.materiel_manquant || "").trim()) ajouter(e, "🎒", "Matériel manquant · " + titre, date + " · " + String(e.materiel_manquant).trim().slice(0, 95), 1);
