@@ -1498,6 +1498,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="pro-only">
         <label for="contratProPrix">💼 Montant de la prestation (€)</label>
         <input id="contratProPrix" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Ex. 350,00" />
+        <p id="contratProKmStatut" class="hint" aria-live="polite" style="margin:5px 0 9px"></p>
         <p class="hint" style="margin:4px 0 10px">Montant convenu avec le client professionnel, sans acompte ni fiche anniversaire.</p>
       </div>
       <div class="anniv-only">
@@ -1946,6 +1947,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <div><label for="depCatEmoji">Icône</label><input id="depCatEmoji" type="text" maxlength="12" placeholder="✨" /></div>
       </div>
       <div class="actions"><button type="button" class="btn ghost" id="depCatAnnuler">Annuler</button><button type="button" class="btn primary" id="depCatCreer">Enregistrer la catégorie</button></div>
+      <div id="depCatErr" class="err" aria-live="polite"></div>
       <p class="hint" style="margin-bottom:0">Elle sera disponible pour tous tes prochains tickets.</p>
     </div>
     <label for="depEv">Pour une animation ? (facultatif)</label>
@@ -3475,6 +3477,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     document.querySelectorAll('input[name="site_affichage"]').forEach(r => r.checked = r.value === $("site_affichage").value);
     paieMap = new Map(((ev && ev.paies) || []).map(p => [normName(p.prenom), { ...p }]));
     kmCalc = null; kmAjouteDansPrix=fraisDeplacementInclus(ev); $("kmBox").classList.add("hidden");
+    $("contratProKmStatut").textContent = ev?.type_evenement === "contrat_pro" && kmAjouteDansPrix !== null
+      ? "🚗 Déplacements déjà inclus : " + euro(kmAjouteDansPrix) + " (recalculables)." : "";
     if(ev?.km_detail?.equipe?.length && isResp() && ev.km_detail.mode!=="evt")
       showKm({detail:ev.km_detail,client:ev.deplacement_client},false);
     // solde « à la main » seulement s'il ne correspond à aucun calcul automatique (prix, ou prix − acompte)
@@ -3897,30 +3901,51 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     finally{btn.disabled=false;btn.textContent="🧮 Calculer les déplacements (km)";}
   });
   $("kmBox").addEventListener("click",(e)=>{
-    const id=e.target.id;
-    if(id==="kmReviser"){
+    if(e.target.closest("#kmReviser")){
       if(appliquerCorrectionKmAnimation())toast("✅ Kilomètres et défraiements recalculés.");
       return;
     }
-    if(id!=="kmAddPrix"||!kmCalc)return;
-    if(kmCalc.detail?.mode==="animation_v2"&&!appliquerCorrectionKmAnimation())return;
-    const pro=$("type_evenement").value==="contrat_pro";
-    const prixInput=$(pro?"contratProPrix":"prix");
-    const base=r2((Number(prixInput.value)||0)-(kmAjouteDansPrix??0));
-    const total=r2(base+kmCalc.client);
-    prixInput.value=total;
-    if(pro)$("prix").value=total; // le contrat pro utilise un champ distinct à l'enregistrement
-    kmAjouteDansPrix=kmCalc.client;
-    const d=kmCalc.detail;
-    const ligne="Déplacement client : "+d.kmClient+" km × "+String(d.tarifClient).replace(".",",")
-      +" €"+(d.billets?" + billets "+euro(d.billets):"")+" = "+euro(kmCalc.client);
-    const notes=($("notes_privees").value||"").split("\n");
-    const k=notes.findLastIndex(x=>x.startsWith("Déplacement client : "));
-    if(k>=0)notes[k]=ligne;else notes.push(ligne);
-    $("notes_privees").value=notes.join("\n").replace(/^\n/,"");
-    $("prix").dispatchEvent(new Event("input"));
-    const bouton=$("kmAddPrix");if(bouton){bouton.disabled=true;bouton.textContent="✅ Frais intégrés au prix";}
-    toast("💶 Prestation "+euro(base)+" + nouveaux déplacements "+euro(kmCalc.client)+" = "+euro(total));
+    const bouton=e.target.closest("#kmAddPrix");
+    if(!bouton)return;
+    e.preventDefault();
+    if(!kmCalc?.detail){toast("🧮 Recalcule d'abord les déplacements pour les appliquer au prix.");return;}
+    try {
+      const pro=$("type_evenement").value==="contrat_pro";
+      if(kmCalc.detail.mode==="animation_v2"&&!appliquerCorrectionKmAnimation())return;
+      if(pro){
+        if(kmCalc.detail.mode!=="evt"||kmCalc.detail.trajetPro!=="via_fantasy")
+          throw new Error("Recalcule les déplacements du contrat pro avant de les ajouter.");
+        // Recalculer au moment exact du clic, y compris les billets et parkings modifiés.
+        const f=facturationDeplacementsPro(kmCalc.detail);
+        if(f.manquants.length)throw new Error("Adresse manquante pour "+f.manquants.join(", "));
+        kmCalc.client=f.total;
+        Object.assign(kmCalc.detail,{kmClient:f.km,tarifClient:f.tarifClient,billets:f.billets,parkingsClient:f.parking});
+      }
+      const frais=Number(kmCalc.client);
+      if(!Number.isFinite(frais)||frais<0)throw new Error("Le montant des déplacements est invalide. Recalcule-les.");
+      const prixInput=$(pro?"contratProPrix":"prix");
+      const base=r2((Number(prixInput.value)||0)-(kmAjouteDansPrix??0));
+      const total=r2(base+frais);
+      prixInput.value=total;
+      if(pro)$("prix").value=total; // champ caché synchronisé pour les autres calculs
+      kmAjouteDansPrix=frais;
+      const d=kmCalc.detail;
+      const ligne="Déplacement client : "+d.kmClient+" km × "+String(d.tarifClient).replace(".",",")
+        +" €"+(d.billets?" + billets "+euro(d.billets):"")+" = "+euro(frais);
+      const notes=($("notes_privees").value||"").split("\n");
+      const k=notes.findLastIndex(x=>x.startsWith("Déplacement client : "));
+      if(k>=0)notes[k]=ligne;else notes.push(ligne);
+      $("notes_privees").value=notes.join("\n").replace(/^\n/,"");
+      $("prix").dispatchEvent(new Event("input"));
+      const boutonActuel=$("kmAddPrix")||bouton;
+      boutonActuel.disabled=true; boutonActuel.textContent="✅ Frais intégrés au prix";
+      const resume="Prestation "+euro(base)+" + déplacements "+euro(frais)+" = total "+euro(total);
+      if(pro)$("contratProKmStatut").textContent="✅ "+resume+" · Clique sur Enregistrer pour conserver ce montant.";
+      const statut=document.createElement("p");statut.className="hint";statut.style.color="#17714f";
+      statut.style.margin="6px 0 0";statut.textContent="✅ "+resume+" · Pense à enregistrer le contrat.";
+      boutonActuel.parentElement?.appendChild(statut);
+      toast("💶 "+resume);
+    } catch(err){toast("Impossible d'ajouter les frais : "+(err.message||err));}
   });
 
   // ---------- ⚙️ Réglages & adresses ----------
@@ -5400,7 +5425,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       + (pro && trajetViaFantasy ? `<div class="km-client">🧾 <b>Déplacements à facturer au client</b> : ${facture.km.toFixed(1)} km × ${euro(facture.tarifClient)} + billets ${euro(facture.billets)} + parkings ${euro(facture.parking)} = <b>${euro(facture.total)}</b>`
         + `<br><small>🏠 Domiciles ↔ Fantasy : ${kmDomicileFantasy.toFixed(1)} km · 🚗 Fantasy ↔ client (${esc(d.conducteurClient || "conducteur")}) : ${Number(d.kmFantasyClient || 0).toFixed(1)} km</small>`
         + (facture.manquants.length ? `<p class="km-route-warn">⚠️ Adresses manquantes pour ${esc(facture.manquants.join(", "))} : complète-les avant de facturer.</p>` : "")
-        + (modifiable && !facture.manquants.length ? `<div class="after-btns" style="margin-top:8px"><button type="button" class="sig enc" id="kmAddPrix">➕ Ajouter ${euro(facture.total)} au montant du contrat</button></div>` : "") + `</div>` : "");
+        + (modifiable && !facture.manquants.length ? `<div class="after-btns" style="margin-top:8px"><button type="button" class="sig enc" id="kmAddPrix">💶 Appliquer ${euro(facture.total)} au montant du contrat</button></div>` : "") + `</div>` : "");
     $("kmBox").classList.remove("hidden");
   }
   async function kmRoute(pts) {
@@ -8882,6 +8907,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function afficherCreationCatDep(index) {
     depCatCible=index;
     $("depCatNom").value=""; $("depCatEmoji").value="✨";
+    $("depCatErr").textContent="";
     $("depCatCreator").classList.remove("hidden");
     $("depCatNom").focus();
     $("depCatCreator").scrollIntoView({block:"nearest",behavior:"smooth"});
@@ -8892,12 +8918,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     afficherCreationCatDep(i>=0?i:Math.max(0,depLignes.length-1));
   });
   $("depCatAnnuler").addEventListener("click",cacherCreationCatDep);
+  ["depCatNom","depCatEmoji"].forEach(id => $(id).addEventListener("keydown",e => {
+    if(e.key==="Enter"){e.preventDefault();$("depCatCreer").click();}
+  }));
   $("depCatCreer").addEventListener("click",async () => {
     const nom=$("depCatNom").value.trim().replace(/\s+/g," ");
     const emoji=$("depCatEmoji").value.trim().slice(0,12)||"✨";
-    if(!nom){$("depErr").textContent="Donne un nom à ta nouvelle catégorie.";$("depCatNom").focus();return;}
-    $("depErr").textContent="";
-    const btn=$("depCatCreer");btn.disabled=true;
+    if(!nom){$("depCatErr").textContent="Donne un nom à ta nouvelle catégorie.";$("depCatNom").focus();return;}
+    $("depCatErr").textContent="";$("depErr").textContent="";
+    const btn=$("depCatCreer");btn.disabled=true;btn.textContent="Enregistrement…";
     try {
       // Relire les catégories partagées avant de compléter la liste, pour ne pas
       // écraser une catégorie créée récemment sur un autre appareil.
@@ -8911,13 +8940,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         cle="perso_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,6);
         const json=JSON.stringify([...personnalisees,{id:cle,nom,emoji}]);
         await regStore.set({[CLE_CATS_DEP]:json});
+        const verif=await regStore.get();
+        if(!lireCatsDep(verif[CLE_CATS_DEP]).some(c=>c.id===cle))
+          throw new Error("La catégorie n'a pas été retrouvée dans les réglages. Vérifie les autorisations Supabase.");
         reglages[CLE_CATS_DEP]=json;syncCatsDep();
       }
       if(depLignes[depCatCible])depLignes[depCatCible].categorie=cle;
       cacherCreationCatDep();renderLignes();
       toast(existante?"Cette catégorie existe déjà : elle a été sélectionnée.":"✨ Catégorie créée et enregistrée !");
-    } catch(err){$("depErr").textContent="Impossible d'enregistrer la catégorie : "+(err.message||err);}
-    finally{btn.disabled=false;}
+    } catch(err){$("depCatErr").textContent="Impossible d'enregistrer : "+(err.message||err);}
+    finally{btn.disabled=false;btn.textContent="Enregistrer la catégorie";}
   });
 
   function renderLignes() {
@@ -10277,7 +10309,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   // ================= Installation (PWA) =================
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).catch(() => {});
   }
 })();
 /* ✕ Fermer : bouton visible sur chaque fenêtre (+ toucher ou glisser la petite barre) */
