@@ -1551,6 +1551,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="anniv-only">
       <div class="row">
         <div><label for="prix">Prix total (€)</label><input id="prix" type="number" step="0.01" min="0" inputmode="decimal" /></div>
+        <div style="grid-column:1/-1"><button type="button" class="sig photo" id="horsZoneToggle" style="width:100%">🚗 Hors zone : ajouter 25 €</button></div>
         <div><label for="acompte">Acompte (€)</label><input id="acompte" type="number" step="0.01" min="0" inputmode="decimal" /></div>
       </div>
       <label class="check"><input id="acompte_paye" type="checkbox" /> Acompte payé</label>
@@ -3500,6 +3501,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("optResume").textContent = nbOpt ? `· ${optTexte(optSel)}` : "· aucune (toucher pour ajouter)";
     const t = optTotal(optSel), tat = tatouagesDemandes({ options: optSel });
     $("optTot").textContent = resp && (t || tat) ? `Options : ${euro(t)} ajoutés au prix total${tat ? ` · tatouages : ${euro(TAT)} par enfant réellement tatoué, ajoutés au solde du jour` : ""}` : "";
+    if ($("horsZoneToggle")) $("horsZoneToggle").textContent = optSel.hors_zone ? "✅ Hors zone : 25 € ajoutés · retirer" : "🚗 Hors zone : ajouter 25 €";
   }
   $("optList").addEventListener("click", (e) => {
     const b = e.target.closest("[data-opt]"); if (!b) return;
@@ -3513,6 +3515,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }
     renderOptions();
     if (diff) $("prix").dispatchEvent(new Event("input"));
+  });
+  $("horsZoneToggle").addEventListener("click", () => {
+    const btn = $("optList").querySelector(`[data-opt="hors_zone"][data-d="${optSel.hors_zone ? "-1" : "1"}"]`);
+    if (btn) btn.click();
   });
   let formuleAvant = "";
   $("theme").addEventListener("focus", () => { formuleAvant = $("theme").value; });
