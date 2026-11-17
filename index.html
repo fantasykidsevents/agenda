@@ -2625,7 +2625,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const weekAgo = iso(new Date(Date.now() - 7*864e5));
     const canSignal = !interne && e.type_evenement !== "evenement" && e.date <= todayISO() && e.date >= weekAgo && e.statut !== "annule";
     const canMode = modeDisponible(e);
-    const canCost = e.statut !== "annule" && parseTeam(e.animateurs).some(p => estRoleCostume(p) && (isResp() || estMoi(p.nom)));
+    const canCost = e.type_evenement !== "repetition" && e.statut !== "annule" && parseTeam(e.animateurs).some(p => estRoleCostume(p) && (isResp() || estMoi(p.nom)));
     const U = universOf(e);
     const parts = U && !reduceMotion ? [0,1,2,3].map(i => `<i class="pt" style="left:${12 + i * 24 + Math.random() * 8}%;color:${U[4]};font-size:${9 + Math.random() * 8}px;animation-duration:${5 + Math.random() * 4}s;animation-delay:${-Math.random() * 8}s">${U[3]}</i>`).join("") : "";
     return `<div class="ev ${U ? "u-" + U[0] : ""}${themeDe(e) ? " spectacle th-c-" + themeDe(e) : ""}" style="--c:${st.color}${themeDe(e) ? `;--th-carte:${THEMES[themeDe(e)].carte};--th-bord:${THEMES[themeDe(e)].bord}` : ""}" data-id="${esc(e.id)}" role="button" tabindex="0">${parts}${U ? `<span class="univ">${U[2]}</span>` : ""}<span class="sheen"></span>
@@ -2640,7 +2640,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         ${["evenement", "repetition"].includes(e.type_evenement) ? evtLigne(e) : animsFull(e).length ? `<span>${parseTeam(e.animateurs).map(p => `${p.role ? roleEmoji(p.role) + " " : "🎭 "}${esc(p.nom)}${p.role ? ` <small style="opacity:.75">(${esc(p.role)})</small>` : ""}${p.role && estMoi(p.nom) && ficheDe(p.role) ? `<button type="button" class="g-lien" data-guide="${esc(ficheDe(p.role).nom)}">📖 ma fiche</button>` : ""}`).join(" · ")}</span>` : ""}
         ${e.parent || e.telephone ? `<span>👤 ${esc(e.parent||"")} ${e.telephone ? `· <a href="tel:${esc(e.telephone.replace(/\s/g,""))}" onclick="event.stopPropagation()">${esc(e.telephone)}</a>` : ""}</span>` : ""}
         ${mat}
-        ${costumes.length ? costLigne(e) : ""}
+        ${costumes.length && e.type_evenement !== "repetition" ? costLigne(e) : ""}
         ${e.notes ? `<span style="white-space:pre-line;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">📝 ${esc(e.notes)}</span>` : ""}
       </div>
       ${pay ? `<div class="badges">${pay}</div>` : ""}
@@ -3277,7 +3277,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("formTitle").textContent = ev ? (ev.type_evenement === "evenement" ? "Modifier l'événement" : ev.type_evenement === "repetition" ? "Modifier la répétition" : "Modifier l'animation") : "Nouvelle animation";
     $("delBtn").classList.toggle("hidden", !ev);
     $("evChatBtn").classList.toggle("hidden", !ev || !jePeuxVoir(ev));
-    $("evCostAssignBtn").classList.toggle("hidden", !ev || !isResp() || !parseTeam(ev.animateurs).some(estRoleCostume));
+    $("evCostAssignBtn").classList.toggle("hidden", !ev || ev.type_evenement === "repetition" || !isResp() || !parseTeam(ev.animateurs).some(estRoleCostume));
     $("formErr").textContent = "";
     setTimeout(() => {
       // ancienne fiche avec un thème libre (ex. « Olaf ») : on le garde dans la liste pour ne rien perdre
@@ -3388,6 +3388,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const closeSignal = () => { $("sigBg").classList.add("hidden"); document.body.style.overflow = ""; sigEv = null; };
   function renderSigCost() {
     if (!sigEv) return;
+    if (sigEv.type_evenement === "repetition") { $("sigCost").innerHTML = ""; return; }
     const moi = normName(chatMe()), team = parseTeam(sigEv.animateurs).filter(p => p.role && normName(p.role) !== "acc");
     const mesRoles = isResp() ? team.filter(estRoleCostume) : team.filter(p => normName(p.nom) === moi && estRoleCostume(p));
     const items = mesRoles.flatMap(p => Object.keys(TYPES).map(type => pieceAttribuee(sigEv, p, type)).filter(Boolean));
@@ -3931,7 +3932,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const maMission = parseTeam(ev.animateurs).find(p => normName(p.nom) === normName(chatMe()));
     const monHoraire = maMission ? horaireDe(ev, maMission.nom) : "";
     const monTrajet = maMission ? voitureTxt(ev, maMission.nom) : "";
-    const mesPieces = maMission && estRoleCostume(maMission) ? Object.keys(TYPES).map(type => {
+    const mesPieces = ev.type_evenement !== "repetition" && maMission && estRoleCostume(maMission) ? Object.keys(TYPES).map(type => {
       const c = pieceAttribuee(ev, maMission, type);
       const requis = costDe(maMission.role, type).some(x => utilisable(x, maMission.nom));
       return c ? `${TYPES[type][0]} <b>${esc(nomDe(c))}</b>${persoDe(c) ? " · personnel" : " · Fantasy"}${etatDe(c) !== "ok" ? ` · ⚠️ ${esc(etatTxt(c))}` : ""}` :
@@ -3941,7 +3942,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <p>${monHoraire ? `🕐 Mon horaire : <b>${esc(monHoraire)}</b>` : `🕐 Début de l'animation : <b>${esc(hhmm(ev.heure_debut) || "à préciser")}</b> (mon horaire individuel n'est pas renseigné)`}</p>
       ${monTrajet ? `<p>${esc(monTrajet)}</p>` : ""}</div>` : "";
     const estAcc = maMission && normName(maMission.role) === "acc";
-    const preparations = maMission && !estAcc
+    const preparations = ev.type_evenement !== "repetition" && maMission && !estAcc
       ? ["Costume prêt", "Perruque (si nécessaire) et accessoires vérifiés", "Matériel d'animation préparé", "Trajet et horaires vérifiés"]
       : ["Matériel d'animation préparé", "Consignes et horaires vérifiés", "Trajet et adresse vérifiés"];
     const prepKey = `fk_jour_prep:${ev.id}:${String(currentUser?.email || chatMe()).toLowerCase()}`;
@@ -3959,7 +3960,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <div class="time">${ev.heure_debut ? hhmm(ev.heure_debut) + (ev.heure_fin ? " – " + hhmm(ev.heure_fin) : "") : "Toute la journée"}</div>
         <div class="hint" style="text-transform:capitalize;margin:0">${esc(fmtLong(ev.date))}</div>${cd ? `<span class="cd">${cd}</span>` : ""}</div>
       ${missionHtml}
-      ${maMission && estRoleCostume(maMission) ? `<div class="blk"><h4>👗 Mes tenues pour cette date</h4>${mesPieces || "Aucune pièce encodée pour ce personnage."}<br><button type="button" class="btn ghost" data-cost-assign="${esc(ev.id)}" style="margin-top:9px">👗 Voir / choisir mes tenues</button></div>` : ""}
+      ${ev.type_evenement !== "repetition" && maMission && estRoleCostume(maMission) ? `<div class="blk"><h4>👗 Mes tenues pour cette date</h4>${mesPieces || "Aucune pièce encodée pour ce personnage."}<br><button type="button" class="btn ghost" data-cost-assign="${esc(ev.id)}" style="margin-top:9px">👗 Voir / choisir mes tenues</button></div>` : ""}
       <div class="go">
         <a href="https://waze.com/ul?q=${adr}&navigate=yes" target="_blank" rel="noopener"><span>🧭</span>Waze</a>
         <a href="https://www.google.com/maps/dir/?api=1&destination=${adr}" target="_blank" rel="noopener"><span>🗺️</span>Maps</a>
@@ -4900,6 +4901,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("adresseLbl").textContent = evt ? "📍 Lieu (pour les trajets de l'équipe)" : "Adresse";
     if (!editingId) $("formTitle").textContent = repete ? "Nouvelle répétition" : evt ? "Nouvel événement" : "Nouvelle animation";
     if (!editingId && repete && $("statut").value === "en_attente") $("statut").value = "confirme";
+    $("evCostAssignBtn").classList.toggle("hidden", !editingId || !isResp() || repete || !parseTeam((events.find(x=>x.id===editingId)||{}).animateurs).some(estRoleCostume));
   }
   $("typeSeg").addEventListener("change", (e) => { $("type_evenement").value = e.target.value; appliquerType(); renderPicked(); });
   $("evtDup").onclick = async () => {
@@ -6110,10 +6112,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!c) return [];
     return costAttributions.filter(a => String(a.costume_id) === String(c.id) && String(a.evenement_id) !== String(ev.id))
       .map(a => ({ a, autre: events.find(e => String(e.id) === String(a.evenement_id)) }))
-      .filter(x => x.autre && x.autre.statut !== "annule" && x.autre.date === ev.date && horairesSeChevauchent(ev, x.autre));
+      .filter(x => x.autre && x.autre.type_evenement !== "repetition" && x.autre.statut !== "annule" && x.autre.date === ev.date && horairesSeChevauchent(ev, x.autre));
   }
   function besoinsCostumes(e) {
-    if (!costAttributionsOK || e.statut === "annule" || e.date < todayISO()) return [];
+    if (!costAttributionsOK || e.type_evenement === "repetition" || e.statut === "annule" || e.date < todayISO()) return [];
     const out = [];
     parseTeam(e.animateurs).filter(estRoleCostume).forEach(p => {
       Object.keys(TYPES).forEach(type => {
@@ -6407,6 +6409,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!costDemandesOK) $("costAssignList").insertAdjacentHTML("afterbegin", `<div class="missing">⚠️ Le nouveau formulaire de souhaits et de signalements n'est pas encore activé. Exécuter « demandes-tenues.sql » dans Supabase. Les attributions actuelles restent utilisables.</div>`);
   }
   function openCostAssign(ev) {
+    if (ev.type_evenement === "repetition") { toast("🎭 Répétition : aucune tenue à attribuer."); return; }
     if (!isResp() && !parseTeam(ev.animateurs).some(p => estRoleCostume(p) && normName(p.nom) === normName(chatMe()))) { toast("Vous n'êtes pas affecté à cette prestation."); return; }
     costAssignEv = ev;
     $("costAssignErr").textContent = "";
