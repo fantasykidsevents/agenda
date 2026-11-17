@@ -1,6 +1,18 @@
 # Facturation Fantasy Kids Events — installation
 
-Le module est accessible depuis **Gestion → Factures clients**, uniquement aux responsables.
+Le module est accessible depuis **Gestion → Factures & devis**, uniquement aux responsables.
+
+Pour les contrats pro, le formulaire propose désormais un nom d'entreprise/client,
+un numéro de TVA et un bouton **Préparer un devis**. La note de la fiche contrat pro
+apparaît dans la partie « Précisions sur la prestation » du devis imprimable.
+Ce champ devient donc **visible par le client sur le devis** : ne pas y mettre
+de données internes ou confidentielles.
+
+Après le premier SQL de facturation, exécuter également
+[`supabase_devis_contrats_pro.sql`](supabase_devis_contrats_pro.sql)
+dans Supabase SQL Editor pour installer le champ TVA privé et les devis.
+Ce second script ne touche pas aux compteurs de factures ; les devis ont
+leur propre numérotation, par exemple `DEV-2026/001`.
 
 ## 1. Installer les tables Supabase
 

@@ -43,6 +43,8 @@
     .bill-table tbody tr:nth-child(even){background:#f4f4f4}.bill-table tbody tr:nth-child(even) td:first-child{border-radius:20px 0 0 20px}.bill-table tbody tr:nth-child(even) td:last-child{border-radius:0 20px 20px 0}
     .totals{text-align:right;margin:19px 0 15px;font-size:15px}.totals b{color:#00b5eb}.total-badge{display:inline-block;background:#01b7ef;color:white;border-radius:25px;padding:10px 15px;font-weight:800;font-size:17px}
     .payment{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-top:20px;font-size:12px}.payment p{line-height:1.6;margin:0}
+    .quote-note{margin:14px 0;font-size:12px;line-height:1.6;white-space:pre-line;border-left:3px solid #00b8ef;padding:4px 12px}
+    .quote-note:empty{display:none}
     .paper-footer{position:absolute;z-index:1;right:9%;bottom:8%;font-size:10px;line-height:1.38;max-width:40%;white-space:pre-line}
     .paper-footer .tax{display:block;border-top:2px solid #00b6ed;margin-top:9px;padding-top:5px;font-size:9px}
     .bottom-text{position:absolute;bottom:3%;left:6%;right:6%;z-index:1;text-align:center;font-size:9px}
@@ -53,11 +55,11 @@
   </style>
 </head>
 <body>
-<header class="top"><a href="index.html">← Agenda</a><div><h1>🧾 Factures</h1><p>Fantasy Kids Events · réservé aux responsables</p></div></header>
+<header class="top"><a href="index.html">← Agenda</a><div><h1>🧾 Factures & devis</h1><p>Fantasy Kids Events · réservé aux responsables</p></div></header>
 <main id="app" hidden>
  <div>
-  <section class="panel"><div class="controls"><button class="primary" id="new">＋ Nouvelle facture</button><button id="refresh">↻ Actualiser</button></div><h2>Mes factures</h2><div id="list">Chargement…</div></section>
-  <section class="panel"><h2>Préparer la facture</h2><div id="message" role="status" aria-live="polite"></div>
+  <section class="panel"><label for="kind">Type de document</label><select id="kind"><option value="facture">🧾 Factures</option><option value="devis">📄 Devis</option></select><div class="controls"><button class="primary" id="new">＋ Nouvelle facture</button><button id="refresh">↻ Actualiser</button></div><h2 id="listTitle">Mes factures</h2><div id="list">Chargement…</div></section>
+  <section class="panel"><h2 id="editorTitle">Préparer la facture</h2><div id="message" role="status" aria-live="polite"></div>
    <label for="event">Reprendre une prestation de l’agenda</label><select id="event"><option value="">Facture libre / choisir une prestation</option></select>
    <p class="note">Le prix est repris de l'agenda et peut déjà comprendre les déplacements : vérifie toujours les lignes avant l’émission.</p>
    <h3>Émetteur (coordonnées légales)</h3>
@@ -72,19 +74,19 @@ fantasykidsevents@gmail.com</textarea>
    <label for="clientName">Nom du client *</label><input id="clientName" placeholder="Nom de la personne ou de l'entreprise">
    <label for="clientAddress">Adresse complète *</label><textarea id="clientAddress" placeholder="Rue, numéro, code postal et ville"></textarea>
    <label for="clientTva">N° de TVA du client (si applicable)</label><input id="clientTva">
-   <div class="row"><div><label for="date">Date prévue / prestation</label><input id="date" type="date"></div><div><label for="due">Date d’échéance</label><input id="due" type="date"></div></div>
+   <div class="row"><div><label for="date">Date prévue / prestation</label><input id="date" type="date"></div><div><label for="due" id="dueLabel">Date d’échéance</label><input id="due" type="date"></div></div>
    <h3>Prestations facturées</h3><div id="lines"></div><button id="addLine">＋ Ajouter une ligne</button>
-   <div class="row"><div><label for="priceType">Prix indiqués</label><select id="priceType"><option value="ttc">Montants finaux (€)</option><option value="ht">Hors TVA (€)</option></select></div><div><label for="notes">Note facultative</label><input id="notes" placeholder="Référence, acompte déjà versé…"></div></div>
+   <div class="row"><div><label for="priceType">Prix indiqués</label><select id="priceType"><option value="ttc">Montants finaux (€)</option><option value="ht">Hors TVA (€)</option></select></div><div><label for="notes" id="notesLabel">Note facultative</label><textarea id="notes" placeholder="Référence, acompte déjà versé…"></textarea></div></div>
    <div class="controls"><button id="save" class="primary">💾 Enregistrer le brouillon</button><button id="issue">🔒 Émettre et numéroter</button><button id="paid">✅ Marquer payée</button></div>
-   <p class="note">Une facture émise est définitive : ses montants et coordonnées ne peuvent plus être modifiés. Le bouton « PDF » utilise l'impression du navigateur, option « Enregistrer en PDF ».</p>
+   <p class="note" id="lockNote">Une facture émise est définitive : ses montants et coordonnées ne peuvent plus être modifiés. Le bouton « PDF » utilise l'impression du navigateur, option « Enregistrer en PDF ».</p>
   </section>
  </div>
  <aside id="paperWrap"><div class="controls"><button class="primary" id="pdf">🖨️ Imprimer / PDF</button><span class="note" id="docStatus">Aperçu du brouillon</span></div>
   <div id="paper"><div class="wave1"></div><div class="wave2"></div><div class="waveBottom"></div>
-   <div class="paper-head"><h2>FACTURE ✦</h2><img src="logo.png" alt="Fantasy Kids Events"></div>
+   <div class="paper-head"><h2 id="pTitle">FACTURE ✦</h2><img src="logo.png" alt="Fantasy Kids Events"></div>
    <div class="paper-content"><div class="paper-client"><div><h3>À l'attention de :</h3><b id="pClient"></b><p id="pClientAddress"></p><span id="pClientTva"></span></div><div class="paper-meta"><b>n° :</b> <span id="pNumber"></span><br><b>date :</b> <span id="pDate"></span></div></div>
     <table class="bill-table"><thead><tr><th>Descriptif</th><th>Nb.</th><th>Tarif</th></tr></thead><tbody id="pLines"></tbody></table>
-    <div class="totals"><b>Sous-total : </b><span id="pSubtotal"></span></div><div class="payment"><p>• Mode de paiement : virement bancaire<br>• N° de compte : <span id="pIban"></span><br>• Échéance : <span id="pDue"></span><br><span id="pNote"></span></p><span class="total-badge" id="pTotal"></span></div>
+    <div class="totals"><b>Sous-total : </b><span id="pSubtotal"></span></div><div id="pDetails" class="quote-note"></div><div class="payment"><p>• Mode de paiement : virement bancaire<br>• N° de compte : <span id="pIban"></span><br>• <span id="pDueLabel">Échéance</span> : <span id="pDue"></span><br><span id="pNote"></span></p><span class="total-badge" id="pTotal"></span></div>
    </div><div class="paper-footer"><span id="pIssuer"></span><span class="tax" id="pRegime"></span></div><div class="bottom-text" id="pLegal"></div>
   </div>
  </aside>
@@ -97,8 +99,11 @@ fantasykidsevents@gmail.com</textarea>
  const today=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Brussels'});
  const dateFR=s=>s?String(s).split('-').reverse().join('/'):'';
  const config=window.APP_CONFIG||{}, sb=(window.supabase&&config.SUPABASE_URL&&config.SUPABASE_ANON_KEY)?window.supabase.createClient(config.SUPABASE_URL,config.SUPABASE_ANON_KEY):null;
- let docs=[],events=[],selected=null,readonly=false,dirty=false;
- let draft={lignes:[{description:'Prestation',quantite:1,prix:0}]};
+ const params=new URLSearchParams(location.search);
+ let mode=params.get('mode')==='devis'?'devis':'facture';
+ let docs=[],events=[],selected=null,readonly=false;
+ const table=()=>mode==='devis'?'devis_fantasy':'factures_fantasy';
+ function updateMode(){const isQuote=mode==='devis';$('kind').value=mode;$('new').textContent=isQuote?'＋ Nouveau devis':'＋ Nouvelle facture';$('listTitle').textContent=isQuote?'Mes devis':'Mes factures';$('editorTitle').textContent=isQuote?'Préparer le devis':'Préparer la facture';$('pTitle').textContent=isQuote?'DEVIS ✦':'FACTURE ✦';$('issue').textContent=isQuote?'🔒 Finaliser le devis':'🔒 Émettre et numéroter';$('paid').hidden=isQuote;$('notesLabel').textContent=isQuote?'Notes visibles sur le devis':'Note facultative';$('notes').placeholder=isQuote?'Ex. Personnages présents, durée, conditions, détail de la prestation…':'Référence, acompte déjà versé…';$('dueLabel').textContent=isQuote?'Valable jusqu’au':'Date d’échéance';$('pDueLabel').textContent=isQuote?'Devis valable jusqu’au':'Échéance';$('lockNote').textContent=isQuote?'Une fois le devis finalisé, son contenu est verrouillé. Il ne sera pas compté comme une facture. Pour le PDF, utilise Imprimer / PDF.':'Une facture émise est définitive : ses montants et coordonnées ne peuvent plus être modifiés. Le bouton PDF utilise l’impression du navigateur.';}
  $('issuerIban').value=config.IBAN||'';
  const settingsIds=['issuerName','issuerTva','issuerIban','issuerAddress','issuerContact','regime'];
  try{const saved=JSON.parse(localStorage.getItem('fk_factures_emetteur')||'null');if(saved)for(const id of settingsIds)if(saved[id]!=null)$(id).value=saved[id];}catch(_){ }
@@ -116,34 +121,36 @@ fantasykidsevents@gmail.com</textarea>
   $('pNumber').textContent=selected?.numero||'BROUILLON';$('pDate').textContent=dateFR(shown.date_emission)||dateFR(today());$('pDue').textContent=dateFR(shown.echeance)||'À préciser';
   $('pLines').innerHTML=(shown.lignes||[]).map(l=>`<tr><td>${h(l.description)}</td><td>${h(l.quantite)}</td><td>${money((Number(l.prix)||0)*(Number(l.quantite)||0))}</td></tr>`).join('');
   const total=(shown.lignes||[]).reduce((sum,l)=>sum+(Number(l.prix)||0)*(Number(l.quantite)||0),0);
-  $('pSubtotal').textContent=money(total);$('pTotal').textContent=`Total : ${money(total)}`;$('pIban').textContent=shown.emetteur?.iban||'';$('pNote').textContent=shown.note?`• ${shown.note}`:'';
+  $('pSubtotal').textContent=money(total);$('pTotal').textContent=`Total : ${money(total)}`;$('pIban').textContent=shown.emetteur?.iban||'';$('pNote').textContent=mode==='facture'&&shown.note?`• ${shown.note}`:'';$('pDetails').textContent=mode==='devis'&&shown.note?`Précisions sur la prestation :\n${shown.note}`:'';
   $('pIssuer').textContent=[shown.emetteur?.nom,shown.emetteur?.adresse,shown.emetteur?.contact,shown.emetteur?.iban?`IBAN : ${shown.emetteur.iban}`:''].filter(Boolean).join('\n');
   $('pRegime').textContent=shown.regime_tva||'';$('pLegal').textContent=`${shown.emetteur?.nom||''} · N° d'entreprise / TVA : ${shown.emetteur?.tva||''}`;
-  $('docStatus').textContent=selected?(selected.statut==='brouillon'?'Brouillon (non émis)':selected.numero+' · '+(selected.statut==='payee'?'payée':'émise')):'Nouveau brouillon';}
+  $('docStatus').textContent=selected?(selected.statut==='brouillon'?'Brouillon (non émis)':selected.numero+' · '+(selected.statut==='payee'?'payée':mode==='devis'?'finalisé':'émise')):'Nouveau brouillon';}
  function editable(yes){readonly=!yes;document.querySelectorAll('#app input,#app textarea').forEach(x=>x.disabled=!yes);$('priceType').disabled=!yes;$('event').disabled=!yes;$('addLine').disabled=!yes;for(const b of $('lines').querySelectorAll('button'))b.disabled=!yes;
-  $('save').disabled=!yes;$('issue').disabled=!yes;$('paid').disabled=!selected||selected.statut!=='emise';}
+  $('save').disabled=!yes;$('issue').disabled=!yes;$('paid').disabled=mode==='devis'||!selected||selected.statut!=='emise';}
  function selectDoc(row){selected=row;const d=row?.contenu||{};setForm(d);$('event').value=row?.source_evenement_id||'';editable(!row||row.statut==='brouillon');$('save').textContent=row?'💾 Enregistrer les modifications':'💾 Enregistrer le brouillon';preview();renderList();}
- function renderList(){$('list').innerHTML=docs.length?docs.map(x=>`<button class="entry ${selected?.id===x.id?'selected':''}" data-id="${h(x.id)}"><span><b>${h(x.numero||'Brouillon')}</b><br><small>${h(x.contenu?.client?.nom||'Client non renseigné')}</small></span><span class="tag">${x.statut==='payee'?'Payée':x.statut==='emise'?'Émise':'Brouillon'}</span></button>`).join(''):'Aucune facture créée.';
+ function renderList(){$('list').innerHTML=docs.length?docs.map(x=>`<button class="entry ${selected?.id===x.id?'selected':''}" data-id="${h(x.id)}"><span><b>${h(x.numero||'Brouillon')}</b><br><small>${h(x.contenu?.client?.nom||'Client non renseigné')}</small></span><span class="tag">${x.statut==='payee'?'Payée':['emise','emis'].includes(x.statut)?mode==='devis'?'Finalisé':'Émise':'Brouillon'}</span></button>`).join(''):(mode==='devis'?'Aucun devis créé.':'Aucune facture créée.');
   $('list').querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>selectDoc(docs.find(d=>d.id===x.dataset.id)));}
- async function load(){const {data,error}=await sb.from('factures_fantasy').select('*').order('created_at',{ascending:false});if(error)throw error;docs=data||[];renderList();}
+ async function load(){const {data,error}=await sb.from(table()).select('*').order('created_at',{ascending:false});if(error)throw error;docs=data||[];renderList();}
  async function loadEvents(){const [{data,error},{data:priv, error:privateError},{data:fiches,error:ficheError}]=await Promise.all([sb.from('evenements').select('*').order('date',{ascending:false}).limit(500),sb.from('evenements_prive').select('*'),sb.from('fiches').select('evenement_id,reponses')]);if(error)throw error;if(privateError)throw privateError;if(ficheError)throw ficheError;
   const details=new Map((priv||[]).map(p=>[String(p.id),p]));const parFiche=new Map((fiches||[]).map(f=>[String(f.evenement_id),f.reponses||{}]));
   events=(data||[]).map(e=>{const p=details.get(String(e.id))||{},r=parFiche.get(String(e.id))||{};return {...e,...p,parent:p.parent||e.parent||r.client_nom||'',fiche_client_nom:r.client_nom||''};});
   $('event').innerHTML='<option value="">Facture libre / choisir une prestation</option>'+events.filter(e=>e.type_evenement==='animation'||e.type_evenement==='contrat_pro').map(e=>`<option value="${h(e.id)}">${h(dateFR(e.date))} · ${h(e.parent||e.titre||e.enfant||'Prestation')}</option>`).join('');}
- $('event').onchange=()=>{const e=events.find(x=>String(x.id)===$('event').value);if(!e)return; $('clientName').value=e.fiche_client_nom||e.parent||'';$('clientAddress').value=e.adresse||'';$('date').value=e.date||'';
-  const tarif=Number(e.prix||0)+Number(e.supplement||0);drawLines([{description:e.titre||e.theme||'Animation Fantasy Kids Events',quantite:1,prix:tarif}]);preview();status($('clientName').value?'Prestation reprise. Vérifie le client, le montant et les éventuels frais de déplacement avant de facturer.':'Le nom du client est absent de l’agenda et de la fiche anniversaire : renseigne-le manuellement avant de facturer.',!$('clientName').value);};
+ $('event').onchange=()=>{const e=events.find(x=>String(x.id)===$('event').value);if(!e)return; $('clientName').value=e.fiche_client_nom||e.parent||'';$('clientAddress').value=e.adresse||'';$('clientTva').value=e.client_tva||'';$('date').value=e.date||'';
+  $('notes').value=mode==='devis'?e.notes||'':'';
+  const tarif=Number(e.prix||0)+Number(e.supplement||0);drawLines([{description:e.titre||e.theme||'Animation Fantasy Kids Events',quantite:1,prix:tarif}]);preview();status($('clientName').value?'Prestation reprise. Vérifie le client, le montant et les éventuels frais de déplacement avant de finaliser.':'Le nom du client est absent de l’agenda et de la fiche anniversaire : renseigne-le manuellement.',!$('clientName').value);};
  $('new').onclick=()=>{selected=null;$('clientName').value='';$('clientAddress').value='';$('clientTva').value='';$('date').value='';$('due').value='';$('notes').value='';$('event').value='';drawLines([{description:'Animation Fantasy Kids Events',quantite:1,prix:0}]);editable(true);renderList();preview();status('Nouveau brouillon prêt.');};
+ $('kind').onchange=async()=>{mode=$('kind').value;selected=null;updateMode();try{await load();$('new').click();}catch(e){status('Pour activer les devis, exécute supabase_devis_contrats_pro.sql dans Supabase. '+e.message,true);}};
  $('refresh').onclick=async()=>{try{await load();status('Liste actualisée.');}catch(e){status(e.message,true)}};
  $('addLine').onclick=()=>addLine();document.querySelectorAll('#app input,#app textarea,#app select').forEach(x=>x.addEventListener('input',preview));
  function validate(d){if(!d.emetteur.nom||!d.emetteur.adresse||!d.emetteur.tva||!d.emetteur.iban||!d.regime_tva||!d.client.nom||!d.client.adresse)throw Error('Complète les coordonnées de l’émetteur, du client, l’IBAN et le régime TVA.');
   if(!d.lignes.length||d.lignes.some(l=>!l.description||!Number.isFinite(l.quantite)||l.quantite<=0||!Number.isFinite(l.prix)||l.prix<0))throw Error('Vérifie les lignes : description, quantité positive et prix valide.');}
- async function save(){if(readonly)throw Error('Cette facture est déjà émise.');const d=getForm();validate(d);localStorage.setItem('fk_factures_emetteur',JSON.stringify(Object.fromEntries(settingsIds.map(id=>[id,$(id).value]))));
+ async function save(){if(readonly)throw Error('Ce document est déjà finalisé.');const d=getForm();validate(d);localStorage.setItem('fk_factures_emetteur',JSON.stringify(Object.fromEntries(settingsIds.map(id=>[id,$(id).value]))));
   const values={contenu:d,source_evenement_id:$('event').value||selected?.source_evenement_id||null};let result;
-  if(selected){result=await sb.from('factures_fantasy').update(values).eq('id',selected.id).select().single();}else{result=await sb.from('factures_fantasy').insert(values).select().single();}
+  if(selected){result=await sb.from(table()).update(values).eq('id',selected.id).select().single();}else{result=await sb.from(table()).insert(values).select().single();}
   if(result.error)throw result.error;selected=result.data;await load();selectDoc(selected);return selected;}
  $('save').onclick=async()=>{try{await save();status('Brouillon enregistré ✅');}catch(e){status(e.message,true);}};
- $('issue').onclick=async()=>{try{const d=getForm();validate(d);if(!confirm('Émettre la facture ? Un numéro définitif sera attribué et son contenu ne pourra plus être modifié.'))return;
-  const row=await save();const {data,error}=await sb.rpc('fk_factures_emettre',{p_id:row.id});if(error)throw error;selected=data;await load();selectDoc(data);status(`Facture ${data.numero} émise ✅`);}catch(e){status(e.message,true);}};
+ $('issue').onclick=async()=>{try{const d=getForm();validate(d);const quote=mode==='devis';if(!confirm(quote?'Finaliser ce devis ? Il recevra son propre numéro et son contenu sera verrouillé.':'Émettre la facture ? Un numéro définitif sera attribué et son contenu ne pourra plus être modifié.'))return;
+  const row=await save();const {data,error}=await sb.rpc(quote?'fk_devis_emettre':'fk_factures_emettre',{p_id:row.id});if(error)throw error;selected=data;await load();selectDoc(data);status(`${quote?'Devis':'Facture'} ${data.numero} ${quote?'finalisé':'émise'} ✅`);}catch(e){status(e.message,true);}};
  $('paid').onclick=async()=>{if(!selected||selected.statut!=='emise')return;if(!confirm('Confirmer la réception du paiement de cette facture ?'))return;
   const {data,error}=await sb.rpc('fk_factures_marquer_payee',{p_id:selected.id,p_date:today()});if(error)return status(error.message,true);selected=data;await load();selectDoc(data);status('Facture marquée comme payée ✅');};
  $('pdf').onclick=()=>{if(!selected||selected.statut==='brouillon'){if(!confirm('Ceci est un brouillon sans numéro. Imprimer l’aperçu quand même ?'))return;}window.print();};
@@ -151,7 +158,7 @@ fantasykidsevents@gmail.com</textarea>
   const {data:{user},error}=await sb.auth.getUser();if(error||!user?.email){$('blocked').innerHTML='Connecte-toi d’abord à <a href="index.html">l’application Fantasy</a>, puis reviens ici.';return;}
   const {data:roles,error:roleErr}=await sb.from('equipe').select('email,responsable').ilike('email',user.email).limit(1);
   if(roleErr||!roles?.some(x=>x.responsable===true)){$('blocked').textContent='Accès réservé aux responsables Fantasy Kids Events.';return;}
-  $('blocked').hidden=true;$('app').hidden=false;try{await Promise.all([load(),loadEvents()]);$('new').click();}catch(e){status('Base de facturation pas encore installée dans Supabase : exécute supabase_facturation.sql dans SQL Editor. '+e.message,true);}
+  $('blocked').hidden=true;$('app').hidden=false;updateMode();try{await Promise.all([load(),loadEvents()]);$('new').click();const eventId=params.get('event');if(eventId&&events.some(e=>String(e.id)===eventId)){$('event').value=eventId;$('event').dispatchEvent(new Event('change'));}}catch(e){status('Tables indisponibles dans Supabase : vérifie les scripts de facturation et de devis. '+e.message,true);}
  })();
 })();
 </script>

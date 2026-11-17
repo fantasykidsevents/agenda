@@ -1347,7 +1347,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <!-- Vue Chiffres (responsables) -->
     <section id="viewStats" class="hidden">
       <div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
-      <a href="factures.html" class="mine-head" style="display:block;text-decoration:none;color:#653090;font-weight:800;text-align:center">🧾 Factures clients · Créer, consulter et imprimer</a>
+      <a href="factures.html" class="mine-head" style="display:block;text-decoration:none;color:#653090;font-weight:800;text-align:center">🧾 Factures & devis · Créer, consulter et imprimer</a>
       <div class="group-title" id="gFinT">💶 Finances</div>
       <div class="seg" id="sCaisseSeg" style="margin-bottom:8px">
         <label><input type="radio" name="sCaisse" value="fantasy" checked /><span>💼 Fantasy</span></label>
@@ -1425,6 +1425,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <datalist id="themesList"></datalist>
     <label for="adresse" id="adresseLbl">Adresse</label>
     <input id="adresse" type="text" />
+    <div class="pro-only">
+      <div class="sec">🏢 Client professionnel</div>
+      <label for="proClientNom">Nom du client / entreprise</label>
+      <input id="proClientNom" type="text" placeholder="Ex. Hôtel Restaurant Charleroi Airport" />
+      <label for="proClientTva">Numéro de TVA du client (si applicable)</label>
+      <input id="proClientTva" type="text" placeholder="Ex. BE 0123.456.789" autocomplete="off" />
+      <button type="button" class="btn ghost resp-only hidden" id="proDevisBtn" style="margin-top:10px;width:100%">📄 Préparer un devis pour ce contrat</button>
+    </div>
     <div id="themeBox" class="hidden">
       <label for="theme_app">🎨 Thème de l'app ce jour-là</label>
       <select id="theme_app"></select>
@@ -1549,8 +1557,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <p class="hint" style="margin-top:4px">Chacun peut signaler ce qui manque avec le bouton « ⚠️ Signaler » sur l'animation : les responsables 👑 sont prévenus. Videz ce champ quand c'est réglé.</p>
     </details>
 
-    <div class="sec">Notes</div>
+    <div class="sec" id="notesLabel">Notes</div>
     <textarea id="notes" placeholder="Matériel, allergies, code de la porte…"></textarea>
+    <p id="proNotesHint" class="hint pro-only">⚠️ Pour un contrat pro, ce texte sera visible par le client sur le devis PDF. N'y mets pas d'informations internes ou confidentielles.</p>
 
     <div id="jourBtnBox" class="hidden" style="margin-top:14px">
       <button type="button" class="btn primary" id="openJour" style="width:100%">☀️ Vue Jour J</button>
@@ -2150,7 +2159,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   };
   const CHAMPS = ["titre","date","heure_debut","heure_fin","enfant","age","adresse","theme","animateurs",
                   "parent","telephone","prix","acompte","acompte_paye","statut","notes","enceinte","materiel","materiel_manquant","solde","notes_privees","site_affichage","email","conducteur","type_evenement","equipe_detail","theme_app","message_jour"];
-  const PRIV = ["prix","acompte","acompte_paye","notes_privees","deplacement_client","km_detail","checklist"];
+  const PRIV = ["prix","acompte","acompte_paye","notes_privees","deplacement_client","km_detail","checklist","client_tva"];
 
   // ================= Utilitaires =================
   const $ = (id) => document.getElementById(id);
@@ -3433,6 +3442,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       else if (k.startsWith("heure") && v) el.value = v.slice(0,5);
       else el.value = v ?? "";
     });
+    $("proClientNom").value = ev?.parent || "";
+    $("proClientTva").value = ev?.client_tva || "";
     if (!ev) $("date").value = date || selDay || todayISO();
     document.querySelectorAll('input[name="enceinte"]').forEach(r => r.checked = r.value === ($("enceinte").value || ""));
     if (!$("site_affichage").value) $("site_affichage").value = "auto";
@@ -4251,11 +4262,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!ev.date) { $("formErr").textContent = "La date est obligatoire."; return; }
     if (!soldeTouched && (ev.solde == null || isResp())) ev.solde = autoSolde();
     if (ev.type_evenement === "contrat_pro") {
+      ev.parent = $("proClientNom").value.trim() || null;
+      ev.client_tva = $("proClientTva").value.trim() || null;
       ev.prix = $("contratProPrix").value === "" ? null : Number($("contratProPrix").value);
       ev.acompte = null;
       ev.acompte_paye = false;
       ev.solde = null;
     }
+    else ev.client_tva = null;
     if(ev.type_evenement==="animation" && kmCalc?.detail?.mode==="animation_v2"){
       if(!appliquerCorrectionKmAnimation())return;
       if(kmAjouteDansPrix!==null && Math.abs(kmAjouteDansPrix-kmCalc.client)>0.009){
@@ -5059,15 +5073,19 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("driverRow").querySelector("label").textContent = pro ? "🚗 Qui conduit de Fantasy au client ?" : "🚗 Qui conduit ?";
     $("evForm").classList.toggle("mode-evt", evt);
     $("evForm").classList.toggle("mode-pro", pro);
+    $("proDevisBtn").classList.toggle("hidden", !pro || !editingId || !isResp());
     $("contratProPrix").value = $("prix").value;
     $("argentSummary").innerHTML = pro ? '💰 Montant du contrat & paie <small class="lock">🔒 responsables</small>' : '💰 Argent : prix, acompte & paie <small class="lock">🔒 responsables</small>';
     $("titre").placeholder = repete ? "Ex. Répétition La Nuit Magique" : pro ? "Ex. Prestation au centre commercial" : evt ? "Ex. Le Bal de Noël" : "Ex. Anniversaire – Elsa & Rumi – Bierwart";
     $("adresseLbl").textContent = evt ? "📍 Lieu (pour les trajets de l'équipe)" : "Adresse";
+    $("notesLabel").textContent = pro ? "Notes affichées sur le devis" : "Notes";
+    $("notes").placeholder = pro ? "Ex. Présence de 2 personnages le 9 décembre, de 14 h à 16 h…" : "Matériel, allergies, code de la porte…";
     if (!editingId) $("formTitle").textContent = repete ? "Nouvelle répétition" : pro ? "Nouveau contrat pro" : evt ? "Nouvel événement" : "Nouvelle animation";
     if (!editingId && repete && $("statut").value === "en_attente") $("statut").value = "confirme";
     $("evCostAssignBtn").classList.toggle("hidden", !editingId || !isResp() || repete || !parseTeam((events.find(x=>x.id===editingId)||{}).animateurs).some(estRoleCostume));
   }
   $("typeSeg").addEventListener("change", (e) => { $("type_evenement").value = e.target.value; appliquerType(); renderPicked(); });
+  $("proDevisBtn").onclick = () => { if (editingId) location.href = "factures.html?mode=devis&event=" + encodeURIComponent(editingId); };
   $("evtDup").onclick = async () => {
     const ev = events.find(x => x.id === editingId); if (!ev) return;
     const d = parseISO(ev.date); d.setDate(d.getDate() + 1); const nd = iso(d);
