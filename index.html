@@ -2590,6 +2590,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const actualise = await rafraichirActionsPartagees(ids);
     const terminees = [];
     notificationsApp = notifs.flatMap(n => {
+      // Les réservations du site sont déjà affichées dans le bloc dédié
+      // « Réservations d'événements (site) » : ne pas ajouter un doublon
+      // provenant des anciennes notifications push importées.
+      if (String(n.titre || "").includes("Nouvelle réservation :") &&
+          String(n.message || "").includes("(via le site, à vérifier)")) {
+        terminees.push(n.id);
+        return [];
+      }
       // Une demande confirmée/annulée dans sa fiche n'est plus une alerte.
       // Même si le membre n'a pas appuyé sur « Vu », on la retire.
       if (n.type === "demande" && n.evenement_id) {
@@ -3905,7 +3913,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if(appliquerCorrectionKmAnimation())toast("✅ Kilomètres et défraiements recalculés.");
       return;
     }
-    const bouton=e.target.closest("#kmAddPrix");
+    const bouton=e.target.closest("#kmAddPrix, #kmRemplacerPrix");
     if(!bouton)return;
     e.preventDefault();
     if(!kmCalc?.detail){toast("🧮 Recalcule d'abord les déplacements pour les appliquer au prix.");return;}
@@ -3924,10 +3932,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const frais=Number(kmCalc.client);
       if(!Number.isFinite(frais)||frais<0)throw new Error("Le montant des déplacements est invalide. Recalcule-les.");
       const prixInput=$(pro?"contratProPrix":"prix");
-      const base=r2((Number(prixInput.value)||0)-(kmAjouteDansPrix??0));
+      // Le montant saisi dans un contrat pro est un prix de prestation.
+      // Un ancien marqueur « frais inclus » peut être incorrect : seul un
+      // clic explicite sur « Remplacer » autorise à soustraire ces anciens frais.
+      const remplacerFraisInclus=pro && bouton.id==="kmRemplacerPrix";
+      if(pro && !remplacerFraisInclus && kmAjouteDansPrix!==null &&
+          !confirm("Des frais de déplacement ("+euro(kmAjouteDansPrix)+") sont déjà marqués comme inclus dans ce contrat. Ajouter "+euro(frais)+" EN PLUS des "+euro(Number(prixInput.value)||0)+" affichés ?"))return;
+      const base=r2((Number(prixInput.value)||0)-(!pro || remplacerFraisInclus ? (kmAjouteDansPrix??0) : 0));
       const total=r2(base+frais);
       prixInput.value=total;
       if(pro)$("prix").value=total; // champ caché synchronisé pour les autres calculs
+      prixInput.dispatchEvent(new Event("input", { bubbles: true }));
       kmAjouteDansPrix=frais;
       const d=kmCalc.detail;
       const ligne="Déplacement client : "+d.kmClient+" km × "+String(d.tarifClient).replace(".",",")
@@ -3936,16 +3951,26 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const k=notes.findLastIndex(x=>x.startsWith("Déplacement client : "));
       if(k>=0)notes[k]=ligne;else notes.push(ligne);
       $("notes_privees").value=notes.join("\n").replace(/^\n/,"");
-      $("prix").dispatchEvent(new Event("input"));
-      const boutonActuel=$("kmAddPrix")||bouton;
-      boutonActuel.disabled=true; boutonActuel.textContent="✅ Frais intégrés au prix";
+      const boutonActuel=bouton;
+      for(const id of ["kmAddPrix","kmRemplacerPrix"]){
+        const action=$(id);if(action)action.disabled=true;
+      }
+      boutonActuel.textContent="✅ Frais intégrés au prix";
       const resume="Prestation "+euro(base)+" + déplacements "+euro(frais)+" = total "+euro(total);
-      if(pro)$("contratProKmStatut").textContent="✅ "+resume+" · Clique sur Enregistrer pour conserver ce montant.";
+      if(pro){$("contratProKmStatut").style.color="#17714f";$("contratProKmStatut").textContent="✅ "+resume+" · Clique sur Enregistrer pour conserver ce montant.";}
       const statut=document.createElement("p");statut.className="hint";statut.style.color="#17714f";
       statut.style.margin="6px 0 0";statut.textContent="✅ "+resume+" · Pense à enregistrer le contrat.";
       boutonActuel.parentElement?.appendChild(statut);
       toast("💶 "+resume);
-    } catch(err){toast("Impossible d'ajouter les frais : "+(err.message||err));}
+    } catch(err){
+      const message="Impossible d'ajouter les frais : "+(err.message||err);
+      if($("type_evenement").value==="contrat_pro"){
+        const statut=$("contratProKmStatut");statut.style.color="#b91c1c";
+        statut.textContent="⚠️ "+message;
+        statut.scrollIntoView({block:"center",behavior:"smooth"});
+      }
+      toast(message);
+    }
   });
 
   // ---------- ⚙️ Réglages & adresses ----------
@@ -4330,6 +4355,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       $("formErr").textContent = "💶 Les frais ont changé depuis leur ajout au montant du contrat. Clique de nouveau sur « Ajouter au montant du contrat » avant d'enregistrer.";
       return;
     }
+    if (ev.type_evenement === "contrat_pro" && kmCalc?.detail?.trajetPro === "via_fantasy"
+        && Number(kmCalc.client) > 0 && kmAjouteDansPrix === null
+        && !confirm("Les déplacements ont été calculés mais PAS ajoutés au montant du contrat.\n\nOK = enregistrer sans ces frais.\nAnnuler = revenir cliquer sur « Ajouter au montant du contrat ».")) return;
     const orig = events.find(x => x.id === editingId) || {};
     ev.deplacement_client = kmCalc ? kmCalc.client : (orig.deplacement_client ?? null);
     ev.km_detail = kmCalc ? kmCalc.detail : (orig.km_detail ?? null);
@@ -5425,7 +5453,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       + (pro && trajetViaFantasy ? `<div class="km-client">🧾 <b>Déplacements à facturer au client</b> : ${facture.km.toFixed(1)} km × ${euro(facture.tarifClient)} + billets ${euro(facture.billets)} + parkings ${euro(facture.parking)} = <b>${euro(facture.total)}</b>`
         + `<br><small>🏠 Domiciles ↔ Fantasy : ${kmDomicileFantasy.toFixed(1)} km · 🚗 Fantasy ↔ client (${esc(d.conducteurClient || "conducteur")}) : ${Number(d.kmFantasyClient || 0).toFixed(1)} km</small>`
         + (facture.manquants.length ? `<p class="km-route-warn">⚠️ Adresses manquantes pour ${esc(facture.manquants.join(", "))} : complète-les avant de facturer.</p>` : "")
-        + (modifiable && !facture.manquants.length ? `<div class="after-btns" style="margin-top:8px"><button type="button" class="sig enc" id="kmAddPrix">💶 Appliquer ${euro(facture.total)} au montant du contrat</button></div>` : "") + `</div>` : "");
+        + (modifiable && !facture.manquants.length ? `<div class="after-btns" style="margin-top:8px"><button type="button" class="sig enc" id="kmAddPrix">➕ Ajouter ${euro(facture.total)} EN PLUS du montant affiché</button>${kmAjouteDansPrix!==null ? `<button type="button" class="sig" id="kmRemplacerPrix">🔄 Remplacer les ${euro(kmAjouteDansPrix)} déjà inclus</button>` : ""}</div>` : "") + `</div>` : "");
     $("kmBox").classList.remove("hidden");
   }
   async function kmRoute(pts) {
