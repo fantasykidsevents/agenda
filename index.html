@@ -3706,15 +3706,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   let devisApres = false;
   async function renderDevis(ev) {
     const box = $("devisBox");
-    const ok = isResp() && ev && ev.id && ev.type_evenement === "animation" && !estEvenementInterne(ev) && ev.statut !== "confirme" && ev.statut !== "termine" && ev.statut !== "annule";
+    const ok = isResp() && ev && ev.id && ev.type_evenement === "animation" && !estEvenementInterne(ev);
     box.classList.toggle("hidden", !ok); if (!ok) return;
     let d = null;
     if (!DEMO) { try { ({ data: d } = await sb.from("devis").select("envoye_le,accepte_le").eq("evenement_id", ev.id).maybeSingle()); } catch (_) {} }
     const f = (x) => new Date(x).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     box.innerHTML = `<div class="sec" style="margin-top:0">📨 Devis pour le client</div>
       <p class="hint" style="margin:0 0 8px">${d && d.accepte_le ? `✅ Accepté par le client le ${f(d.accepte_le)}` : d && d.envoye_le ? `⏳ Envoyé le ${f(d.envoye_le)} · en attente de sa réponse` : "Le client reçoit le détail du prix (formule + options) et l'accepte en un clic. Il reçoit ensuite la demande d'acompte."}</p>
-      <button type="button" class="btn ${d && d.envoye_le ? "ghost" : "primary"}" id="devisBtn" style="width:100%">${d && d.envoye_le ? "🔁 Renvoyer le devis" : "📨 Enregistrer et envoyer le devis"}</button>`;
-    $("devisBtn").onclick = () => {
+      ${["confirme","termine","annule"].includes(ev.statut) ? "" : `<button type="button" class="btn ${d && d.envoye_le ? "ghost" : "primary"}" id="devisBtn" style="width:100%">${d && d.envoye_le ? "🔁 Renvoyer le devis" : "📨 Enregistrer et envoyer le devis"}</button>`}`;
+    if ($("devisBtn")) $("devisBtn").onclick = () => {
       if (!$("email").value.trim()) { $("formErr").textContent = "📧 Ajoute d'abord l'e-mail du parent."; $("email").focus(); return; }
       if (!(+$("prix").value > 0)) { $("formErr").textContent = "💶 Indique d'abord le prix total."; $("prix").focus(); return; }
       if (!(+$("acompte").value > 0) && !confirm("Aucun acompte indiqué : le devis partira sans montant d'acompte. Continuer ?")) return;
