@@ -2569,7 +2569,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // Agenda commun : événements/spectacles visibles par toute l'équipe ;
   // animations visibles uniquement si affecté. « Mon espace » conserve son
   // propre filtre strict sur les affectations, même pour les événements.
-  const jeVoisEv = (e) => isGest() || e.type_evenement === "evenement" || anims(e).some(a => normName(a) === normName(chatMe()));
+  const jeVoisEv = (e) => isResp() || (e.statut !== "en_attente" && (isGest() || e.type_evenement === "evenement" || anims(e).some(a => normName(a) === normName(chatMe()))));
   function isResp() {
     if (DEMO) return demoRole === "resp";
     const me = myMember();
@@ -2596,7 +2596,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   let mesAnimsAvant = null;
   function detecterNouvelles() {
     const me = myMember(); if (!me) return;
-    const t = todayISO(), ids = new Set(events.filter(e => e.date >= t && e.statut !== "annule" && anims(e).some(a => normName(a) === normName(me.prenom))).map(e => String(e.id)));
+    const t = todayISO(), ids = new Set(events.filter(e => e.date >= t && jeVoisEv(e) && e.statut !== "annule" && anims(e).some(a => normName(a) === normName(me.prenom))).map(e => String(e.id)));
     if (mesAnimsAvant) { const nv = [...ids].filter(i => !mesAnimsAvant.has(i));
       if (nv.length) { const e = events.find(x => String(x.id) === nv[0]); son("notif"); toast(`✨ ${e?.type_evenement === "contrat_pro" ? "Nouveau contrat pro" : `Nouvelle ${e?.type_evenement === "repetition" ? "répétition" : e?.type_evenement === "evenement" ? "mission" : "animation"}`} pour toi : ${(e && (e.titre || e.enfant)) || ""}`.trim()); } }
     mesAnimsAvant = ids;
@@ -2666,6 +2666,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const actualise = await rafraichirActionsPartagees(ids);
     const terminees = [];
     notificationsApp = notifs.flatMap(n => {
+      const fiche = n.evenement_id && events.find(e => String(e.id) === String(n.evenement_id));
+      if (!isResp() && fiche?.statut === "en_attente") { terminees.push(n.id); return []; }
       // Les réservations du site sont déjà affichées dans le bloc dédié
       // « Réservations d'événements (site) » : ne pas ajouter un doublon
       // provenant des anciennes notifications push importées.
@@ -3241,11 +3243,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("postActions").classList.add("hidden");
     $("postActions").innerHTML = "";
     const t = todayISO(), n = normName(prenom);
-    const list = events.filter(e => e.date >= t && e.statut !== "annule" && anims(e).some(a => normName(a) === n))
+    const list = events.filter(e => e.date >= t && jeVoisEv(e) && e.statut !== "annule" && anims(e).some(a => normName(a) === n))
       .sort((x,y) => (x.date + (x.heure_debut||"")).localeCompare(y.date + (y.heure_debut||"")));
     const recentDate = parseISO(t); recentDate.setDate(recentDate.getDate() - 3);
     const since = iso(recentDate);
-    const recent = events.filter(e => e.date < t && e.date >= since && e.statut !== "annule" && anims(e).some(a => normName(a) === n))
+    const recent = events.filter(e => e.date < t && e.date >= since && jeVoisEv(e) && e.statut !== "annule" && anims(e).some(a => normName(a) === n))
       .sort((x,y) => (y.date + (y.heure_debut||"")).localeCompare(x.date + (x.heure_debut||"")));
     const limiteDate = parseISO(t); limiteDate.setDate(limiteDate.getDate() - 20);
     const limite = iso(limiteDate);
