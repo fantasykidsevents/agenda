@@ -787,8 +787,6 @@ const ETAT_TXT = { laver: "🧺 à laver", reparer: "🪡 à réparer", coiffer:
 const isoJ = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const VOEUX = [
   "🎂 Joyeux anniversaire {p} ! ✨ Toute l'équipe Fantasy te souhaite une journée magique 🎉",
-  "🎉 C'est l'anniversaire de {p} aujourd'hui ! Plein de paillettes et de bonheur ✨🎂",
-  "🥳 Bon anniversaire {p} ! Que ta journée soit aussi féerique que nos animations 🪄💖",
 ];
 async function anniversairesEquipe() {
   const bxl = maintenantBxl();
