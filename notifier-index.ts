@@ -1617,6 +1617,15 @@ Deno.serve(async (req) => {
         dest = dest.filter((x) => x.responsable || noms.includes(String(x.prenom).toLowerCase()));
       }
       dest = dest.filter((x) => x.email.toLowerCase() !== String(m.auteur_email || "").toLowerCase());
+      // 🔕 Respecte les conversations mises en sourdine, y compris pour @tous et @mentions.
+      // Cette préférence est enregistrée dans Supabase pour tous les appareils de l'utilisateur.
+      const { data: muets, error: erreurMuets } = await sb.from("chat_muets").select("email").eq("canal", m.canal);
+      if (erreurMuets) {
+        console.error("Impossible de lire les conversations muettes", erreurMuets);
+        return json({ ok: false, erreur: "Préférences de chat indisponibles" }, 503);
+      }
+      const emailsMuets = new Set((muets || []).map((x) => String(x.email).toLowerCase()));
+      dest = dest.filter((x) => !emailsMuets.has(String(x.email).toLowerCase()));
       // 👀 pas de notification pour ceux qui ont cette conversation ouverte en ce moment
       try {
         const { data: pres } = await sb.from("chat_presence").select("email,canal,vu_le").eq("canal", m.canal).gte("vu_le", new Date(Date.now() - 60000).toISOString());

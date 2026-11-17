@@ -674,6 +674,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .ch .tx small{display:block;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
   .ch .tx small.d{font-size:12px;color:#9a8fb5}
   .ch .rt{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px;font-size:11px;color:#9a8fb5}
+  .ch .chat-muted-label{font-size:15px;line-height:1;filter:grayscale(.15)}
   .ch .nb{min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:linear-gradient(135deg,#ff4f8b,#a020ff);color:#fff;font-weight:700;font-size:12px;line-height:22px;text-align:center}
   .ch.unread .tx small:not(.d){color:var(--ink,#2a1d4a);font-weight:600}
 
@@ -687,6 +688,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .chat-top .tt b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .chat-top .tt small{color:var(--muted);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .chat-top .info{border:0;background:none;font-size:20px;cursor:pointer}
+  .chat-top .mute{border:1px solid #e4d6f4;background:#fff;border-radius:12px;min-width:39px;height:39px;font-size:19px;cursor:pointer;display:grid;place-items:center;flex-shrink:0}
+  .chat-top .mute.on{background:#f2e9ff;border-color:#c8a6ef}
+  .chat-top .mute:disabled{opacity:.55;cursor:wait}
   .msgs{flex:1;overflow-y:auto;padding:12px 12px 6px;background:
     radial-gradient(circle at 15% 20%,rgba(0,180,255,.06),transparent 40%),radial-gradient(circle at 85% 70%,rgba(214,63,208,.07),transparent 40%),#fdfbff;
     overscroll-behavior:contain}
@@ -2133,6 +2137,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <button type="button" class="back" id="chatBack" aria-label="Retour">‹</button>
       <span class="av" id="chatAv">✨</span>
       <div class="tt"><b id="chatTitle"></b><small id="chatSub"></small><small id="chatOnline" class="chat-online"></small></div>
+      <button type="button" class="mute" id="chatMute" title="Mettre les notifications en sourdine" aria-label="Mettre les notifications en sourdine" aria-pressed="false">🔔</button>
       <button type="button" class="info hidden" id="chatInfo" title="Voir l'animation">ℹ️</button>
     </div>
     <div class="msgs" id="msgs"></div>
@@ -4454,6 +4459,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("viewPt").classList.toggle("hidden", view !== "pt");
     document.querySelector(".filters").classList.toggle("hidden", view === "mine" || view === "stats" || view === "chat" || view === "pt");
     render();
+    if (view === "chat" && (currentUser || DEMO)) chargerChatMuets();
   }));
   $("prevM").onclick = () => { if (--curM < 0) { curM = 11; curY--; } render(); };
   $("nextM").onclick = () => { if (++curM > 11) { curM = 0; curY++; } render(); };
@@ -9870,10 +9876,51 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
 
   // ================= 💬 Chat =================
-  const LS_CHAT = "fk_agenda_chat_demo", LS_LU = "fk_chat_lu";
+  const LS_CHAT = "fk_agenda_chat_demo", LS_LU = "fk_chat_lu", LS_MUETS = "fk_chat_muets_demo";
   const CHAT_RX = ["❤️", "👍", "😂", "✨", "😮", "🙏"];
   let chatMsgs = [], chatCanal = null, chatLoaded = false, chatPhoto = null, chatPick = null;
   let chatLu = {}; try { chatLu = JSON.parse(localStorage.getItem(LS_LU) || "{}"); } catch (e) {}
+  let chatMuets = new Set(), chatMuteEnCours = false;
+  const chatEstMuet = (canal) => !!canal && chatMuets.has(canal);
+  async function chargerChatMuets() {
+    chatMuets = new Set();
+    if (DEMO) {
+      try { chatMuets = new Set(JSON.parse(localStorage.getItem(LS_MUETS) || "[]")); } catch (_) {}
+    } else if (sb && currentUser) {
+      const { data, error } = await sb.from("chat_muets").select("canal").eq("email", currentUser.email.toLowerCase());
+      if (error) { console.error("Préférences de chat", error); toast("Impossible de charger les conversations muettes : " + error.message); return; }
+      chatMuets = new Set((data || []).map(x => x.canal));
+    }
+    majBoutonChatMuet();
+    if (view === "chat") renderChatList();
+  }
+  function majBoutonChatMuet() {
+    const bouton = $("chatMute"), muet = chatEstMuet(chatCanal);
+    bouton.textContent = muet ? "🔕" : "🔔";
+    bouton.classList.toggle("on", muet);
+    bouton.disabled = chatMuteEnCours;
+    bouton.setAttribute("aria-pressed", String(muet));
+    const libelle = muet ? "Réactiver les notifications de ce chat" : "Mettre les notifications de ce chat en sourdine";
+    bouton.title = libelle; bouton.setAttribute("aria-label", libelle);
+  }
+  $("chatMute").addEventListener("click", async () => {
+    const canal = chatCanal; if (!canal || chatMuteEnCours) return;
+    const muet = !chatEstMuet(canal); chatMuteEnCours = true; majBoutonChatMuet();
+    try {
+      if (DEMO) {
+        const a = new Set(chatMuets); if (muet) a.add(canal); else a.delete(canal);
+        localStorage.setItem(LS_MUETS, JSON.stringify([...a]));
+      } else {
+        const email = currentUser.email.toLowerCase();
+        const q = muet ? sb.from("chat_muets").upsert({ email, canal }) : sb.from("chat_muets").delete().eq("email", email).eq("canal", canal);
+        const { error } = await q; if (error) throw error;
+      }
+      if (muet) chatMuets.add(canal); else chatMuets.delete(canal);
+      toast(muet ? "🔕 Notifications désactivées pour ce chat" : "🔔 Notifications réactivées pour ce chat");
+      if (view === "chat") renderChatList();
+    } catch (e) { toast("Impossible de modifier les notifications : " + (e.message || e)); }
+    finally { chatMuteEnCours = false; majBoutonChatMuet(); }
+  });
   const chatId = () => (crypto.randomUUID ? crypto.randomUUID() : "m" + Date.now() + Math.random().toString(16).slice(2));
   function chatMe() {
     const me = myMember(); if (me) return me.prenom;
@@ -10022,7 +10069,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       return `<button type="button" class="ch${c.canal === "equipe" ? " equipe" : ""}${n ? " unread" : ""}" data-canal="${esc(c.canal)}">
         <span class="av">${c.av}</span>
         <span class="tx"><b>${esc(c.nom)}</b>${c.ev ? `<small class="d" style="text-transform:capitalize">${esc(c.sous)}</small>` : ""}<small>${apercu}</small></span>
-        <span class="rt">${l ? quandCourt(l.created_at) : ""}${n ? `<span class="nb">${n}</span>` : ""}</span></button>`;
+        <span class="rt">${l ? quandCourt(l.created_at) : ""}${chatEstMuet(c.canal) ? '<span class="chat-muted-label" title="Notifications désactivées" aria-label="Notifications désactivées">🔕</span>' : ""}${n ? `<span class="nb">${n}</span>` : ""}</span></button>`;
     }).join("");
     chatBadges();
   }
@@ -10137,6 +10184,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       : `${members.length || ""} membre${members.length > 1 ? "s" : ""} · toute l'équipe`.trim();
     $("chatAv").textContent = ev ? (universOf(ev) || [0, 0, "🎭"])[2] : "✨";
     $("chatInfo").classList.toggle("hidden", !ev);
+    majBoutonChatMuet();
     $("chatBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
     luCanal = null; luMap = {}; renderMsgs(); marquerLu(canal); rtRejoindre(canal); chargerLu(canal);
     clearInterval(luT); luT = setInterval(() => { if (chatCanal && !$("chatBg").classList.contains("hidden") && !document.hidden) chargerLu(chatCanal); else clearInterval(luT); }, 15000);
@@ -10250,9 +10298,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     try { chatMsgs = await chatStore.list(); chatLoaded = true; if (!horsLigne) sauverHL(); } catch (e) { console.error(e); return; }
     if (chatCanal) { renderMsgs(true); if (!$("chatBg").classList.contains("hidden")) marquerLu(chatCanal); }
     if (view === "chat") renderChatList(); else chatBadges();
-    if (nouveau && !isMine(nouveau) && nouveau.canal !== chatCanal && chatCanaux().some(c => c.canal === nouveau.canal))
+    if (nouveau && !isMine(nouveau) && !chatEstMuet(nouveau.canal) && nouveau.canal !== chatCanal && chatCanaux().some(c => c.canal === nouveau.canal))
       { toast(`💬 ${nouveau.auteur || "?"} : ${(nouveau.texte || "📸 Photo").slice(0, 60)}`); son("message"); }
-    else if (nouveau && !isMine(nouveau) && nouveau.canal === chatCanal) son("message");
+    else if (nouveau && !isMine(nouveau) && !chatEstMuet(nouveau.canal) && nouveau.canal === chatCanal) son("message");
   }
 
   // ================= Connexion =================
@@ -10266,6 +10314,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("demoBar").classList.toggle("hidden", !DEMO);
     await reload();
     ouvrirClocheAuDemarrage(user);
+    await chargerChatMuets();
     await chatReload();
     await ptReload();
     if (isResp()) { try { ventesTout = await caisseStore.tout(); } catch (e) { ventesTout = []; } }
