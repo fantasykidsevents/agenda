@@ -691,6 +691,37 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .chat-top .mute{border:1px solid #e4d6f4;background:#fff;border-radius:12px;min-width:39px;height:39px;font-size:19px;cursor:pointer;display:grid;place-items:center;flex-shrink:0}
   .chat-top .mute.on{background:#f2e9ff;border-color:#c8a6ef}
   .chat-top .mute:disabled{opacity:.55;cursor:wait}
+  .chat-tools{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+  .chat-tools button{border:1px solid #e5d9f5;background:#fff;border-radius:12px;padding:8px 11px;color:#563a83;font-weight:700;font-size:13px}
+  .chat-tools button.on{background:#f2e8ff;border-color:#bb8def;color:#7420b7}
+  .chat-search-result{display:block;width:100%;border:1px solid #e9def6;background:#fff;border-radius:13px;padding:11px;text-align:left;margin:7px 0;color:#2f224a;cursor:pointer}
+  .chat-search-result small{display:block;color:#7c6b98;margin:3px 0}
+  .chat-search-result span{display:block;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+  .chat-pin{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff7e4;border-bottom:1px solid #f1dfb6;font-size:12px;cursor:pointer}
+  .chat-pin span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .chat-pin button{border:0;background:#fff;border-radius:9px;padding:6px;color:#82520b;font-weight:700}
+  .chat-reply{display:flex;align-items:center;gap:8px;padding:7px 12px;background:#f7f0ff;border-top:1px solid #ead9fa;font-size:12px}
+  .chat-reply span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chat-reply button{border:0;border-radius:50%;background:#fff;font-size:17px;min-width:30px;height:30px}
+  .m .bub .quote{display:block;border:0;border-left:3px solid #b887e5;background:#f6f0fc;color:#5b3c87;padding:5px 8px;margin:3px 0 7px;border-radius:6px;text-align:left;font-size:12px;max-width:100%;cursor:pointer;overflow-wrap:anywhere}
+  .m.me .bub .quote{background:rgba(255,255,255,.19);color:#fff;border-left-color:#fff}
+  .m .bub .chat-audio{display:block;width:min(235px,65vw);max-width:100%;margin:5px 0}
+  .m .bub .audio-play{border:0;border-radius:10px;padding:8px;background:#ebe0ff;color:#5934a0;font-weight:700;cursor:pointer}
+  .m .flags{font-size:11px;color:#987bb9;margin-top:3px}
+  .m.chat-focus .bub{outline:3px solid #f5b82b;outline-offset:2px}
+  .chat-in .ph.recording{background:#ffe0e9;color:#ad1641;animation:float 1s infinite}
+  .chat-voice-prev{background:#fff5f8;border-top:1px solid #f2d4e2;padding:9px 12px;display:flex;align-items:center;gap:10px;font-size:13px}
+  .chat-voice-prev audio{flex:1;min-width:0;max-width:100%;height:38px}
+  .chat-voice-prev button{border:0;border-radius:12px;padding:7px 10px;background:#fff}
+  .cost-return{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:#6f4b8f}
+  .cost-return input{width:auto;min-width:130px;padding:7px;font-size:13px}
+  .cost-return.late{color:#ba123d;font-weight:800}
+  .music-row{border:1px solid #e8dcf6;border-radius:14px;padding:12px;margin:9px 0;background:#fff}
+  .music-row b{display:block;color:#46316c;font-size:15px}
+  .music-row small{display:block;color:#8b789f;margin:4px 0 8px}
+  .music-row .music-actions{display:flex;gap:7px;flex-wrap:wrap}
+  .music-actions button{border:1px solid #ded1f2;border-radius:11px;padding:8px 11px;background:#f7f0ff;color:#632c99;font-weight:700}
+  .music-row audio{width:100%;height:42px;display:block;margin-top:9px}
   .msgs{flex:1;overflow-y:auto;padding:12px 12px 6px;background:
     radial-gradient(circle at 15% 20%,rgba(0,180,255,.06),transparent 40%),radial-gradient(circle at 85% 70%,rgba(214,63,208,.07),transparent 40%),#fdfbff;
     overscroll-behavior:contain}
@@ -716,7 +747,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .m .rx{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
     .rxc{border:0;border-radius:12px;padding:2px 7px;font-size:13px;background:#f3ecff;cursor:pointer;font-family:inherit;color:#5a3a9a;box-shadow:0 0 0 1px rgba(160,32,255,.12)}
   .rxc.mine{background:linear-gradient(135deg,#ffe6f3,#efe1ff);box-shadow:0 0 0 1.5px #c56cf0}
-  .picker{display:flex;gap:2px;padding:5px 6px;margin:4px 0 6px;border-radius:24px;background:#fff;box-shadow:0 6px 24px rgba(120,60,220,.22);width:max-content;max-width:100%;animation:pop .2s}
+  .picker{display:flex;flex-wrap:wrap;gap:2px;padding:5px 6px;margin:4px 0 6px;border-radius:24px;background:#fff;box-shadow:0 6px 24px rgba(120,60,220,.22);width:max-content;max-width:100%;animation:pop .2s}
   .m.me + .picker,.picker.me{margin-left:auto}
   .picker button{border:0;background:none;font-size:22px;width:38px;height:38px;border-radius:50%;cursor:pointer;transition:transform .12s}
   .picker button:active{transform:scale(1.3)}
@@ -1294,6 +1325,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="mine-head" id="mineHead"></div>
       <div class="evt-tiles">
         <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
+        <button type="button" class="evt-tile" id="musicOpenBtn"><span>🎵</span>Musiques</button>
         <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span>📣</span>Infos équipe</button>
         <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
         <button type="button" class="evt-tile" id="myFavBtn"><span>⭐</span>Mes personnages</button>
@@ -1348,8 +1380,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="mine-head"><div id="mesPts"></div></div>
     </section>
     <section id="viewChat" class="hidden">
+      <input id="chatSearch" type="search" placeholder="🔎 Rechercher un message ou une conversation…" aria-label="Rechercher dans les chats" />
+      <div class="chat-tools" style="margin-top:8px">
+        <button type="button" data-chat-mode="actifs" class="on">💬 Actuels</button>
+        <button type="button" data-chat-mode="archives">📂 Archives</button>
+        <button type="button" data-chat-mode="favoris">⭐ Mes favoris</button>
+      </div>
       <div id="chList" class="ch-list"></div>
-      <p class="hint" style="text-align:center;margin-top:14px">💬 Le chat « Équipe Fantasy » est ouvert à toute l'équipe.<br>Le chat d'une prestation apparaît ici 15 jours avant sa date, pour les animateurs concernés et les responsables 👑.<br>Il reste visible environ un mois après la prestation.</p>
+      <p class="hint" style="text-align:center;margin-top:14px">Les conversations récentes et les anciennes prestations sont accessibles dans les onglets ci-dessus. Les messages non lus restent visibles même en mode muet.</p>
     </section>
 
     <!-- Vue Chiffres (responsables) -->
@@ -2130,6 +2168,28 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   </div>
 </div>
 
+<!-- ============ 🎵 MUSIQUES ============ -->
+<div id="musicBg" class="sheet-bg hidden">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>🎵 Musiques des animations</h2>
+    <p class="hint" style="margin-top:0">Retrouvez les titres utilisés pendant les prestations. Les fichiers sont réservés à l'équipe.</p>
+    <input type="search" id="musicSearch" placeholder="🔎 Titre, personnage, animation…" aria-label="Rechercher une musique" />
+    <select id="musicCategorie" aria-label="Filtrer les musiques" style="margin-top:8px"><option value="">Toutes les animations</option></select>
+    <div id="musicList"></div>
+    <form id="musicAdd" class="hidden" style="margin-top:16px">
+      <div class="sec">👑 Ajouter une musique</div>
+      <input name="titre" placeholder="Titre de la musique" required maxlength="120" />
+      <div class="row"><input name="personnage" placeholder="Personnage (facultatif)" maxlength="80" /><input name="categorie" placeholder="Animation (ex. Noël)" maxlength="80" /></div>
+      <input name="notes" placeholder="Utilisation (ex. danse finale)" maxlength="200" />
+      <label for="musicFile">Fichier audio (MP3, M4A, WAV…)</label>
+      <input type="file" id="musicFile" name="fichier" accept="audio/*,.mp3,.m4a,.wav,.ogg" required />
+      <button class="btn primary" type="submit" style="width:100%;margin-top:9px">➕ Ajouter à la bibliothèque</button>
+    </form>
+    <div class="actions"><button type="button" class="btn primary" id="musicClose">Fermer</button></div>
+  </div>
+</div>
+
 <!-- ============ 💬 CONVERSATION ============ -->
 <div id="chatBg" class="sheet-bg hidden">
   <div class="sheet">
@@ -2140,12 +2200,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <button type="button" class="mute" id="chatMute" title="Mettre les notifications en sourdine" aria-label="Mettre les notifications en sourdine" aria-pressed="false">🔔</button>
       <button type="button" class="info hidden" id="chatInfo" title="Voir l'animation">ℹ️</button>
     </div>
+    <div id="chatPinned" class="chat-pin hidden"></div>
     <div class="msgs" id="msgs"></div>
     <div class="chat-prev hidden" id="chatPrev"><img id="chatPrevImg" alt="" /><span class="hint" style="margin:0">Photo prête à envoyer</span><button type="button" id="chatPrevX" aria-label="Retirer la photo">✕</button></div>
     <div class="ment-list hidden" id="mentList"></div>
     <div class="chat-typing hidden" id="chatTyping"><span class="dots"><i></i><i></i><i></i></span><span id="chatTypingTxt"></span></div>
+    <div id="chatReply" class="chat-reply hidden"></div>
+    <div id="chatVoicePreview" class="chat-voice-prev hidden"></div>
     <form class="chat-in" id="chatForm">
       <button type="button" class="ph" id="chatPhoto" aria-label="Envoyer une photo">📷</button>
+      <button type="button" class="ph" id="chatVoice" aria-label="Enregistrer un message vocal" title="Message vocal">🎤</button>
       <input type="file" id="chatFile" accept="image/*" class="hidden" />
       <textarea id="chatTxt" rows="1" placeholder="Écrire un message…" maxlength="2000"></textarea>
       <button type="submit" class="go" id="chatSend" aria-label="Envoyer" disabled>➤</button>
@@ -4459,7 +4523,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("viewPt").classList.toggle("hidden", view !== "pt");
     document.querySelector(".filters").classList.toggle("hidden", view === "mine" || view === "stats" || view === "chat" || view === "pt");
     render();
-    if (view === "chat" && (currentUser || DEMO)) chargerChatMuets();
+    if (view === "chat" && (currentUser || DEMO)) { chargerChatMuets(); chargerChatFavoris(); }
   }));
   $("prevM").onclick = () => { if (--curM < 0) { curM = 11; curY--; } render(); };
   $("nextM").onclick = () => { if (++curM > 11) { curM = 0; curY++; } render(); };
@@ -6331,8 +6395,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const { error } = await sb.from("costumes").insert(o); if (error) throw error;
     },
     async move(id, chez) {
-      const o = { chez, maj_le: new Date().toISOString(), maj_par: chatMe() };
+      const o = { chez, retour_prevu: null, maj_le: new Date().toISOString(), maj_par: chatMe() };
       if (DEMO) return this._demo(a => a.map(c => c.id === id ? { ...c, ...o } : c));
+      const { error } = await sb.from("costumes").update(o).eq("id", id); if (error) throw error;
+    },
+    async retour(id, date) {
+      const o = { retour_prevu: date || null, maj_le: new Date().toISOString(), maj_par: chatMe() };
+      if (DEMO) return this._demo(a => a.map(c => String(c.id) === String(id) ? { ...c, ...o } : c));
       const { error } = await sb.from("costumes").update(o).eq("id", id); if (error) throw error;
     },
     async etat(id, etat, probleme) {
@@ -6558,11 +6627,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       (c.chez !== STOCK && !members.some(m => normName(m.prenom) === normName(c.chez)) ? `<option selected>${esc(c.chez)}</option>` : "");
     const visibles = costumes.filter(c => costSource === "fantasy" ? !persoDe(c) : !!persoDe(c) && (r || normName(persoDe(c)) === normName(moi)));
     const l = visibles.filter(c => (!q || normName(c.personnage + " " + nomDe(c) + " " + c.chez + " " + (c.probleme || "") + " " + persoDe(c)).includes(q))
-        && (!costType || (costType === "soin" ? etatDe(c) !== "ok" : typeDe(c) === costType)))
+        && (!costType || (costType === "soin" ? etatDe(c) !== "ok" : costType === "retours" ? c.chez !== STOCK : typeDe(c) === costType)))
       .sort((a, b) => costSource === "perso" ? (persoDe(a).localeCompare(persoDe(b), "fr") || a.personnage.localeCompare(b.personnage, "fr")) :
         ((etatDe(a) === "ok") - (etatDe(b) === "ok") || a.personnage.localeCompare(b.personnage, "fr") || typeDe(a).localeCompare(typeDe(b))));
     const nSoin = visibles.filter(c => etatDe(c) !== "ok").length;
-    $("costChips").innerHTML = [["", "Tout"], ["costume", "👗 Costumes"], ["perruque", "💇 Perruques"], ["soin", `🧺 À s'occuper${nSoin ? " (" + nSoin + ")" : ""}`]]
+    const nEmprunts = visibles.filter(c => c.chez !== STOCK).length;
+    $("costChips").innerHTML = [["", "Tout"], ["costume", "👗 Costumes"], ["perruque", "💇 Perruques"], ["soin", `🧺 À s'occuper${nSoin ? " (" + nSoin + ")" : ""}`], ["retours", `📦 Sorties${nEmprunts ? " (" + nEmprunts + ")" : ""}`]]
       .map(([v, t]) => `<button type="button" class="chip${costType === v ? " on" : ""}" data-ctype="${v}">${t}</button>`).join("");
     $("costList").innerHTML = l.length ? l.map((c, i) => `${costSource === "perso" && r && (i === 0 || normName(persoDe(c)) !== normName(persoDe(l[i - 1]))) ? `<div class="group-title">👤 ${esc(persoDe(c))}</div>` : ""}<div class="cost-row ${etatDe(c)}">
         <span class="em">${TYPES[typeDe(c)][0]}<i>${roleEmoji(c.personnage)}</i></span>
@@ -6573,7 +6643,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           ${r || normName(persoDe(c)) === normName(moi) ? `<select data-move="${esc(c.id)}" aria-label="Où est cette pièce ?">${opts(c)}</select>` : ""}
           ${r || normName(persoDe(c)) === normName(moi) ? `<button type="button" class="edit-btn" data-cost-edit-open="${esc(c.id)}" aria-label="Modifier ${esc(nomDe(c))}">✏️</button>` : ""}
           ${r || normName(persoDe(c)) === normName(moi) ? `<button type="button" class="x" data-cdel="${esc(c.id)}" title="Supprimer">🗑️</button>` : ""}
-        </div>${String(costEditId) === String(c.id) ? formulaireEditionCostume(c) : ""}</div>`).join("")
+        </div>${c.chez !== STOCK ? `<div class="cost-return${c.retour_prevu && c.retour_prevu < todayISO() ? " late" : ""}"><span>${c.retour_prevu && c.retour_prevu < todayISO() ? "⚠️ En retard · " : "📆 "}Retour prévu :</span>
+          ${r || normName(persoDe(c)) === normName(moi) ? `<input type="date" data-cost-retour="${esc(c.id)}" value="${esc(c.retour_prevu || "")}" aria-label="Date de retour prévue pour ${esc(nomDe(c))}" />` : `<b>${c.retour_prevu ? esc(c.retour_prevu.split("-").reverse().join("/")) : "à préciser"}</b>`}</div>` : ""}
+        ${String(costEditId) === String(c.id) ? formulaireEditionCostume(c) : ""}</div>`).join("")
       : `<p class="hint">${visibles.length ? "Aucune pièce ne correspond aux filtres." : "Aucune pièce encodée dans cet espace pour l'instant."}</p>`;
     $("costAdd").classList.toggle("hidden", !r && costSource === "fantasy");
     $("costOwnerBox").classList.toggle("hidden", !r || costSource === "fantasy");
@@ -6630,6 +6702,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("costList").addEventListener("change", async (e) => {
     const s = e.target.closest("[data-move]"); if (!s) return;
     try { await costStore.move(s.dataset.move, s.value); toast(`👗 ${s.value === STOCK ? "Remis au stock" : "Maintenant chez " + s.value}`); await costReload(); renderCost(); }
+    catch (err) { toast("Erreur : " + (err.message || err)); }
+  });
+  $("costList").addEventListener("change", async (e) => {
+    const inp = e.target.closest("[data-cost-retour]"); if (!inp) return;
+    try { await costStore.retour(inp.dataset.costRetour, inp.value); await costReload(); renderCost(); toast(inp.value ? "📆 Retour prévu enregistré" : "Date de retour effacée"); }
     catch (err) { toast("Erreur : " + (err.message || err)); }
   });
   $("costSearch").addEventListener("input", (e) => { costFiltre = e.target.value; renderCost(); });
@@ -9875,10 +9952,119 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }
   });
 
+  // ================= 🎵 Bibliothèque musicale de l'équipe =================
+  const LS_MUSIQUES = "fk_musiques_demo";
+  let musiques = [];
+  const musicStore = {
+    async list() {
+      if (DEMO) { try { return JSON.parse(localStorage.getItem(LS_MUSIQUES) || "[]"); } catch (_) { return []; } }
+      const { data, error } = await sb.from("musiques_fantasy").select("*").order("titre");
+      if (error) throw error; return data || [];
+    },
+    async upload(file) {
+      if (file.size > 50 * 1024 * 1024) throw new Error("Le fichier dépasse 50 Mo.");
+      const extension = (file.name.split(".").pop() || "").toLowerCase();
+      const types = { mp3: "audio/mpeg", m4a: "audio/mp4", mp4: "audio/mp4", wav: "audio/wav", ogg: "audio/ogg", webm: "audio/webm", aac: "audio/aac" };
+      if (!types[extension]) throw new Error("Format audio non pris en charge : MP3, M4A, WAV, OGG, WebM ou AAC.");
+      if (DEMO) {
+        if (file.size > 2 * 1024 * 1024) throw new Error("En mode démo, choisissez un fichier de moins de 2 Mo.");
+        return await new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ko; r.readAsDataURL(file); });
+      }
+      const path = `${currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${extension}`;
+      const { error } = await sb.storage.from("musiques-fantasy").upload(path, file, { contentType: types[extension] });
+      if (error) throw error; return path;
+    },
+    async add(row) {
+      if (DEMO) { musiques.push({ ...row, id: chatId() }); localStorage.setItem(LS_MUSIQUES, JSON.stringify(musiques)); return; }
+      const { error } = await sb.from("musiques_fantasy").insert(row); if (error) throw error;
+    },
+    async remove(row) {
+      if (DEMO) { musiques = musiques.filter(x => x.id !== row.id); localStorage.setItem(LS_MUSIQUES, JSON.stringify(musiques)); return; }
+      const { error } = await sb.from("musiques_fantasy").delete().eq("id", row.id); if (error) throw error;
+      const { error: fichierErreur } = await sb.storage.from("musiques-fantasy").remove([row.fichier_path]);
+      if (fichierErreur) console.warn("Fichier musical non supprimé", fichierErreur);
+    },
+    async url(row) {
+      if (DEMO) return row.fichier_path;
+      const { data, error } = await sb.storage.from("musiques-fantasy").createSignedUrl(row.fichier_path, 900);
+      if (error) throw error; return data.signedUrl;
+    },
+    async download(row) {
+      if (DEMO) return await (await fetch(row.fichier_path)).blob();
+      const { data, error } = await sb.storage.from("musiques-fantasy").download(row.fichier_path);
+      if (error) throw error; return data;
+    },
+  };
+  async function musicReload() {
+    try { musiques = await musicStore.list(); renderMusiques(); }
+    catch (e) { $("musicList").innerHTML = `<p class="hint">Impossible de charger les musiques : ${esc(e.message || e)}. La configuration Supabase doit être installée.</p>`; }
+  }
+  function renderMusiques() {
+    const q = normName($("musicSearch").value.trim()), filtre = $("musicCategorie").value;
+    const categories = [...new Set(musiques.map(m => m.categorie).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr"));
+    $("musicCategorie").innerHTML = `<option value="">Toutes les animations</option>${categories.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("")}`;
+    $("musicCategorie").value = categories.includes(filtre) ? filtre : "";
+    const lignes = musiques.filter(m => (!q || normName(`${m.titre} ${m.personnage} ${m.categorie} ${m.notes}`).includes(q)) && (!filtre || m.categorie === filtre));
+    $("musicList").innerHTML = lignes.length ? lignes.map(m => `<div class="music-row" data-music-row="${esc(m.id)}">
+      <b>🎵 ${esc(m.titre)}</b><small>${[m.categorie, m.personnage, m.notes].filter(Boolean).map(esc).join(" · ") || "Animation"}</small>
+      <div class="music-actions"><button type="button" data-music-play="${esc(m.id)}">▶️ Écouter</button><button type="button" data-music-download="${esc(m.id)}">⬇️ Télécharger</button>
+      ${isResp() ? `<button type="button" data-music-delete="${esc(m.id)}">🗑️</button>` : ""}</div><div class="music-player"></div></div>`).join("")
+      : `<p class="hint" style="padding:15px 0">${musiques.length ? "Aucun morceau ne correspond à la recherche." : "Aucune musique ajoutée pour le moment."}</p>`;
+  }
+  $("musicOpenBtn").onclick = () => { $("musicBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
+    $("musicAdd").classList.toggle("hidden", !isResp()); musicReload(); };
+  const closeMusiques = () => { $("musicBg").querySelectorAll("audio").forEach(a => a.pause()); $("musicBg").classList.add("hidden"); document.body.style.overflow = ""; };
+  $("musicClose").onclick = closeMusiques;
+  $("musicBg").addEventListener("click", e => { if (e.target.id === "musicBg") closeMusiques(); });
+  $("musicSearch").addEventListener("input", renderMusiques);
+  $("musicCategorie").addEventListener("change", renderMusiques);
+  $("musicAdd").addEventListener("submit", async e => {
+    e.preventDefault(); if (!isResp()) return;
+    const form = e.currentTarget, file = form.elements.fichier.files[0], titre = form.elements.titre.value.trim();
+    if (!file || !titre) return;
+    const btn = form.querySelector('button[type="submit"]'); btn.disabled = true; btn.textContent = "⏳ Envoi de la musique…";
+    let path = null;
+    try {
+      path = await musicStore.upload(file);
+      await musicStore.add({ titre, personnage: form.elements.personnage.value.trim(), categorie: form.elements.categorie.value.trim(),
+        notes: form.elements.notes.value.trim(), fichier_path: path, cree_par: chatMe() });
+      form.reset(); await musicReload(); toast("🎵 Musique ajoutée !");
+    } catch (err) {
+      if (path && !DEMO) await sb.storage.from("musiques-fantasy").remove([path]);
+      toast("Erreur musique : " + (err.message || err));
+    } finally { btn.disabled = false; btn.textContent = "➕ Ajouter à la bibliothèque"; }
+  });
+  $("musicList").addEventListener("click", async e => {
+    const play = e.target.closest("[data-music-play]"), dl = e.target.closest("[data-music-download]"), del = e.target.closest("[data-music-delete]");
+    const id = (play && play.dataset.musicPlay) || (dl && dl.dataset.musicDownload) || (del && del.dataset.musicDelete);
+    if (!id) return; const row = musiques.find(m => String(m.id) === String(id)); if (!row) return;
+    const bouton = play || dl || del; bouton.disabled = true;
+    try {
+      if (del) {
+        if (bouton.dataset.sure !== "oui") { bouton.dataset.sure = "oui"; bouton.textContent = "Confirmer ?"; bouton.disabled = false; return; }
+        await musicStore.remove(row); await musicReload(); toast("Musique supprimée"); return;
+      }
+      if (play) {
+        const url = await musicStore.url(row);
+        $("musicList").querySelectorAll("audio").forEach(a => a.pause());
+        const zone = play.closest(".music-row").querySelector(".music-player"); zone.replaceChildren();
+        const a = document.createElement("audio"); a.controls = true; a.preload = "metadata"; a.src = url; zone.appendChild(a);
+        a.play().catch(() => {});
+      } else {
+        const blob = await musicStore.download(row), ext = String(row.fichier_path || "").split(".").pop().toLowerCase();
+        const href = URL.createObjectURL(blob), a = document.createElement("a"); a.href = href;
+        a.download = (row.titre || "musique").replace(/[\\/:*?"<>|]/g, "-") + "." + (["mp3", "mp4", "m4a", "wav", "ogg", "webm", "aac"].includes(ext) ? ext : "mp3");
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(href), 60000);
+      }
+    } catch (err) { toast("Impossible d'ouvrir le morceau : " + (err.message || err)); }
+    finally { bouton.disabled = false; }
+  });
+
   // ================= 💬 Chat =================
-  const LS_CHAT = "fk_agenda_chat_demo", LS_LU = "fk_chat_lu", LS_MUETS = "fk_chat_muets_demo";
+  const LS_CHAT = "fk_agenda_chat_demo", LS_LU = "fk_chat_lu", LS_MUETS = "fk_chat_muets_demo", LS_CHAT_FAVORIS = "fk_chat_favoris_demo";
   const CHAT_RX = ["❤️", "👍", "😂", "✨", "😮", "🙏"];
   let chatMsgs = [], chatCanal = null, chatLoaded = false, chatPhoto = null, chatPick = null;
+  let chatFavoris = new Set(), chatMode = "actifs", chatReplyId = null, chatVocal = null, chatRecorder = null, chatRecordStream = null, chatRecordTimer = null, chatPinIndex = 0;
   let chatLu = {}; try { chatLu = JSON.parse(localStorage.getItem(LS_LU) || "{}"); } catch (e) {}
   let chatMuets = new Set(), chatMuteEnCours = false;
   const chatEstMuet = (canal) => !!canal && chatMuets.has(canal);
@@ -9955,14 +10141,20 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         if (!a) { a = chatSeed(); localStorage.setItem(LS_CHAT, JSON.stringify(a)); }
         return a;
       }
-      const since = new Date(Date.now() - 120 * 864e5).toISOString();
-      const { data, error } = await sb.from("messages").select("*").gte("created_at", since).order("created_at").limit(2000);
-      if (error) throw error; return data || [];
+      // Archive : jusqu'à deux ans d'historique, paginé pour éviter la limite de Supabase à 1 000 lignes.
+      const since = new Date(Date.now() - 730 * 864e5).toISOString(), out = [];
+      for (let i = 0; i < 10000; i += 500) {
+        const { data, error } = await sb.from("messages").select("*").gte("created_at", since)
+          .order("created_at").order("id").range(i, i + 499);
+        if (error) throw error; out.push(...(data || [])); if (!data || data.length < 500) break;
+      }
+      return out;
     },
     _save(a) { try { localStorage.setItem(LS_CHAT, JSON.stringify(a)); } catch (e) { throw new Error("Mémoire de démo pleine : supprimez quelques photos."); } },
     async send(m) {
       if (DEMO) { const a = await this.list(); a.push(m); this._save(a); return m; }
-      const { data, error } = await sb.from("messages").insert({ id: m.id, canal: m.canal, evenement_id: m.evenement_id, auteur: m.auteur, texte: m.texte, photo_url: m.photo_url }).select().single();
+      const { data, error } = await sb.from("messages").insert({ id: m.id, canal: m.canal, evenement_id: m.evenement_id, auteur: m.auteur,
+        texte: m.texte, photo_url: m.photo_url, audio_path: m.audio_path || null, reponse_a: m.reponse_a || null }).select().single();
       if (error) throw error; return data;
     },
     async react(id, emoji) {
@@ -9978,6 +10170,40 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     async remove(id) {
       if (DEMO) { this._save((await this.list()).filter(x => x.id !== id)); return; }
       const { error } = await sb.from("messages").delete().eq("id", id); if (error) throw error;
+    },
+    async epingler(id, actif) {
+      if (DEMO) {
+        const a = await this.list(), m = a.find(x => String(x.id) === String(id)); if (!m) throw new Error("Message introuvable");
+        m.epingle_le = actif ? new Date().toISOString() : null; m.epingle_par = actif ? chatMe() : null; this._save(a); return;
+      }
+      const { error } = await sb.rpc("epingler_message_chat", { p_message_id: String(id), p_epingle: actif });
+      if (error) throw error;
+    },
+    async favoris() {
+      if (DEMO) { try { return JSON.parse(localStorage.getItem(LS_CHAT_FAVORIS) || "[]"); } catch (_) { return []; } }
+      const { data, error } = await sb.from("chat_favoris").select("message_id").eq("email", currentUser.email.toLowerCase());
+      if (error) throw error; return (data || []).map(x => String(x.message_id));
+    },
+    async favori(id, actif) {
+      if (DEMO) { const a = new Set(await this.favoris()); if (actif) a.add(String(id)); else a.delete(String(id));
+        localStorage.setItem(LS_CHAT_FAVORIS, JSON.stringify([...a])); return; }
+      const q = actif ? sb.from("chat_favoris").insert({ email: currentUser.email.toLowerCase(), message_id: String(id) })
+        : sb.from("chat_favoris").delete().eq("email", currentUser.email.toLowerCase()).eq("message_id", String(id));
+      const { error } = await q; if (error) throw error;
+    },
+    async uploadVocal(blob, canal) {
+      if (blob.size > 12 * 1024 * 1024) throw new Error("Vocal trop volumineux (12 Mo maximum).");
+      if (DEMO) return await new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ko; r.readAsDataURL(blob); });
+      const ext = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
+      const type = ext === "m4a" ? "audio/mp4" : ext === "ogg" ? "audio/ogg" : "audio/webm";
+      const path = `${currentUser.id}/${canal.replace(/[^a-z0-9-]/gi, "_")}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+      const { error } = await sb.storage.from("chat-vocaux").upload(path, blob, { contentType: type });
+      if (error) throw error; return path;
+    },
+    async vocalUrl(path) {
+      if (DEMO || /^data:audio\//.test(path)) return path;
+      const { data, error } = await sb.storage.from("chat-vocaux").createSignedUrl(path, 900);
+      if (error) throw error; return data.signedUrl;
     },
     async upload(blob, canal) {
       if (DEMO) return await new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(blob); });
@@ -10009,7 +10235,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const p = normName(chatMe()); return anims(ev).some(a => normName(a) === p);
   }
   const CHAT_JOURS_AVANT = 15;
-  function chatCanaux() {
+  function chatCanaux(archives = false) {
     const t = todayISO();
     const parCanal = new Map(); chatMsgs.forEach(m => parCanal.set(m.canal, m));
     const out = [{ canal: "equipe", nom: "Équipe Fantasy", sous: "Toute l'équipe", av: "✨", last: parCanal.get("equipe") }];
@@ -10017,13 +10243,23 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     // 💬 Chat affiché à partir de 15 jours avant la prestation (et un mois après).
     // L'accès reste limité à l'équipe affectée et aux responsables.
     const dOuv = iso(new Date(Date.now() + CHAT_JOURS_AVANT * 864e5));
-    events.filter(e => e.statut !== "annule" && jePeuxVoir(e) && e.date >= d30 && e.date <= dOuv)
+    events.filter(e => jePeuxVoir(e) && (archives
+      ? (e.date < d30 && e.date >= iso(new Date(Date.now() - 730 * 864e5)) && parCanal.has("ev:" + e.id))
+      : (e.statut !== "annule" && e.date >= d30 && e.date <= dOuv)))
       .forEach(e => { const U = universOf(e);
         out.push({ canal: "ev:" + e.id, ev: e, nom: e.titre || e.enfant || "Animation", av: U ? U[2] : "🎭",
           sous: `${fmtLong(e.date)}${e.heure_debut ? " · " + hhmm(e.heure_debut) : ""}${e.date < t ? " · terminée" : ""}`, last: parCanal.get("ev:" + e.id) }); });
     const cle = (c) => c.last ? c.last.created_at : (c.ev ? c.ev.date + "T00" : "");
-    return [out[0], ...out.slice(1).sort((a, b) => (b.last ? 1 : 0) - (a.last ? 1 : 0) || (a.last && b.last ? cle(b).localeCompare(cle(a)) : cle(a).localeCompare(cle(b))))];
+    const trie = out.slice(1).sort((a, b) => archives ? cle(b).localeCompare(cle(a))
+      : (b.last ? 1 : 0) - (a.last ? 1 : 0) || (a.last && b.last ? cle(b).localeCompare(cle(a)) : cle(a).localeCompare(cle(b))));
+    return archives ? trie : [out[0], ...trie];
   }
+  async function chargerChatFavoris() {
+    try { chatFavoris = new Set(await chatStore.favoris()); if (view === "chat") renderChatList(); }
+    catch (e) { console.warn("Favoris de chats", e); toast("Favoris indisponibles : vérifie la migration Supabase"); }
+  }
+  const chatVisible = (m) => m.canal === "equipe" || !!(evOfCanal(m.canal) && jePeuxVoir(evOfCanal(m.canal)));
+  const chatResume = (m) => String(m.texte || (m.audio_path ? "🎤 Message vocal" : m.photo_url ? "📸 Photo" : "Message")).replace(/\s+/g, " ").slice(0, 150);
   const nonLus = (canal) => chatMsgs.filter(m => m.canal === canal && !isMine(m) && m.created_at > (chatLu[canal] || "")).length;
   // 👀 Accusés de lecture : qui a lu jusqu'où (table chat_lu)
   let luCanal = null, luMap = {}, luT = null, luEnvoi = {};
@@ -10031,7 +10267,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (DEMO || !sb || !canal) return;
     try { const { data } = await sb.from("chat_lu").select("email,nom,lu_le").eq("canal", canal);
       if (chatCanal !== canal) return; luCanal = canal; luMap = {}; (data || []).forEach(r => { luMap[String(r.email).toLowerCase()] = r; });
-      if (!$("chatBg").classList.contains("hidden")) renderMsgs(true); } catch (_) {}
+      if (!$("chatBg").classList.contains("hidden") && ![...$("msgs").querySelectorAll("audio")].some(a => !a.paused)) renderMsgs(true); } catch (_) {}
   }
   function luPar(m) {
     if (!m || luCanal !== m.canal) return [];
@@ -10063,17 +10299,32 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     return d.toLocaleDateString("fr-BE", { day: "numeric", month: "short" });
   };
   function renderChatList() {
-    $("chList").innerHTML = chatCanaux().map(c => {
+    const q = normName($("chatSearch").value.trim());
+    $("viewChat").querySelectorAll("[data-chat-mode]").forEach(b => b.classList.toggle("on", b.dataset.chatMode === chatMode));
+    if (q || chatMode === "favoris") {
+      const resultats = chatMsgs.filter(m => chatVisible(m) && (!q || normName(`${m.auteur} ${m.texte || ""} ${evOfCanal(m.canal)?.titre || ""}`).includes(q))
+        && (chatMode !== "favoris" || chatFavoris.has(String(m.id)))).slice(-150).reverse();
+      $("chList").innerHTML = resultats.length ? resultats.map(m => `<button type="button" class="chat-search-result" data-chat-target="${esc(m.id)}" data-canal="${esc(m.canal)}">
+        <b>${esc(m.canal === "equipe" ? "Équipe Fantasy" : (evOfCanal(m.canal)?.titre || "Animation"))}</b>
+        <small>${esc(m.auteur || "?")} · ${esc(quandCourt(m.created_at))}${chatFavoris.has(String(m.id)) ? " · ⭐" : ""}</small>
+        <span>${esc(chatResume(m))}</span></button>`).join("") : `<p class="hint" style="padding:14px">Aucun message trouvé.</p>`;
+      chatBadges(); return;
+    }
+    const liste = chatCanaux(chatMode === "archives");
+    $("chList").innerHTML = liste.length ? liste.map(c => {
       const n = nonLus(c.canal), l = c.last;
-      const apercu = l ? `${isMine(l) ? "Vous" : esc(l.auteur || "?")} : ${l.texte ? esc(l.texte.split("\n")[0]) : "📸 Photo"}` : "Pas encore de message";
+      const apercu = l ? `${isMine(l) ? "Vous" : esc(l.auteur || "?")} : ${esc(chatResume(l))}` : "Pas encore de message";
       return `<button type="button" class="ch${c.canal === "equipe" ? " equipe" : ""}${n ? " unread" : ""}" data-canal="${esc(c.canal)}">
         <span class="av">${c.av}</span>
         <span class="tx"><b>${esc(c.nom)}</b>${c.ev ? `<small class="d" style="text-transform:capitalize">${esc(c.sous)}</small>` : ""}<small>${apercu}</small></span>
         <span class="rt">${l ? quandCourt(l.created_at) : ""}${chatEstMuet(c.canal) ? '<span class="chat-muted-label" title="Notifications désactivées" aria-label="Notifications désactivées">🔕</span>' : ""}${n ? `<span class="nb">${n}</span>` : ""}</span></button>`;
-    }).join("");
+    }).join("") : `<p class="hint" style="padding:14px">Aucune ancienne conversation pour le moment.</p>`;
     chatBadges();
   }
-  $("chList").addEventListener("click", (e) => { const b = e.target.closest("[data-canal]"); if (b) openChat(b.dataset.canal); });
+  $("chList").addEventListener("click", (e) => { const b = e.target.closest("[data-canal]"); if (b) openChat(b.dataset.canal, b.dataset.chatTarget || null); });
+  $("chatSearch").addEventListener("input", renderChatList);
+  $("viewChat").addEventListener("click", e => { const b = e.target.closest("[data-chat-mode]"); if (!b) return;
+    chatMode = b.dataset.chatMode; $("chatSearch").value = ""; renderChatList(); });
 
   const COULEURS = ["#0a8fd8", "#7a3cff", "#d63fd0", "#e2577a", "#1f9d74", "#c27a00", "#5b63f8", "#b0369e"];
   const couleurDe = (n) => { let h = 0; for (const c of normName(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COULEURS[h % COULEURS.length]; };
@@ -10101,6 +10352,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function renderMsgs(garderPos) {
     const box = $("msgs"), enBas = box.scrollHeight - box.scrollTop - box.clientHeight < 120, avant = box.scrollTop;
     const ev = evOfCanal(chatCanal), list = chatMsgs.filter(m => m.canal === chatCanal);
+    const epingles = list.filter(m => m.epingle_le).sort((a, b) => String(b.epingle_le).localeCompare(String(a.epingle_le)));
+    $("chatPinned").classList.toggle("hidden", !epingles.length);
+    if (epingles.length) {
+      const i = chatPinIndex % epingles.length, p = epingles[i];
+      $("chatPinned").innerHTML = `📌 <span><b>${i + 1}/${epingles.length} épinglé${epingles.length > 1 ? "s" : ""}</b> · ${esc(chatResume(p))}</span>
+        <button type="button" data-chat-scroll="${esc(p.id)}">Voir</button>${epingles.length > 1 ? '<button type="button" data-chat-pin-next="1" title="Épinglé suivant">›</button>' : ""}`;
+    }
     if (!list.length) {
       box.innerHTML = `<div class="empty-chat"><span class="em">${ev ? (universOf(ev) || [0, 0, "🎭"])[2] : "💬"}</span>${ev ? "Premier message pour l'équipe de cette animation !" : "Dites bonjour à toute l'équipe ✨"}</div>`;
       return;
@@ -10112,16 +10370,22 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const moi = isMine(m), first = !prev || prev.auteur !== m.auteur || (new Date(m.created_at) - new Date(prev.created_at)) > 10 * 6e4;
       const d = new Date(m.created_at), rx = Object.entries(m.reactions || {}).filter(([, l]) => l && l.length);
       const rxHtml = rx.length ? `<div class="rx">${rx.map(([e, l]) => `<button type="button" class="rxc${l.some(x => normName(x) === normName(chatMe())) ? " mine" : ""}" data-rx="${esc(e)}" data-id="${esc(m.id)}" title="${esc(l.join(", "))}">${e} ${l.length}</button>`).join("")}</div>` : "";
+      const original = m.reponse_a && chatMsgs.find(x => String(x.id) === String(m.reponse_a) && x.canal === m.canal);
       html += `<div class="m${moi ? " me" : ""}${first ? " first" : ""}${!moi && meMentionne(m.texte) ? " tagme" : ""}" data-mid="${esc(m.id)}">
         ${moi ? "" : `<span class="who">${first ? emojiAuteur(m.auteur, ev) : ""}</span>`}
         <div class="col"><div class="bub" style="--c:${couleurDe(m.auteur || "?")}">
           ${!moi && first ? `<span class="n">${esc(m.auteur || "?")}</span>` : ""}
+          ${m.reponse_a ? `<button type="button" class="quote" data-chat-scroll="${esc(m.reponse_a)}">↩️ ${original ? `<b>${esc(original.auteur || "?")}</b> · ${esc(chatResume(original))}` : "Message précédent"}</button>` : ""}
           ${m.photo_url ? `<img src="${esc(m.photo_url)}" alt="Photo" loading="lazy" data-zoom />` : ""}
+          ${m.audio_path ? `<button type="button" class="audio-play" data-audio-play="${esc(m.id)}">🎤 Écouter le vocal</button><span class="audio-zone"></span>` : ""}
           ${m.texte ? `<span class="t">${lier(m.texte)}</span>` : ""}
           <span class="h">${pad(d.getHours())}h${pad(d.getMinutes())}</span></div>
-          ${rxHtml}${rx.length ? `<div class="rx-who">${rx.map(([e, l]) => `${e} ${esc(l.join(", "))}`).join(" · ")}</div>` : ""}</div>${moi ? `<span class="who">${first ? emojiAuteur(m.auteur, ev) : ""}</span>` : ""}</div>`;
+          ${rxHtml}${m.epingle_le || chatFavoris.has(String(m.id)) ? `<span class="flags">${m.epingle_le ? "📌 Épinglé" : ""}${m.epingle_le && chatFavoris.has(String(m.id)) ? " · " : ""}${chatFavoris.has(String(m.id)) ? "⭐ Favori" : ""}</span>` : ""}${rx.length ? `<div class="rx-who">${rx.map(([e, l]) => `${e} ${esc(l.join(", "))}`).join(" · ")}</div>` : ""}</div>${moi ? `<span class="who">${first ? emojiAuteur(m.auteur, ev) : ""}</span>` : ""}</div>`;
       if (chatPick === m.id) {
         html += `<div class="picker${moi ? " me" : ""}">${CHAT_RX.map(e => `<button type="button" data-rx="${e}" data-id="${esc(m.id)}">${e}</button>`).join("")}
+          <button type="button" data-chat-reply="${esc(m.id)}" title="Répondre à ce message" aria-label="Répondre">↩️</button>
+          <button type="button" data-chat-fav="${esc(m.id)}" title="${chatFavoris.has(String(m.id)) ? "Retirer des favoris" : "Ajouter aux favoris"}" aria-label="Favori">${chatFavoris.has(String(m.id)) ? "⭐" : "☆"}</button>
+          ${isResp() ? `<button type="button" data-chat-pin="${esc(m.id)}" title="${m.epingle_le ? "Désépingler" : "Épingler"}" aria-label="Épingler">${m.epingle_le ? "📌" : "📍"}</button>` : ""}
           ${moi || isResp() ? `<button type="button" class="del" data-del="${esc(m.id)}" title="Supprimer">🗑️</button>` : ""}</div>`;
       }
       prev = m;
@@ -10175,10 +10439,27 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   document.addEventListener("visibilitychange", () => presenceTick());
   new MutationObserver(() => presenceTick()).observe(document.getElementById("chatBg"), { attributes: true, attributeFilter: ["class"] });
-  function openChat(canal) {
+  function scrollerChat(id) {
+    const ligne = [...$("msgs").querySelectorAll("[data-mid]")].find(x => x.dataset.mid === String(id));
+    if (!ligne) { toast("Ce message n'est plus disponible"); return; }
+    ligne.scrollIntoView({ behavior: "smooth", block: "center" }); ligne.classList.add("chat-focus");
+    setTimeout(() => ligne.classList.remove("chat-focus"), 2200);
+  }
+  function majChatReply() {
+    const m = chatReplyId && chatMsgs.find(x => String(x.id) === String(chatReplyId) && x.canal === chatCanal);
+    if (!m) chatReplyId = null;
+    $("chatReply").classList.toggle("hidden", !m);
+    if (m) $("chatReply").innerHTML = `<span>↩️ Réponse à <b>${esc(m.auteur || "?")}</b> · ${esc(chatResume(m))}</span><button type="button" id="chatReplyCancel" aria-label="Annuler la réponse">✕</button>`;
+  }
+  $("chatReply").addEventListener("click", e => { if (e.target.closest("#chatReplyCancel")) { chatReplyId = null; majChatReply(); } });
+  $("chatPinned").addEventListener("click", e => {
+    if (e.target.closest("[data-chat-pin-next]")) { chatPinIndex++; renderMsgs(true); return; }
+    const b = e.target.closest("[data-chat-scroll]"); if (b) scrollerChat(b.dataset.chatScroll);
+  });
+  function openChat(canal, targetId = null) {
     const ev = evOfCanal(canal);
     if (canal !== "equipe" && !ev) { toast("Animation introuvable"); return; }
-    chatCanal = canal; chatPick = null;
+    chatCanal = canal; chatPick = null; chatPinIndex = 0; chatReplyId = null; majChatReply();
     $("chatTitle").textContent = ev ? (ev.titre || ev.enfant || "Animation") : "Équipe Fantasy";
     $("chatSub").textContent = ev ? `${fmtLong(ev.date)}${ev.heure_debut ? " · " + hhmm(ev.heure_debut) : ""} · ${anims(ev).join(", ") || "équipe à définir"}`
       : `${members.length || ""} membre${members.length > 1 ? "s" : ""} · toute l'équipe`.trim();
@@ -10189,6 +10470,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     luCanal = null; luMap = {}; renderMsgs(); marquerLu(canal); rtRejoindre(canal); chargerLu(canal);
     clearInterval(luT); luT = setInterval(() => { if (chatCanal && !$("chatBg").classList.contains("hidden") && !document.hidden) chargerLu(chatCanal); else clearInterval(luT); }, 15000);
     if (!chatLoaded) chatReload().then(() => { if (chatCanal === canal) { renderMsgs(); marquerLu(canal); } });
+    if (targetId) setTimeout(() => { if (chatCanal === canal) scrollerChat(targetId); }, 120);
     if (matchMedia("(min-width:700px)").matches) setTimeout(() => $("chatTxt").focus(), 100);
   }
   // 🟢 Qui est en ligne dans la conversation + ✍️ qui écrit (Supabase Realtime Presence, rien n'est enregistré)
@@ -10232,7 +10514,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   function closeChat() {
     rtQuitter();
-    $("chatBg").classList.add("hidden"); document.body.style.overflow = ""; chatCanal = null; chatPick = null; clearPhoto();
+    if (chatRecorder && chatRecorder.state === "recording") { chatRecorder.onstop = null; chatRecorder.stop(); }
+    if (chatRecordStream) chatRecordStream.getTracks().forEach(t => t.stop());
+    chatRecorder = null; chatRecordStream = null; clearTimeout(chatRecordTimer); clearVocal();
+    $("chatVoice").textContent = "🎤"; $("chatVoice").classList.remove("recording");
+    $("chatBg").classList.add("hidden"); document.body.style.overflow = ""; chatCanal = null; chatPick = null; chatReplyId = null; majChatReply(); clearPhoto();
     if (view === "chat") renderChatList(); else chatBadges();
   }
   $("chatBack").onclick = closeChat;
@@ -10241,12 +10527,48 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("evChatBtn").onclick = () => { if (editingId) { const id = editingId; closeForm(); openChat("ev:" + id); } };
   $("jourChat").onclick = (e) => { const id = e.currentTarget.dataset.id; if (id) { $("jourBg").classList.add("hidden"); openChat("ev:" + id); } };
 
-  const majSend = () => { $("chatSend").disabled = !$("chatTxt").value.trim() && !chatPhoto; };
+  const majSend = () => { $("chatSend").disabled = (!$("chatTxt").value.trim() && !chatPhoto && !chatVocal) || chatRecorder?.state === "recording"; };
   $("chatTxt").addEventListener("input", () => { const t = $("chatTxt"); t.style.height = "auto"; t.style.height = Math.min(120, t.scrollHeight) + "px"; majSend(); });
   $("chatTxt").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey && matchMedia("(min-width:700px)").matches) { e.preventDefault(); $("chatForm").requestSubmit(); }
   });
   $("chatPhoto").onclick = () => $("chatFile").click();
+  let chatVocalPreviewUrl = null;
+  function clearVocal() {
+    chatVocal = null;
+    if (chatVocalPreviewUrl) URL.revokeObjectURL(chatVocalPreviewUrl);
+    chatVocalPreviewUrl = null; $("chatVoicePreview").classList.add("hidden"); $("chatVoicePreview").replaceChildren(); majSend();
+  }
+  $("chatVoicePreview").addEventListener("click", e => { if (e.target.closest("[data-voice-cancel]")) clearVocal(); });
+  $("chatVoice").onclick = async () => {
+    if (chatRecorder?.state === "recording") { chatRecorder.stop(); clearTimeout(chatRecordTimer); return; }
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") { toast("Votre navigateur ne permet pas les messages vocaux."); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!chatCanal) { stream.getTracks().forEach(t => t.stop()); return; }
+      chatRecordStream = stream;
+      const type = ["audio/webm;codecs=opus", "audio/mp4", "audio/ogg"].find(t => MediaRecorder.isTypeSupported(t)) || "";
+      const rec = new MediaRecorder(stream, type ? { mimeType: type } : {}), morceaux = [];
+      chatRecorder = rec;
+      rec.ondataavailable = e => { if (e.data?.size) morceaux.push(e.data); };
+      rec.onstop = () => {
+        clearTimeout(chatRecordTimer); stream.getTracks().forEach(t => t.stop()); chatRecordStream = null; chatRecorder = null;
+        $("chatVoice").textContent = "🎤"; $("chatVoice").classList.remove("recording");
+        const mime = rec.mimeType.includes("mp4") ? "audio/mp4" : rec.mimeType.includes("ogg") ? "audio/ogg" : "audio/webm";
+        const blob = new Blob(morceaux, { type: mime });
+        if (!blob.size) { toast("Aucun son enregistré"); return; }
+        clearVocal(); chatVocal = blob; chatVocalPreviewUrl = URL.createObjectURL(blob);
+        const audio = document.createElement("audio"); audio.controls = true; audio.src = chatVocalPreviewUrl;
+        const lib = document.createElement("span"); lib.textContent = "🎤 Vocal prêt";
+        const btn = document.createElement("button"); btn.type = "button"; btn.dataset.voiceCancel = "1"; btn.textContent = "✕";
+        $("chatVoicePreview").replaceChildren(lib, audio, btn); $("chatVoicePreview").classList.remove("hidden"); majSend();
+      };
+      rec.start(); $("chatVoice").textContent = "⏹️"; $("chatVoice").classList.add("recording"); majSend();
+      chatRecordTimer = setTimeout(() => { if (rec.state === "recording") rec.stop(); }, 60000);
+      toast("🎤 Enregistrement : touchez ⏹️ pour arrêter (60 s maximum)");
+    } catch (err) { if (chatRecordStream) chatRecordStream.getTracks().forEach(t => t.stop()); chatRecordStream = null;
+      toast("Micro indisponible : " + (err.message || err)); }
+  };
   function clearPhoto() { chatPhoto = null; $("chatPrev").classList.add("hidden"); $("chatFile").value = ""; majSend(); }
   $("chatPrevX").onclick = clearPhoto;
   $("chatFile").addEventListener("change", async () => {
@@ -10258,21 +10580,56 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
   $("chatForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const texte = $("chatTxt").value.trim(); if ((!texte && !chatPhoto) || !chatCanal) return;
+    const texte = $("chatTxt").value.trim(); if ((!texte && !chatPhoto && !chatVocal) || !chatCanal) return;
     const ev = evOfCanal(chatCanal), btn = $("chatSend"); btn.disabled = true;
     try {
       const photo_url = chatPhoto ? await chatStore.upload(chatPhoto, chatCanal) : null;
+      const audio_path = chatVocal ? await chatStore.uploadVocal(chatVocal, chatCanal) : null;
       const m = { id: chatId(), canal: chatCanal, evenement_id: ev ? ev.id : null, auteur: chatMe(),
-        auteur_email: currentUser ? currentUser.email : "", texte: texte || null, photo_url, reactions: {}, created_at: new Date().toISOString() };
+        auteur_email: currentUser ? currentUser.email : "", texte: texte || null, photo_url, audio_path,
+        reponse_a: chatReplyId || null, reactions: {}, created_at: new Date().toISOString() };
       const saved = await chatStore.send(m);
       if (!chatMsgs.some(x => x.id === saved.id)) chatMsgs.push(saved);
-      $("chatTxt").value = ""; $("chatTxt").style.height = "auto"; clearPhoto();
+      $("chatTxt").value = ""; $("chatTxt").style.height = "auto"; chatReplyId = null; majChatReply(); clearPhoto(); clearVocal();
       renderMsgs(); marquerLu(chatCanal); son("pop");
       const r = btn.getBoundingClientRect(); magicBurst(r.left + r.width / 2, r.top);
     } catch (err) { toast(navigator.onLine ? "Pas envoyé : " + (err.message || err) : "📶 Pas de réseau : message pas envoyé"); }
     finally { majSend(); }
   });
   $("msgs").addEventListener("click", async (e) => {
+    const go = e.target.closest("[data-chat-scroll]"); if (go) { scrollerChat(go.dataset.chatScroll); return; }
+    const rep = e.target.closest("[data-chat-reply]");
+    if (rep) { chatReplyId = rep.dataset.chatReply; chatPick = null; majChatReply(); renderMsgs(true); $("chatTxt").focus(); return; }
+    const fav = e.target.closest("[data-chat-fav]");
+    if (fav) {
+      const id = fav.dataset.chatFav, actif = !chatFavoris.has(id);
+      try { await chatStore.favori(id, actif); if (actif) chatFavoris.add(id); else chatFavoris.delete(id);
+        chatPick = null; renderMsgs(true); toast(actif ? "⭐ Message ajouté aux favoris" : "Favori retiré"); }
+      catch (err) { toast("Erreur favori : " + (err.message || err)); }
+      return;
+    }
+    const pin = e.target.closest("[data-chat-pin]");
+    if (pin) {
+      if (!isResp()) return; const id = pin.dataset.chatPin, m = chatMsgs.find(x => String(x.id) === id); if (!m) return;
+      const actif = !m.epingle_le;
+      try { await chatStore.epingler(id, actif); m.epingle_le = actif ? new Date().toISOString() : null; m.epingle_par = actif ? chatMe() : null;
+        chatPick = null; renderMsgs(true); toast(actif ? "📌 Message épinglé" : "Message désépinglé"); }
+      catch (err) { toast("Erreur épingle : " + (err.message || err)); }
+      return;
+    }
+    const audio = e.target.closest("[data-audio-play]");
+    if (audio) {
+      const m = chatMsgs.find(x => String(x.id) === audio.dataset.audioPlay); if (!m?.audio_path) return;
+      audio.disabled = true;
+      try {
+        const src = await chatStore.vocalUrl(m.audio_path), zone = audio.parentElement.querySelector(".audio-zone");
+        if (!zone) return;
+        const player = document.createElement("audio"); player.className = "chat-audio"; player.controls = true; player.src = src;
+        zone.replaceChildren(player); audio.classList.add("hidden"); player.play().catch(() => {});
+      } catch (err) { toast("Impossible d'écouter : " + (err.message || err)); }
+      finally { audio.disabled = false; }
+      return;
+    }
     const z = e.target.closest("[data-zoom]");
     if (z) { const d = document.createElement("div"); d.className = "zoom"; d.innerHTML = `<img src="${esc(z.src)}" alt="Photo" />`; d.onclick = () => d.remove(); document.body.appendChild(d); return; }
     const rx = e.target.closest("[data-rx]");
@@ -10295,11 +10652,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
 
   async function chatReload(nouveau) {
-    try { chatMsgs = await chatStore.list(); chatLoaded = true; if (!horsLigne) sauverHL(); } catch (e) { console.error(e); return; }
-    if (chatCanal) { renderMsgs(true); if (!$("chatBg").classList.contains("hidden")) marquerLu(chatCanal); }
+    try {
+      if (nouveau && chatLoaded) {
+        if (!chatMsgs.some(m => String(m.id) === String(nouveau.id))) chatMsgs.push(nouveau);
+        chatMsgs.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+      } else { chatMsgs = await chatStore.list(); chatLoaded = true; if (!horsLigne) sauverHL(); }
+    } catch (e) { console.error(e); return; }
+    if (chatCanal) { if (![...$("msgs").querySelectorAll("audio")].some(a => !a.paused)) renderMsgs(true);
+      if (!$("chatBg").classList.contains("hidden")) marquerLu(chatCanal); }
     if (view === "chat") renderChatList(); else chatBadges();
     if (nouveau && !isMine(nouveau) && !chatEstMuet(nouveau.canal) && nouveau.canal !== chatCanal && chatCanaux().some(c => c.canal === nouveau.canal))
-      { toast(`💬 ${nouveau.auteur || "?"} : ${(nouveau.texte || "📸 Photo").slice(0, 60)}`); son("message"); }
+      { toast(`💬 ${nouveau.auteur || "?"} : ${chatResume(nouveau).slice(0, 60)}`); son("message"); }
     else if (nouveau && !isMine(nouveau) && !chatEstMuet(nouveau.canal) && nouveau.canal === chatCanal) son("message");
   }
 
@@ -10316,6 +10679,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     ouvrirClocheAuDemarrage(user);
     await chargerChatMuets();
     await chatReload();
+    await chargerChatFavoris();
     await ptReload();
     if (isResp()) { try { ventesTout = await caisseStore.tout(); } catch (e) { ventesTout = []; } }
     precharger();
