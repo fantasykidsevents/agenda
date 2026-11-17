@@ -1105,6 +1105,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .g-makeup-viewer-head{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:10px;font-weight:800}
   .g-makeup-viewer-close{display:grid;place-items:center;flex:0 0 46px;width:46px;height:46px;border:0;border-radius:50%;background:#f2ebff;color:#643c9a;font-size:25px;cursor:pointer}
   .g-makeup-viewer img{display:block;max-width:100%;max-height:calc(94dvh - 100px);width:auto;height:auto;object-fit:contain;margin:auto;border-radius:10px}
+  .g-fav-inline{display:block;padding:9px 14px;margin:5px 0 14px;border:1px solid #e4d4fa;border-radius:12px;background:#f5efff;color:#6930b1;font:inherit;font-weight:800;cursor:pointer}
+  .g-fav-row{display:flex;align-items:center;gap:8px;margin:7px 0;border:1px solid #ece2f7;border-radius:13px;background:#fff}
+  .g-fav-star{font-size:28px;flex:0 0 54px;border:0;background:transparent;color:#862cde;cursor:pointer;padding:8px 2px}
+  .g-fav-name{font:inherit;text-align:left;font-weight:700;color:#553481;border:0;background:transparent;cursor:pointer;padding:13px 10px;flex:1;min-width:0}
+  .g-idee-reponse{margin:12px 0 3px;padding:12px;border-radius:13px;background:#e9f8ef;color:#21583f;border-left:3px solid #4bcb82}
+  .g-makeup-viewer-head{position:sticky;top:-14px;background:#fff;z-index:4;padding:10px 0 12px}
+  .g-makeup-viewer-bottom{display:block;width:100%;margin-top:14px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -1203,7 +1210,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="mine-head" id="mineHead"></div>
       <a href="fantasy-match.html?v=20261116-2" class="mine-head" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;background:linear-gradient(110deg,#e0f5ff,#f0ddff 52%,#ffe0f1);border:1px solid #d8b5ff;box-shadow:0 5px 18px rgba(169,42,220,.13)">
         <span aria-hidden="true" style="font-size:38px;line-height:1">💎</span>
-        <span style="flex:1"><b style="display:block;color:#8021bf;font-size:19px">Fantasy Match</b><small style="display:block;color:#6c5588;margin-top:3px">Le jeu magique de l'équipe · 100 niveaux · 5 vies</small></span>
+        <span style="flex:1"><b style="display:block;color:#8021bf;font-size:19px">Fantasy Match</b><small style="display:block;color:#6c5588;margin-top:3px">Le jeu magique de l'équipe · 200 niveaux · 5 vies</small></span>
         <span aria-hidden="true" style="font-size:23px;color:#a52fe8">›</span>
       </a>
       <div class="mine-head post-actions hidden" id="postActions"></div>
@@ -1238,6 +1245,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
         <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span>📣</span>Infos équipe</button>
         <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
+        <button type="button" class="evt-tile" id="myFavBtn"><span>⭐</span>Mes personnages</button>
+        <button type="button" class="evt-tile" id="myIdeasBtn"><span>💡</span>Boîte à idées</button>
         <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
       </div>
       <div class="group-title">👗 Mes costumes & perruques</div>
@@ -1271,7 +1280,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue Chiffres (responsables) -->
     <section id="viewStats" class="hidden">
-      <div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
+      <div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
       <div class="group-title" id="gFinT">💶 Finances</div>
       <div class="seg" id="sCaisseSeg" style="margin-bottom:8px">
         <label><input type="radio" name="sCaisse" value="fantasy" checked /><span>💼 Fantasy</span></label>
@@ -1895,6 +1904,45 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div class="grab"></div>
     <div id="guideBody"></div>
     <div class="actions"><button type="button" class="btn ghost hidden" id="guideRetour">‹ Tous les personnages</button><button type="button" class="btn primary" id="guideClose">Fermer</button></div>
+  </div>
+</div>
+
+<!-- ============ ⭐ MES PERSONNAGES FAVORIS ============ -->
+<div id="favorisBg" class="sheet-bg hidden">
+  <div class="sheet" style="max-width:760px">
+    <div class="grab"></div>
+    <h2>⭐ Mes personnages</h2>
+    <p class="hint" style="margin-top:0">Retrouve rapidement tes personnages habituels, leur guide et leurs maquillages. Touche une étoile pour ajouter ou retirer un favori.</p>
+    <input id="favorisSearch" type="search" placeholder="🔎 Rechercher un personnage…" aria-label="Rechercher un personnage" />
+    <div id="favorisList"></div>
+    <div id="favorisErr" class="err hidden"></div>
+    <div class="actions"><button type="button" class="btn primary" id="favorisClose">Fermer</button></div>
+  </div>
+</div>
+<!-- ============ 💡 BOÎTE À IDÉES ÉQUIPE ============ -->
+<div id="ideesBg" class="sheet-bg hidden">
+  <div class="sheet" style="max-width:760px">
+    <div class="grab"></div>
+    <h2>💡 Boîte à idées</h2>
+    <p class="hint" style="margin-top:0">Des idées pour faire grandir Fantasy ? Partage-les ici ! Jordan pourra te répondre directement.</p>
+    <div class="team-preset-box">
+      <label for="ideesCategorie">Catégorie</label>
+      <select id="ideesCategorie">
+        <option value="Personnage">👑 Nouveau personnage</option>
+        <option value="Animation">🎪 Idée d'animation</option>
+        <option value="Amélioration">✨ Amélioration</option>
+        <option value="Spectacle">🎭 Idée de spectacle</option>
+      </select>
+      <label for="ideesTitre">Titre de ton idée</label>
+      <input id="ideesTitre" maxlength="120" placeholder="Ex. Une nouvelle animation d'anniversaire" />
+      <label for="ideesTexte">Explique ton idée</label>
+      <textarea id="ideesTexte" rows="4" maxlength="3000" placeholder="Décris ton idée en quelques phrases…"></textarea>
+      <button type="button" class="btn primary" id="ideesEnvoyer" style="width:100%;margin-top:10px">💌 Envoyer mon idée</button>
+    </div>
+    <div id="ideesErr" class="err hidden" role="alert"></div>
+    <h3 style="margin:20px 0 9px">💌 Les propositions</h3>
+    <div id="ideesList"></div>
+    <div class="actions"><button type="button" class="btn ghost" id="ideesRefresh">↻ Actualiser</button><button type="button" class="btn primary" id="ideesClose">Fermer</button></div>
   </div>
 </div>
 
@@ -2876,6 +2924,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("caissePrestaBg").addEventListener("click", e => { if (e.target.id === "caissePrestaBg") fermerCaissePresta(); });
   async function ouvrirCaissePresta() {
     if (!peutConfirmerRemise()) { toast("Cette caisse est réservée à Jordan."); return; }
+    // Une seule fenêtre visible à la fois : évite les deux croix superposées.
+    document.querySelectorAll(".sheet-bg:not(.hidden)").forEach(modal=>{if(modal.id!=="caissePrestaBg")modal.classList.add("hidden");});
     $("caissePrestaBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
     $("caissePrestaBody").innerHTML = `<p class="hint">⏳ Actualisation de la caisse…</p>`;
     try { reglages = await regStore.get(); events = await store.list(); renderCaissePresta(); }
@@ -3103,6 +3153,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
               if (canal === "equipe" || evOfCanal(canal)) openChat(canal);
               else toast("Cette conversation n'est plus disponible.");
             } else if (qs.has("infos")) openInfosEquipe(qs.get("infos"));
+            else if (qs.has("idees")) ouvrirIdees(qs.get("idees"));
             else if (qs.get("costumes")) openCost();
             else if (qs.get("checklist")) openCK();
             else if (qs.get("sondages")) openSondages();
@@ -4477,8 +4528,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         s.infos.unshift({id:pollId(),titre,contenu,cree_le:new Date().toISOString()});
         localStorage.setItem(LS_INFOS_EQUIPE,JSON.stringify(s));return;
       }
-      const {error}=await sb.rpc("publier_info_equipe",{p_titre:titre,p_contenu:contenu});
+      const {data:id,error}=await sb.rpc("publier_info_equipe",{p_titre:titre,p_contenu:contenu});
       if(error)throw error;
+      try{
+        const {data:push,error:pushError}=await sb.functions.invoke("notifier",{body:{type:"INFO_EQUIPE",infoId:id}});
+        if(pushError||push?.ok===false)throw new Error(pushError?.message||push?.erreur||"push indisponible");
+      }catch(err){
+        console.warn("Information publiée dans la cloche, push non confirmé",err);
+        return {pushWarn:true};
+      }
+      return {pushWarn:false};
     },
     async acknowledge(id){
       if(DEMO){
@@ -4587,9 +4646,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if(titre.length<3||contenu.length<3){infoMsgErreur("Indique un titre et un message.");return;}
     const button=$("infoPublish");button.disabled=true;infoMsgErreur("");
     try{
-      await infoStore.publish(titre,contenu);
+      const publication=await infoStore.publish(titre,contenu);
       infoCreating=false;$("infoTitle").value="";$("infoBody").value="";
-      await reloadInfosEquipe();toast("📣 Information publiée à l’équipe !");
+      await reloadInfosEquipe();toast(publication?.pushWarn?"📣 Info publiée, mais push non envoyé (à activer)":"📣 Information publiée à l’équipe !");
       if(!DEMO)chargerNotifications().catch(console.warn);
     }catch(err){infoMsgErreur("Publication impossible : "+(err.message||err));}
     finally{button.disabled=false;}
@@ -5251,6 +5310,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (qs.get("vue")) { const tb = document.querySelector(`.tab[data-view="${qs.get("vue")}"]`); linkHandled = true; history.replaceState(null, "", location.pathname); if (tb) setTimeout(() => tb.click(), 50); return; }
     if (qs.get("checklist")) { linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(openCK, 50); return; }
     if (qs.has("infos")) { const infoId=qs.get("infos"); linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(() => openInfosEquipe(infoId), 50); return; }
+    if (qs.has("idees")) { linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(() => ouvrirIdees(qs.get("idees")), 50); return; }
     if (qs.get("sondages")) { linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(openSondages, 50); return; }
     if (qs.get("costumes")) { linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(openCost, 50); return; }
     if (qs.get("tenue")) {
@@ -7145,6 +7205,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (guideSel) {
       const f = fichesGuide().find(x => x.nom === guideSel); if (!f) { guideSel = null; return renderGuide(); }
       $("guideBody").innerHTML = `<h2>📖 ${esc(f.nom)}</h2>
+        <button type="button" class="g-fav-inline" data-guide-fav="${esc(f.nom)}">${mesFavoris.has(f.nom) ? "⭐ Dans mes personnages" : "☆ Ajouter à mes personnages"}</button>
         ${galerieMaquillages(f.nom)}
         ${G_SECS.map(([k, t]) => guideEdit ? `<div class="g-sec ${k}"><h4>${t}</h4><textarea data-gk="${k}">${esc(f[k] || "")}</textarea></div>`
           : f[k] ? `<div class="g-sec ${k}"><h4>${t}</h4><p>${esc(f[k])}</p></div>` : "").join("")}
@@ -7162,12 +7223,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <div class="g-list">${Object.keys(GUIDE_MAQUILLAGES).map(n => `<button type="button" data-guide="${esc(n)}">💄 ${esc(n)}</button>`).join("")}</div>
       </details>
       ${mes.size ? `<p style="margin:6px 0 0"><b>⭐ Tes prochains personnages :</b></p><div class="g-list">${[...mes].map(n => `<button type="button" class="mine" data-guide="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : ""}
+      ${mesFavoris.size ? `<p style="margin:10px 0 0"><b>⭐ Mes favoris :</b></p><div class="g-list">${[...mesFavoris].map(n => `<button type="button" class="mine" data-guide="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : ""}
       <input id="guideSearch" type="search" placeholder="🔎 Elsa, Stitch, Rumi…" value="${esc(filtre)}" style="margin-top:12px" />
       <div class="g-list">${vis.map(f => `<button type="button" data-guide="${esc(f.nom)}">${esc(f.nom)}${GUIDE_MAQUILLAGES[f.nom] ? " 💄" : ""}</button>`).join("") || `<p class="hint">Aucun personnage trouvé.</p>`}</div>
       ${isResp() ? `<div class="after-btns" style="margin-top:12px"><button type="button" class="sig photo" id="gNew">➕ Nouvelle fiche</button></div>` : ""}`;
     const inp = $("guideSearch"); inp.oninput = () => { const v = inp.value, pos = inp.selectionStart; renderGuide(v); const n = $("guideSearch"); n.focus(); n.setSelectionRange(pos, pos); };
   }
-  async function openGuide(nom) { await guideReload(); guideSel = nom || null; guideEdit = false; renderGuide(); $("guideBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; $("guideBg").querySelector(".sheet").scrollTop = 0; }
+  async function openGuide(nom) { await chargerFavoris(); await guideReload(); guideSel = nom || null; guideEdit = false; renderGuide(); $("guideBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; $("guideBg").querySelector(".sheet").scrollTop = 0; }
   const closeGuide = () => { $("guideBg").classList.add("hidden"); document.body.style.overflow = ""; };
   $("guideBtn").onclick = () => { closeTeam(); openGuide(); };
   $("guideBtn2").onclick = () => openGuide();
@@ -7207,9 +7269,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const makeupViewer = document.createElement("dialog");
   makeupViewer.className = "g-makeup-viewer";
   makeupViewer.setAttribute("aria-label", "Fiche maquillage agrandie");
-  makeupViewer.innerHTML = '<div class="g-makeup-viewer-head"><span id="gMakeupViewerTitle">💄 Fiche maquillage</span><button type="button" class="g-makeup-viewer-close" aria-label="Fermer la fiche maquillage">✕</button></div><img alt="Fiche maquillage agrandie">';
+  makeupViewer.innerHTML = '<div class="g-makeup-viewer-head"><span id="gMakeupViewerTitle">💄 Fiche maquillage</span><button type="button" class="g-makeup-viewer-close" aria-label="Fermer la fiche maquillage">✕</button></div><img alt="Fiche maquillage agrandie"><button type="button" class="g-makeup-viewer-bottom btn primary">Fermer la fiche maquillage</button>';
   document.body.appendChild(makeupViewer);
   makeupViewer.querySelector(".g-makeup-viewer-close").addEventListener("click", () => makeupViewer.close());
+  makeupViewer.querySelector(".g-makeup-viewer-bottom").addEventListener("click", () => makeupViewer.close());
   makeupViewer.addEventListener("click", e => { if (e.target === makeupViewer) makeupViewer.close(); });
   $("guideBg").addEventListener("click", e => {
     const lien = e.target.closest("a[data-guide-makeup-viewer]");
@@ -7224,6 +7287,204 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
   // 📖 depuis une carte ou la fiche du jour J
   document.addEventListener("click", (e) => { const g = e.target.closest(".g-lien[data-guide]"); if (g && !g.closest("#guideBg")) { e.stopPropagation(); e.preventDefault(); openGuide(g.dataset.guide); } }, true);
+
+
+  // ================= ⭐ Favoris : enregistrement personnel =================
+  const FAV_PREFIX="fk_personnages_favoris_v1_";
+  let mesFavoris=new Set(),favorisSynchronises=false;
+  const favorisEmail=()=>String(myMember()?.email||currentUser?.email||"invite").trim().toLowerCase();
+  const favorisCle=()=>FAV_PREFIX+favorisEmail();
+  function favorisCache(){
+    try{return JSON.parse(localStorage.getItem(favorisCle())||"[]");}catch{return [];}
+  }
+  function sauvegarderFavorisLocaux(){
+    localStorage.setItem(favorisCle(),JSON.stringify([...mesFavoris]));
+  }
+  async function chargerFavoris(){
+    mesFavoris=new Set(favorisCache());
+    favorisSynchronises=false;
+    if(DEMO)return;
+    try{
+      if(mesFavoris.size && localStorage.getItem(favorisCle()+"_dirty")==="1"){
+        const {error:syncErr}=await sb.rpc("definir_personnages_favoris",{p_noms:[...mesFavoris]});
+        if(syncErr)throw syncErr;
+        localStorage.removeItem(favorisCle()+"_dirty");
+      }
+      const {data,error}=await sb.from("personnages_favoris").select("nom");
+      if(error)throw error;
+      if(!data.length&&mesFavoris.size){
+        const {error:initial}=await sb.rpc("definir_personnages_favoris",{p_noms:[...mesFavoris]});
+        if(initial)throw initial;
+      }else mesFavoris=new Set((data||[]).map(r=>r.nom));
+      favorisSynchronises=true;sauvegarderFavorisLocaux();
+    }catch(e){console.warn("Favoris : synchronisation non disponible, copie locale conservée",e);}
+  }
+  async function basculerFavori(nom){
+    if(mesFavoris.has(nom))mesFavoris.delete(nom);
+    else mesFavoris.add(nom);
+     sauvegarderFavorisLocaux();
+    if(!DEMO)localStorage.setItem(favorisCle()+"_dirty","1");
+    if(!DEMO&&favorisSynchronises){
+      const {error}=await sb.rpc("definir_personnages_favoris",{p_noms:[...mesFavoris]});
+      if(error){favorisSynchronises=false;console.warn("Favoris non synchronisés",error);toast("⭐ Favoris gardés sur cet appareil seulement");}
+      else localStorage.removeItem(favorisCle()+"_dirty");
+    }
+    if(!$("favorisBg").classList.contains("hidden"))afficherFavoris();
+    if(!$("guideBg").classList.contains("hidden"))renderGuide();
+  }
+  function afficherFavoris(){
+    const q=gNorm($("favorisSearch").value||"");
+    const liste=[...new Set([...fichesGuide().map(f=>f.nom),...Object.keys(GUIDE_MAQUILLAGES)])];
+    liste.sort((a,b)=>Number(mesFavoris.has(b))-Number(mesFavoris.has(a))||a.localeCompare(b,"fr"));
+    const visibles=liste.filter(n=>!q||gNorm(n).includes(q));
+    const favoris=visibles.filter(n=>mesFavoris.has(n)),autres=visibles.filter(n=>!mesFavoris.has(n));
+    function ligne(n){
+      const sel=mesFavoris.has(n);
+      return '<div class="g-fav-row"><button type="button" class="g-fav-star" data-fav-toggle="'+esc(n)+'" aria-label="'+(sel?"Retirer ":"Ajouter ")+'des favoris : '+esc(n)+'" title="'+(sel?"Retirer des favoris":"Ajouter aux favoris")+'">'+(sel?"⭐":"☆")+'</button>'
+        +'<button type="button" class="g-fav-name" data-fav-open="'+esc(n)+'">'+esc(n)+(GUIDE_MAQUILLAGES[n]?" · 💄":"")+' ›</button></div>';
+    }
+    $("favorisList").innerHTML=
+      '<p class="hint" style="margin:12px 0 4px">⭐ Mes favoris ('+mesFavoris.size+')</p>'
+      +(favoris.map(ligne).join("")||'<p class="hint">Aucun favori enregistré. Ajoute tes personnages en touchant ☆.</p>')
+      +'<p class="hint" style="margin:18px 0 4px">📖 Tous les personnages</p>'
+      +(autres.map(ligne).join("")||'<p class="hint">Aucun autre personnage trouvé.</p>')
+      +(!favorisSynchronises&&!DEMO?'<p class="hint">ℹ️ Ces favoris sont enregistrés sur cet appareil. La synchronisation entre appareils sera disponible après activation de la base de données.</p>':"");
+  }
+  async function ouvrirFavoris(){
+    $("favorisBg").classList.remove("hidden");document.body.style.overflow="hidden";
+    $("favorisSearch").value="";
+    await chargerFavoris();afficherFavoris();
+  }
+  function fermerFavoris(){$("favorisBg").classList.add("hidden");document.body.style.overflow="";}
+  $("myFavBtn").onclick=ouvrirFavoris;
+  $("favorisClose").onclick=fermerFavoris;
+  $("favorisSearch").oninput=afficherFavoris;
+  $("favorisBg").addEventListener("click",async e=>{
+    if(e.target.id==="favorisBg"){fermerFavoris();return;}
+    const star=e.target.closest("[data-fav-toggle]");
+    if(star){star.disabled=true;await basculerFavori(star.dataset.favToggle);return;}
+    const open=e.target.closest("[data-fav-open]");
+    if(open){const nom=open.dataset.favOpen;fermerFavoris();await openGuide(nom);}
+  });
+  $("guideBg").addEventListener("click",async e=>{
+    const favori=e.target.closest("[data-guide-fav]");
+    if(favori){e.stopPropagation();await basculerFavori(favori.dataset.guideFav);}
+  });
+  // ================= 💡 Boîte à idées : propositions et réponses =================
+  const IDEES_LS="fk_idees_equipe_demo_v1";
+  let ideesEquipe=[];
+  const ideeEmail=()=>String(myMember()?.email||currentUser?.email||"").trim().toLowerCase();
+  function ideesErreur(texte){
+    $("ideesErr").textContent=texte||"";
+    $("ideesErr").classList.toggle("hidden",!texte);
+  }
+  const ideesStore={
+    async list(){
+      if(DEMO)return JSON.parse(localStorage.getItem(IDEES_LS)||"[]");
+      const {data,error}=await sb.from("idees_equipe")
+        .select("id,email,prenom,categorie,titre,contenu,reponse,repondu_par,repondu_le,cree_le")
+        .order("cree_le",{ascending:false}).limit(200);
+      if(error)throw error;
+      return data||[];
+    },
+    async propose(categorie,titre,contenu){
+      if(DEMO){
+        const a=JSON.parse(localStorage.getItem(IDEES_LS)||"[]");
+        a.unshift({id:"demo-"+Date.now(),email:ideeEmail(),prenom:myMember()?.prenom||"Membre",categorie,titre,contenu,reponse:null,cree_le:new Date().toISOString()});
+        localStorage.setItem(IDEES_LS,JSON.stringify(a));return;
+      }
+      const {error}=await sb.rpc("proposer_idee_equipe",{p_categorie:categorie,p_titre:titre,p_contenu:contenu});
+      if(error)throw error;
+    },
+    async reponds(id,reponse){
+      if(DEMO){
+        const a=JSON.parse(localStorage.getItem(IDEES_LS)||"[]"),i=a.find(x=>x.id===id);
+        if(i){i.reponse=reponse;i.repondu_par=myMember()?.prenom||"Jordan";i.repondu_le=new Date().toISOString();}
+        localStorage.setItem(IDEES_LS,JSON.stringify(a));return;
+      }
+      const {error}=await sb.rpc("repondre_idee_equipe",{p_idee_id:id,p_reponse:reponse});
+      if(error)throw error;
+    },
+    async supprime(id){
+      if(DEMO){
+        localStorage.setItem(IDEES_LS,JSON.stringify(JSON.parse(localStorage.getItem(IDEES_LS)||"[]").filter(x=>x.id!==id)));return;
+      }
+      const {error}=await sb.rpc("supprimer_idee_equipe",{p_idee_id:id});
+      if(error)throw error;
+    }
+  };
+  function afficherIdees(){
+    const manager=isGest();
+    $("ideesList").innerHTML=ideesEquipe.length?ideesEquipe.map(i=>{
+      const moi=i.email===ideeEmail(),responsable=manager;
+      const date=new Date(i.cree_le).toLocaleDateString("fr-BE",{day:"numeric",month:"short",year:"numeric"});
+      const catIcon={Personnage:"👑",Animation:"🎪","Amélioration":"✨",Spectacle:"🎭"}[i.categorie]||"💡";
+      return '<article class="poll-card" data-idee-card="'+esc(i.id)+'">'
+        +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><h3 style="margin:0">'+esc(catIcon+" "+i.titre)+'</h3>'
+        +((moi||responsable)?'<button type="button" class="info-card-delete" data-idee-delete="'+esc(i.id)+'" title="Retirer cette proposition">🗑️</button>':"")+'</div>'
+        +'<p class="hint" style="margin:6px 0 9px">'+esc(i.categorie)+' · '+esc(i.prenom||i.email)+' · '+esc(date)+'</p>'
+        +'<p style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(i.contenu)+'</p>'
+        +(i.reponse?'<div class="g-idee-reponse"><b>💌 Réponse de '+esc(i.repondu_par||"Fantasy")+'</b><p style="white-space:pre-wrap;margin:6px 0 0">'+esc(i.reponse)+'</p></div>':"")
+        +(responsable?'<label for="ideerep-'+esc(i.id)+'" style="display:block;margin-top:12px">'+(i.reponse?"Modifier ma réponse":"Répondre à cette idée")+'</label>'
+          +'<textarea id="ideerep-'+esc(i.id)+'" rows="2" maxlength="3000" data-idee-input="'+esc(i.id)+'" placeholder="Écrire une réponse…">'+esc(i.reponse||"")+'</textarea>'
+          +'<button type="button" class="btn ghost" data-idee-reply="'+esc(i.id)+'" style="margin-top:7px;width:100%">💌 Envoyer la réponse</button>':"")
+        +'</article>';
+    }).join(""):'<p class="hint">Aucune idée envoyée pour le moment.</p>';
+  }
+  async function actualiserIdees(){
+    ideesErreur("");
+    $("ideesList").innerHTML='<p class="hint">Chargement des propositions…</p>';
+    try{
+      ideesEquipe=await ideesStore.list();afficherIdees();
+    }catch(err){
+      $("ideesList").innerHTML="";
+      ideesErreur("Boîte à idées non disponible : "+(err.message||err)+". Il faut activer « equipe-favoris-idees.sql » dans Supabase.");
+    }
+  }
+  function ouvrirIdees(id){
+    $("ideesBg").classList.remove("hidden");document.body.style.overflow="hidden";
+    actualiserIdees().then(()=>{
+      if(typeof id==="string"&&id){
+        const element=[...$("ideesList").querySelectorAll("[data-idee-card]")].find(e=>e.dataset.ideeCard===id);
+        if(element){element.scrollIntoView({block:"center",behavior:"smooth"});element.style.outline="2px solid #a333ef";}
+      }
+    });
+  }
+  function fermerIdees(){$("ideesBg").classList.add("hidden");document.body.style.overflow="";}
+  $("myIdeasBtn").onclick=ouvrirIdees;
+  $("gIdeas").onclick=ouvrirIdees;
+  $("ideesClose").onclick=fermerIdees;
+  $("ideesRefresh").onclick=actualiserIdees;
+  $("ideesBg").addEventListener("click",e=>{if(e.target.id==="ideesBg")fermerIdees();});
+  $("ideesEnvoyer").onclick=async()=>{
+    const categorie=$("ideesCategorie").value,titre=$("ideesTitre").value.trim(),contenu=$("ideesTexte").value.trim();
+    if(titre.length<3||contenu.length<10){ideesErreur("Précise le titre et décris ton idée (au moins 10 caractères).");return;}
+    const b=$("ideesEnvoyer");b.disabled=true;ideesErreur("");
+    try{
+      await ideesStore.propose(categorie,titre,contenu);
+      $("ideesTitre").value="";$("ideesTexte").value="";
+      await actualiserIdees();toast("💌 Ton idée a bien été envoyée !");
+    }catch(err){ideesErreur("Envoi impossible : "+(err.message||err));}
+    finally{b.disabled=false;}
+  };
+  $("ideesList").addEventListener("click",async e=>{
+    const reply=e.target.closest("[data-idee-reply]"),del=e.target.closest("[data-idee-delete]");
+    if(!reply&&!del)return;
+    const button=reply||del,id=reply?.dataset.ideeReply||del?.dataset.ideeDelete;
+    if(reply&&!isGest())return;
+    if(del&&!confirm("Retirer cette proposition ?"))return;
+    button.disabled=true;ideesErreur("");
+    try{
+      if(reply){
+        const texte=$("ideesList").querySelector('[data-idee-input="'+CSS.escape(id)+'"]').value.trim();
+        if(texte.length<2)throw new Error("Écris une réponse avant de l'envoyer.");
+        await ideesStore.reponds(id,texte);
+        toast("💌 Réponse envoyée à la personne !");
+      }else {await ideesStore.supprime(id);toast("🗑️ Proposition retirée");}
+      await actualiserIdees();
+    }catch(err){ideesErreur("Action impossible : "+(err.message||err));}
+    finally{button.disabled=false;}
+  });
 
   // ================= 🎨 Stock des consommables =================
   const LS_STOCK = "fk_agenda_stock_demo3";
