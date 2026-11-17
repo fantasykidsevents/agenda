@@ -1344,6 +1344,41 @@ Deno.serve(async (req) => {
       return json({ok:true,pushs});
     }
 
+
+    // 📣 Infos équipe : cloche enregistrée par le SQL, push envoyé une seule fois.
+    if (p.type === "INFO_EQUIPE") {
+      const bearer=(req.headers.get("Authorization")||"").match(/^Bearer\s+(.+)$/i)?.[1];
+      if(!bearer)return json({ok:false,erreur:"Connexion requise"},401);
+      const {data:identite,error:errAuth}=await sb.auth.getUser(bearer);
+      const email=identite?.user?.email;
+      if(errAuth||!email)return json({ok:false,erreur:"Session invalide"},401);
+      const {data:profil,error:errProfil}=await sb.from("equipe")
+        .select("responsable,gestionnaire").ilike("email",email);
+      if(errProfil||!(profil||[]).some(m=>m.responsable||m.gestionnaire))
+        return json({ok:false,erreur:"Réservé aux responsables"},403);
+      const id=String(p.infoId||"").trim();
+      if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+        return json({ok:false,erreur:"Identifiant invalide"},400);
+      const {data:info,error:errInfo}=await sb.from("infos_equipe")
+        .update({push_envoye_le:new Date().toISOString()})
+        .eq("id",id).is("push_envoye_le",null)
+        .select("titre,contenu").maybeSingle();
+      if(errInfo)throw errInfo;
+      if(!info)return json({ok:true,dejaEnvoye:true});
+      const {data:dest,error:errDest}=await sb.from("equipe").select("email");
+      if(errDest)throw errDest;
+      let n=0;
+      for(const destinataire of [...new Set((dest||[]).map(x=>String(x.email||"").trim().toLowerCase()).filter(Boolean))]){
+        n+=await envoyerPush(destinataire,{
+          title:"📣 Info équipe : "+info.titre,
+          body:String(info.contenu||"").slice(0,180),
+          url:"./index.html?infos="+id,
+          tag:"info-equipe-"+id
+        },{dejaEnCloche:true,categorie:"autres"});
+      }
+      return json({ok:true,pushs:n});
+    }
+
     // 💶 Paiements marqués par Jordan : seuls les responsables connectés peuvent
     // déclencher l'alerte. Les sommes sont relues côté serveur, jamais acceptées du navigateur.
     if (p.type === "PAIES_MAJ") {
