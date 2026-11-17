@@ -1160,7 +1160,7 @@ async function rappelsCostumes(equipe) {
     const { data: evs } = await sb.from("evenements").select("*").gte("date", auj).lte("date", j7).neq("statut", "annule").order("date");
     await charger();
     const soucis = new Map();   // id pièce -> { c, quand }
-    for (const ev of evs || []) for (const a of equipeDe(ev)) {
+    for (const ev of (evs || []).filter(e=>e.type_evenement!=="repetition")) for (const a of equipeDe(ev)) {
       if (!a.role || norm(a.role) === "acc") continue;
       for (const type of ["costume", "perruque"]) {
         const c = pieceDeLaPrestation(ev, a, type);
@@ -1186,7 +1186,7 @@ async function rappelsCostumes(equipe) {
   // 2) La veille : à récupérer chez quelqu'un
   if (bxl.getHours() >= 17) {
     const { data: evs } = await sb.from("evenements").select("*").eq("date", demain).neq("statut", "annule").is("costume_rappel", null);
-    for (const ev of evs || []) {
+    for (const ev of (evs || []).filter(e=>e.type_evenement!=="repetition")) {
       const { data: pris } = await sb.from("evenements").update({ costume_rappel: new Date().toISOString() })
         .eq("id", ev.id).is("costume_rappel", null).select("id");
       if (!pris || !pris.length) continue;
@@ -1275,6 +1275,7 @@ const euros0 = (n) => `${Number(n || 0).toFixed(2).replace(".", ",").replace(",0
 // ---------- logique principale ----------
 const CHAMPS_IMPORTANTS = ["date", "heure_debut", "heure_fin", "adresse", "enceinte"];
 const aujourdhui = () => new Date().toISOString().slice(0, 10);
+const aujourdhuiBelgique=()=>new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Brussels",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 
 function quiPrevenir(type, ev, ancien) {
   const nouv = equipeDe(ev), anc = equipeDe(ancien);
@@ -1415,6 +1416,10 @@ Deno.serve(async (req) => {
         const paiement = (paiementsRep.data || []).find((x) =>
           String(x.evenement_id) === ligne.evId && norm(x.prenom) === norm(ligne.prenom));
         const ev = parId.get(ligne.evId), membre = parNom.get(norm(ligne.prenom));
+        if(ev?.date && ev.date<aujourdhuiBelgique()){
+          envoyes.push({prenom:ligne.prenom,ignore:"historique : notification désactivée"});
+          continue;
+        }
         if (!paiement?.paye || !paiement.paye_le || !ev || !membre?.email) {
           envoyes.push({ prenom: ligne.prenom, ignore: "paiement non confirmé ou membre introuvable" });
           continue;
@@ -1441,6 +1446,8 @@ Deno.serve(async (req) => {
       }
       if (p.type !== "UPDATE" || !pv.acompte_paye || avant.acompte_paye) return json({ ok: true, acompte: "rien à faire" });
       const { data: ev } = await sb.from("evenements").select("*").eq("id", pv.id).maybeSingle();
+      if(ev?.date && ev.date<aujourdhuiBelgique())
+        return json({ok:true,acompte:"historique : mail de confirmation non envoyé"});
       if (!ev || ev.statut !== "confirme" || !ev.email) return json({ ok: true, acompte: "pas confirmée ou pas d'e-mail" });
       try { return json({ ok: true, acompte: await envoyerFicheParent(ev, true, pv) }); }
       catch (e) { console.error("acompte", e); return json({ ok: false, acompte: "erreur : " + (e?.message || e) }); }
@@ -1878,8 +1885,15 @@ Deno.serve(async (req) => {
         try { site[d] = await syncDateSite(d); } catch (e) { console.error("site", e); site[d] = "erreur : " + (e?.message || e); }
       }
     }
-    // Pour une animation passée, on n'envoie que les alertes de matériel
-    const cibles = ev.date < aujourdhui() ? [] : quiPrevenir(type, ev, ancien);
+    // 📚 Mise à jour de l'historique (avant aujourd'hui à Bruxelles) :
+    // aucun push, e-mail ou avis dans la cloche, même pour matériel, fiche,
+    // encaissement ou changement d'équipe. Les données restent enregistrées.
+    // Inclut également l'ajout rétroactif d'une ancienne prestation.
+    const jourLocal=aujourdhuiBelgique();
+    if(["UPDATE","INSERT","DELETE"].includes(type) && ev.date < jourLocal)
+      return json({ok:true,envoyes:[],site,historique:true,silencieux:true});
+
+    const cibles=quiPrevenir(type,ev,ancien);
 
     const { data: equipe } = await sb.from("equipe").select("prenom,email,responsable");
     const parNom = new Map((equipe || []).map((m) => [norm(m.prenom), m]));
