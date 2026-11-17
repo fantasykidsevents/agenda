@@ -160,7 +160,7 @@ fantasykidsevents@gmail.com</textarea>
  function selectDoc(row){selected=row;const d=row?.contenu||{};setForm(d);$('event').value=row?.source_evenement_id||'';editable(!row||row.statut==='brouillon');$('save').textContent=row?'💾 Enregistrer les modifications':'💾 Enregistrer le brouillon';preview();renderList();}
  function renderList(){$('list').innerHTML=docs.length?docs.map(x=>`<button class="entry ${selected?.id===x.id?'selected':''}" data-id="${h(x.id)}"><span><b>${h(x.numero||'En préparation')}</b><br><small>${h(x.contenu?.client?.nom||'Client non renseigné')}</small></span><span class="tag">${x.statut==='annule'?'Annulé':x.statut==='payee'?'Payée':['emise','emis'].includes(x.statut)?mode==='devis'?'Finalisé':'Émise':'Brouillon'}</span></button>`).join(''):(mode==='devis'?'Aucun devis créé.':'Aucune facture créée.');
   $('list').querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>selectDoc(docs.find(d=>d.id===x.dataset.id)));}
- async function load(){const {data,error}=await sb.from(table()).select('*').order('created_at',{ascending:false});if(error)throw error;docs=data||[];renderList();$('listTitle').textContent=mode==='devis'?'Mes devis':'Mes factures';}
+ async function load(){const {data,error}=await sb.from(table()).select('*').order('created_at',{ascending:false});if(error)throw error;docs=(data||[]).filter(x=>mode!=='devis'||x.statut!=='annule');renderList();$('listTitle').textContent=mode==='devis'?'Mes devis':'Mes factures';}
  async function loadEvents(){const [{data,error},{data:priv, error:privateError},{data:fiches,error:ficheError}]=await Promise.all([sb.from('evenements').select('*').order('date',{ascending:false}).limit(500),sb.from('evenements_prive').select('*'),sb.from('fiches').select('evenement_id,reponses')]);if(error)throw error;if(privateError)throw privateError;if(ficheError)throw ficheError;
   const details=new Map((priv||[]).map(p=>[String(p.id),p]));const parFiche=new Map((fiches||[]).map(f=>[String(f.evenement_id),f.reponses||{}]));
   events=(data||[]).map(e=>{const p=details.get(String(e.id))||{},r=parFiche.get(String(e.id))||{};return {...e,...p,parent:p.parent||e.parent||r.client_nom||'',fiche_client_nom:r.client_nom||''};});
@@ -215,7 +215,7 @@ fantasykidsevents@gmail.com</textarea>
   if(!confirm(`Annuler le devis ${selected.numero} ? Son numéro restera dans l’historique et le document ne sera plus utilisable.`))return;
   const {data,error}=await sb.rpc('fk_devis_annuler',{p_id:selected.id});
   if(error)return status(error.message,true);
-  selected=data;await load();selectDoc(data);status(`Devis ${data.numero} annulé et conservé dans l’historique ✅`);
+  selected=null;await load();$('new').click();status(`Devis ${data.numero} annulé et retiré de « Mes devis ». Son numéro reste conservé dans Supabase ✅`);
  };
  $('originalPdf').onclick=async()=>{
   if(!selected||selected.statut==='brouillon')return;
