@@ -27,7 +27,7 @@
     .entry{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;margin:7px 0;background:#f9f5ff;border:1px solid #ebddfa}
     .entry.selected{outline:2px solid #a020ff}.tag{font-size:11px;border-radius:20px;padding:5px 7px;background:#ddf2ff;color:#036796}
     #paperWrap{position:sticky;top:10px;align-self:start}
-    #paper{width:100%;min-height:760px;aspect-ratio:210/297;background:#fff url('factures-fond-magique.jpg?v=magique-20261117-v2') center/100% 100% no-repeat;position:relative;overflow:hidden;box-shadow:0 10px 28px #28174522;color:#42145e}
+    #paper{width:100%;min-height:760px;aspect-ratio:210/297;background:#fff url('factures-fond-magique.jpg?v=magique-20261117-v3') center/100% 100% no-repeat;position:relative;overflow:hidden;box-shadow:0 10px 28px #28174522;color:#42145e}
     .paper-head{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;padding:12% 8% 0;height:22%;gap:12px}
     .paper-head h2{font-family:Georgia,'Times New Roman',serif;color:#471367;font-size:43px;font-weight:400;letter-spacing:1px;margin:0;line-height:1}
     .paper-head .subtitle{font-family:Georgia,'Times New Roman',serif;font-size:13px;font-style:italic;color:#6f218b;margin:10px 0 0}
@@ -108,7 +108,7 @@ fantasykidsevents@gmail.com</textarea>
    <p class="note" id="lockNote">Une facture émise est définitive : ses montants et coordonnées ne peuvent plus être modifiés. Le bouton « Télécharger PDF » crée directement un fichier au format A4.</p>
   </section>
  </div>
- <aside id="paperWrap"><div class="controls"><button class="primary" id="pdf">📄 Télécharger PDF A4</button><button id="printPdf">🖨️ Ouvrir pour imprimer</button><span class="note" id="docStatus">Aperçu du brouillon</span></div>
+ <aside id="paperWrap"><div class="controls"><button class="primary" id="pdf">📄 Télécharger PDF A4</button><button id="printPdf">🖨️ Ouvrir pour imprimer</button><button id="originalPdf" type="button" hidden>📁 Copie PDF originale</button><span class="note" id="docStatus">Aperçu du brouillon</span></div>
   <div id="paper">
    <div class="paper-head"><div><h2 id="pTitle">FACTURE</h2><p class="subtitle">De la magie plein les yeux</p></div><img src="logo.png" alt="Fantasy Kids Events"></div>
    <div class="paper-content"><div class="paper-client"><div><h3>CLIENT</h3><b id="pClient"></b><p id="pClientAddress"></p><span id="pClientTva"></span></div><div class="paper-meta"><b>n° :</b> <span id="pNumber"></span><br><b>date :</b> <span id="pDate"></span></div></div><p id="pServiceDate" class="note"></p>
@@ -119,7 +119,7 @@ fantasykidsevents@gmail.com</textarea>
   </div>
  </aside>
 </main><div id="blocked" class="panel" style="max-width:650px;margin:30px auto">Vérification de ton accès…</div>
-<script src="factures-pdf.js?v=magique-20261117-v2"></script>
+<script src="factures-pdf.js?v=magique-20261117-v3"></script>
 <script>
 (()=>{
  'use strict';
@@ -131,6 +131,7 @@ fantasykidsevents@gmail.com</textarea>
  const params=new URLSearchParams(location.search);
  let mode=params.get('mode')==='devis'?'devis':'facture';
  let docs=[],events=[],selected=null,readonly=false;
+ const PDF_BUCKET='fantasy-facturation';
  const table=()=>mode==='devis'?'devis_fantasy':'factures_fantasy';
  function updateMode(){const isQuote=mode==='devis';$('kind').value=mode;$('new').textContent=isQuote?'＋ Nouveau devis':'＋ Nouvelle facture';$('listTitle').textContent=isQuote?'Mes devis':'Mes factures';$('editorTitle').textContent=isQuote?'Préparer le devis':'Préparer la facture';$('pTitle').textContent=isQuote?'DEVIS':'FACTURE';$('issue').textContent=isQuote?'🔒 Finaliser le devis':'🔒 Émettre et numéroter';$('paid').hidden=isQuote;$('notesLabel').textContent=isQuote?'Notes visibles sur le devis':'Note facultative';$('notes').placeholder=isQuote?'Ex. Personnages présents, durée, conditions, détail de la prestation…':'Référence, acompte déjà versé…';$('dueLabel').textContent=isQuote?'Valable jusqu’au':'Date d’échéance';$('pDueLabel').textContent=isQuote?'Devis valable jusqu’au':'Échéance';$('lockNote').textContent=isQuote?'Les devis finalisés sont conservés avec leur numéro. Les brouillons peuvent être supprimés. Le PDF est généré directement en A4.':'Les factures émises sont conservées pour la comptabilité ; seuls les brouillons sont supprimables. Le PDF est généré directement en A4.';}
  $('issuerIban').value=config.IBAN||'';
@@ -155,7 +156,7 @@ fantasykidsevents@gmail.com</textarea>
   $('pRegime').textContent=shown.regime_tva||'';$('pLegal').textContent=`${shown.emetteur?.nom||''} · N° d'entreprise / TVA : ${shown.emetteur?.tva||''}`;
   $('docStatus').textContent=selected?(selected.statut==='brouillon'?'Aperçu non finalisé':selected.numero+' · '+(selected.statut==='payee'?'payée':selected.statut==='annule'?'annulé':mode==='devis'?'finalisé':'émise')):'Aperçu non finalisé';}
  function editable(yes){readonly=!yes;document.querySelectorAll('#app input,#app textarea').forEach(x=>x.disabled=!yes);$('priceType').disabled=!yes;$('event').disabled=!yes;$('addLine').disabled=!yes;for(const b of $('lines').querySelectorAll('button'))b.disabled=!yes;
-  $('save').disabled=!yes;$('issue').disabled=!yes;$('paid').disabled=mode==='devis'||!selected||selected.statut!=='emise';$('deleteDraft').hidden=!selected||selected.statut!=='brouillon';$('cancelQuote').hidden=mode!=='devis'||!selected||selected.statut!=='emis';}
+  $('save').disabled=!yes;$('issue').disabled=!yes;$('paid').disabled=mode==='devis'||!selected||selected.statut!=='emise';$('deleteDraft').hidden=!selected||selected.statut!=='brouillon';$('cancelQuote').hidden=mode!=='devis'||!selected||selected.statut!=='emis';$('originalPdf').hidden=!selected||selected.statut==='brouillon';}
  function selectDoc(row){selected=row;const d=row?.contenu||{};setForm(d);$('event').value=row?.source_evenement_id||'';editable(!row||row.statut==='brouillon');$('save').textContent=row?'💾 Enregistrer les modifications':'💾 Enregistrer le brouillon';preview();renderList();}
  function renderList(){$('list').innerHTML=docs.length?docs.map(x=>`<button class="entry ${selected?.id===x.id?'selected':''}" data-id="${h(x.id)}"><span><b>${h(x.numero||'En préparation')}</b><br><small>${h(x.contenu?.client?.nom||'Client non renseigné')}</small></span><span class="tag">${x.statut==='annule'?'Annulé':x.statut==='payee'?'Payée':['emise','emis'].includes(x.statut)?mode==='devis'?'Finalisé':'Émise':'Brouillon'}</span></button>`).join(''):(mode==='devis'?'Aucun devis créé.':'Aucune facture créée.');
   $('list').querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>selectDoc(docs.find(d=>d.id===x.dataset.id)));}
@@ -177,9 +178,28 @@ fantasykidsevents@gmail.com</textarea>
   const values={contenu:d,source_evenement_id:$('event').value||selected?.source_evenement_id||null};let result;
   if(selected){result=await sb.from(table()).update(values).eq('id',selected.id).select().single();}else{result=await sb.from(table()).insert(values).select().single();}
   if(result.error)throw result.error;selected=result.data;await load();selectDoc(selected);return selected;}
+ function pdfParams(row,docMode=mode){const data=row.contenu||{};return {kind:docMode,data:{...data,date_emission:data.date_emission||today()},number:row.numero||'',cancelled:row.statut==='annule'};}
+ function originalPath(row,docMode=mode){return `${docMode==='devis'?'devis':'factures'}/${row.id}.pdf`;}
+ function saveBlob(blob,filename){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),90000);}
+ async function saveOriginalPdf(row,docMode=mode){
+  if(!row?.id||!row.numero||row.statut==='brouillon')throw Error('Le document doit être numéroté avant sa sauvegarde PDF.');
+  if(window.fkFacturesPdfVersion!=='magique-20261117-v3'||typeof window.fkGenererFacturePdfBlob!=='function')throw Error('Le nouveau générateur PDF n’est pas chargé. Recharge l’application.');
+  const result=await window.fkGenererFacturePdfBlob(pdfParams(row,docMode));
+  if(!result.blob?.size)throw Error('Le PDF généré est vide.');
+  const {error}=await sb.storage.from(PDF_BUCKET).upload(originalPath(row,docMode),result.blob,{contentType:'application/pdf',upsert:false,cacheControl:'31536000'});
+  if(error){
+   if(error.statusCode===409||/already exists|resource already exists|duplicate/i.test(error.message||''))return {...result,existeDeja:true};
+   throw Error(error.message||'Échec de l’enregistrement privé dans Supabase.');
+  }
+  return result;
+ }
+ async function readOriginalPdf(row,docMode=mode){return sb.storage.from(PDF_BUCKET).download(originalPath(row,docMode));}
  $('save').onclick=async()=>{try{await save();status('Brouillon enregistré ✅');}catch(e){status(e.message,true);}};
  $('issue').onclick=async()=>{try{const d=getForm();validate(d);const quote=mode==='devis';if(!confirm(quote?'Finaliser ce devis ? Il recevra son propre numéro et son contenu sera verrouillé.':'Émettre la facture ? Un numéro définitif sera attribué et son contenu ne pourra plus être modifié.'))return;
-  const row=await save();const {data,error}=await sb.rpc(quote?'fk_devis_emettre':'fk_factures_emettre',{p_id:row.id});if(error)throw error;if(!data?.numero)throw Error('Aucun numéro attribué. Le document reste en brouillon : vérifie la fonction de numérotation dans Supabase.');selected=data;await load();selectDoc(data);status(`${quote?'Devis':'Facture'} ${data.numero} ${quote?'finalisé':'émise'} ✅`);}catch(e){const msg=String(e.message||e);status(/annee.*ambiguous/i.test(msg)?'La numérotation est bloquée par une ancienne fonction SQL (référence « annee » ambiguë). Lance le fichier supabase_correctif_numero_devis.sql dans Supabase, puis réessaie.':msg,true);}};
+  const row=await save();const {data,error}=await sb.rpc(quote?'fk_devis_emettre':'fk_factures_emettre',{p_id:row.id});if(error)throw error;if(!data?.numero)throw Error('Aucun numéro attribué. Le document reste en brouillon : vérifie la fonction de numérotation dans Supabase.');selected=data;await load();selectDoc(data);
+  try{const original=await saveOriginalPdf(data,quote?'devis':'facture');status(`${quote?'Devis':'Facture'} ${data.numero} ${quote?'finalisé':'émise'} et PDF original conservé dans Supabase ✅${original.existeDeja?' (copie déjà présente)':''}`);}
+  catch(pdfError){status(`${quote?'Devis':'Facture'} ${data.numero} bien ${quote?'finalisé':'émise'} ✅ MAIS sa copie PDF n’a pas été enregistrée : ${pdfError.message}. Exécute supabase_archives_pdf_fantasy.sql dans Supabase puis utilise « Copie PDF originale » pour réessayer.`,true);}
+ }catch(e){const msg=String(e.message||e);status(/annee.*ambiguous/i.test(msg)?'La numérotation est bloquée par une ancienne fonction SQL (référence « annee » ambiguë). Lance le fichier supabase_correctif_numero_devis.sql dans Supabase, puis réessaie.':msg,true);}};
  $('paid').onclick=async()=>{if(!selected||selected.statut!=='emise')return;if(!confirm('Confirmer la réception du paiement de cette facture ?'))return;
   const {data,error}=await sb.rpc('fk_factures_marquer_payee',{p_id:selected.id,p_date:today()});if(error)return status(error.message,true);selected=data;await load();selectDoc(data);status('Facture marquée comme payée ✅');};
  $('deleteDraft').onclick=async()=>{
@@ -197,16 +217,46 @@ fantasykidsevents@gmail.com</textarea>
   if(error)return status(error.message,true);
   selected=data;await load();selectDoc(data);status(`Devis ${data.numero} annulé et conservé dans l’historique ✅`);
  };
+ $('originalPdf').onclick=async()=>{
+  if(!selected||selected.statut==='brouillon')return;
+  const row=selected,docMode=mode,button=$('originalPdf'),former=button.textContent;
+  button.disabled=true;button.textContent='⏳ Recherche de la copie…';
+  try{
+   let {data,error}=await readOriginalPdf(row,docMode);
+   if(error){
+    const message=String(error.message||'');
+    if(/bucket|permission|access denied|not authorized|row.level.security/i.test(message))throw Error('Stockage privé non accessible. Exécute supabase_archives_pdf_fantasy.sql dans Supabase. '+message);
+    if(!/not found|404|does not exist/i.test(message))throw error;
+    if(!confirm('Ce document ne possède pas encore de PDF sauvegardé (il date peut-être d’avant cette fonctionnalité). Créer maintenant une copie à partir des données conservées et du modèle actuel ?'))return;
+    const created=await saveOriginalPdf(row,docMode);
+    if(created.existeDeja){const existing=await readOriginalPdf(row,docMode);if(existing.error)throw existing.error;data=existing.data;}
+    else data=created.blob;
+   }
+   saveBlob(data,window.fkNomFichierFacturePdf(pdfParams(row,docMode)));
+   status(`Copie PDF conservée dans Supabase et téléchargée pour ${row.numero} ✅`);
+  }catch(e){status('Impossible de récupérer la copie PDF : '+e.message,true);}
+  finally{button.disabled=false;button.textContent=former;}
+ };
  async function exportPdf(action){
-  if(window.fkFacturesPdfVersion!=='magique-20261117-v2')return status('Ancienne version du générateur PDF détectée. Ferme complètement la page Factures & devis, puis rouvre-la avec une connexion Internet.',true);
+  if(window.fkFacturesPdfVersion!=='magique-20261117-v3')return status('Ancienne version du générateur PDF détectée. Ferme complètement la page Factures & devis, puis rouvre-la avec une connexion Internet.',true);
   if(!selected||selected.statut==='brouillon')if(!confirm('Ceci est un document non finalisé, sans numéro. Continuer ?'))return;
   const data=selected&&selected.statut!=='brouillon'?selected.contenu:getForm();
   const popup=action==='print'?window.open('','_blank'):null;
   const button=$(action==='print'?'printPdf':'pdf');
   button.disabled=true;const former=button.textContent;button.textContent='⏳ Préparation du PDF…';
   try{
+   // Un document finalisé conserve toujours son PDF original, même si le modèle
+   // de l'application est modifié par la suite.
+   if(selected?.numero&&selected.statut!=='annule'){
+    const original=await readOriginalPdf(selected,mode);
+    if(!original.error&&original.data){
+     if(action==='print'&&popup&&!popup.closed){const url=URL.createObjectURL(original.data);popup.location.replace(url);setTimeout(()=>URL.revokeObjectURL(url),300000);}
+     else{if(popup&&!popup.closed)popup.close();saveBlob(original.data,window.fkNomFichierFacturePdf(pdfParams(selected,mode)));}
+     status(`PDF original ${selected.numero} récupéré depuis Supabase ✅`);return;
+    }
+   }
    await window.fkExporterFacturePdf({kind:mode,data:{...data,date_emission:data.date_emission||today()},number:selected?.numero||'',cancelled:selected?.statut==='annule'},action,popup);
-   status(action==='print'&&popup?'PDF A4 ouvert : utilise le bouton Imprimer du lecteur PDF. ✅':'PDF A4 téléchargé ✅');
+   status(action==='print'&&popup?'PDF A4 ouvert : utilise le bouton Imprimer du lecteur PDF. ✅':selected?.numero?'PDF A4 téléchargé (copie originale non disponible pour ce document).':'PDF A4 téléchargé ✅');
   }catch(e){status('Impossible de générer le PDF : '+e.message,true);}
   finally{button.disabled=false;button.textContent=former;}
  }

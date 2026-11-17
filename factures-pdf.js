@@ -3,7 +3,7 @@
   'use strict';
 
   let jsPdfLoader;
-  const TEMPLATE_VERSION='magique-20261117-v2';
+  const TEMPLATE_VERSION='magique-20261117-v3';
   window.fkFacturesPdfVersion=TEMPLATE_VERSION;
   const COLORS = {
     cyan: [0, 181, 235], purple: [82, 25, 119], pink: [203, 27, 179],
@@ -232,12 +232,24 @@
     return pdf;
   }
 
+  function filenameFor(params) {
+    const rawNumber = value(params.number || 'a-numeroter').replace(/[\\/]+/g, '-');
+    const rawClient = value(params.data?.client?.nom || 'client').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9-]+/gi, '-').replace(/^-|-$/g, '').slice(0, 45);
+    return `${params.kind === 'devis' ? 'Devis' : 'Facture'}_${rawNumber}_${rawClient || 'client'}.pdf`;
+  }
+  window.fkNomFichierFacturePdf = filenameFor;
+
+  // Cette sortie n'effectue aucun téléchargement. Elle permet de figer une copie PDF
+  // immuable dans un bucket Supabase privé au moment de la finalisation.
+  window.fkGenererFacturePdfBlob = async params => {
+    const pdf = await build(params);
+    return { blob: pdf.output('blob'), filename: filenameFor(params) };
+  };
+
   window.fkExporterFacturePdf = async (params, action = 'download', targetWindow = null) => {
     try {
       const pdf = await build(params);
-      const rawNumber = value(params.number || 'a-numeroter').replace(/[\\/]+/g, '-');
-      const rawClient = value(params.data?.client?.nom || 'client').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9-]+/gi, '-').replace(/^-|-$/g, '').slice(0, 45);
-      const filename = `${params.kind === 'devis' ? 'Devis' : 'Facture'}_${rawNumber}_${rawClient || 'client'}.pdf`;
+      const filename = filenameFor(params);
       if (action === 'print' && targetWindow && !targetWindow.closed) {
         const url = pdf.output('bloburl');
         targetWindow.location.replace(url);
