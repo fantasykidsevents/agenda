@@ -83,7 +83,7 @@ declare
   d public.devis_fantasy;
   n integer;
   jour date := (now() at time zone 'Europe/Brussels')::date;
-  annee integer := extract(year from jour)::integer;
+  v_annee integer := extract(year from jour)::integer;
 begin
   if not public.fk_factures_est_responsable() then raise exception 'Accès refusé.'; end if;
   select * into d from public.devis_fantasy where id = p_id for update;
@@ -95,13 +95,13 @@ begin
     raise exception 'Complétez le client, son adresse et les lignes du devis.';
   end if;
   insert into public.devis_fantasy_compteurs(annee, dernier_numero)
-  values(annee,1)
+  values(v_annee,1)
   on conflict (annee) do update
      set dernier_numero=public.devis_fantasy_compteurs.dernier_numero+1
   returning dernier_numero into n;
   perform set_config('fk_devis.autorise_rpc','oui',true);
   update public.devis_fantasy
-    set numero='DEV-'||annee::text||'/'||lpad(n::text,3,'0'),
+    set numero='DEV-'||v_annee::text||'/'||lpad(n::text,3,'0'),
         statut='emis',
         contenu=jsonb_set(d.contenu,'{date_emission}',to_jsonb(jour::text),true)
     where id=p_id returning * into d;
