@@ -1934,6 +1934,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <optgroup label="✨ Féerique"><option>Flash · 30 min</option><option>Magic · 1 h</option><option>Fantastic · 1 h 30</option><option>Célébration · 2 h</option><option>Surprise · 1 h</option></optgroup>
       <optgroup label="🎤 K-pop"><option>Rising Star (K-pop) · 30 min</option><option>Idol Party (K-pop) · 1 h</option><option>Superstar Experience (K-pop) · 2 h</option></optgroup>
     </select></div>
+    <div class="anniv-only">
+      <label for="personnages_client">🎭 Personnage(s) choisi(s) par le client</label>
+      <input id="personnages_client" type="text" maxlength="180" placeholder="Ex. Elsa et Anna" autocomplete="off" />
+      <p class="hint" style="margin:4px 0 8px">Apparaît sur le devis et les confirmations. Indique les personnages promis, pas le nom des comédiens.</p>
+    </div>
     <datalist id="themesList"></datalist>
     <label for="adresse" id="adresseLbl">Adresse</label>
     <input id="adresse" type="text" />
@@ -4251,6 +4256,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   function openForm(ev, date) {
     optSel = { ...((ev && ev.options) || {}) }; devisApres = false;
+    $("personnages_client").value = String(ev?.options?.personnages_client || "");
     $("optFold").open = false;
     editingId = ev ? ev.id : null;
     document.querySelectorAll("#evForm details.fold-auto").forEach(d => d.open = !ev);   // nouvelle fiche : tout ouvert ; fiche existante : replié
@@ -4483,6 +4489,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       ${["confirme","termine","annule"].includes(ev.statut) ? "" : `<button type="button" class="btn ${d?.envoye_le ? "ghost" : "primary"}" id="devisBtn" style="width:100%">${texteBouton}</button>`}`;
     if ($("devisBtn")) $("devisBtn").onclick = () => {
       if (!$("email").value.trim()) { $("formErr").textContent = "📧 Ajoute d'abord l'e-mail du parent."; $("email").focus(); return; }
+      if (!$("personnages_client").value.trim()) { $("formErr").textContent = "🎭 Indique le ou les personnages choisis par le client avant d'envoyer le devis."; $("personnages_client").focus(); return; }
       if (!(+$("prix").value > 0)) { $("formErr").textContent = "💶 Indique d'abord le prix total."; $("prix").focus(); return; }
       if (!(+$("acompte").value > 0) && !confirm("Aucun acompte indiqué : le devis partira sans montant d'acompte. Continuer ?")) return;
       devisApres = true; $("evForm").requestSubmit();
@@ -5236,7 +5243,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     ev.paies = picked.map(p => paieMap.get(normName(p.nom)) || { prenom: p.nom, deplacement: 0, prestation: 0 })
       .map(p => ({ ...p, prenom: picked.find(x => normName(x.nom) === normName(p.prenom))?.nom || p.prenom }))
       .filter(p => (+p.deplacement || 0) + (+p.prestation || 0) > 0);
-    ev.options = ["evenement", "repetition", "contrat_pro"].includes(ev.type_evenement) || !Object.keys(optSel).length ? null : { ...optSel };
+    const optionsTarifs = Object.fromEntries(Object.entries(optSel).filter(([k]) => k !== "personnages_client"));
+    const personnagesChoisis = $("personnages_client").value.trim();
+    ev.options = ["evenement", "repetition", "contrat_pro"].includes(ev.type_evenement) ? null
+      : Object.keys(optionsTarifs).length || personnagesChoisis
+        ? { ...optionsTarifs, ...(personnagesChoisis ? { personnages_client: personnagesChoisis } : {}) } : null;
     // Sans membres effectivement ajoutés, personne ne recevra d'affectation.
     if (["evenement", "repetition", "contrat_pro"].includes(ev.type_evenement) && eventTeamIds.length && !picked.length) {
       $("formErr").textContent = "Cette team ne contient aucun membre affecté. Vérifiez sa composition dans l'onglet Équipe.";
