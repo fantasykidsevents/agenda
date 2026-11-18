@@ -1274,6 +1274,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .m-year-totals>div{background:#faf6ff;border:1px solid #eadff7;border-radius:12px;padding:11px 12px}
   .m-year-totals small{display:block;font-size:11px;color:#7e668c;margin-bottom:5px}
   .m-year-totals b{display:block;font-size:18px;color:#53317e}
+
+  .m-preview-settings{background:#f8f3ff;border:1px solid #e6d8f4;border-radius:15px;padding:11px 13px;margin:3px 0 18px}
+  .m-preview-settings .sec{margin-top:3px}
+  .m-preview-settings>button{width:100%;margin:7px 0}
+  .m-preview-exit{position:fixed;z-index:95;right:14px;bottom:calc(15px + env(safe-area-inset-bottom,0px));
+    background:linear-gradient(120deg,#5f348f,#8758bf);color:#fff;border:1px solid #d4b3f7;
+    border-radius:16px;padding:13px 17px;font-size:13px;font-weight:800;box-shadow:0 7px 25px #32165966;
+    cursor:pointer;max-width:calc(100vw - 24px)}
+  .m-preview-exit:focus-visible{outline:3px solid #e8b8ff;outline-offset:3px}
 </style>
 </head>
 <body>
@@ -1326,6 +1335,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </div>
   </header>
   <div id="demoBar" class="demo hidden">Mode démo : les événements restent sur cet appareil. Ajoutez vos clés Supabase dans <b>config.js</b> pour partager avec l'équipe.</div>
+  <button type="button" class="m-preview-exit hidden" id="memberPreviewExit" aria-label="Revenir en mode responsable">👑 Revenir en mode responsable</button>
 
   <main>
     <div id="bdaySurprise" class="bday-surprise hidden" role="status" aria-live="polite"></div>
@@ -1831,6 +1841,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <h2 id="teamSheetTitle">👤 Mon profil</h2>
     <div id="profileSelf"></div>
     <div id="profilePrefs">
+    <div id="memberPreviewSettings" class="m-preview-settings hidden">
+      <div class="sec">🎭 Aperçu de l’application</div>
+      <p class="hint">Teste ce que voit un membre de l’équipe avec ton propre profil. Tes droits de responsable restent inchangés.</p>
+      <button type="button" class="btn primary" id="memberPreviewToggle">🎭 Tester la vue membre</button>
+      <p class="hint" style="font-size:11px;margin-bottom:0">Les données sont réelles : toute action effectuée dans cet aperçu est enregistrée normalement.</p>
+    </div>
     <div class="sec">🎂 Mon anniversaire</div>
     <p class="hint" style="margin-top:0">Indique ta date si tu veux une petite surprise magique dans l'app le jour J. C'est facultatif.</p>
     <label for="myBirthday">Date de naissance (facultative)</label>
@@ -2479,7 +2495,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       // Agenda : toute l'équipe voit les événements publics / spectacles,
       // mais les animations restent limitées aux membres affectés.
       const visibles = data.filter(jeVoisEv);
-      if (isResp()) {
+      if (estVraiResponsable()) {
         const [{ data: pv }, { data: pa }] = await Promise.all([sb.from("evenements_prive").select("*"), sb.from("paies").select("*")]);
         const P = new Map((pv || []).map(x => [x.id, x]));
         visibles.forEach(e => { const p = P.get(e.id); if (p) PRIV.forEach(k => e[k] = p[k]); e.paies = (pa || []).filter(x => x.evenement_id === e.id); });
@@ -2646,8 +2662,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   let currentUser = null;
   let demoRole = "resp";
+  // Aperçu purement visuel : ne modifie ni l'utilisateur connecté ni ses droits Supabase.
+  // Repart à zéro à chaque nouvelle ouverture de l'application.
+  let apercuMembre = false;
+  function estVraiResponsable() {
+    if (DEMO) return demoRole === "resp";
+    const me = myMember();
+    return !!(me && me.responsable);
+  }
   // ⭐ Gestionnaire : voit tout l'agenda et gère le planning (sans prix ni paie)
   function isGest() {
+    if (apercuMembre) return false;
     if (DEMO) return demoRole === "resp" || demoRole === "gest";
     const me = myMember(); return isResp() || !!(me && me.gestionnaire);
   }
@@ -2656,11 +2681,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // propre filtre strict sur les affectations, même pour les événements.
   const jeVoisEv = (e) => isResp() || (e.statut !== "en_attente" && (isGest() || e.type_evenement === "evenement" || anims(e).some(a => normName(a) === normName(chatMe()))));
   function isResp() {
-    if (DEMO) return demoRole === "resp";
-    const me = myMember();
-    // Ne jamais donner les droits de responsable par défaut si l'équipe
-    // est vide ou filtrée par les autorisations de la base de données.
-    return !!(me && me.responsable);
+    if (apercuMembre) return false;
+    return estVraiResponsable();
   }
   // L'envoi des photos aux clients est réservé à Jordan personnellement,
   // même si d'autres membres ont le rôle de responsable / gestionnaire.
@@ -6184,6 +6206,26 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   };
   $("teamBtn").onclick = () => openTeamSheet("profil");
   const closeTeam = () => { teamDetailsExpanded=false; $("teamBg").classList.add("hidden"); document.body.style.overflow = ""; };
+  let basculeApercuEnCours = false;
+  async function basculerApercuMembre() {
+    if (basculeApercuEnCours || !estVraiResponsable() || DEMO) return;
+    basculeApercuEnCours = true;
+    const avant = apercuMembre;
+    closeTeam();
+    apercuMembre = !apercuMembre;
+    mesAnimsAvant = null;
+    try {
+      await reload();
+      document.querySelector(`.tab[data-view="${apercuMembre ? "mine" : "cal"}"]`)?.click();
+      toast(apercuMembre ? "🎭 Aperçu membre activé — actions sur les vraies données" : "👑 Mode responsable rétabli");
+    } catch (err) {
+      apercuMembre = avant;
+      await reload().catch(console.error);
+      toast("Impossible de changer la vue : " + (err.message || err));
+    } finally { basculeApercuEnCours = false; }
+  }
+  $("memberPreviewToggle").onclick = basculerApercuMembre;
+  $("memberPreviewExit").onclick = basculerApercuMembre;
   $("teamClose").onclick = closeTeam;
   $("teamBg").addEventListener("click", (e) => { if (e.target.id === "teamBg") closeTeam(); });
   document.addEventListener("change", (e) => { if (e.target.id === "demoMe") { demoMe = e.target.value; renderMine(); } });
@@ -6474,6 +6516,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!isGest() && view === "list") document.querySelector('.tab[data-view="cal"]').click();
     document.querySelectorAll(".resp-only").forEach(el => el.classList.toggle("hidden", !r));
     $("demoRoleBox").classList.toggle("hidden", !DEMO);
+    $("memberPreviewSettings").classList.toggle("hidden", !estVraiResponsable() || DEMO);
+    $("memberPreviewToggle").textContent = apercuMembre ? "👑 Revenir en mode responsable" : "🎭 Tester la vue membre";
+    $("memberPreviewExit").classList.toggle("hidden", !apercuMembre);
     if (!r && view === "stats") document.querySelector('.tab[data-view="cal"]').click();
   }
   try { $("sonsChk").checked = sonsOn(); } catch (e) {}
@@ -9179,7 +9224,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // ================= 💶 Mes gains (chacun voit seulement les siens) =================
   let mesPaies = [], gY = now.getFullYear(), gM = now.getMonth();
   async function gainsReload() {
-    if (DEMO || isResp() || !sb) { mesPaies = null; return; }   // responsables / démo : calculé depuis les animations
+    if (DEMO || estVraiResponsable() || !sb) { mesPaies = null; return; }   // responsables / démo / aperçu : calculé depuis leurs animations
     try { const { data, error } = await sb.rpc("mes_paies"); if (error) throw error; mesPaies = data || []; } catch (e) { console.error(e); mesPaies = []; }
   }
   function lignesGains(prenom) {
@@ -11116,6 +11161,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   async function showApp(user) {
     $("loginScreen").classList.add("hidden");
     $("app").classList.remove("hidden");
+    apercuMembre = false; // un nouveau début de session revient toujours aux droits affichés normaux
     currentUser = user;
     majWho();
     $("logoutBtn").classList.toggle("hidden", DEMO);
