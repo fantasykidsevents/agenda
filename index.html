@@ -1392,6 +1392,23 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     #viewMine .m-visible-tools .evt-tile,#viewStats .g-tiles .evt-tile{transition:none!important}
   }
 
+  /* Aperçu ponctuel des univers : contrôle réservé aux responsables. */
+  .theme-preview-dock{position:fixed;z-index:96;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));max-width:640px;margin:auto;
+    padding:10px;border:1px solid #e7d3f9;border-radius:20px;background:#fffef9f5;
+    box-shadow:0 12px 35px #30134f66;backdrop-filter:blur(15px);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .theme-preview-dock .preview-caption{color:#5b3386;font-size:12px;font-weight:800;white-space:nowrap}
+  .theme-preview-dock select{flex:1;min-width:120px;max-width:225px;border:1px solid #e1caf8;border-radius:12px;background:#f7f0ff;padding:9px 6px;font:inherit;font-size:13px;font-weight:700}
+  .theme-preview-dock button{border:0;border-radius:12px;padding:10px 11px;font-size:12px;font-weight:800;background:#7b3ec2;color:#fff}
+  .theme-preview-dock button.preview-close{background:#efe6f8;color:#623b89}
+  #themePreviewSample{margin-bottom:14px}
+  #themePreviewSample .preview-eyebrow{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.4px;opacity:.8;text-transform:uppercase}
+  #themePreviewSample .preview-title{font-size:21px;margin:3px 0 2px;font-weight:800}
+  #themePreviewSample .preview-sub{font-size:13px;opacity:.9}
+  #rgThemeStatus{background:#f9f5ff;border:1px solid #e8d6f8;border-radius:12px;padding:10px 12px;margin:8px 0;font-size:13px;color:#644189}
+  body[data-magic-override] header::after{background:var(--th-ban)!important;background-size:200% 100%;filter:drop-shadow(0 0 5px var(--th-bord))}
+  @media(max-width:480px){.theme-preview-dock{gap:6px}.theme-preview-dock .preview-caption{width:100%}.theme-preview-dock select{max-width:none}.theme-preview-dock button{padding:9px 8px}}
+  @media(prefers-reduced-motion:reduce){.theme-preview-dock,#themePreviewSample{animation:none!important}}
+  
   /* Identité Fantasy : dessins vectoriels d'origine, effets doux et univers. */
   .mag-svg-defs{position:absolute!important;width:0!important;height:0!important;overflow:hidden!important;pointer-events:none}
   .mag-shortcut-symbol svg{width:26px;height:26px;color:#8355b6;display:block;filter:drop-shadow(0 2px 4px #a879bd50)}
@@ -1626,6 +1643,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <button class="tab hidden" data-view="stats" id="statsTab"><i>📊</i> Gestion</button>
     </div>
   </header>
+  <div id="themePreviewDock" class="theme-preview-dock hidden" aria-label="Essai du thème, visible uniquement sur cet appareil">
+    <span class="preview-caption">👀 Aperçu temporaire</span>
+    <select id="themePreviewQuick" aria-label="Changer de thème dans l'aperçu"></select>
+    <button type="button" id="themePreviewApply">✨ Activer pour tous</button>
+    <button type="button" class="preview-close" id="themePreviewClose">✕ Quitter</button>
+  </div>
   <div id="demoBar" class="demo hidden">Mode démo : les événements restent sur cet appareil. Ajoutez vos clés Supabase dans <b>config.js</b> pour partager avec l'équipe.</div>
 
   <main>
@@ -1645,6 +1668,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue calendrier -->
     <section id="viewCal">
+      <div id="themePreviewSample" class="nuit-ban hidden"></div>
       <div id="magicAdminWelcome" class="magic-admin-welcome hidden" aria-label="Accueil Fantasy"></div>
       <div id="modeAccueil" class="mode-accueil hidden" aria-label="Mes prestations du jour"></div>
       <div id="centreControle" class="centre-controle hidden" aria-label="Mon centre de contrôle"></div>
@@ -2075,6 +2099,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div class="grab"></div>
     <h2>⚙️ Réglages</h2>
     <div class="resp-only">
+      <div class="sec">🎨 Univers magiques de l'application</div>
+      <p class="hint" style="margin:4px 0 8px">Le thème se met à jour automatiquement selon la saison et les événements. Tu peux aussi choisir un univers pour <b>toute l'équipe</b>. Les membres ne peuvent pas le modifier.</p>
+      <label for="rgThemeChoice">Thème à découvrir ou à activer</label>
+      <select id="rgThemeChoice" aria-label="Choisir un thème magique"></select>
+      <div id="rgThemeStatus" aria-live="polite">✨ Mode automatique actif</div>
+      <div class="actions" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">
+        <button type="button" class="btn ghost" id="rgThemePreview">👀 Voir l'aperçu</button>
+        <button type="button" class="btn primary" id="rgThemeActivate">✨ Activer pour l'équipe</button>
+      </div>
+      <button type="button" class="btn ghost" id="rgThemeAuto" style="margin:7px 0 10px;width:100%">🔄 Revenir au mode automatique</button>
       <div class="sec">🚗 Déplacements</div>
       <label for="rgFantasy">📍 Adresse de Fantasy (point de départ)</label>
       <input id="rgFantasy" type="text" placeholder="Rue, numéro, code postal, ville" />
@@ -2677,7 +2711,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   function appliquerSaisonFantasy() {
     const mois = new Date().getMonth() + 1;
-    document.body.dataset.magicSeason = mois === 10 ? "halloween" : mois === 12 ? "noel" : mois === 2 ? "romance" : "fantasy";
+    const saison = mois === 10 ? "halloween" : mois === 12 ? "noel" : mois === 2 ? "romance" : "fantasy";
+    const forcage = themeApercu || reglages.theme_force || "";
+    document.body.dataset.magicSeason = ["halloween", "noel", "romance"].includes(forcage) ? forcage : saison;
+    if (forcage && (themeApercu || THEMES[forcage])) document.body.dataset.magicOverride = forcage;
+    else delete document.body.dataset.magicOverride;
   }
 
   const ROLE_EMOJI = [[/^acc$/i,"🎒"],[/elsa|anna|kristoff/i,"❄️"],[/olaf/i,"⛄"],[/rumi|mira|zoey/i,"🎤"],[/raiponce|flynn/i,"🌸"],[/belle|aurore/i,"🌹"],
@@ -2974,6 +3012,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   let members = [];
   let indispos = [];
   let reglages = {};
+  // Prévisualisation locale, non enregistrée. Le choix définitif vit dans reglages.theme_force (Supabase).
+  let themeApercu = "";
   let kmCalc = null;
   let kmAjouteDansPrix = null;
   let kmPrixApplication = null; // Base saisie au dernier ajout, jamais déduite d’un ancien marqueur.
@@ -3984,7 +4024,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   });
 
-  function render() { appliquerSaisonFantasy(); majWho(); majCloche(); modeNuit(); renderBirthdaySurprise(); renderNext(); renderMagicAdminWelcome(); renderModeAccueil(); renderCentreControle(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
+  function render() { appliquerSaisonFantasy(); majWho(); majCloche(); modeNuit(); renderThemePreviewUI(); renderBirthdaySurprise(); renderNext(); renderMagicAdminWelcome(); renderModeAccueil(); renderCentreControle(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
   function renderMagicAdminWelcome() {
     const box = $("magicAdminWelcome"); if (!box) return;
     if (!isResp() || view !== "cal") { box.classList.add("hidden"); return; }
@@ -4694,6 +4734,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   // ---------- ⚙️ Réglages & adresses ----------
   function fillReglages() {
+    $("rgThemeChoice").value = THEMES[reglages.theme_force] ? reglages.theme_force : "auto";
+    rafraichirStatutTheme();
     $("rgFantasy").value = reglages.fantasy_adresse || "";
     $("rgKmClient").value = reglages.km_client || "0.25";
     $("rgKmEquipe").value = reglages.km_equipe ?? "0.15";
@@ -10156,6 +10198,96 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
                  scene: "radial-gradient(ellipse at 50% 38%,#9fd6f0 0%,#5fa6d4 50%,#3a78ab 85%)", rideau: ["#e88fb5", "#f4a9c8", "#d9779f"], galon: "#fff3a8",
                  jour: "Aujourd'hui, c'est la chasse aux œufs ✨", cri: "Joyeuses Pâques à toute l'équipe ! 🐰", carte: "linear-gradient(160deg,#fffbe6,#eefaff)" },
   };
+
+  // Univers supplémentaires pour l'ambiance globale, sans modifier les thèmes des fiches existantes.
+  THEMES.ocean = { nom: "L'océan d'Ariel", emoji: "🧜‍♀️", fx: ["🫧", "✧", "✦", "🐚"], fxMode: "neige", fxCol: "#b8f8ff",
+    fond: "linear-gradient(180deg,#042f50,#0b7495 56%,#60bfb9)", ban: "linear-gradient(135deg,#06415b,#0a84a4 58%,#5bc9bd)", bord: "#a7fff2", txt: "#f0ffff",
+    scene: "radial-gradient(ellipse at 50% 38%,#33b7c7,#0a6590 55%,#043752)", rideau: ["#127a9c","#2095af","#065779"], galon: "#c6ffed",
+    jour: "Une vague de magie t'attend ! ✨", cri: "Que la magie de l'océan t'accompagne ! 🐚", carte: "linear-gradient(155deg,#e8fbff,#f0fff9)" };
+  THEMES.lanterns = { nom: "Les lanternes de Raiponce", emoji: "🏮", fx: ["✦", "🌸", "✨", "✧"], fxMode: "scintille", fxCol: "#ffe3a0",
+    fond: "linear-gradient(180deg,#30184d,#744a95 58%,#d39b8d)", ban: "linear-gradient(135deg,#4d2b78,#9f62b3 52%,#e4ab75)", bord: "#ffe6a5", txt: "#fff5e6",
+    scene: "radial-gradient(ellipse at 50% 38%,#b77cb8,#694083 53%,#291a48)", rideau: ["#653987","#9565b1","#513071"], galon: "#f4d99b",
+    jour: "Que les lanternes illuminent cette journée ✨", cri: "Que tes rêves brillent de mille feux ! 🏮", carte: "linear-gradient(155deg,#f9f0ff,#fff6e5)" };
+  THEMES.romance = { nom: "Saint-Valentin", emoji: "💗", fx: ["💗", "🌸", "✦", "💕"], fxMode: "neige", fxCol: "#ffd3f1",
+    fond: "linear-gradient(180deg,#491b56,#9e568e 55%,#e8a3bb)", ban: "linear-gradient(135deg,#763b85,#cb76ad 55%,#f0adcf)", bord: "#ffe0ef", txt: "#fff6fb",
+    scene: "radial-gradient(ellipse at 50% 38%,#d590bc,#8d477d 52%,#4a214e)", rideau: ["#9e467d","#ca619c","#7e356b"], galon: "#ffe0ef",
+    jour: "Une journée pleine de douceur et de magie ✨", cri: "De l'amour et de la magie pour toute l'équipe ! 💗", carte: "linear-gradient(155deg,#fff0f9,#f8edff)" };
+  // Uniquement l'administrateur peut prévisualiser ou enregistrer l'ambiance pour l'équipe.
+  const OPTIONS_AMBIANCES = [
+    ["auto","✨ Automatique (saisons et événements)"], ["noel","🎄 Noël"], ["halloween","🎃 Halloween"],
+    ["nuit","🌙 La Nuit Magique"], ["glace","❄️ Elsa · Royaume des glaces"],
+    ["ocean","🧜‍♀️ Ariel · Océan"], ["lanterns","🏮 Raiponce · Lanternes"],
+    ["kpop","🎤 K-pop"], ["paques","🐣 Pâques"], ["romance","💗 Saint-Valentin"]
+  ];
+  $("rgThemeChoice").innerHTML = OPTIONS_AMBIANCES.map(([k,label]) => '<option value="'+k+'">'+label+'</option>').join("");
+  $("themePreviewQuick").innerHTML = OPTIONS_AMBIANCES.filter(([k]) => k !== "auto")
+    .map(([k,label]) => '<option value="'+k+'">'+label+'</option>').join("");
+  function rafraichirStatutTheme() {
+    const k = reglages.theme_force;
+    $("rgThemeStatus").textContent = THEMES[k]
+      ? "✨ Univers actif pour toute l'équipe : " + THEMES[k].nom + ". Tu peux changer de thème ou revenir à Automatique."
+      : "📅 Mode automatique : l'ambiance change selon les saisons et les événements.";
+  }
+  function renderThemePreviewUI() {
+    const k = themeApercu;
+    const show = !!(k && THEMES[k] && isResp());
+    const dock = $("themePreviewDock"), carte = $("themePreviewSample");
+    dock.classList.toggle("hidden", !show);
+    carte.classList.toggle("hidden", !show || view !== "cal");
+    if (show) {
+      $("themePreviewQuick").value = k;
+      appliquerVars(carte, k);
+      carte.innerHTML = '<span class="nm-mini emo">' + visuelTheme(k) + '</span><div>'
+        + '<small class="preview-eyebrow">👀 Aperçu, non envoyé à l’équipe</small>'
+        + '<b class="preview-title">' + esc(THEMES[k].nom) + '</b>'
+        + '<small class="preview-sub">' + esc(THEMES[k].jour) + '</small></div>';
+    }
+    rafraichirStatutTheme();
+  }
+  function arreterApercuTheme() {
+    themeApercu = "";
+    render();
+    toast("✨ Aperçu terminé : retour à l'ambiance actuelle.");
+  }
+  function essayerTheme(k) {
+    if (!isResp()) return toast("Réservé aux responsables.");
+    if (!THEMES[k]) { arreterApercuTheme(); return; }
+    themeApercu = k;
+    $("rgBg").classList.add("hidden");
+    document.body.style.overflow = "";
+    const agenda = document.querySelector('.tab[data-view="cal"]');
+    if (view !== "cal" && agenda) agenda.click(); else render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  async function activerThemeEquipe(k) {
+    if (!isResp()) return toast("Réservé aux responsables.");
+    if (k !== "auto" && !THEMES[k]) return toast("Thème non reconnu.");
+    const valeur = k === "auto" ? "" : k;
+    const boutons = [$("rgThemeActivate"), $("rgThemeAuto"), $("themePreviewApply")];
+    boutons.forEach(b => b.disabled = true);
+    try {
+      await regStore.set({ theme_force: valeur });
+      const nouveau = await regStore.get();
+      if ((nouveau.theme_force || "") !== valeur) throw new Error("L'enregistrement global n'a pas été confirmé.");
+      reglages = nouveau;
+      themeApercu = "";
+      $("rgThemeChoice").value = valeur || "auto";
+      render();
+      toast(valeur ? "✨ " + THEMES[valeur].nom + " activé pour toute l'équipe !" : "📅 Thèmes automatiques réactivés pour toute l'équipe.");
+    } catch (err) { toast("Impossible de changer le thème : " + (err.message || err)); }
+    finally { boutons.forEach(b => b.disabled = false); }
+  }
+  $("rgThemePreview").onclick = () => essayerTheme($("rgThemeChoice").value);
+  $("rgThemeActivate").onclick = () => activerThemeEquipe($("rgThemeChoice").value);
+  $("rgThemeAuto").onclick = () => activerThemeEquipe("auto");
+  $("themePreviewQuick").onchange = () => {
+    if (!isResp()) return;
+    themeApercu = $("themePreviewQuick").value;
+    render();
+  };
+  $("themePreviewApply").onclick = () => activerThemeEquipe(themeApercu);
+  $("themePreviewClose").onclick = arreterApercuTheme;
+
   const THEME_LABELS = [["auto", "✨ Automatique (selon le titre)"], ["nuit", "🌙 La Nuit Magique"], ["noel", "🎄 Noël"], ["halloween", "🎃 Halloween"], ["kpop", "🎤 K-pop"], ["glace", "❄️ Royaume des glaces"], ["paques", "🐣 Pâques"], ["aucun", "Aucun thème"]];
   $("theme_app").innerHTML = THEME_LABELS.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
   const estSpectacle = (e) => !!e && e.statut !== "annule" && /nuit magique/i.test((e.theme || "") + " " + (e.titre || "")) && /spectacle/i.test(e.titre || "");
@@ -10196,12 +10328,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   function modeNuit() {   // (nom historique) : thème du jour + bandeaux à rebours
     const t = todayISO(), duJour = events.find(e => e.date === t && themeDe(e));
-    const k = duJour ? themeDe(duJour) : null;
+    const force = THEMES[themeApercu] ? themeApercu : (THEMES[reglages.theme_force] ? reglages.theme_force : "");
+    const saison = document.body.dataset.magicSeason;
+    const k = force || (duJour ? themeDe(duJour) : null) || (THEMES[saison] ? saison : null);
     Object.keys(THEMES).forEach(x => document.body.classList.toggle("th-" + x, x === k));
     document.body.classList.toggle("themed", !!k);
     if (k) appliquerVars(document.body, k);
     if (k !== themeActif) { themeActif = k; effets(k); }
-    if (duJour && themeFait !== t + k) { themeFait = t + k; rideau(duJour); }
+    if (!force && duJour && themeFait !== t + k) { themeFait = t + k; rideau(duJour); }
     // bandeaux : prochain spectacle / événement à thème (jamais celui du jour)
     let ban = $("nuitBan");
     if (!ban) { ban = document.createElement("div"); ban.id = "nuitBan"; ban.className = "th-bans"; $("nextMagic").before(ban); }
@@ -10375,6 +10509,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
   // Sans notifications téléphone, la cloche se met tout de même à jour dans l'app.
   setInterval(() => { if (currentUser && !document.hidden) chargerNotifications().catch(console.warn); }, 30000);
+  // Secours si la diffusion temps réel des réglages n'est pas activée : vérifier l'ambiance toutes les 2 minutes.
+  setInterval(async () => {
+    if (!currentUser || DEMO || document.hidden) return;
+    try {
+      const prochain = await regStore.get();
+      if ((prochain.theme_force || "") !== (reglages.theme_force || "")) {
+        reglages = { ...reglages, theme_force: prochain.theme_force || "" };
+        render();
+      }
+    } catch (e) { console.warn("Actualisation du thème :", e); }
+  }, 120000);
 
   // ================= 📋 Check-list de la veille (responsables) =================
   const CK_DEFAUT = "🔊 JBL chargée\n🫧 Machine à bulles chargée\n💄 Caisse maquillage complète\n🎨 Matériel d'animation (feutres, coloriages…)\n📸 Téléphone / appareil photo chargé";
@@ -11531,6 +11676,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (sb && !channel) {
       channel = sb.channel("ev").on("postgres_changes", { event: "*", schema: "public", table: "evenements" }, () => reload())
         .on("postgres_changes", { event: "*", schema: "public", table: "equipe" }, () => reload())
+        .on("postgres_changes", { event: "*", schema: "public", table: "reglages" }, async () => { try { reglages = await regStore.get(); render(); } catch (err) { console.warn("Thème Fantasy :", err); } })
         .on("postgres_changes", { event: "*", schema: "public", table: "bilans" }, () => reload())
         .on("postgres_changes", { event: "*", schema: "public", table: "costumes" }, async () => { await costReload(); if (!$("costBg").classList.contains("hidden")) renderCost(); if (!$("costAssignBg").classList.contains("hidden")) renderCostAssign(); render(); })
         .on("postgres_changes", { event: "*", schema: "public", table: "costume_attributions" }, async () => { await costAttributionReload(); if (!$("costBg").classList.contains("hidden")) renderCost(); if (!$("costAssignBg").classList.contains("hidden")) renderCostAssign(); render(); })
