@@ -1283,6 +1283,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     border-radius:16px;padding:13px 17px;font-size:13px;font-weight:800;box-shadow:0 7px 25px #32165966;
     cursor:pointer;max-width:calc(100vw - 24px)}
   .m-preview-exit:focus-visible{outline:3px solid #e8b8ff;outline-offset:3px}
+
+  .m-visible-tools{margin:2px 0 20px}
+  .m-visible-tools>.mine-head{margin:0 0 15px}
+  .m-visible-tools .group-title{margin:6px 0 10px}
+  .m-visible-tools .evt-tiles{margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -1389,6 +1394,23 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <button type="button" data-member-jump="gainsSection"><span>💶</span><b>Mes gains</b><small>Mes paiements</small></button>
         <button type="button" data-member-jump="indFold"><span>🚫</span><b>Indispos</b><small>Mes absences</small></button>
       </nav>
+      <div class="m-visible-tools" aria-label="Jeu et outils de l'équipe">
+        <a href="fantasy-match.html?v=20261116-2" class="mine-head" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;background:linear-gradient(110deg,#e0f5ff,#f0ddff 52%,#ffe0f1);border:1px solid #d8b5ff;box-shadow:0 5px 18px rgba(169,42,220,.13)">
+        <span aria-hidden="true" style="font-size:38px;line-height:1">💎</span>
+        <span style="flex:1"><b style="display:block;color:#8021bf;font-size:19px">Fantasy Match</b><small style="display:block;color:#6c5588;margin-top:3px">Le jeu magique de l'équipe · 200 niveaux · 5 vies</small></span>
+        <span aria-hidden="true" style="font-size:23px;color:#a52fe8">›</span>
+      </a>
+        <div class="group-title">✨ Les outils de l'équipe</div>
+        <div class="evt-tiles">
+        <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
+        <button type="button" class="evt-tile" id="musicOpenBtn"><span>🎵</span>Musiques</button>
+        <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span>📣</span>Infos équipe</button>
+        <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
+        <button type="button" class="evt-tile" id="myFavBtn"><span>⭐</span>Mes personnages</button>
+        <button type="button" class="evt-tile" id="myIdeasBtn"><span>💡</span>Boîte à idées</button>
+        <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
+      </div>
+      </div>
       <div class="mine-head post-actions hidden" id="postActions"></div>
       <div class="mine-head remises-jordan hidden" id="remisesJordan"></div>
       <div class="mine-head post-actions photos-jordan hidden" id="photosJordan"></div>
@@ -1426,32 +1448,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         </div>
       </details>
 
-      <details class="m-extras" id="memberExtras">
-        <summary>🧰 Autres outils de l'équipe <small>Musiques, sondages, guide, stock…</small></summary>
-        <div class="m-extras-body">
-      <div class="evt-tiles">
-        <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
-        <button type="button" class="evt-tile" id="musicOpenBtn"><span>🎵</span>Musiques</button>
-        <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span>📣</span>Infos équipe</button>
-        <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
-        <button type="button" class="evt-tile" id="myFavBtn"><span>⭐</span>Mes personnages</button>
-        <button type="button" class="evt-tile" id="myIdeasBtn"><span>💡</span>Boîte à idées</button>
-        <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
-      </div>
-      <a href="fantasy-match.html?v=20261116-2" class="mine-head" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;background:linear-gradient(110deg,#e0f5ff,#f0ddff 52%,#ffe0f1);border:1px solid #d8b5ff;box-shadow:0 5px 18px rgba(169,42,220,.13)">
-        <span aria-hidden="true" style="font-size:38px;line-height:1">💎</span>
-        <span style="flex:1"><b style="display:block;color:#8021bf;font-size:19px">Fantasy Match</b><small style="display:block;color:#6c5588;margin-top:3px">Le jeu magique de l'équipe · 200 niveaux · 5 vies</small></span>
-        <span aria-hidden="true" style="font-size:23px;color:#a52fe8">›</span>
-      </a>
-
       <div class="mine-head mine-calendar">
         <div class="group-title">📆 Mes prestations sur mon téléphone</div>
         <p class="hint" style="margin:0 0 10px">Retrouvez automatiquement vos animations dans Google Agenda ou le calendrier de l'iPhone.</p>
         <div id="calBox"><button type="button" class="btn primary" id="calBtn" style="width:100%">📆 Ajouter mes prestations à mon calendrier</button></div>
       </div>
 
-        </div>
-      </details>
     </section>
 
     <!-- Vue Chat -->
