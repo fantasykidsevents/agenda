@@ -159,7 +159,8 @@
   function remplir(d) {
     const jour = d.date ? new Date(d.date + "T12:00:00").toLocaleDateString("fr-BE", { weekday: "long", day: "numeric", month: "long" }) : "";
     const h = (x) => x ? String(x).slice(0, 5).replace(":", "h") : "";
-    $("recap").innerHTML = `<b>🎂 ${d.enfant ? "L'anniversaire de " + esc(d.enfant) + (d.age ? ` (${esc(d.age)} ans)` : "") : "Votre animation"}</b>📅 ${esc(jour.charAt(0).toUpperCase() + jour.slice(1))}${d.heure ? " · " + h(d.heure) + (d.heure_fin ? " – " + h(d.heure_fin) : "") : ""}${d.adresse ? "<br>📍 " + esc(d.adresse) : ""}`;
+    const personnages = String(d.options?.personnages_client || "").trim();
+    $("recap").innerHTML = `<b>🎂 ${d.enfant ? "L'anniversaire de " + esc(d.enfant) + (d.age ? ` (${esc(d.age)} ans)` : "") : "Votre animation"}</b>📅 ${esc(jour.charAt(0).toUpperCase() + jour.slice(1))}${d.heure ? " · " + h(d.heure) + (d.heure_fin ? " – " + h(d.heure_fin) : "") : ""}${d.adresse ? "<br>📍 " + esc(d.adresse) : ""}${personnages ? "<br>🎭 Personnage(s) choisi(s) : <b>" + esc(personnages) + "</b>" : ""}`;
     const optionsFacturees = Object.entries(d.options || {}).reduce((t,[k,n]) => t + (k === "tatouage" ? 0 : (OPT[k]?.[1] || 0) * (+n || 0)),0);
     const deplacement = d.km_detail?.fraisInclusPrix === true || d.frais_deplacement_inclus === true ? Math.max(0,+d.deplacement_client || 0) : 0;
     const formule = Math.max(0,Math.round(((+d.prix || 0)-optionsFacturees-deplacement)*100)/100);
@@ -187,7 +188,7 @@
   async function charger() {
     if (DEMO) {
       $("demoBar").classList.remove("hidden");
-      remplir({ date: new Date(Date.now() + 12*864e5).toISOString().slice(0,10), heure: "14:00:00", heure_fin: "15:00:00", enfant: "Lina", age: 6, adresse: "Rue des Fées 12, 5070 Fosses-la-Ville", theme: "Magic · 1 h", options: { mascotte: 1, tatouage: 12 }, prix: 275, acompte: 50 });
+      remplir({ date: new Date(Date.now() + 12*864e5).toISOString().slice(0,10), heure: "14:00:00", heure_fin: "15:00:00", enfant: "Lina", age: 6, adresse: "Rue des Fées 12, 5070 Fosses-la-Ville", theme: "Magic · 1 h", options: { personnages_client: "Elsa et Anna", mascotte: 1, tatouage: 12 }, prix: 275, acompte: 50 });
     } else {
       const { data, error } = await sb.rpc("devis_get", { p_token: token });
       if (error || !data) { $("loading").classList.add("hidden"); $("invalid").classList.remove("hidden"); return; }
