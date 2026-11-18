@@ -1288,6 +1288,109 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .m-visible-tools>.mine-head{margin:0 0 15px}
   .m-visible-tools .group-title{margin:6px 0 10px}
   .m-visible-tools .evt-tiles{margin-bottom:4px}
+
+  /* ✨ Fantasy dans toutes les vues : lumières et micro-effets, sans nuire aux données. */
+  @keyframes fkMtwinkle{0%,100%{opacity:.32;transform:translateY(0)}48%{opacity:.9;transform:translateY(-3px)}}
+  @keyframes fkMglow{0%,100%{box-shadow:0 9px 26px #63349a23,0 0 0 1px #f7ddff30}50%{box-shadow:0 13px 35px #7f46c14a,0 0 0 1px #ffd69b66}}
+  @keyframes fkMshimmer{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+  @keyframes fkMsweep{0%{transform:translateX(-160%) rotate(17deg)}40%,100%{transform:translateX(1500%) rotate(17deg)}}
+  @keyframes fkMfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  @keyframes fkMappear{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  header::after{background:var(--grad-loop);background-size:200% 100%;animation:fkMshimmer 14s linear infinite alternate}
+  header::before{content:"";position:absolute;right:7%;top:calc(var(--safe-t) + 6px);width:76px;height:44px;pointer-events:none;opacity:.38;
+    background:radial-gradient(circle at 8% 24%,#aa65ff 0 1.6px,transparent 2.3px),
+      radial-gradient(circle at 72% 14%,#fcbf67 0 1px,transparent 2px),
+      radial-gradient(circle at 48% 70%,#7ccdfb 0 1.5px,transparent 2.2px);
+    animation:fkMtwinkle 7s ease-in-out infinite}
+  .tabs .tab.on{background:linear-gradient(180deg,#f1e8ff65,#fbf8ff12);border-radius:11px 11px 0 0}
+  .tabs .tab.on::after{box-shadow:0 0 10px #ba73f79e}
+  #viewMine #mineHead{position:relative;overflow:hidden;border:1px solid #ead8f7;
+    background:linear-gradient(115deg,#fffdfd,#f7efff 60%,#eef8ff)}
+  #viewMine #mineHead::after{content:"✧";position:absolute;right:20px;top:8px;color:#bb8ee8;font-size:24px;pointer-events:none}
+  #viewMine .m-hero{position:relative;isolation:isolate;overflow:hidden;
+    border:1px solid #d6b6f7;background:radial-gradient(circle at 87% 11%,#f3b9ff55,transparent 37%),
+      radial-gradient(circle at 6% 96%,#43c6ff3d,transparent 47%),
+      linear-gradient(118deg,#35216e,#6944ab 57%,#8f4fb0);animation:fkMglow 8s ease-in-out infinite,fkMappear .45s ease both}
+  #viewMine .m-hero::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(circle at 9% 18%,#fff8ce 0 1.5px,transparent 2.2px),
+      radial-gradient(circle at 79% 23%,#ffffff 0 1.2px,transparent 2px),
+      radial-gradient(circle at 92% 67%,#fff3ce 0 1.7px,transparent 2.5px),
+      radial-gradient(circle at 27% 80%,#c5ebff 0 1.2px,transparent 2px),
+      radial-gradient(circle at 58% 14%,#ffffff 0 .9px,transparent 1.8px),
+      radial-gradient(circle at 63% 82%,#ffcbe9 0 1px,transparent 1.9px);
+    animation:fkMtwinkle 6s ease-in-out infinite}
+  #viewMine .m-hero::after{content:"";position:absolute;pointer-events:none;z-index:0;width:250px;height:250px;
+    right:-120px;top:-145px;border:1px solid #fff5d566;border-radius:50%;
+    box-shadow:0 0 0 29px #ffffff07,0 0 0 58px #ffffff06,0 0 70px #ffc9ef28}
+  #viewMine .m-hero>*{position:relative;z-index:1}
+  #viewMine .m-hero-empty{background:linear-gradient(135deg,#fefcff,#f0e9ff 70%,#e8f6ff);color:#5d4b76}
+  #viewMine .m-hero-empty h2{color:#533582}#viewMine .m-hero-empty p{color:#79658c}
+  #viewMine .m-hero-empty::before{opacity:.4}
+  #viewMine .m-hero-actions button{box-shadow:0 3px 12px #1b084632;transition:transform .2s,box-shadow .2s}
+  #viewMine .m-hero-actions button:hover,#viewMine .m-hero-actions button:focus-visible{transform:translateY(-2px);box-shadow:0 6px 18px #1b08464d}
+  #viewMine .fantasy-game-banner{position:relative;overflow:hidden;isolation:isolate;display:flex;align-items:center;gap:14px;
+    color:#5e358d;text-decoration:none;border:1px solid #c7afea;border-radius:18px;
+    background:radial-gradient(circle at 78% 14%,#ffe7ff,transparent 46%),
+      linear-gradient(115deg,#def6ff,#e7dcff 58%,#ffe1f3);
+    box-shadow:0 8px 25px #985ed228,0 0 0 1px #fff9;animation:fkMappear .5s ease both;
+    transition:transform .2s,box-shadow .2s}
+  #viewMine .fantasy-game-banner::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.82;
+    background:radial-gradient(circle at 18% 24%,#fff 0 2px,transparent 3px),
+      radial-gradient(circle at 92% 16%,#a373eb 0 1.7px,transparent 3px),
+      radial-gradient(circle at 53% 81%,#fff 0 2px,transparent 3px),
+      radial-gradient(circle at 72% 40%,#c783d9 0 1px,transparent 2px)}
+  #viewMine .fantasy-game-banner::after{content:"";position:absolute;top:-55%;left:-24%;width:13%;height:220%;
+    background:linear-gradient(90deg,transparent,#ffffffa6,transparent);pointer-events:none;animation:fkMsweep 9s ease-in-out infinite}
+  #viewMine .fantasy-game-banner>*{position:relative;z-index:1}
+  #viewMine .fantasy-game-banner>span:first-child{animation:fkMfloat 3.8s ease-in-out infinite;filter:drop-shadow(0 3px 8px #aa5ce488)}
+  #viewMine .fantasy-game-banner:hover,#viewMine .fantasy-game-banner:focus-visible{transform:translateY(-2px);box-shadow:0 11px 30px #8a51c944}
+  #viewMine .m-shortcuts button{background:linear-gradient(150deg,#fff,#f7f0ff);
+    border-color:#dfc8f3;box-shadow:0 3px 11px #6b389c15;transition:transform .18s,box-shadow .18s}
+  #viewMine .m-shortcuts button:hover,#viewMine .m-shortcuts button:focus-visible{
+    transform:translateY(-2px);box-shadow:0 8px 16px #733ca82b}
+  #viewMine .m-card{position:relative;border-color:#e3d4f0;border-left:3px solid #b485ef;
+    background:linear-gradient(135deg,#fff,#fefbff);box-shadow:0 4px 17px #70449718}
+  #viewMine .m-card::before{content:"✧";position:absolute;right:15px;top:28px;
+    font-size:22px;color:#d7b9f4;pointer-events:none}
+  #viewMine .m-section>.group-title{color:#6c409c}
+  #viewMine .m-visible-tools .evt-tile,#viewStats .g-tiles .evt-tile{position:relative;
+    border-color:#dfcbf4;background:linear-gradient(145deg,#fff,#f5efff);
+    box-shadow:0 4px 14px #7645af13;transition:transform .2s,box-shadow .2s,border-color .2s}
+  #viewMine .m-visible-tools .evt-tile:hover,#viewStats .g-tiles .evt-tile:hover,
+  #viewMine .m-visible-tools .evt-tile:focus-visible,#viewStats .g-tiles .evt-tile:focus-visible{
+    transform:translateY(-3px);border-color:#b783ef;box-shadow:0 8px 20px #7c49c033}
+  #viewMine .m-visible-tools .evt-tile span,#viewStats .g-tiles .evt-tile span{
+    filter:drop-shadow(0 2px 5px #b581d45c)}
+  #viewCal .cal{border:1px solid #e9dcf6;box-shadow:0 7px 27px #66439716}
+  #viewCal .cal-nav h2{color:#5f388e;letter-spacing:.1px}
+  #viewCal .cal-nav h2::before{content:"✦";font-size:12px;color:#c78ad7;margin-right:8px;vertical-align:2px}
+  #viewCal .day.sel{outline:2px solid #ad70e6;background:linear-gradient(145deg,#f1e5ff,#fdf8ff);
+    box-shadow:0 0 0 3px #f3e7ff,inset 0 0 14px #b57be925}
+  #viewCal .day.today .n{box-shadow:0 0 0 3px #e3c5f7,0 0 12px #9e61ed77}
+  #viewCal .day.has:not(.sel):hover{background:#f6efff}
+  #viewCal .centre-controle{position:relative;isolation:isolate;overflow:hidden;
+    border-color:#ddc6ef;background:radial-gradient(circle at 100% 0%,#f2ddff 0,transparent 32%),
+      linear-gradient(130deg,#fff,#fbf6ff);box-shadow:0 8px 28px #7652a824}
+  #viewCal .centre-controle::before{content:"";pointer-events:none;position:absolute;inset:0;opacity:.65;z-index:0;
+    background:radial-gradient(circle at 96% 12%,#d397e7 0 1.5px,transparent 2.6px),
+      radial-gradient(circle at 80% 74%,#bba4f5 0 1.2px,transparent 2.2px),
+      radial-gradient(circle at 60% 13%,#e4b36d 0 1px,transparent 2px);animation:fkMtwinkle 8s ease-in-out infinite}
+  #viewCal .centre-controle>*{position:relative;z-index:1}
+  #viewStats #gCategories{background:linear-gradient(115deg,#fcf9ff,#f2eaff);
+    border:1px solid #e5d5f3;border-radius:15px;padding:8px;box-shadow:0 4px 16px #66439712}
+  #viewStats .group-title{color:#70469b}
+  body.dark #viewMine .m-hero{background:radial-gradient(circle at 90% 0%,#945bbe66,transparent 43%),
+    linear-gradient(130deg,#25144d,#573080)!important}
+  body.dark #viewMine .fantasy-game-banner{background:linear-gradient(115deg,#30204d,#503376,#623f75)!important;color:#f3e3ff!important}
+  body.dark #viewMine .fantasy-game-banner b,body.dark #viewMine .fantasy-game-banner small{color:#f2e7ff!important}
+  body.dark #viewCal .centre-controle{background:linear-gradient(135deg,#271b40,#332347)!important}
+  @media(prefers-reduced-motion:reduce){
+    header::before,header::after,#viewMine .m-hero,#viewMine .m-hero::before,
+    #viewMine .fantasy-game-banner,#viewMine .fantasy-game-banner::after,#viewMine .fantasy-game-banner>span:first-child,
+    #viewCal .centre-controle::before{animation:none!important}
+    #viewMine .m-shortcuts button,#viewMine .fantasy-game-banner,#viewMine .m-card,
+    #viewMine .m-visible-tools .evt-tile,#viewStats .g-tiles .evt-tile{transition:none!important}
+  }
 </style>
 </head>
 <body>
@@ -1388,14 +1491,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <section id="viewMine" class="hidden">
       <div class="mine-head" id="mineHead"></div>
       <div id="memberOverview" class="m-overview" aria-live="polite"></div>
-      <nav class="m-shortcuts" aria-label="Accès rapide à mon espace">
-        <button type="button" data-member-jump="mineListSection"><span>🎭</span><b>Prestations</b><small>Mon planning</small></button>
-        <button type="button" data-member-jump="tenuesSection"><span>👗</span><b>Mes tenues</b><small>À préparer</small></button>
-        <button type="button" data-member-jump="gainsSection"><span>💶</span><b>Mes gains</b><small>Mes paiements</small></button>
-        <button type="button" data-member-jump="indFold"><span>🚫</span><b>Indispos</b><small>Mes absences</small></button>
-      </nav>
       <div class="m-visible-tools" aria-label="Jeu et outils de l'équipe">
-        <a href="fantasy-match.html?v=20261116-2" class="mine-head" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;background:linear-gradient(110deg,#e0f5ff,#f0ddff 52%,#ffe0f1);border:1px solid #d8b5ff;box-shadow:0 5px 18px rgba(169,42,220,.13)">
+        <a href="fantasy-match.html?v=20261116-2" class="mine-head fantasy-game-banner">
         <span aria-hidden="true" style="font-size:38px;line-height:1">💎</span>
         <span style="flex:1"><b style="display:block;color:#8021bf;font-size:19px">Fantasy Match</b><small style="display:block;color:#6c5588;margin-top:3px">Le jeu magique de l'équipe · 200 niveaux · 5 vies</small></span>
         <span aria-hidden="true" style="font-size:23px;color:#a52fe8">›</span>
@@ -1411,6 +1508,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
       </div>
       </div>
+      <nav class="m-shortcuts" aria-label="Accès rapide à mon espace">
+        <button type="button" data-member-jump="mineListSection"><span>🎭</span><b>Prestations</b><small>Mon planning</small></button>
+        <button type="button" data-member-jump="tenuesSection"><span>👗</span><b>Mes tenues</b><small>À préparer</small></button>
+        <button type="button" data-member-jump="gainsSection"><span>💶</span><b>Mes gains</b><small>Mes paiements</small></button>
+        <button type="button" data-member-jump="indFold"><span>🚫</span><b>Indispos</b><small>Mes absences</small></button>
+      </nav>
       <div class="mine-head post-actions hidden" id="postActions"></div>
       <div class="mine-head remises-jordan hidden" id="remisesJordan"></div>
       <div class="mine-head post-actions photos-jordan hidden" id="photosJordan"></div>
