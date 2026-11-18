@@ -222,6 +222,24 @@ async function adresseMailAdministration(email: string) {
   return r.origine === email.trim().toLowerCase() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.destination)
     ? r.destination : email;
 }
+
+// Une décision du client sur un devis est importante : elle part aussi par
+// e-mail au responsable, indépendamment des préférences des rappels courants.
+// Le mail passe par Resend, sans ajouter de message dans « Envoyés » de Gmail.
+async function mailDecisionDevis(titre: string, details: string, evenementId: string) {
+  // Adresse confirmée explicitement par Jordan : ne pas rediriger vers une
+  // préférence ou une variable d'environnement pouvant changer le destinataire.
+  const destinataire = "fantasykidsevents@gmail.com";
+  const lien = `${APP_URL || "."}/index.html?ev=${encodeURIComponent(evenementId)}`;
+  const html = `<div style="font-family:Arial,sans-serif;max-width:540px;margin:auto;color:#241b34">
+    <div style="height:6px;background:linear-gradient(90deg,#00b4ff,#8a3cf7,#d63fd0)"></div>
+    <h2>${esc(titre)}</h2><p style="white-space:pre-line;line-height:1.6">${esc(details)}</p>
+    <p><a href="${lien}" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#793bd3;color:#fff;text-decoration:none">Ouvrir la fiche dans Fantasy</a></p>
+    <p style="font-size:12px;color:#6b6385">Notification automatique Fantasy Kids Events</p></div>`;
+  await envoyerEmail(destinataire, `${titre} – Fantasy Kids Events`, html,
+    `${titre}\n\n${details}\n\nOuvrir la fiche : ${lien}`, [], { canal: "interne" });
+  return destinataire;
+}
 const categoriePush = (tag = "") => {
   if (/^(chat|ment)-/i.test(tag)) return "chat";
   if (/costume|stock|checklist|materiel|repar|piece-perso/i.test(tag)) return "materiel";
@@ -1761,7 +1779,10 @@ Deno.serve(async (req) => {
       for(const m of equipe||[])if(m.email)
         pushs+=await envoyerPush(m.email,{title:titre,body,url:`./index.html?ev=${d.evenement_id}`,tag:`devis-reponse-${d.evenement_id}`},
           {categorie:"administration",sansCloche:true});
-      return json({ok:true,pushs});
+      let mail="envoyé";
+      try { await mailDecisionDevis(titre,body,d.evenement_id); }
+      catch(e) { mail="erreur : "+(e?.message||e); console.error("Mail réponse devis",e); }
+      return json({ok:true,pushs,mail});
     }
 
     // Rappels 1h avant (appelé toutes les 5 minutes par la tâche planifiée)
@@ -2060,9 +2081,15 @@ Deno.serve(async (req) => {
       // ✅ confirmée par le client lui-même (devis accepté en ligne) → on prévient les 👑
       try {
         const { data: dv } = await sb.from("devis").select("accepte_le").eq("evenement_id", ev.id).maybeSingle();
-        if (dv?.accepte_le && Date.now() - new Date(dv.accepte_le).getTime() < 5 * 60e3)
+        if (dv?.accepte_le && Date.now() - new Date(dv.accepte_le).getTime() < 5 * 60e3) {
           for (const m of (equipe || []).filter((y) => y.responsable && y.email))
             await envoyerPush(m.email, { title: `✅ Devis accepté : ${ev.titre || ev.enfant || "animation"}`, body: `${ev.parent || "Le client"} a accepté le devis. La demande d'acompte vient de partir 💳`, url: `./index.html?ev=${ev.id}`, tag: `devis-${ev.id}` });
+          try {
+            await mailDecisionDevis(`✅ Devis accepté : ${ev.titre || ev.enfant || "animation"}`,
+              `${ev.parent || "Le client"} a accepté votre devis.\n${quand(ev)}\nLa demande d'acompte est prévue dans le mail de confirmation.`,
+              ev.id);
+          } catch (mailErreur) { console.error("Mail devis accepté", mailErreur); }
+        }
       } catch (e) { console.error("devis accepté", e); }
       if (ficheEnvoi === "pas d'e-mail" || String(ficheEnvoi).startsWith("erreur"))
         for (const m of equipe || []) if (m.responsable) cibles.push({ nom: m.prenom, role: "", type: "fiche_manuelle" });
