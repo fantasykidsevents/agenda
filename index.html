@@ -2785,14 +2785,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   function lancerIntroFantasy() {
     if (reduceMotion || !$("magicIntro")) return;
-    try { if (sessionStorage.getItem("fk_magic_intro_v2")) return; sessionStorage.setItem("fk_magic_intro_v1", "1"); } catch (_) {}
+    try { if (sessionStorage.getItem("fk_magic_intro_v3")) return; sessionStorage.setItem("fk_magic_intro_v1", "1"); } catch (_) {}
     introFantasyDebut = Date.now(); introFantasyActive = true;
     $("magicIntro").classList.remove("hidden", "closing");
   }
   function terminerIntroFantasy() {
     if (!introFantasyActive) return;
     // Ne découvrir le tableau de bord que lorsque les données sont prêtes.
-    introFantasyTimer = setTimeout(fermerIntroFantasy, Math.max(0, 1450 - (Date.now() - introFantasyDebut)));
+    introFantasyTimer = setTimeout(fermerIntroFantasy, Math.max(0, 4000 - (Date.now() - introFantasyDebut)));
   }
   $("magicIntroSkip").onclick = fermerIntroFantasy;
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("magicIntro").classList.contains("hidden")) fermerIntroFantasy(); });
