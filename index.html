@@ -1406,6 +1406,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         </div>
         <p class="hint">Prestations confirmées et effectuées. La validation enregistre le paiement et prévient le membre, mais ne fait pas de virement.</p>
         <label class="check"><input type="checkbox" id="gPaiesHistory" /> Afficher aussi les paiements déjà effectués</label>
+        <div class="row" style="margin:10px 0"><div><label for="gPaiesYear">📊 Année du bilan</label><select id="gPaiesYear"></select></div></div>
+        <div class="row" style="margin:10px 0"><div><label for="gPaiesMonth">📅 Mois de la prestation</label><input type="month" id="gPaiesMonth" /></div><div><label for="gPaiesMember">👤 Membre</label><select id="gPaiesMember"><option value="">Tous les membres</option></select></div></div>
+        <button type="button" class="sig" id="gPaiesClear">↩ Effacer les filtres</button>
         <div id="gPaiesBody"></div>
       </section>
       <div class="group-title" id="gFinT">💶 Finances</div>
@@ -5913,10 +5916,34 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function renderGestionPaies() {
     if (!isResp()) return;
     const historique=$("gPaiesHistory").checked, auj=todayISO();
+    const annees=new Set([String(new Date().getFullYear())]);
+    for(const e of events){if(e.date)annees.add(e.date.slice(0,4));for(const p of e.paies||[])if(p.paye_le)annees.add(p.paye_le.slice(0,4));}
+    const anneeAvant=$("gPaiesYear").value||String(new Date().getFullYear());
+    $("gPaiesYear").innerHTML=[...annees].sort((a,b)=>b.localeCompare(a)).map(a=>'<option value="'+a+'">'+a+'</option>').join("");
+    $("gPaiesYear").value=anneeAvant;
+    const annee=$("gPaiesYear").value;
+    let dejaPrestation=0,dejaDeplacement=0,encoreDu=0;
+    for(const ev of events)for(const p of ev.paies||[]){
+      if(p.paye && p.paye_le?.startsWith(annee)){
+        dejaPrestation+=+p.prestation||0;dejaDeplacement+=+p.deplacement||0;
+      }
+      if(!p.paye && ["confirme","termine"].includes(ev.statut) && ev.date?.startsWith(annee)){
+        encoreDu+=(+p.prestation||0)+(+p.deplacement||0);
+      }
+    }
+    const dejaPaye=r2(dejaPrestation+dejaDeplacement);
+    dejaPrestation=r2(dejaPrestation);dejaDeplacement=r2(dejaDeplacement);encoreDu=r2(encoreDu);
+
+    const moisFiltre=$("gPaiesMonth").value, membreFiltre=$("gPaiesMember").value;
+    const candidats=[...new Set(events.filter(e=>["confirme","termine"].includes(e.statut)&&e.date<=auj)
+      .flatMap(e=>(e.paies||[]).filter(p=>totPaie(p)>0).map(p=>p.prenom)))].sort((a,b)=>a.localeCompare(b,"fr"));
+    $("gPaiesMember").innerHTML='<option value="">Tous les membres</option>'+candidats.map(n=>'<option value="'+esc(normName(n))+'">'+esc(n)+'</option>').join("");
+    $("gPaiesMember").value=membreFiltre;
     const parPersonne=new Map();
     for (const e of events) {
-      if (!["confirme","termine"].includes(e.statut) || e.date>auj) continue;
+      if (!["confirme","termine"].includes(e.statut) || e.date>auj || (moisFiltre&&!e.date.startsWith(moisFiltre))) continue;
       for (const p of e.paies||[]) {
+        if (membreFiltre && normName(p.prenom)!==membreFiltre) continue;
         const montant=r2((+p.prestation||0)+(+p.deplacement||0));
         if (montant<=0 || (p.paye && !historique)) continue;
         const k=normName(p.prenom);
@@ -5931,7 +5958,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const lignes=groupes.flatMap(g=>g.lignes.map(l=>({...l,nom:g.nom}))).sort((a,b)=>b.date.localeCompare(a.date)||a.nom.localeCompare(b.nom,"fr"));
     const total=groupes.reduce((n,g)=>n+g.du,0);
     const dateFr=x=>x?x.split("-").reverse().join("/"):"—";
-    $("gPaiesBody").innerHTML=`<div class="mine-head" style="margin:10px 0"><b>💶 Reste à verser : ${euro(total)}</b><small>La date du virement est enregistrée automatiquement quand tu cliques sur « Payé ».</small></div>
+    $("gPaiesBody").innerHTML=`<div class="mine-head" style="margin:10px 0">
+      <h3 style="margin:0 0 8px">📊 Bilan des paiements ${esc(annee)} · toute l'équipe</h3>
+      <div class="kpi-row" style="display:flex;flex-wrap:wrap;gap:10px">
+        <div class="kpi" style="flex:1;min-width:140px"><b>${euro(dejaPaye)}</b><span>✅ Total effectivement payé</span></div>
+        <div class="kpi" style="flex:1;min-width:140px"><b>${euro(encoreDu)}</b><span>⏳ Reste prévu à payer</span></div>
+        <div class="kpi" style="flex:1;min-width:140px"><b>${euro(dejaPrestation)}</b><span>🎭 Prestations payées</span></div>
+        <div class="kpi" style="flex:1;min-width:140px"><b>${euro(dejaDeplacement)}</b><span>🚗 Déplacements remboursés</span></div>
+      </div>
+      <small class="hint">Les sommes payées sont comptées selon la date de validation du paiement, même si la prestation a eu lieu une autre année. Les filtres ci-dessous ne modifient pas ce bilan annuel.</small>
+    </div>
+    <div class="mine-head" style="margin:10px 0"><b>💶 Reste à verser dans le tableau affiché : ${euro(total)}</b><small>La date du virement est enregistrée automatiquement quand tu cliques sur « Payé ».</small></div>
       <div style="overflow-x:auto;width:100%;margin-top:10px">
       <table style="width:100%;min-width:850px;border-collapse:collapse;font-size:13px">
         <thead><tr style="background:#f1e9ff;text-align:left"><th style="padding:10px 6px">Date</th><th>Type / animation</th><th>Personnage</th><th>Membre</th><th>Prestation</th><th>Déplacements</th><th>Total</th><th>Virement le</th><th>Action</th></tr></thead>
@@ -5957,6 +5994,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("gPaies").onclick=()=>{ $("gPaiesPanel").classList.remove("hidden");renderGestionPaies();$("gPaiesPanel").scrollIntoView({behavior:"smooth",block:"start"}); };
   $("gPaiesClose").onclick=()=>$("gPaiesPanel").classList.add("hidden");
   $("gPaiesHistory").onchange=renderGestionPaies;
+  $("gPaiesYear").onchange=renderGestionPaies;
+  $("gPaiesMonth").onchange=renderGestionPaies;
+  $("gPaiesMember").onchange=renderGestionPaies;
+  $("gPaiesClear").onclick=()=>{$("gPaiesMonth").value="";$("gPaiesMember").value="";renderGestionPaies();};
   $("gPaiesBody").addEventListener("click",async e=>{
     const un=e.target.closest("[data-g-paie-id]"),tous=e.target.closest("[data-g-paie-tous]");
     if(!un&&!tous)return;
@@ -5969,7 +6010,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       lignes=[{evId:ev.id,prenom:p.prenom}];montant=totPaie(p);
     }else{
       prenom=tous.dataset.gPaieTous;
-      for(const ev of events)if(["confirme","termine"].includes(ev.statut)&&ev.date<=todayISO())
+      const moisSelectionne=$("gPaiesMonth").value;
+      for(const ev of events)if(["confirme","termine"].includes(ev.statut)&&ev.date<=todayISO()&&(!moisSelectionne||ev.date.startsWith(moisSelectionne)))
         for(const p of ev.paies||[])if(!p.paye&&normName(p.prenom)===normName(prenom)&&totPaie(p)>0){
           lignes.push({evId:ev.id,prenom:p.prenom});montant+=totPaie(p);
         }
