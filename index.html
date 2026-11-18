@@ -1397,7 +1397,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue Chiffres (responsables) -->
     <section id="viewStats" class="hidden">
-      <div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
+      <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
       <a href="factures.html" class="mine-head" style="display:block;text-decoration:none;color:#653090;font-weight:800;text-align:center">🧾 Factures & devis · Créer, consulter et imprimer</a>
       <section id="gPaiesPanel" class="panel hidden" aria-label="Paiements de l'équipe">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -1445,6 +1445,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   <form class="sheet" id="evForm" novalidate>
     <div class="grab"></div>
     <h2 id="formTitle">Nouvelle animation</h2>
+    <div id="ficheGuide" class="mine-head resp-only hidden" style="margin:5px 0 12px;background:linear-gradient(115deg,#f1faff,#f8efff)"><b id="ficheGuideTitle">✨ Prochaine étape</b><p class="hint" id="ficheGuideText" style="margin:5px 0 8px"></p><button type="button" class="sig photo" id="ficheGuideAction">Continuer</button></div>
     <div class="seg" id="typeSeg" style="margin-bottom:6px">
       <label><input type="radio" name="typeEv" value="animation" checked /><span>🎂 Animation</span></label>
       <label><input type="radio" name="typeEv" value="evenement" /><span>🎪 Événement</span></label>
@@ -1563,6 +1564,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="anniv-only">
       <div class="row">
         <div><label for="prix">Prix total (€)</label><input id="prix" type="number" step="0.01" min="0" inputmode="decimal" /></div>
+        <div><label for="prixBase">Prix de la prestation (€)</label><input id="prixBase" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Hors options et déplacements" /></div>
+        <div style="flex-basis:100%"><p class="hint" id="prixBreakdown" aria-live="polite">Le détail du prix apparaîtra ici.</p></div>
         <div style="grid-column:1/-1"><button type="button" class="sig photo" id="horsZoneToggle" style="width:100%">🚗 Hors zone : ajouter 25 €</button></div>
         <div><label for="acompte">Acompte (€)</label><input id="acompte" type="number" step="0.01" min="0" inputmode="decimal" /></div>
       </div>
@@ -1841,6 +1844,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </div>
     <div class="sec">👥 Membres de l'équipe</div>
     <p class="hint">Écrivez le prénom <b>comme dans le champ Animateur(s)</b> des animations, et l'e-mail avec lequel la personne se connecte. C'est à cet e-mail qu'elle reçoit les notifications.<br>👑 = responsable (toi) : tout, y compris prix, paie et Gestion.<br>⭐ = gestionnaire : voit tout l'agenda, ajoute et modifie les animations et événements, sans voir les prix ni la paie.<br>🎭 les autres : voient tous les événements dans l'Agenda, mais uniquement leurs animations et événements assignés dans « Mon espace ».</p>
+    <div id="teamMemberDetail" class="mine-head hidden" style="margin:10px 0"></div>
     <div id="teamList"></div>
     <form id="teamForm" class="resp-only">
       <div class="row">
@@ -2886,10 +2890,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("grid").innerHTML = html;
     $("dayTitle").textContent = fmtLong(selDay);
     const dayEvs = byDay[selDay] || [];
-    $("dayList").innerHTML = dayEvs.length ? dayEvs.map(e => card(e, false)).join("")
+    const accesRapide=dayEvs.length?'<div class="mine-head" style="margin:8px 0 12px"><b>✨ '+dayEvs.length+' activité'+(dayEvs.length>1?'s':'')+' ce jour</b>'+dayEvs.map(e=>
+      '<div class="pay-row" style="margin-top:7px"><span class="who"><b>'+esc(e.titre||e.enfant||e.theme||"Prestation")+'</b><small>'+esc(e.heure_debut?hhmm(e.heure_debut):"Horaire à préciser")+' · '+esc((STATUTS[e.statut]||STATUTS.en_attente).label)+'</small></span><button type="button" class="sig" data-day-open="'+esc(e.id)+'">📋 Ouvrir</button></div>'
+      ).join("")+'</div>':"";
+    $("dayList").innerHTML = dayEvs.length ? accesRapide + dayEvs.map(e => card(e, false)).join("")
       : `<div class="empty">🌙 Rien de prévu ce jour-là…<br>Un peu de magie à ajouter ?<br><br><button class="btn ghost" id="addHere" style="flex:none;padding:10px 16px">✨ Ajouter une animation</button></div>`;
   }
 
+  $("dayList").addEventListener("click",e=>{
+    const b=e.target.closest("[data-day-open]");if(!b)return;
+    e.preventDefault();e.stopPropagation();
+    const ev=events.find(x=>String(x.id)===b.dataset.dayOpen);if(ev)openForm(ev);
+  });
   function renderList() {
     const t = todayISO();
     const all = filtered();
@@ -3500,6 +3512,23 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const optCatalogue = () => estKpopTxt(`${$("theme").value} ${$("titre") ? $("titre").value : ""}`) ? OPTIONS_KPOP : OPTIONS_FEE;
   const optPrixDansTotal = (o) => o && o[0] !== "tatouage";
   const optTotal = (sel) => Object.entries(sel || {}).reduce((t, [k, n]) => { const o = OPTIONS_TOUTES[k]; return t + (optPrixDansTotal(o) ? o[2] * (+n || 0) : 0); }, 0);
+  function renderPrixDetail() {
+    if(!$("prixBase") || !$("prixBreakdown"))return;
+    const total=Number($("prix").value)||0, options=optTotal(optSel);
+    const km=kmAjouteDansPrix===null?0:Number(kmAjouteDansPrix)||0;
+    const base=Math.max(0,r2(total-options-km));
+    if(document.activeElement!==$("prixBase"))$("prixBase").value=$("prix").value===""?"":base;
+    const ecart=r2(total-options-km);
+    $("prixBreakdown").textContent="Prestation "+euro(base)+" + options "+euro(options)+" + déplacements "+euro(km)+" = total "+euro(total)
+      +(ecart<0?" ⚠️ Les suppléments dépassent le total : vérifie les montants.":"");
+    $("prixBreakdown").style.color=ecart<0?"#b91c1c":"";
+  }
+  $("prixBase").addEventListener("input",()=>{
+    const base=Math.max(0,Number($("prixBase").value)||0);
+    $("prix").value=r2(base+optTotal(optSel)+(kmAjouteDansPrix===null?0:Number(kmAjouteDansPrix)||0));
+    $("prix").dispatchEvent(new Event("input",{bubbles:true}));
+  });
+  $("prix").addEventListener("input",renderPrixDetail);
   const optTexte = (sel) => Object.entries(sel || {}).filter(([k, n]) => k === "tatouage" ? tatouagesDemandes({ options: sel }) : +n > 0).map(([k, n]) => { const o = OPTIONS_TOUTES[k]; return o ? `${o[1]}${k === "tatouage" ? " · 2 € par enfant réellement tatoué" : +n > 1 ? " ×" + n : ""}` : ""; }).filter(Boolean).join(" · ");
   let optSel = {};
   // 💶 Prix de base des formules (tarifs du site)
@@ -3515,6 +3544,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("optResume").textContent = nbOpt ? `· ${optTexte(optSel)}` : "· aucune (toucher pour ajouter)";
     const t = optTotal(optSel), tat = tatouagesDemandes({ options: optSel });
     $("optTot").textContent = resp && (t || tat) ? `Options : ${euro(t)} ajoutés au prix total${tat ? ` · tatouages : ${euro(TAT)} par enfant réellement tatoué, ajoutés au solde du jour` : ""}` : "";
+    renderPrixDetail();
     if ($("horsZoneToggle")) $("horsZoneToggle").textContent = optSel.hors_zone ? "✅ Hors zone : 25 € ajoutés · retirer" : "🚗 Hors zone : ajouter 25 €";
   }
   $("optList").addEventListener("click", (e) => {
@@ -3582,6 +3612,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     document.querySelectorAll('input[name="site_affichage"]').forEach(r => r.checked = r.value === $("site_affichage").value);
     paieMap = new Map(((ev && ev.paies) || []).map(p => [normName(p.prenom), { ...p }]));
     kmCalc = null; kmAjouteDansPrix=fraisDeplacementInclus(ev); kmPrixApplication=null; $("kmBox").classList.add("hidden");
+    renderPrixDetail();
     $("contratProKmStatut").textContent = ev?.type_evenement === "contrat_pro" && kmAjouteDansPrix !== null
       ? "🚗 Déplacements déjà inclus : " + euro(kmAjouteDansPrix) + " (recalculables)." : "";
     if(ev?.km_detail?.equipe?.length && isResp() && ev.km_detail.mode!=="evt")
@@ -3615,7 +3646,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!resp) $("delBtn").classList.add("hidden");
     if (!gest) { $("delBtn").classList.add("hidden"); $("formTitle").textContent = $("type_evenement").value === "repetition" ? "Détails de la répétition" : $("type_evenement").value === "contrat_pro" ? "Détails du contrat pro" : estEvt() ? "Détails de l'événement" : "Détails de l'animation"; $("cancelBtn").textContent = "Fermer"; }
     else $("cancelBtn").textContent = "Annuler";
-    renderFiche(ev); renderDevis(ev);
+    renderFiche(ev); renderEtapeFiche(ev); renderDevis(ev);
     renderMonTrajet(ev);
     if (ev) $("bilanBox").innerHTML = bilanHtml(ev);
     $("jourBtnBox").classList.toggle("hidden", !ev || ev.statut === "annule" || ev.type_evenement !== "animation");
@@ -3724,12 +3755,47 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     !!(e.parent || e.telephone || e.email || e.enfant || e.prix || /anniv|flash|magic|fantastic|c[ée]l[ée]bration|surprise|rising|idol|superstar|formule/i.test((e.theme || "") + " " + (e.titre || "")));
   // 📨 Devis : le client reçoit le prix détaillé et l'accepte en ligne → l'animation passe en « confirmée » → mail d'acompte
   let devisApres = false;
+  function renderEtapeFiche(ev,devis=null){
+    const box=$("ficheGuide");
+    if(!isResp()||!ev||ev.type_evenement!=="animation"||String(editingId)!==String(ev.id)){
+      box.classList.add("hidden");return;
+    }
+    box.classList.remove("hidden");
+    let titre="",desc="",action="",cible="";
+    if(ev.statut==="annule"){titre="❌ Animation annulée";desc="Aucune action demandée.";action="";cible="";}
+    else if(ev.statut==="en_attente"){
+      if(!ev.email){titre="📧 Coordonnées du client";desc="Ajoute l'adresse e-mail du client pour pouvoir lui envoyer son devis.";action="Ajouter l'e-mail";cible="email";}
+      else if(!(Number(ev.prix)>0)){titre="💶 Préparer le prix";desc="Vérifie le prix total, les options et les déplacements.";action="Vérifier les montants";cible="prix";}
+      else if(devis?.envoye_le){titre="⏳ Devis envoyé";desc="Le devis a été envoyé. La réservation attend l'accord du client.";action="Consulter le devis";cible="devisBox";}
+      else{titre="📨 Devis prêt à envoyer";desc="Vérifie le détail puis envoie le devis au client.";action="Envoyer le devis";cible="devisBtn";}
+    }else if(!anims(ev).length){titre="🎭 Affecter l'équipe";desc="La prestation est confirmée, mais personne n'est encore affecté.";action="Ajouter les membres";cible="addAnim";}
+    else if(ev.acompte>0&&!ev.acompte_paye){titre="💰 Acompte à vérifier";desc="Vérifie la réception de l'acompte dans les informations financières.";action="Vérifier l'acompte";cible="acompte_paye";}
+    else if(ev.date>todayISO()){titre="👗 Préparer la prestation";desc="Vérifie l'équipe, les costumes et le matériel avant le jour J.";action="Voir les tenues";cible="evCostAssignBtn";}
+    else if(ev.statut!=="termine"){titre="🏁 Clôturer la prestation";desc="Vérifie le solde, les photos et le bilan de l'animation.";action="Ouvrir les actions de fin";cible="afterBox";}
+    else if((ev.paies||[]).some(p=>!p.paye&&(+p.deplacement||0)+(+p.prestation||0)>0)){titre="👛 Équipe à payer";desc="La prestation est terminée. Il reste des rémunérations à régler.";action="Voir les paiements";cible="gPaies";}
+    else{titre="✅ Prestation terminée";desc="Les principales étapes sont clôturées.";action="";cible="";}
+    $("ficheGuideTitle").textContent=titre;$("ficheGuideText").textContent=desc;
+    $("ficheGuideAction").textContent=action;$("ficheGuideAction").classList.toggle("hidden",!action);
+    $("ficheGuideAction").dataset.cible=cible;
+  }
+  $("ficheGuideAction").addEventListener("click",()=>{
+    const id=$("ficheGuideAction").dataset.cible;
+    if(id==="gPaies"){closeForm();document.querySelector('.tab[data-view="stats"]').click();$("gPaies").click();return;}
+    const cible=$(id);if(!cible)return;
+    if(id==="devisBtn"){cible.click();return;}
+    if(id==="evCostAssignBtn"&&!cible.classList.contains("hidden")){cible.click();return;}
+    if(id==="acompte_paye"||id==="prix")$("privSec").querySelector("details").open=true;
+    if(id==="devisBox" && cible.classList.contains("hidden"))return;
+    cible.scrollIntoView({behavior:"smooth",block:"center"});
+    if(["email","prix","addAnim","acompte_paye"].includes(id))cible.focus();
+  });
   async function renderDevis(ev) {
     const box = $("devisBox");
     const ok = isResp() && ev && ev.id && ev.type_evenement === "animation" && !estEvenementInterne(ev);
-    box.classList.toggle("hidden", !ok); if (!ok) return;
+    box.classList.toggle("hidden", !ok); if (!ok) { renderEtapeFiche(ev); return; }
     let d = null;
     if (!DEMO) { try { ({ data: d } = await sb.from("devis").select("envoye_le,accepte_le").eq("evenement_id", ev.id).maybeSingle()); } catch (_) {} }
+    renderEtapeFiche(ev,d);
     const f = (x) => new Date(x).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     box.innerHTML = `<div class="sec" style="margin-top:0">📨 Devis pour le client</div>
       <p class="hint" style="margin:0 0 8px">${d && d.accepte_le ? `✅ Accepté par le client le ${f(d.accepte_le)}` : d && d.envoye_le ? `⏳ Envoyé le ${f(d.envoye_le)} · en attente de sa réponse` : "Le client reçoit le détail du prix (formule + options) et l'accepte en un clic. Il reçoit ensuite la demande d'acompte."}</p>
@@ -4041,6 +4107,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       prixInput.dispatchEvent(new Event("input", { bubbles: true }));
       kmAjouteDansPrix=frais;
       kmPrixApplication={base,total};
+      if (!pro) renderPrixDetail();
       const d=kmCalc.detail;
       const ligne="Déplacement client : "+d.kmClient+" km × "+String(d.tarifClient).replace(".",",")
         +" €"+(d.billets?" + billets "+euro(d.billets):"")+" = "+euro(frais);
@@ -5717,6 +5784,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="member">
         ${m.perso_prefere ? persoImg(m.perso_prefere, "av mem-av", `<div class="av">${esc((m.prenom || "?")[0].toUpperCase())}</div>`) : `<div class="av">${esc((m.prenom || "?")[0].toUpperCase())}</div>`}
         <div class="info"><b>${esc(m.prenom)}</b>${m.perso_prefere ? `<small class="mem-alias">alias ${esc(m.perso_prefere)}</small>` : ""}<span>${m.email ? esc(m.email) : (isResp() ? "✉️ e-mail à compléter" : "")}</span><span class="addr">${m.adresse ? "📍 " + esc(m.adresse) : (isResp() ? "📍 adresse à compléter" : "")}</span>${isResp() && naissDe(m.prenom) ? `<span class="addr">🎂 ${esc(jourMois(naissDe(m.prenom)))}</span>` : ""}${equipesTypes().filter(t=>membreDansTeam(m,t)).length?`<small style="color:var(--violet-d);margin-top:4px">🎭 ${equipesTypes().filter(t=>membreDansTeam(m,t)).map(t=>esc(t.nom)).join(" · ")}</small>`:""}</div>
+        ${isGest() ? `<button type="button" class="sig photo" data-member-info="${esc(m.id)}" style="font-size:12px">📋 Fiche</button>` : ""}
         ${isResp() ? `<button type="button" class="crown ed" data-addr="${esc(m.id)}" title="Adresse">📍</button>` : ""}
         ${isResp() ? `<button type="button" class="crown ${m.gestionnaire ? "on" : ""}" data-star="${esc(m.id)}" title="Gestionnaire : voit tout l'agenda et gère le planning">⭐</button>` : ""}
         ${isResp() ? `<button type="button" class="crown ${m.responsable ? "on" : ""}" data-crown="${esc(m.id)}" title="Responsable">👑</button>
@@ -5727,7 +5795,37 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       try { await team.monPerso(choice); members = await team.list(); majWho(); renderTeam(); toast(choice ? `🦸 Bonjour ${moi.prenom} alias ${choice} !` : "Personnage retiré"); }
       catch (e) { members=await team.list().catch(()=>members);renderTeam();toast("⚠️ " + (e.message || e)); } };
   }
+  function ouvrirFicheMembre(id){
+    if(!isGest())return;
+    const m=members.find(x=>String(x.id)===String(id));if(!m)return;
+    const n=normName(m.prenom),today=todayISO();
+    const affectations=events.filter(e=>e.statut==="confirme"&&e.date>=today&&anims(e).some(p=>normName(p)===n))
+      .sort((a,b)=>a.date.localeCompare(b.date)).slice(0,12);
+    const indis=indispos.filter(x=>normName(x.prenom)===n&&(x.fin||x.debut)>=today)
+      .sort((a,b)=>a.debut.localeCompare(b.debut)).slice(0,8);
+    const gains=events.flatMap(e=>(e.paies||[]).filter(p=>normName(p.prenom)===n).map(p=>({...p,date:e.date})));
+    const gagne=gains.reduce((t,p)=>t+(+p.prestation||0)+(+p.deplacement||0),0);
+    const encore=gains.filter(p=>!p.paye).reduce((t,p)=>t+(+p.prestation||0)+(+p.deplacement||0),0);
+    const box=$("teamMemberDetail");box.classList.remove("hidden");
+    box.innerHTML=`<div class="row" style="align-items:center"><h3 style="margin:0;flex:1">👤 ${esc(m.prenom)}</h3><button type="button" class="sig" id="teamMemberBack">✕ Fermer</button></div>
+      <p class="hint">🦸 ${esc(m.perso_prefere||"Aucun personnage favori")} · ✉️ ${esc(m.email||"E-mail à compléter")}<br>📍 ${esc(m.adresse||"Adresse à compléter")}</p>
+      <p class="hint"><b>Teams :</b> ${esc(equipesTypes().filter(t=>membreDansTeam(m,t)).map(t=>t.nom).join(", ")||"Aucune")}</p>
+      ${isResp()?`<div class="mine-head" style="margin:8px 0"><b>💰 Rémunérations enregistrées : ${euro(gagne)}</b><br><small>${euro(encore)} encore à régler (toutes années)</small></div>`:""}
+      <h4>📅 Prochaines prestations confirmées</h4>
+      ${affectations.map(e=>`<button type="button" class="sig" data-member-event="${esc(e.id)}" style="display:block;width:100%;margin:5px 0;text-align:left">${esc(fmtLong(e.date))} · ${esc(e.titre||e.theme||"Animation")}</button>`).join("")||'<p class="hint">Aucune prestation confirmée à venir.</p>'}
+      <h4>🚫 Indisponibilités enregistrées</h4>
+      ${indis.map(x=>`<p class="hint">${esc(x.debut)}${x.fin&&x.fin!==x.debut?" → "+esc(x.fin):""}${x.note?" · "+esc(x.note):""}</p>`).join("")||'<p class="hint">Aucune indisponibilité à venir.</p>'}
+      <p class="hint">Les costumes et perruques se gèrent toujours dans la rubrique 👗 Costumes.</p>`;
+    box.scrollIntoView({behavior:"smooth",block:"start"});
+    $("teamMemberBack").onclick=()=>box.classList.add("hidden");
+  }
+  $("teamMemberDetail").addEventListener("click",e=>{
+    const b=e.target.closest("[data-member-event]");if(!b)return;
+    const ev=events.find(x=>String(x.id)===b.dataset.memberEvent);
+    if(ev){closeTeam();openForm(ev);}
+  });
   $("teamList").addEventListener("click", async (e) => {
+    const info=e.target.closest("[data-member-info]");if(info){ouvrirFicheMembre(info.dataset.memberInfo);return;}
     const ad = e.target.closest("[data-addr]");
     if (ad) {
       const m = members.find(x => x.id === ad.dataset.addr); if (!m) return;
@@ -5913,6 +6011,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const closeRg = () => { $("rgBg").classList.add("hidden"); document.body.style.overflow = ""; };
   $("rgClose").onclick = closeRg; $("rgBg").addEventListener("click", (e) => { if (e.target.id === "rgBg") closeRg(); });
   $("gReglages").onclick = openRg;
+  const gestionGroupes={
+    prestas:["gEvts","gCaissePresta","gCaisseLibre"],
+    equipe:["gEquipe","gPaies","gHeures","gPolls","gInfos"],
+    finances:["gFin","gPaies","gExport","gRecap","gCaissePresta","gCaisseLibre"],
+    orga:["costBtn","gStock","guideBtn","gIdeas","gReglages"]
+  };
+  $("gCategories").addEventListener("change",e=>{
+    if(e.target.name!=="gCategorie")return;
+    const ids=gestionGroupes[e.target.value];
+    $("viewStats").querySelectorAll(".g-tiles .evt-tile").forEach(b=>b.classList.toggle("hidden",!!ids&&!ids.includes(b.id)));
+  });
+
   function renderGestionPaies() {
     if (!isResp()) return;
     const historique=$("gPaiesHistory").checked, auj=todayISO();
