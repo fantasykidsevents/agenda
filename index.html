@@ -1553,50 +1553,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   @keyframes magicLogoHover{0%,100%{transform:translateY(3px)}50%{transform:translateY(-5px)}}
   @media(prefers-reduced-motion:reduce){.magic-intro-emblem::before,.magic-intro-emblem::after,
     .magic-intro-rune,.magic-intro-logo,.mag-admin-art svg,.mag-admin-art span,.mag-admin-art i,header::after{animation:none!important}}
-  /* Cartes des missions : même finesse pastel et motifs que les fiches de l'agenda. */
-  #viewMine .m-card{--world-accent:#b284dd;--world-border:#e4d5ef;--world-text:#965abb;
-    position:relative;isolation:isolate;overflow:hidden;border:1.5px solid var(--world-border);
-    border-left:4px solid var(--world-accent);border-radius:20px;padding:14px 15px 13px 16px;margin:11px 0;
-    background:linear-gradient(145deg,#f7f2ff,#fff 68%);box-shadow:0 6px 21px #69458d17}
-  #viewMine .m-card::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.6;
-    background:radial-gradient(circle at 96% 18%,#fff 0 2px,transparent 3px),
-      radial-gradient(circle at 77% 7%,#b5a9e8 0 1px,transparent 2px),
-      radial-gradient(circle at 86% 69%,#d2b9ef 0 1px,transparent 2px)}
-  #viewMine .m-card::after{content:attr(data-mag-emoji);position:absolute;right:17px;top:53px;
-    font-size:47px;opacity:.17;pointer-events:none;transform-origin:center;
-    animation:magicCardFloat 5s ease-in-out infinite}
-  #viewMine .m-card>*{position:relative;z-index:1}
-  #viewMine .m-card-top{display:flex;align-items:center;justify-content:space-between;gap:6px;
-    font-size:11px;line-height:1.2;color:#635675}
-  #viewMine .m-card-top b{font-size:12px;color:#5c4785;text-transform:capitalize;font-weight:800}
-  #viewMine .m-card-status{flex:none;border-radius:100px;background:#d9f9e9;border:1px solid #bcecd6;
-    color:#087d59;font-size:10.5px;font-weight:800;padding:5px 8px;white-space:nowrap}
-  #viewMine .m-card h3{font-size:16.5px;line-height:1.28;font-weight:800;color:#29203d;margin:10px 0 4px;
-    overflow-wrap:anywhere;hyphens:auto}
-  #viewMine .m-card-worldtag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;
-    color:var(--world-text);font-weight:800;line-height:1.2;margin:0 0 9px}
-  #viewMine .m-card-info{display:grid;gap:5px;color:#625a70;font-size:12.5px;line-height:1.35}
-  #viewMine .m-card-info strong{color:#51347a}
-  #viewMine .m-card-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;padding-top:10px;
-    border-top:1px solid #a18db026}
-  #viewMine .m-card-actions button,#viewMine .m-card-actions a{flex:0 1 auto;min-width:0;min-height:37px;
-    border:1px solid #e4d6f0;background:#ffffffb8;color:#66438b;border-radius:12px;
-    padding:8px 11px;font-size:11.5px;font-weight:800;box-shadow:0 2px 6px #6e44a60b}
-  #viewMine .m-card-actions .m-main{background:#7445af;color:#fff;border-color:#7445af;box-shadow:0 3px 10px #7445af24}
-  #viewMine .m-card[data-mag-world="frozen"]{--world-accent:#62bedf;--world-border:#b2e7fb;--world-text:#488bb9;
-    background:radial-gradient(circle at 90% 22%,#d8f5ff,transparent 55%),linear-gradient(150deg,#e9f9ff,#fff 75%)}
-  #viewMine .m-card[data-mag-world="lanterns"]{--world-accent:#ecb36f;--world-border:#f0d7b3;--world-text:#a476aa;
-    background:radial-gradient(circle at 91% 14%,#ffe8b9,transparent 54%),linear-gradient(150deg,#fff4e8,#fff1fa 83%)}
-  #viewMine .m-card[data-mag-world="ocean"]{--world-accent:#40b8c6;--world-border:#ace3e7;--world-text:#258f9d;
-    background:radial-gradient(circle at 92% 16%,#c4f7f0,transparent 53%),linear-gradient(150deg,#e7fbff,#fff 80%)}
-  #viewMine .m-card[data-mag-world="halloween"]{--world-accent:#dba06a;--world-border:#edcdad;--world-text:#ae6b48;
-    background:radial-gradient(circle at 89% 20%,#ffe1bc,transparent 50%),linear-gradient(150deg,#fff2e5,#fff9f5 84%)}
-  #viewMine .m-card[data-mag-world="noel"]{--world-accent:#77bea2;--world-border:#b7e0cd;--world-text:#418d75;
-    background:radial-gradient(circle at 89% 20%,#f9ebc6,transparent 48%),linear-gradient(145deg,#ecfcf5,#fff8f2 84%)}
-  #viewMine .m-card[data-mag-world="nuit"]{--world-accent:#4fc4de;--world-border:#badff4;--world-text:#a14bcc;
-    background:radial-gradient(circle at 92% 12%,#e5d6ff,transparent 53%),linear-gradient(150deg,#e5f7ff,#f9edff 76%,#fff)}
-  @keyframes magicCardFloat{0%,100%{transform:translateY(2px) rotate(-8deg)}50%{transform:translateY(-5px) rotate(5deg)}}
-  @media(prefers-reduced-motion:reduce){#viewMine .m-card::after{animation:none!important}}
 </style>
 </head>
 <body>
@@ -3785,34 +3741,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function monRoleMission(e, prenom) {
     return parseTeam(e.animateurs).find(p => normName(p.nom) === normName(prenom)) || null;
   }
+  // Dans Mon espace, une prestation utilise exactement le même rendu que dans l'agenda.
+  // Les thèmes, décors, couleurs, statuts, rôles et animations restent ainsi synchronisés.
   function memberCard(e, prenom) {
-    const p = monRoleMission(e, prenom);
-    const role = p?.role || "À préciser";
-    const h = p ? horaireDe(e, p.nom) : "";
-    const trajet = p ? voitureTxt(e, p.nom) : "";
-    const maps = e.adresse ? "https://maps.google.com/?q=" + encodeURIComponent(e.adresse) : "";
-    const isCost = p && estRoleCostume(p) && e.type_evenement !== "repetition";
-    const monCost = isCost ? pieceAttribuee(e, p, "costume") : null;
-    const monde = mondeMagique(e);
-    const mondeInfos = ({ frozen:["❄️","Le royaume des neiges"], lanterns:["🏮","Le royaume des lanternes"], ocean:["🫧","Le monde marin"], halloween:["🎃","Halloween"], noel:["🎄","La magie de Noël"], nuit:["🌙","La Nuit Magique"], fantasy:["✨","Fantasy Kids Events"] })[monde];
-    return `<article class="m-card" data-mag-world="${monde}" data-mag-emoji="${mondeInfos[0]}">
-      <div class="m-card-top"><b>📅 ${esc(fmtLong(e.date))}</b><span class="m-card-status">✅ Confirmée</span></div>
-      <h3>${esc(e.titre || e.enfant || "Prestation Fantasy")}</h3>
-      <div class="m-card-worldtag">${mondeInfos[0]} ${esc(mondeInfos[1])}</div>
-      <div class="m-card-info">
-        <span>🕒 ${esc(h || (e.heure_debut ? hhmm(e.heure_debut) + (e.heure_fin ? " – " + hhmm(e.heure_fin) : "") : "Horaire à préciser"))}</span>
-        <span>🎭 Mon rôle : <strong>${esc(role)}</strong></span>
-        ${e.adresse ? `<span>📍 ${esc(e.adresse)}</span>` : ""}
-        ${trajet ? `<span>🚗 ${esc(trajet)}</span>` : ""}
-        ${isCost ? `<span>👗 ${monCost ? esc(nomDe(monCost)) : "Tenue à confirmer / choisir"}</span>` : ""}
-      </div>
-      <div class="m-card-actions">
-        <button type="button" class="m-main" data-member-open="${esc(e.id)}">📋 Ma fiche</button>
-        ${isCost ? `<button type="button" data-member-tenue="${esc(e.id)}">👗 Tenue</button>` : ""}
-        ${maps ? `<a href="${maps}" target="_blank" rel="noopener">📍 Itinéraire</a>` : ""}
-        ${jePeuxVoir(e) ? `<button type="button" data-member-chat="${esc(e.id)}">💬 Chat</button>` : ""}
-      </div>
-    </article>`;
+    return card(e, true).replace('class="ev ', 'class="ev member-agenda-card ');
   }
   function renderMemberOverview(prenom, prochaines) {
     const box = $("memberOverview");
@@ -3891,6 +3823,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     cible.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
   }));
   $("viewMine").addEventListener("click", e => {
+    // La fiche commune reste cliquable, mais s'ouvre en vue de prestation côté membre.
+    const carteAgenda = e.target.closest("#mineList .member-agenda-card");
+    if (carteAgenda && !e.target.closest("button,a")) {
+      const ev = events.find(x => String(x.id) === String(carteAgenda.dataset.id));
+      if (ev && jeVoisEv(ev)) { e.preventDefault(); e.stopPropagation(); openJour(ev); }
+      return;
+    }
     const open = e.target.closest("[data-member-open]");
     const tenue = e.target.closest("[data-member-tenue]");
     const chat = e.target.closest("[data-member-chat]");
@@ -3901,6 +3840,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (open) openJour(ev);
     else if (tenue) openCostAssign(ev);
     else if (chat && jePeuxVoir(ev)) openChat("ev:" + ev.id);
+  });
+  $("viewMine").addEventListener("keydown", e => {
+    if ((e.key !== "Enter" && e.key !== " ") || e.target.closest("button,a")) return;
+    const carte = e.target.closest("#mineList .member-agenda-card");
+    if (!carte) return;
+    const ev = events.find(x => String(x.id) === String(carte.dataset.id));
+    if (ev && jeVoisEv(ev)) { e.preventDefault(); e.stopPropagation(); openJour(ev); }
   });
   function renderModeAccueil() {
     const box = $("modeAccueil"); if (!box) return;
