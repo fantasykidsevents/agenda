@@ -1536,6 +1536,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     #viewMine .m-shortcuts button>span,#viewMine .m-visible-tools .evt-tile>span,
     #viewStats .g-tiles .evt-tile>span{animation:none!important}
   }
+  /* Un voeux personnalisé, uniquement le 1er janvier dans Mon espace. */
+  #mineHead.ny-active{position:relative;overflow:hidden;padding:22px 20px;border:1.5px solid #e6c7fa;
+    background:radial-gradient(circle at 90% 4%,#fce4a7a8,transparent 50%),
+      linear-gradient(135deg,#eefaff,#f4e8ff 60%,#fff2f7);box-shadow:0 9px 25px #945cc528}
+  #mineHead.ny-active::before,#mineHead.ny-active::after{position:absolute;pointer-events:none;
+    color:#e9bb68;text-shadow:0 0 12px #efcdfd;animation:fkMtwinkle 2.4s ease-in-out infinite}
+  #mineHead.ny-active::before{content:"✦";right:18px;top:12px;font-size:24px}
+  #mineHead.ny-active::after{content:"✧";right:56px;bottom:10px;font-size:19px;animation-delay:.8s}
+  #mineHead.ny-active small{display:block;margin-bottom:8px;color:#9460aa;font-size:11px;font-weight:800;letter-spacing:.2px}
+  #mineHead.ny-active h2{margin:0 0 9px;font-size:21px;line-height:1.2;color:#5b328f}
+  #mineHead.ny-active p{margin:0;max-width:95%;font-size:13px;line-height:1.5;color:#725c8e}
+  @media(prefers-reduced-motion:reduce){#mineHead.ny-active::before,#mineHead.ny-active::after{animation:none!important}}
 </style>
 </head>
 <body>
@@ -3366,6 +3378,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function renderMine0() {
     const me = myMember();
     if (!me) {
+      $("mineHead").classList.remove("ny-active");
       $("postActions").classList.add("hidden");
       $("mineHead").innerHTML = DEMO
         ? `<b>Mon espace</b><p class="hint">Pour essayer l'espace membre, choisissez votre prénom.</p>
@@ -3377,7 +3390,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if (DEMO && demoMe) { $("demoMe").value = demoMe; return renderMineFor(demoMe); }
       return;
     }
-    $("mineHead").innerHTML = `<b>Bonjour ${esc(me.prenom)} 👋</b><p class="hint" style="margin-bottom:0">Tout ce dont tu as besoin pour tes prochaines prestations.</p>`;
+    const jour = new Date(), nouvelAn = jour.getMonth() === 0 && jour.getDate() === 1;
+    $("mineHead").classList.toggle("ny-active", nouvelAn);
+    $("mineHead").innerHTML = nouvelAn
+      ? `<small>✦ ✨ Une nouvelle année commence ✨ ✦</small>
+         <h2>🎆 Bonne année ${jour.getFullYear()}, ${esc(me.prenom)} !</h2>
+         <p>Que cette année soit remplie de magie, de belles rencontres et d'aventures avec Fantasy Kids Events ! 💜</p>`
+      : `<b>Bonjour ${esc(me.prenom)} 👋</b><p class="hint" style="margin-bottom:0">Tout ce dont tu as besoin pour tes prochaines prestations.</p>`;
     renderMineFor(me.prenom);
   }
   let demoMe = "";
