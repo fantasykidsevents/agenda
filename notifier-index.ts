@@ -634,10 +634,13 @@ async function lirePrive(id) {
   return pv || {};
 }
 const commAnim = (ev) => `${ev.enfant || String(ev.parent || "").split(" ")[0] || "Anniversaire"} ${String(ev.date || "").split("-").reverse().join("/")}`.trim();
+// Le choix commercial vient de la fiche du client, jamais des noms de l'équipe.
+const personnagesChoisis = (ev) => String(ev.options?.personnages_client || "").trim();
 const recapAnim = (ev) => `<table style="font-size:15px;border-collapse:collapse;margin:8px 0 14px">
       <tr><td style="padding:3px 12px 3px 0;color:#6b6385">📅 Quand</td><td>${esc(quand(ev))}</td></tr>
       ${ev.adresse ? `<tr><td style="padding:3px 12px 3px 0;color:#6b6385">📍 Où</td><td>${esc(ev.adresse)}</td></tr>` : ""}
       ${ev.theme ? `<tr><td style="padding:3px 12px 3px 0;color:#6b6385">✨ Formule</td><td>${esc(ev.theme)}</td></tr>` : ""}
+      ${personnagesChoisis(ev) ? `<tr><td style="padding:3px 12px 3px 0;color:#6b6385">🎭 Personnage(s)</td><td><b>${esc(personnagesChoisis(ev))}</b></td></tr>` : ""}
     </table>`;
 
 // 1️⃣ Animation confirmée : demande d'acompte (sans la fiche). Pas d'acompte à payer → on envoie directement la fiche.
@@ -657,7 +660,7 @@ async function mailConfirmationAnimation(ev) {
     ${solde ? `<p style="font-size:15px">💰 <b>Solde restant : ${euros0(solde)}</b>, à régler le jour de la fête.</p>` : ""}
     <p style="font-size:15px">Dès réception de l'acompte, la date est <b>officiellement réservée rien que pour vous</b> 🔒 et nous vous envoyons la <b>fiche anniversaire</b> pour connaître tous les petits secrets de la star du jour 🪄</p>
     ${SIGNATURE}</div>`;
-  const texte = `Bonjour,\n\nVotre animation est confirmée : ${quand(ev)}${ev.adresse ? " – " + ev.adresse : ""}.\n${prix ? `Prix total : ${euros0(prix)}\n` : ""}\n${texteVirement(acompte, comm, "Acompte à verser pour bloquer la date")}\n${solde ? `\nSolde restant : ${euros0(solde)}, à régler le jour de la fête.\n` : ""}\nDès réception de l'acompte, nous vous envoyons la fiche anniversaire à remplir.\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
+  const texte = `Bonjour,\n\nVotre animation est confirmée : ${quand(ev)}${ev.adresse ? " – " + ev.adresse : ""}.\n${ev.theme ? `Formule : ${ev.theme}\n` : ""}${personnagesChoisis(ev) ? `Personnage(s) choisi(s) : ${personnagesChoisis(ev)}\n` : ""}${prix ? `Prix total : ${euros0(prix)}\n` : ""}\n${texteVirement(acompte, comm, "Acompte à verser pour bloquer la date")}\n${solde ? `\nSolde restant : ${euros0(solde)}, à régler le jour de la fête.\n` : ""}\nDès réception de l'acompte, nous vous envoyons la fiche anniversaire à remplir.\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
   await envoyerEmail(ev.email, `✨ Animation confirmée${enfant} – acompte à verser`, html, texte, [], { canal: "client" });
   return "confirmation + acompte envoyés";
 }
@@ -685,7 +688,7 @@ async function envoyerFicheParent(ev, forcer = false, pvDonne = null) {
       <p style="font-size:15px;margin:0 0 10px">Créez une jolie invitation féerique aux couleurs de la fête, en quelques clics sur notre site. Les copains vont adorer ! 🎈</p>
       <a href="https://www.fantasykidsevents.be/invitation.html" style="display:inline-block;background:#ff7f9f;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:15px">🎉 Créer mon invitation</a></div>
     ${SIGNATURE}</div>`;
-  const texte = `Bonjour,\n\n${recu ? `Nous avons bien reçu votre acompte de ${euros0(acompte)} : la date est réservée.` : "Votre animation est confirmée."}\n${quand(ev)}${ev.adresse ? " – " + ev.adresse : ""}${solde ? `\nSolde restant : ${euros0(solde)}, à régler le jour de la fête.` : ""}\n\nPour préparer une fête magique, merci de remplir cette petite fiche (3 minutes) :\n${lien}\n\n💌 Créez vos invitations d'anniversaire sur notre site :\nhttps://www.fantasykidsevents.be/invitation.html\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
+  const texte = `Bonjour,\n\n${recu ? `Nous avons bien reçu votre acompte de ${euros0(acompte)} : la date est réservée.` : "Votre animation est confirmée."}\n${quand(ev)}${ev.adresse ? " – " + ev.adresse : ""}${ev.theme ? `\nFormule : ${ev.theme}` : ""}${personnagesChoisis(ev) ? `\nPersonnage(s) choisi(s) : ${personnagesChoisis(ev)}` : ""}${solde ? `\nSolde restant : ${euros0(solde)}, à régler le jour de la fête.` : ""}\n\nPour préparer une fête magique, merci de remplir cette petite fiche (3 minutes) :\n${lien}\n\n💌 Créez vos invitations d'anniversaire sur notre site :\nhttps://www.fantasykidsevents.be/invitation.html\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
   await envoyerEmail(ev.email, recu ? `✅ Acompte reçu – la fiche anniversaire${enfant}` : `✨ Préparons l'anniversaire magique${enfant} !`, html, texte, [], { canal: "client" });
   await sb.from("fiches").update({ envoyee_le: new Date().toISOString() }).eq("evenement_id", ev.id);
   return "fiche envoyée";
@@ -778,7 +781,7 @@ async function envoyerDevis(ev, { relance = false } = {}) {
     <p><a href="${lien}" style="display:inline-block;background:linear-gradient(110deg,#00b4ff,#a020ff,#d63fd0);color:#fff;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:16px">📜 Consulter et répondre à mon devis</a></p>
     <p style="font-size:14px;color:#6b6385">Vous pouvez <b>accepter</b>, <b>refuser</b> ou <b>demander une modification</b> directement sur cette page. Dès votre accord, nous vous envoyons les infos pour l'acompte afin de bloquer la date 🔒</p>
     ${SIGNATURE}</div>`;
-  const detailTexte = [`Formule ${ev.theme || "Animation"} : ${euros0(formule)}`, ...Object.entries(ev.options || {}).filter(([k,n]) => +n>0 && OPTIONS_PRIX[k]).map(([k,n]) => `${OPTIONS_PRIX[k][0]}${+n>1 ? " × "+n : ""} : ${k === "tatouage" ? euros0(OPTIONS_PRIX[k][1])+" / enfant (payé sur place)" : euros0(OPTIONS_PRIX[k][1]*n)}`), ...(deplacement ? [`Frais de déplacement : ${euros0(deplacement)}`] : [])].join("\n");
+  const detailTexte = [`Formule ${ev.theme || "Animation"} : ${euros0(formule)}`, ...(personnagesChoisis(ev) ? [`Personnage(s) choisi(s) : ${personnagesChoisis(ev)}`] : []), ...Object.entries(ev.options || {}).filter(([k,n]) => +n>0 && OPTIONS_PRIX[k]).map(([k,n]) => `${OPTIONS_PRIX[k][0]}${+n>1 ? " × "+n : ""} : ${k === "tatouage" ? euros0(OPTIONS_PRIX[k][1])+" / enfant (payé sur place)" : euros0(OPTIONS_PRIX[k][1]*n)}`), ...(deplacement ? [`Frais de déplacement : ${euros0(deplacement)}`] : [])].join("\n");
   const introTexte = relance ? `Petit rappel : nous n'avons pas encore reçu de réponse à votre devis pour l'animation${enfant} prévue ${quand(ev)}.`
     : `Voici votre devis pour l'animation${enfant} : ${quand(ev)}.`;
   const texte = `Bonjour,\n\n${introTexte}\n\n${detailTexte}\nTotal : ${euros0(prix)}${acompte ? `\nAcompte : ${euros0(acompte)}` : ""}\n\nPour l'accepter, le refuser ou demander une modification :\n${lien}\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
