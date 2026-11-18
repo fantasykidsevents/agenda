@@ -1391,9 +1391,173 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     #viewMine .m-shortcuts button,#viewMine .fantasy-game-banner,#viewMine .m-card,
     #viewMine .m-visible-tools .evt-tile,#viewStats .g-tiles .evt-tile{transition:none!important}
   }
+
+  /* Identité Fantasy : dessins vectoriels d'origine, effets doux et univers. */
+  .mag-svg-defs{position:absolute!important;width:0!important;height:0!important;overflow:hidden!important;pointer-events:none}
+  .mag-shortcut-symbol svg{width:26px;height:26px;color:#8355b6;display:block;filter:drop-shadow(0 2px 4px #a879bd50)}
+  .mag-game-gem{width:47px;height:47px;flex:none;color:#7954cf;filter:drop-shadow(0 3px 7px #a879df62);animation:fkMfloat 3.8s ease-in-out infinite}
+  #viewMine .fantasy-game-banner .mag-game-gem{position:relative;z-index:1}
+  #viewMine .fantasy-game-banner span:first-child{animation:none}
+  .magic-intro{position:fixed;inset:0;z-index:999;display:grid;place-items:center;overflow:hidden;
+    background:radial-gradient(circle at 50% 70%,#7455b9 0%,#3a236f 49%,#180d39 100%);color:#fff;
+    opacity:1;transition:opacity .36s ease}
+  .magic-intro.closing{opacity:0;pointer-events:none}
+  .magic-intro::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.7;
+    background:radial-gradient(circle at 9% 20%,#fff 0 2px,transparent 3px),
+      radial-gradient(circle at 75% 15%,#dcefff 0 1px,transparent 2px),
+      radial-gradient(circle at 80% 79%,#faddb5 0 2px,transparent 3px),
+      radial-gradient(circle at 28% 70%,#fff 0 1px,transparent 2px),
+      radial-gradient(circle at 61% 35%,#e5caff 0 1.4px,transparent 2.4px);
+    animation:fkMtwinkle 4.5s ease-in-out infinite}
+  .magic-intro-halo{position:absolute;width:min(66vw,350px);aspect-ratio:1;border-radius:50%;
+    background:radial-gradient(circle,#fdd3ff6f 0,#8f61e74d 35%,transparent 71%);
+    animation:magicHalo 1.5s ease-out both}
+  .magic-intro-inner{position:relative;z-index:1;display:flex;align-items:center;flex-direction:column;gap:10px;
+    text-align:center;padding:24px;animation:magicRise .75s ease-out both}
+  .magic-intro-castle{width:min(50vw,180px);height:auto;aspect-ratio:160/130;color:#e8d3ff;filter:drop-shadow(0 0 18px #eed4ff8f)}
+  .magic-intro-logo{width:min(54vw,195px);max-height:100px;object-fit:contain;filter:drop-shadow(0 4px 18px #ffffff36)}
+  .magic-intro-inner p{font-size:15px;font-weight:800;letter-spacing:.5px;margin:8px 0 0;color:#fff7de}
+  .magic-intro-stars{display:flex;gap:14px;color:#ffe6ae;font-size:19px}
+  .magic-intro-stars i{font-style:normal;animation:fkMtwinkle 1.2s ease-in-out infinite alternate}
+  .magic-intro-stars i:nth-child(2n){animation-delay:.3s;color:#bceaff}
+  #magicIntroSkip{position:absolute;right:15px;top:calc(env(safe-area-inset-top,0px) + 15px);z-index:2;
+    border:1px solid #ffffff50;border-radius:100px;background:#ffffff17;color:#fff;font:inherit;font-size:12px;padding:7px 13px}
+  @keyframes magicRise{from{opacity:0;transform:translateY(30px) scale(.91)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes magicHalo{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+  .magic-admin-welcome{position:relative;display:flex;align-items:center;gap:11px;overflow:hidden;
+    padding:16px 17px;margin:1px 0 14px;border:1px solid #dac6ef;border-radius:19px;
+    background:radial-gradient(circle at 100% 0,#eddaff,transparent 55%),linear-gradient(130deg,#fff,#f4ebff);
+    box-shadow:0 8px 24px #7845b52a;color:#4e307e}
+  .magic-admin-welcome::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background:radial-gradient(circle at 21% 28%,#b892ed 0 1px,transparent 2px),
+      radial-gradient(circle at 93% 74%,#dfaeff 0 1.5px,transparent 2.6px),
+      radial-gradient(circle at 69% 16%,#eabf82 0 1px,transparent 2px);animation:fkMtwinkle 8s ease-in-out infinite}
+  .magic-admin-welcome .mag-admin-text{position:relative;z-index:1;flex:1;min-width:0}
+  .magic-admin-welcome small{display:block;color:#7c5ca1;font-weight:800;letter-spacing:.3px}
+  .magic-admin-welcome h2{font-size:20px;line-height:1.2;margin:3px 0 6px;color:#533383}
+  .magic-admin-welcome p{font-size:12px;color:#715789;line-height:1.45;margin:0}
+  .magic-admin-welcome .mag-admin-art{width:110px;height:96px;flex:none;color:#9d76ce;opacity:.85;filter:drop-shadow(0 4px 12px #b281e650)}
+  .magic-admin-welcome .mag-admin-pill{display:inline-flex;font-size:11px;margin-top:9px;padding:5px 9px;
+    border-radius:50px;background:#fff8;border:1px solid #e8d4fa;color:#6b4894;font-weight:800}
+  .magic-victory{display:inline-flex;align-items:center;gap:7px;font-weight:800;color:#4e8a67;
+    padding:10px 13px;border-radius:12px;background:linear-gradient(100deg,#eefcf2,#f7f1ff);border:1px solid #cfeada}
+  .magic-action-success{position:fixed;z-index:150;top:calc(16vh + env(safe-area-inset-top,0px));left:50%;
+    transform:translateX(-50%);width:min(90vw,360px);pointer-events:none;padding:14px 18px;border-radius:18px;
+    background:linear-gradient(118deg,#4b2c83,#8158c2);border:1px solid #e0c4ff;color:#fff;
+    box-shadow:0 12px 35px #28135180;text-align:center;font-size:14px;font-weight:800;
+    animation:magicToast 1.65s ease-out both}
+  .magic-action-success svg{width:27px;height:27px;vertical-align:middle;margin-right:7px;color:#ffe0a2}
+  @keyframes magicToast{0%{opacity:0;transform:translate(-50%,14px) scale(.91)}16%,76%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-9px) scale(.98)}}
+  /* Ambiance personnalisée : les couleurs de statut du calendrier restent inchangées. */
+  #viewMine .m-hero[data-mag-world="frozen"],.next-magic[data-mag-world="frozen"]{
+    background:radial-gradient(circle at 85% 10%,#defaff8c,transparent 47%),linear-gradient(125deg,#285b9d,#4787d1,#9bceeb)!important}
+  #viewMine .m-hero[data-mag-world="lanterns"],.next-magic[data-mag-world="lanterns"]{
+    background:radial-gradient(circle at 85% 15%,#f8dc9580,transparent 55%),linear-gradient(120deg,#65378d,#a66dc1,#d8a565)!important}
+  #viewMine .m-hero[data-mag-world="ocean"],.next-magic[data-mag-world="ocean"]{
+    background:radial-gradient(circle at 90% 15%,#a3f5e080,transparent 50%),linear-gradient(120deg,#0b5c8c,#188cbd,#57a7b4)!important}
+  #viewMine .m-hero[data-mag-world="halloween"],.next-magic[data-mag-world="halloween"]{
+    background:radial-gradient(circle at 88% 10%,#d18b685c,transparent 50%),linear-gradient(125deg,#332451,#68406d,#ae654b)!important}
+  #viewMine .m-hero[data-mag-world="noel"],.next-magic[data-mag-world="noel"]{
+    background:radial-gradient(circle at 89% 13%,#fff1bf7a,transparent 48%),linear-gradient(125deg,#225f5d,#438f7e,#bb785f)!important}
+  #viewMine .m-hero[data-mag-world="nuit"],.next-magic[data-mag-world="nuit"]{
+    background:radial-gradient(circle at 87% 13%,#e0d0ff80,transparent 50%),linear-gradient(120deg,#1d235f,#58428f,#786cc8)!important}
+  #viewMine .m-card[data-mag-world="frozen"]{border-left-color:#64b6ef}
+  #viewMine .m-card[data-mag-world="lanterns"]{border-left-color:#e0ab6b}
+  #viewMine .m-card[data-mag-world="ocean"]{border-left-color:#3dabc3}
+  #viewMine .m-card[data-mag-world="halloween"]{border-left-color:#bc7049}
+  #viewMine .m-card[data-mag-world="noel"]{border-left-color:#5b9c78}
+  #viewMine .m-card[data-mag-world="nuit"]{border-left-color:#8274e2}
+  .next-magic[data-mag-world]{box-shadow:0 9px 30px #7254ae51}
+  body[data-magic-season="halloween"] header::after{background:linear-gradient(100deg,#844b9d,#f0a45c,#6c477d)}
+  body[data-magic-season="noel"] header::after{background:linear-gradient(100deg,#7ac6b1,#f4d690,#b87caa)}
+  body[data-magic-season="romance"] header::after{background:linear-gradient(100deg,#b968bd,#f5a3c7,#dda5e9)}
+  body[data-magic-season="halloween"] .magic-admin-welcome{background:linear-gradient(120deg,#fff8f4,#f4e9ff)}
+  body[data-magic-season="noel"] .magic-admin-welcome{background:linear-gradient(120deg,#f3fff9,#fff4df)}
+  body[data-magic-season="romance"] .magic-admin-welcome{background:linear-gradient(120deg,#fff6fc,#f8edff)}
+  .evt-tile,.btn.primary{position:relative;overflow:hidden}
+  .evt-tile:focus-visible,.btn.primary:focus-visible{outline:2px solid #c591f7;outline-offset:2px}
+  .magic-tap-spark{position:fixed;z-index:135;pointer-events:none;color:#d6a8f7;font-size:13px;
+    animation:magicTap .58s ease-out forwards;text-shadow:0 0 9px #e6c0ff}
+  @keyframes magicTap{from{opacity:1;transform:translate(-50%,-50%) scale(.5)}
+    to{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.25)}}
+  @media(prefers-reduced-motion:reduce){
+    .mag-game-gem,.magic-intro,.magic-intro::before,.magic-intro-halo,.magic-intro-inner,
+    .magic-intro-stars i,.magic-admin-welcome::after,.magic-action-success,.magic-tap-spark{animation:none!important;transition:none!important}
+  }
+
+  .evt-tile .mag-tile-symbol{display:grid;place-items:center;width:34px;height:32px;line-height:1;color:#8a53bc}
+  .evt-tile .mag-tile-symbol svg{display:block;width:29px;height:29px;overflow:visible;
+    filter:drop-shadow(0 2px 4px #a37ace4a)}
+  .evt-tiles .evt-tile:nth-child(3n+1) .mag-tile-symbol{color:#6c8dc8}
+  .evt-tiles .evt-tile:nth-child(3n+2) .mag-tile-symbol{color:#a16fc4}
+  .evt-tiles .evt-tile:nth-child(3n) .mag-tile-symbol{color:#bf7da6}
+
+  /* Motifs des univers : neige, lanternes et bulles dessinées en CSS. */
+  @keyframes magicDrift{0%{transform:translateY(-7px);opacity:.35}55%{opacity:.9}100%{transform:translateY(14px);opacity:.35}}
+  @keyframes magicBubbles{0%{transform:translateY(12px);opacity:.3}50%{opacity:.8}100%{transform:translateY(-14px);opacity:.3}}
+  #viewMine .m-hero[data-mag-world="frozen"]::before{
+    background:radial-gradient(circle at 12% 16%,#fff 0 2px,transparent 3px),
+      radial-gradient(circle at 74% 32%,#dff8ff 0 3px,transparent 4px),
+      radial-gradient(circle at 48% 71%,#fff 0 2px,transparent 3px),
+      radial-gradient(circle at 89% 84%,#c6edff 0 2px,transparent 3px);
+    animation:magicDrift 8s ease-in-out infinite alternate}
+  #viewMine .m-hero[data-mag-world="lanterns"]::before{
+    background:radial-gradient(ellipse 5px 9px at 13% 29%,#ffdb93cc 0 60%,transparent 70%),
+      radial-gradient(ellipse 4px 8px at 79% 24%,#fff2bbce 0 60%,transparent 70%),
+      radial-gradient(ellipse 4px 8px at 58% 82%,#f8c980c2 0 60%,transparent 70%);
+    animation:magicBubbles 8s ease-in-out infinite alternate}
+  #viewMine .m-hero[data-mag-world="ocean"]::before{
+    background:radial-gradient(circle at 8% 80%,transparent 0 6px,#d3ffff8a 7px 8px,transparent 9px),
+      radial-gradient(circle at 68% 18%,transparent 0 4px,#ffffff9c 5px 6px,transparent 7px),
+      radial-gradient(circle at 88% 77%,transparent 0 9px,#b9f5ff9e 10px 11px,transparent 12px);
+    animation:magicBubbles 9s ease-in-out infinite alternate}
+  #viewMine .m-hero[data-mag-world="noel"]::before{
+    background:radial-gradient(circle at 15% 25%,#ffe8ab 0 2px,transparent 3px),
+      radial-gradient(circle at 65% 18%,#ffffff 0 2px,transparent 3px),
+      radial-gradient(circle at 84% 78%,#fff1b5 0 3px,transparent 4px),
+      radial-gradient(circle at 48% 68%,#e7fff3 0 1.5px,transparent 3px);
+    animation:fkMtwinkle 6s ease-in-out infinite}
+  .magic-victory{position:relative;overflow:hidden;animation:fkMglow 9s ease-in-out infinite}
+  .magic-victory::after{content:"✧";color:#b490d7;font-size:16px;animation:fkMtwinkle 4s ease-in-out infinite}
+  @media(prefers-reduced-motion:reduce){
+    #viewMine .m-hero[data-mag-world]::before,.magic-victory,.magic-victory::after{animation:none!important}
+  }
 </style>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" class="mag-svg-defs" aria-hidden="true" focusable="false">
+  <symbol id="mag-icon-castle" viewBox="0 0 160 130">
+    <path d="M20 114V57h22V36h16V16l13 10 13-10v20h16v21h22V42l14-12 14 12v72Z" fill="currentColor" opacity=".15"/>
+    <path d="M12 115h136M24 115V56h19V36h18V16l12 9 12-9v20h18v20h23V41l13-10 13 10v74M43 56h60M61 36h24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M69 115V92c0-8 5-13 11-13s11 5 11 13v23M49 73v12m62-12v12M37 20v-9M31 15h12M121 13V3m-5 5h10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <path d="m24 22 3 7 7 3-7 3-3 7-3-7-7-3 7-3Zm114 46 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" fill="currentColor"/>
+  </symbol>
+  <symbol id="mag-icon-gem" viewBox="0 0 48 48">
+    <path d="M9 16 17 7h14l8 9-15 24Z" fill="currentColor" opacity=".13"/><path d="M9 16h30L24 40 9 16Zm0 0 8-9h14l8 9M17 7l-4 9m18-9 4 9M19 16l5 24 5-24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round"/><path d="m39 3 1.5 4.5L45 9l-4.5 1.5L39 15l-1.5-4.5L33 9l4.5-1.5Z" fill="currentColor"/>
+  </symbol>
+  <symbol id="mag-icon-calendar" viewBox="0 0 48 48">
+    <rect x="7" y="11" width="34" height="30" rx="6" fill="currentColor" opacity=".1"/><path d="M12 5v11M36 5v11M7 19h34M13 11H9a2 2 0 0 0-2 2v24a4 4 0 0 0 4 4h26a4 4 0 0 0 4-4V13a2 2 0 0 0-2-2h-4" stroke="currentColor" stroke-width="2.7" fill="none" stroke-linecap="round"/><path d="m18 29 5 5 9-11" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="mag-icon-hanger" viewBox="0 0 48 48">
+    <path d="M21 12a5 5 0 1 1 7 5c-2 1-4 2-4 5v2M24 24 6 34c-3 2-2 6 2 6h32c4 0 5-4 2-6L24 24Z" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="m39 7 1.5 4L44 12l-3.5 1-1.5 4-1.5-4-3.5-1 3.5-1Z" fill="currentColor"/>
+  </symbol>
+  <symbol id="mag-icon-coins" viewBox="0 0 48 48">
+    <ellipse cx="23" cy="13" rx="14" ry="6" fill="currentColor" opacity=".14"/><path d="M9 13v22c0 4 6 7 14 7s14-3 14-7V13M9 13c0-4 6-7 14-7s14 3 14 7-6 7-14 7-14-3-14-7Zm0 12c0 4 6 7 14 7s14-3 14-7" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M20 10h5m-2.5-3v11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="mag-icon-away" viewBox="0 0 48 48">
+    <rect x="8" y="9" width="32" height="32" rx="7" fill="currentColor" opacity=".1"/><path d="M15 5v9m18-9v9M8 19h32M12 9h24a4 4 0 0 1 4 4v23a5 5 0 0 1-5 5H13a5 5 0 0 1-5-5V13a4 4 0 0 1 4-4Zm8 17 9 9m0-9-9 9" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="mag-icon-music" viewBox="0 0 48 48"><path d="M18 14 38 8v26M18 14v25M38 20 18 26" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><ellipse cx="11" cy="39" rx="7" ry="4.5" fill="currentColor" opacity=".28"/><ellipse cx="31" cy="34" rx="7" ry="4.5" fill="currentColor" opacity=".28"/><path d="M4 39c0-3 4-6 7-6 4 0 7 2 7 6S14 45 11 45s-7-2-7-6Zm20-5c0-3 4-6 7-6 4 0 7 2 7 6s-4 6-7 6-7-2-7-6Z" fill="none" stroke="currentColor" stroke-width="2.6"/></symbol>
+  <symbol id="mag-icon-box" viewBox="0 0 48 48"><path d="m6 15 18-9 18 9v20L24 44 6 35V15Zm0 0 18 9 18-9M24 24v20M15 10l18 9v9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="m37 3 1 3 3 1-3 1-1 3-1-3-3-1 3-1Z" fill="currentColor"/></symbol>
+  <symbol id="mag-icon-poll" viewBox="0 0 48 48"><rect x="8" y="7" width="32" height="35" rx="6" fill="currentColor" opacity=".1"/><rect x="8" y="7" width="32" height="35" rx="6" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="m15 19 3 3 5-6m4 4h7m-19 12 3 3 5-6m4 4h7" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="mag-icon-message" viewBox="0 0 48 48"><path d="M7 12a6 6 0 0 1 6-6h22a6 6 0 0 1 6 6v19a6 6 0 0 1-6 6H20L9 44v-9a6 6 0 0 1-2-4V12Z" fill="currentColor" opacity=".1" stroke="currentColor" stroke-width="2.7" stroke-linejoin="round"/><path d="M15 17h18M15 24h14" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></symbol>
+  <symbol id="mag-icon-book" viewBox="0 0 48 48"><path d="M24 12c-7-5-15-5-20-2v28c7-3 14-3 20 2 6-5 13-5 20-2V10c-5-3-13-3-20 2Zm0 0v28M10 18c4-1 7 0 10 2m8 0c3-2 7-3 10-2M10 26c4-1 7 0 10 2m8 0c3-2 7-3 10-2" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></symbol>
+  <symbol id="mag-icon-idea" viewBox="0 0 48 48"><path d="M15 31c-4-3-6-7-6-12a15 15 0 1 1 30 0c0 5-2 9-6 12l-2 5H17l-2-5Zm4 11h10M18 36h12m-6-24v13m-5-7 5 7 5-7" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><path d="m41 2 1 3 3 1-3 1-1 3-1-3-3-1 3-1Z" fill="currentColor"/></symbol>
+  <symbol id="mag-icon-team" viewBox="0 0 48 48"><circle cx="24" cy="13" r="7" fill="currentColor" opacity=".13"/><circle cx="24" cy="13" r="7" fill="none" stroke="currentColor" stroke-width="2.7"/><path d="M12 39v-4a12 12 0 0 1 24 0v4M10 16c-8 0-8 11 0 11m28-11c8 0 8 11 0 11M5 38v-4c0-3 3-5 6-5m32 9v-4c0-3-3-5-6-5" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/></symbol>
+  <symbol id="mag-icon-stars" viewBox="0 0 48 48"><path d="m24 3 5 15 15 6-15 5-5 16-5-16-15-5 15-6Z" fill="currentColor" opacity=".12" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="m38 5 1.7 4.3L44 11l-4.3 1.7L38 17l-1.7-4.3L32 11l4.3-1.7Z" fill="currentColor"/></symbol>
+  <symbol id="mag-icon-clock" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" fill="currentColor" opacity=".08" stroke="currentColor" stroke-width="2.7"/><path d="M24 12v13l8 5m-8-6 5-4" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
 <div id="sky" aria-hidden="true"></div>
 
 <!-- ============ ÉCRAN DE CONNEXION ============ -->
@@ -1422,6 +1586,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </form>
       <button type="button" class="login-inst" id="instLogin">📲 Comment installer l'app sur mon téléphone ?</button>
   </div>
+</div>
+
+<div id="magicIntro" class="magic-intro hidden" role="dialog" aria-label="Bienvenue chez Fantasy Kids Events">
+  <div class="magic-intro-halo" aria-hidden="true"></div>
+  <div class="magic-intro-inner">
+    <svg class="magic-intro-castle" aria-hidden="true"><use href="#mag-icon-castle"></use></svg>
+    <img src="logo.png" alt="" class="magic-intro-logo" />
+    <div class="magic-intro-stars" aria-hidden="true"><i>✦</i><i>✧</i><i>✦</i><i>✧</i><i>✦</i></div>
+    <p>De la magie plein les yeux</p>
+  </div>
+  <button type="button" id="magicIntroSkip">Passer</button>
 </div>
 
 <!-- ============ APP ============ -->
@@ -1462,6 +1637,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue calendrier -->
     <section id="viewCal">
+      <div id="magicAdminWelcome" class="magic-admin-welcome hidden" aria-label="Accueil Fantasy"></div>
       <div id="modeAccueil" class="mode-accueil hidden" aria-label="Mes prestations du jour"></div>
       <div id="centreControle" class="centre-controle hidden" aria-label="Mon centre de contrôle"></div>
       <div class="seg vue-seg"><label><input type="radio" name="vueAg" value="cal"><span>📅 Calendrier</span></label><label><input type="radio" name="vueAg" value="list"><span>📋 Liste</span></label></div>
@@ -1493,26 +1669,26 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div id="memberOverview" class="m-overview" aria-live="polite"></div>
       <div class="m-visible-tools" aria-label="Jeu et outils de l'équipe">
         <a href="fantasy-match.html?v=20261116-2" class="mine-head fantasy-game-banner">
-        <span aria-hidden="true" style="font-size:38px;line-height:1">💎</span>
+        <svg class="mag-game-gem" aria-hidden="true"><use href="#mag-icon-gem"></use></svg>
         <span style="flex:1"><b style="display:block;color:#8021bf;font-size:19px">Fantasy Match</b><small style="display:block;color:#6c5588;margin-top:3px">Le jeu magique de l'équipe · 200 niveaux · 5 vies</small></span>
         <span aria-hidden="true" style="font-size:23px;color:#a52fe8">›</span>
       </a>
         <div class="group-title">✨ Les outils de l'équipe</div>
         <div class="evt-tiles">
-        <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
-        <button type="button" class="evt-tile" id="musicOpenBtn"><span>🎵</span>Musiques</button>
-        <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span>📣</span>Infos équipe</button>
-        <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
-        <button type="button" class="evt-tile" id="myFavBtn"><span>⭐</span>Mes personnages</button>
-        <button type="button" class="evt-tile" id="myIdeasBtn"><span>💡</span>Boîte à idées</button>
-        <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
+        <button type="button" class="evt-tile" id="myCostBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-hanger"></use></svg></span>Costumes</button>
+        <button type="button" class="evt-tile" id="musicOpenBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-music"></use></svg></span>Musiques</button>
+        <button type="button" class="evt-tile" id="stockBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-box"></use></svg></span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-poll"></use></svg></span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-message"></use></svg></span>Infos équipe</button>
+        <button type="button" class="evt-tile" id="guideBtn2"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-book"></use></svg></span>Guide</button>
+        <button type="button" class="evt-tile" id="myFavBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-stars"></use></svg></span>Mes personnages</button>
+        <button type="button" class="evt-tile" id="myIdeasBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-idea"></use></svg></span>Boîte à idées</button>
+        <button type="button" class="evt-tile hidden" id="recapBtnEq"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-stars"></use></svg></span>Fantasy en chiffres</button>
       </div>
       </div>
       <nav class="m-shortcuts" aria-label="Accès rapide à mon espace">
-        <button type="button" data-member-jump="mineListSection"><span>🎭</span><b>Prestations</b><small>Mon planning</small></button>
-        <button type="button" data-member-jump="tenuesSection"><span>👗</span><b>Mes tenues</b><small>À préparer</small></button>
-        <button type="button" data-member-jump="gainsSection"><span>💶</span><b>Mes gains</b><small>Mes paiements</small></button>
-        <button type="button" data-member-jump="indFold"><span>🚫</span><b>Indispos</b><small>Mes absences</small></button>
+        <button type="button" data-member-jump="mineListSection"><span class="mag-shortcut-symbol"><svg aria-hidden="true"><use href="#mag-icon-calendar"></use></svg></span><b>Prestations</b><small>Mon planning</small></button>
+        <button type="button" data-member-jump="tenuesSection"><span class="mag-shortcut-symbol"><svg aria-hidden="true"><use href="#mag-icon-hanger"></use></svg></span><b>Mes tenues</b><small>À préparer</small></button>
+        <button type="button" data-member-jump="gainsSection"><span class="mag-shortcut-symbol"><svg aria-hidden="true"><use href="#mag-icon-coins"></use></svg></span><b>Mes gains</b><small>Mes paiements</small></button>
+        <button type="button" data-member-jump="indFold"><span class="mag-shortcut-symbol"><svg aria-hidden="true"><use href="#mag-icon-away"></use></svg></span><b>Indispos</b><small>Mes absences</small></button>
       </nav>
       <div class="mine-head post-actions hidden" id="postActions"></div>
       <div class="mine-head remises-jordan hidden" id="remisesJordan"></div>
@@ -1581,7 +1757,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue Chiffres (responsables) -->
     <section id="viewStats" class="hidden">
-      <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
+      <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-message"></use></svg></span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-idea"></use></svg></span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-calendar"></use></svg></span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-coins"></use></svg></span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-coins"></use></svg></span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-coins"></use></svg></span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-coins"></use></svg></span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-hanger"></use></svg></span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-box"></use></svg></span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-book"></use></svg></span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-team"></use></svg></span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-poll"></use></svg></span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-stars"></use></svg></span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-clock"></use></svg></span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-calendar"></use></svg></span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-stars"></use></svg></span>Réglages</button></div>
       <a href="factures.html" class="mine-head" style="display:block;text-decoration:none;color:#653090;font-weight:800;text-align:center">🧾 Factures & devis · Créer, consulter et imprimer</a>
       <section id="gPaiesPanel" class="panel hidden" aria-label="Paiements de l'équipe">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -2479,6 +2655,22 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     ["princess", /raiponce|belle|cendrillon|aurore|blanche|ariel|jasmine|vaiana|tiana|alice|m[ée]rida|elena|esmeralda|asha|mirabel|pepa|aladdin|flynn|philippe|merlin|peter pan|f[ée]e|princess/i, "👑", "✧", "#eab308"],
   ];
   const universOf = (e) => { const t = [e.titre, e.theme, e.animateurs].join(" "); return UNIVERS.find(u => u[1].test(t)) || null; };
+  // Les petits univers graphiques sont purement visuels (aucun impact sur les statuts ou les prix).
+  function mondeMagique(e) {
+    const t = [e?.titre, e?.theme, e?.animateurs].join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    if (/nuit magique/.test(t)) return "nuit";
+    if (/halloween|jack skellington|frissons|sorcier|mechante reine/.test(t)) return "halloween";
+    if (/noel|christmas|sapin|pere noel|bal de noel/.test(t)) return "noel";
+    if (/elsa|anna|olaf|kristoff|reine des neiges|frozen/.test(t)) return "frozen";
+    if (/raiponce|flynn|lanterne/.test(t)) return "lanterns";
+    if (/ariel|sirene|ocean/.test(t)) return "ocean";
+    return "fantasy";
+  }
+  function appliquerSaisonFantasy() {
+    const mois = new Date().getMonth() + 1;
+    document.body.dataset.magicSeason = mois === 10 ? "halloween" : mois === 12 ? "noel" : mois === 2 ? "romance" : "fantasy";
+  }
+
   const ROLE_EMOJI = [[/^acc$/i,"🎒"],[/elsa|anna|kristoff/i,"❄️"],[/olaf/i,"⛄"],[/rumi|mira|zoey/i,"🎤"],[/raiponce|flynn/i,"🌸"],[/belle|aurore/i,"🌹"],
     [/cendrillon/i,"👠"],[/blanche/i,"🍎"],[/ariel/i,"🧜‍♀️"],[/jasmine|aladdin|g[ée]nie/i,"🧞"],[/vaiana/i,"🌊"],[/tiana/i,"🐸"],[/alice/i,"🫖"],
     [/m[ée]rida/i,"🏹"],[/peter pan|f[ée]e/i,"🧚"],[/merlin/i,"🧙"],[/asha/i,"⭐"],[/mirabel/i,"🦋"],[/pepa/i,"🌦️"],[/elena|esmeralda|philippe/i,"👑"],
@@ -2549,6 +2741,50 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // ✨ ciel étoilé + éclats
   const MAGIC_COLORS = ["#00b4ff","#5b63f8","#a020ff","#d63fd0","#ff7f7f","#ffd86b"];
   const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let introFantasyTimer = null, introFantasyDebut = 0, introFantasyActive = false;
+  function fermerIntroFantasy() {
+    const el = $("magicIntro"); if (!el || el.classList.contains("hidden")) return;
+    introFantasyActive = false;
+    clearTimeout(introFantasyTimer);
+    el.classList.add("closing");
+    setTimeout(() => { el.classList.add("hidden"); el.classList.remove("closing"); }, reduceMotion ? 0 : 360);
+  }
+  function lancerIntroFantasy() {
+    if (reduceMotion || !$("magicIntro")) return;
+    try { if (sessionStorage.getItem("fk_magic_intro_v1")) return; sessionStorage.setItem("fk_magic_intro_v1", "1"); } catch (_) {}
+    introFantasyDebut = Date.now(); introFantasyActive = true;
+    $("magicIntro").classList.remove("hidden", "closing");
+  }
+  function terminerIntroFantasy() {
+    if (!introFantasyActive) return;
+    // Ne découvrir le tableau de bord que lorsque les données sont prêtes.
+    introFantasyTimer = setTimeout(fermerIntroFantasy, Math.max(0, 1450 - (Date.now() - introFantasyDebut)));
+  }
+  $("magicIntroSkip").onclick = fermerIntroFantasy;
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("magicIntro").classList.contains("hidden")) fermerIntroFantasy(); });
+  function celebrerMagie(message) {
+    if (reduceMotion) { toast(message); return; }
+    document.querySelector(".magic-action-success")?.remove();
+    const el = document.createElement("div"); el.className = "magic-action-success";
+    el.setAttribute("role", "status");
+    el.innerHTML = '<svg aria-hidden="true"><use href="#mag-icon-gem"></use></svg>' + esc(message);
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1700);
+    try { son("succes"); } catch (_) {}
+    magicBurst(innerWidth / 2, innerHeight * .38);
+  }
+  // Des étoiles au toucher, sans perturber les boutons ni déclencher de nouvelles actions.
+  document.addEventListener("pointerup", e => {
+    if (reduceMotion || !e.isTrusted || !e.target.closest?.(".evt-tile,.btn.primary,.m-shortcuts button,.g-tiles button")) return;
+    for (let i = 0; i < 4; i++) {
+      const star = document.createElement("span"); star.className = "magic-tap-spark";
+      star.textContent = i % 2 ? "✧" : "✦";
+      star.style.left = e.clientX + "px"; star.style.top = e.clientY + "px";
+      star.style.setProperty("--dx", (Math.cos(i * 1.57) * (17 + i * 5)) + "px");
+      star.style.setProperty("--dy", (Math.sin(i * 1.57) * (17 + i * 5)) + "px");
+      document.body.appendChild(star); setTimeout(() => star.remove(), 650);
+    }
+  }, { passive: true });
   function fillSky(el, n) {
     if (!el) return; let h = "";
     for (let i = 0; i < n; i++) {
@@ -3479,7 +3715,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const maps = e.adresse ? "https://maps.google.com/?q=" + encodeURIComponent(e.adresse) : "";
     const isCost = p && estRoleCostume(p) && e.type_evenement !== "repetition";
     const monCost = isCost ? pieceAttribuee(e, p, "costume") : null;
-    return `<article class="m-card">
+    return `<article class="m-card" data-mag-world="${mondeMagique(e)}">
       <div class="m-card-top"><b>📅 ${esc(fmtLong(e.date))}</b><span>✅ Confirmée</span></div>
       <h3>${esc(e.titre || e.enfant || "Prestation Fantasy")}</h3>
       <div class="m-card-info">
@@ -3513,7 +3749,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const p = monRoleMission(prochain, prenom);
     const heure = p ? horaireDe(prochain, p.nom) : "";
     const maps = prochain.adresse ? "https://maps.google.com/?q=" + encodeURIComponent(prochain.adresse) : "";
-    box.innerHTML = `<div class="m-hero">
+    box.innerHTML = `<div class="m-hero" data-mag-world="${mondeMagique(prochain)}">
       <div class="eyebrow">✨ Ma prochaine prestation</div>
       <h2>${esc(prochain.titre || prochain.enfant || "Prestation Fantasy")}</h2>
       <p>📅 ${esc(fmtLong(prochain.date))} ${esc(heure || (prochain.heure_debut ? "· " + hhmm(prochain.heure_debut) : ""))}<br>
@@ -3614,7 +3850,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const U = universOf(next);
     const cd = jours === 0 ? `<b>Auj.</b><small>${next.heure_debut ? hhmm(next.heure_debut) : ""}</small>` : jours === 1 ? `<b>Demain</b><small>${next.heure_debut ? hhmm(next.heure_debut) : ""}</small>` : `<b>${jours}</b><small>jours</small>`;
     b.innerHTML = `<span class="big">${U ? U[2] : "🪄"}</span><span><small>${n ? "Ta prochaine magie" : "Prochaine magie"}</small><b>${esc(next.titre || next.enfant || "Animation")}</b><small style="text-transform:capitalize">${esc(fmtLong(next.date))}${next.heure_debut ? " · " + hhmm(next.heure_debut) : ""}</small></span><span class="cd">${cd}</span>`;
-    b.dataset.id = next.id; b.classList.remove("hidden");
+    b.dataset.id = next.id; b.dataset.magWorld = mondeMagique(next); b.classList.remove("hidden");
   }
   $("nextMagic").addEventListener("click", () => { const ev = events.find(x => String(x.id) === $("nextMagic").dataset.id); if (ev) { magicBurst(); setTimeout(() => openJour(ev), 150); } });
 
@@ -3760,7 +3996,27 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   });
 
-  function render() { majWho(); majCloche(); modeNuit(); renderBirthdaySurprise(); renderNext(); renderModeAccueil(); renderCentreControle(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
+  function render() { appliquerSaisonFantasy(); majWho(); majCloche(); modeNuit(); renderBirthdaySurprise(); renderNext(); renderMagicAdminWelcome(); renderModeAccueil(); renderCentreControle(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
+  function renderMagicAdminWelcome() {
+    const box = $("magicAdminWelcome"); if (!box) return;
+    if (!isResp() || view !== "cal") { box.classList.add("hidden"); return; }
+    const date = new Date(), h = date.getHours(), prenom = myMember()?.prenom || "Jordan";
+    const salutation = h >= 18 ? "Bonsoir" : h < 11 ? "Bonjour" : "Belle journée";
+    const prochaines = events.filter(e => e.date >= todayISO() && ["confirme", "en_attente"].includes(e.statut))
+      .sort((a, b) => (a.date + (a.heure_debut || "")).localeCompare(b.date + (b.heure_debut || "")));
+    const prochain = prochaines[0], n = prochaines.length;
+    const saison = document.body.dataset.magicSeason;
+    const ambiance = saison === "noel" ? "La magie de Noël s'invite dans l'agenda" : saison === "halloween" ? "Une touche de mystère souffle sur Fantasy" :
+      saison === "romance" ? "Un peu de douceur dans notre univers" : "De la magie plein les yeux";
+    box.classList.remove("hidden");
+    box.innerHTML = `<div class="mag-admin-text">
+      <small>✦ ${esc(ambiance)} ✦</small><h2>${esc(salutation)} ${esc(prenom)} !</h2>
+      <p>${prochain ? `Prochaine aventure : <b>${esc(prochain.titre || prochain.enfant || "Prestation")}</b>, le ${esc(fmtLong(prochain.date))}.` : "Aucune prestation à venir pour le moment. À toi d'écrire la prochaine aventure !"}</p>
+      <span class="mag-admin-pill">${n ? `${n} prestation${n > 1 ? "s" : ""} à suivre` : "✨ Un agenda prêt pour la magie"}</span>
+    </div>
+    <svg class="mag-admin-art" aria-hidden="true"><use href="#mag-icon-castle"></use></svg>`;
+  }
+
 
   // 🧭 Centre de contrôle : uniquement des actions déduites des données réelles.
   function renderCentreControle() {
@@ -3789,7 +4045,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     box.classList.remove("hidden");
     box.innerHTML = `<div class="cc-head"><h2>🧭 Mon centre de contrôle <span class="cc-count ${actions.length ? "" : "ok"}">${actions.length ? actions.length + " à traiter" : "Tout est à jour"}</span></h2><button type="button" class="cc-refresh" id="ccRefresh" title="Recharger les données de l'agenda">↻ Actualiser</button></div>
       <p class="cc-summary">Demandes, équipes, acomptes, fiches clients, matériel et réservations du site · ouvre chaque fiche en un clic.</p>
-      ${actions.length ? `<div class="cc-items">${actions.slice(0,5).map(ligne).join("")}</div>${actions.length > 5 ? `<details class="cc-more"><summary>Voir les ${actions.length - 5} autres actions</summary><div class="cc-items" style="margin-top:9px">${actions.slice(5).map(ligne).join("")}</div></details>` : ""}` : `<div class="cc-empty">✅ Rien d'urgent dans les informations enregistrées. Profite de ce moment !</div>`}`;
+      ${actions.length ? `<div class="cc-items">${actions.slice(0,5).map(ligne).join("")}</div>${actions.length > 5 ? `<details class="cc-more"><summary>Voir les ${actions.length - 5} autres actions</summary><div class="cc-items" style="margin-top:9px">${actions.slice(5).map(ligne).join("")}</div></details>` : ""}` : `<div class="cc-empty"><span class="magic-victory">✦ Tout est prêt ! ✦</span><p style="margin:9px 0 0">Aucune urgence dans les informations enregistrées. Place à la magie !</p></div>`}`;
   }
   $("centreControle").addEventListener("click", async ev => {
     const b = ev.target.closest("[data-cc-event]");
@@ -4026,7 +4282,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const deja = sigEv && bilanAnimation(sigEv.id);
       const b = await enregistrerBilan();
       if (!deja && !b) { $("sigErr").textContent = "📝 Pour valider votre bilan, choisissez l'humeur du parent ou écrivez un commentaire."; return; }
-      closeSignal(); toast(b ? "📝 Bilan envoyé ! Merci ✨" : "👍 Merci, bonne fin de journée ✨"); render();
+      closeSignal(); toast(b ? "📝 Bilan envoyé ! Merci ✨" : "👍 Merci, bonne fin de journée ✨"); if (b) celebrerMagie("Mission accomplie !"); render();
     }
     catch (err) { $("sigErr").textContent = "Erreur : " + (err.message || err); }
   };
@@ -4052,7 +4308,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     finally { $("sigSend").disabled = false; }
   });
   $("sigClear").onclick = async () => {
-    try { await saveMissing(null); closeSignal(); toast("✅ Matériel réglé"); await reload(); }
+    try { await saveMissing(null); closeSignal(); toast("✅ Matériel réglé"); celebrerMagie("Matériel prêt !"); await reload(); }
     catch (err) { $("sigErr").textContent = "Erreur : " + (err.message || err); }
   };
 
@@ -4902,7 +5158,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       await store.save(ev);
       if (devisApres && editingId) { devisApres = false; envoyerDevis(editingId); }
       selDay = ev.date; const d = parseISO(ev.date); curY = d.getFullYear(); curM = d.getMonth();
-      closeForm(); toast(ev.type_evenement === "repetition" ? (editingId ? "🎭 Répétition modifiée !" : "🎭 Répétition ajoutée !") : ev.type_evenement === "evenement" ? (editingId ? "✨ Événement modifié !" : "🎪 Événement ajouté !") : ev.type_evenement === "contrat_pro" ? (editingId ? "💼 Contrat pro modifié !" : "💼 Contrat pro ajouté !") : editingId ? "✨ Animation modifiée !" : "🪄 Animation ajoutée !"); poof(editingId ? "✨ Magique !" : "🪄 Abracadabra !");  await reload();
+      closeForm(); toast(ev.type_evenement === "repetition" ? (editingId ? "🎭 Répétition modifiée !" : "🎭 Répétition ajoutée !") : ev.type_evenement === "evenement" ? (editingId ? "✨ Événement modifié !" : "🎪 Événement ajouté !") : ev.type_evenement === "contrat_pro" ? (editingId ? "💼 Contrat pro modifié !" : "💼 Contrat pro ajouté !") : editingId ? "✨ Animation modifiée !" : "🪄 Animation ajoutée !"); if (ev.statut === "confirme" && avantStatut !== "confirme") celebrerMagie("Prestation confirmée !"); else poof(editingId ? "✨ Magique !" : "🪄 Abracadabra !"); await reload();
     } catch (err) { $("formErr").textContent = "Erreur : " + (err.message || err); devisApres = false; }
     finally { $("saveBtn").disabled = false; }
   });
@@ -6465,6 +6721,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const resultat=await store.setPaid(lignes,paye);
       await reload();renderGestionPaies();
       toast(resultat?.notifError?"⚠️ Paiement enregistré, mais notification non envoyée : "+resultat.notifError:paye?"✅ Paiement enregistré et membre prévenu":"↩ Paiement remis en attente");
+      if (paye && !resultat?.notifError) celebrerMagie("Paiement enregistré !");
     }catch(err){toast("Erreur de paiement : "+(err.message||err));btn.disabled=false;}
   });
   $("gFin").onclick = () => $("gFinT").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -11272,7 +11529,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("logoutBtn").classList.toggle("hidden", DEMO);
     $("demoBar").classList.toggle("hidden", !DEMO);
     const lienOuverture = !!location.search; // ne pas interrompre un lien direct vers une fiche ou un chat
+    if (!lienOuverture) lancerIntroFantasy();
     await reload();
+    terminerIntroFantasy();
     // Un membre arrive d’abord sur son tableau de bord personnel ; les responsables gardent l’agenda.
     if (!isGest() && !lienOuverture && view === "cal") document.querySelector('.tab[data-view="mine"]')?.click();
     ouvrirClocheAuDemarrage(user);
