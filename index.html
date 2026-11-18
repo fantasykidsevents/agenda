@@ -650,6 +650,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .lu-par{text-align:right;font-size:11.5px;color:#8a80a6;margin:2px 10px 6px}
   .devis-box{background:#f6efff;border-radius:16px;padding:12px 14px;margin:12px 0}
   body.dark .devis-box{background:#2c2540}
+  .devis-gestion-row{border:1px solid var(--line);border-radius:15px;padding:12px;margin:10px 0;background:rgba(255,255,255,.68)}
+  .devis-gestion-row .dv-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .devis-gestion-row .dv-top b{color:var(--txt)}
+  .devis-gestion-row .dv-meta{font-size:13px;color:var(--muted);margin:5px 0;line-height:1.5}
+  .devis-gestion-row .dv-status{font-size:12px;border-radius:24px;background:#f1e8ff;color:#6a2ad6;padding:5px 9px;white-space:nowrap;font-weight:800}
+  .devis-gestion-row .dv-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+  .devis-gestion-row .dv-actions button{flex:1;min-width:110px}
+  .devis-gestion-row details{margin-top:9px;color:var(--muted);font-size:13px}
+  .devis-gestion-row details summary{cursor:pointer;color:#7343b1;font-weight:700}
+  body.dark .devis-gestion-row{background:rgba(44,37,64,.68)}
   .rx-who{font-size:11px;color:#8a80a6;margin:2px 6px 0;line-height:1.3}
   .m.me .rx-who{text-align:right}
   .chat-online{display:block;color:#17a35a;font-weight:700;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1797,6 +1807,19 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <section id="viewStats" class="hidden">
       <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
       <a href="factures.html" class="mine-head" style="display:block;text-decoration:none;color:#653090;font-weight:800;text-align:center">🧾 Factures & devis · Créer, consulter et imprimer</a>
+      <button type="button" id="gDevis" class="mine-head" style="width:100%;border:1px solid #d5b4f8;text-align:center;color:#653090;font:800 17px Fredoka,sans-serif;cursor:pointer">📜 Devis clients · Réponses et relances</button>
+      <section id="gDevisPanel" class="panel hidden" aria-label="Suivi des devis clients">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <h3 style="margin:0">📜 Suivi des devis clients</h3>
+          <button type="button" class="sig" id="gDevisClose">✕ Fermer</button>
+        </div>
+        <p class="hint">Réponses des clients, dates d'envoi et relances. Un devis sans réponse n'est jamais annulé automatiquement.</p>
+        <div class="actions" style="margin:9px 0;justify-content:flex-start">
+          <select id="devisFiltre" aria-label="Filtrer les devis" style="flex:1;min-width:160px"><option value="actifs">✨ À suivre</option><option value="tout">Tous les devis</option><option value="relance">⏰ À relancer</option><option value="modification">💬 Modifications</option><option value="refuse">❌ Refusés</option><option value="accepte">✅ Acceptés</option></select>
+          <button type="button" class="btn ghost" id="devisActualiser">🔄 Actualiser</button>
+        </div>
+        <div id="devisGestionBody" aria-live="polite">Ouvrez ce panneau pour consulter les devis.</div>
+      </section>
       <section id="gPaiesPanel" class="panel hidden" aria-label="Paiements de l'équipe">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
           <h3 style="margin:0">👛 Paiements de l'équipe</h3>
@@ -3943,7 +3966,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const date = new Date(n.cree_le).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
       const info = String(n.titre || "") + " " + String(n.type || "");
       const cat = /paie|paiement|virement|défrai|defrai/i.test(info) ? "paie" :
-        /bilan|à faire|à remplir|action requise|tenue|costume|perruque|matériel manquant|materiel manquant/i.test(info) || n.type === "fin" || n.type === "demande" ? "action" : "info";
+        /bilan|à faire|à remplir|action requise|tenue|costume|perruque|matériel manquant|materiel manquant/i.test(info) || n.type === "fin" || n.type === "demande" || n.type === "devis" ? "action" : "info";
       return { cat, html: `<div class="dem-row" style="${n.lue_le ? "opacity:.7" : "border-left:4px solid #9a39ed;padding-left:10px"}">
         <b>${esc(n.titre)}</b>${n.lue_le ? "" : " · <small>🔴 Nouveau</small>"}<br>
         <small style="white-space:normal">${esc(n.message || "").replace(/\n/g, "<br>")}</small><br>
@@ -4387,6 +4410,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     else if(ev.statut==="en_attente"){
       if(!ev.email){titre="📧 Coordonnées du client";desc="Ajoute l'adresse e-mail du client pour pouvoir lui envoyer son devis.";action="Ajouter l'e-mail";cible="email";}
       else if(!(Number(ev.prix)>0)){titre="💶 Préparer le prix";desc="Vérifie le prix total, les options et les déplacements.";action="Vérifier les montants";cible="prix";}
+      else if(devis?.reponse_client==="refuse"){titre="❌ Devis refusé par le client";desc="Tu peux consulter son motif et décider de préparer une nouvelle proposition ou d'annuler la fiche.";action="Consulter la réponse";cible="devisBox";}
+      else if(devis?.reponse_client==="modification"){titre="💬 Le client demande une modification";desc="Lis son message puis adapte et renvoie le devis lorsque tu es prêt.";action="Consulter la demande";cible="devisBox";}
       else if(devis?.envoye_le){titre="⏳ Devis envoyé";desc="Le devis a été envoyé. La réservation attend l'accord du client.";action="Consulter le devis";cible="devisBox";}
       else{titre="📨 Devis prêt à envoyer";desc="Vérifie le détail puis envoie le devis au client.";action="Envoyer le devis";cible="devisBtn";}
     }else if(!anims(ev).length){titre="🎭 Affecter l'équipe";desc="La prestation est confirmée, mais personne n'est encore affecté.";action="Ajouter les membres";cible="addAnim";}
@@ -4415,12 +4440,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const ok = isResp() && ev && ev.id && ev.type_evenement === "animation" && !estEvenementInterne(ev);
     box.classList.toggle("hidden", !ok); if (!ok) { renderEtapeFiche(ev); return; }
     let d = null;
-    if (!DEMO) { try { ({ data: d } = await sb.from("devis").select("envoye_le,accepte_le").eq("evenement_id", ev.id).maybeSingle()); } catch (_) {} }
+    if (!DEMO) { try { ({ data: d } = await sb.from("devis").select("envoye_le,accepte_le,reponse_client,reponse_motif,reponse_message,reponse_le,relance_le,relance_nombre").eq("evenement_id", ev.id).maybeSingle()); } catch (_) {} }
     renderEtapeFiche(ev,d);
     const f = (x) => new Date(x).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    const explication = d?.accepte_le ? `✅ Accepté par le client le ${f(d.accepte_le)}`
+      : d?.reponse_client === "refuse" ? `❌ Refusé le ${f(d.reponse_le)}. ${[d.reponse_motif,d.reponse_message].filter(Boolean).map(esc).join(" · ")}`
+      : d?.reponse_client === "modification" ? `💬 Modification demandée le ${f(d.reponse_le)}. ${esc(d.reponse_message || "")}`
+      : d?.envoye_le ? `⏳ Envoyé le ${f(d.envoye_le)} · en attente de sa réponse${d.relance_nombre ? ` · ${d.relance_nombre} relance(s)` : ""}`
+      : "Le client reçoit le détail du prix (formule + options), peut l'accepter, le refuser ou demander une modification.";
+    const texteBouton = d?.reponse_client === "refuse" ? "📨 Envoyer une nouvelle proposition" : d?.reponse_client === "modification" ? "📨 Envoyer le devis modifié" : d?.envoye_le ? "🔁 Renvoyer le devis" : "📨 Enregistrer et envoyer le devis";
     box.innerHTML = `<div class="sec" style="margin-top:0">📨 Devis pour le client</div>
-      <p class="hint" style="margin:0 0 8px">${d && d.accepte_le ? `✅ Accepté par le client le ${f(d.accepte_le)}` : d && d.envoye_le ? `⏳ Envoyé le ${f(d.envoye_le)} · en attente de sa réponse` : "Le client reçoit le détail du prix (formule + options) et l'accepte en un clic. Il reçoit ensuite la demande d'acompte."}</p>
-      ${["confirme","termine","annule"].includes(ev.statut) ? "" : `<button type="button" class="btn ${d && d.envoye_le ? "ghost" : "primary"}" id="devisBtn" style="width:100%">${d && d.envoye_le ? "🔁 Renvoyer le devis" : "📨 Enregistrer et envoyer le devis"}</button>`}`;
+      <p class="hint" style="margin:0 0 8px">${explication}</p>
+      ${["confirme","termine","annule"].includes(ev.statut) ? "" : `<button type="button" class="btn ${d?.envoye_le ? "ghost" : "primary"}" id="devisBtn" style="width:100%">${texteBouton}</button>`}`;
     if ($("devisBtn")) $("devisBtn").onclick = () => {
       if (!$("email").value.trim()) { $("formErr").textContent = "📧 Ajoute d'abord l'e-mail du parent."; $("email").focus(); return; }
       if (!(+$("prix").value > 0)) { $("formErr").textContent = "💶 Indique d'abord le prix total."; $("prix").focus(); return; }
@@ -4432,7 +4463,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (DEMO) { toast("📨 Dans la version en ligne, le devis part tout de suite"); return; }
     try { const { data, error } = await sb.functions.invoke("notifier", { body: { type: "DEVIS", evId: id } });
       if (error || !data?.ok) throw error || new Error(data?.erreur || "erreur");
-      toast("📨 Devis envoyé au client !"); magicBurst(); }
+      toast("📨 Devis envoyé au client !"); magicBurst();
+      const ev=events.find(x=>String(x.id)===String(id)); if(ev)renderDevis(ev);
+      if(!$("gDevisPanel").classList.contains("hidden"))chargerSuiviDevis().catch(console.warn);
+    }
     catch (err) { toast("Erreur devis : " + (err.message || err)); }
   }
   function renderFiche(ev) {
@@ -6665,6 +6699,88 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if(e.target.name!=="gCategorie")return;
     const ids=gestionGroupes[e.target.value];
     $("viewStats").querySelectorAll(".g-tiles .evt-tile").forEach(b=>b.classList.toggle("hidden",!!ids&&!ids.includes(b.id)));
+  });
+
+  // 📜 Suivi des devis clients : seul le responsable voit les réponses et les relances.
+  let devisClients = [], devisJournal = [];
+  const dateDevis = (x) => x ? new Date(x).toLocaleString("fr-BE", {day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit"}) : "—";
+  function statutDevisClient(d, ev) {
+    if (d.accepte_le || ["confirme", "termine"].includes(ev?.statut)) return ["accepte", "✅ Accepté"];
+    if (d.reponse_client === "refuse") return ["refuse", "❌ Refusé"];
+    if (d.reponse_client === "modification") return ["modification", "💬 Modification demandée"];
+    if (ev?.statut === "annule") return ["annule", "❌ Animation annulée"];
+    if (!ev || ev.date < todayISO()) return ["expire", "🕘 Date passée"];
+    const dernier = d.relance_le || d.envoye_le;
+    const jours = dernier ? Math.max(0, Math.floor((Date.now() - new Date(dernier).getTime()) / 86400000)) : 0;
+    return jours >= 5 ? ["relance", "⏰ À relancer"] : jours >= 3 ? ["rappel", "🔔 Rappel conseillé"] : ["attente", "📨 En attente"];
+  }
+  function afficherSuiviDevis() {
+    const filtre = $("devisFiltre").value;
+    const lignes = devisClients.map(d => ({ d, ev: events.find(e => String(e.id) === String(d.evenement_id)) }))
+      .map(x => ({ ...x, etat: statutDevisClient(x.d, x.ev) }))
+      .filter(x => filtre === "tout" || filtre === "actifs" && ["attente", "rappel", "relance", "modification", "refuse"].includes(x.etat[0])
+        || filtre === "relance" && ["rappel", "relance"].includes(x.etat[0]) || filtre === x.etat[0])
+      .sort((a,b) => (b.d.reponse_le || b.d.relance_le || b.d.envoye_le || "").localeCompare(a.d.reponse_le || a.d.relance_le || a.d.envoye_le || ""))
+      .slice(0,100);
+    const actifs = devisClients.filter(d => {
+      const e = events.find(x => String(x.id) === String(d.evenement_id));
+      return ["attente", "rappel", "relance", "modification", "refuse"].includes(statutDevisClient(d,e)[0]);
+    });
+    const urgents = actifs.filter(d => ["relance", "modification", "refuse"].includes(statutDevisClient(d, events.find(x=>String(x.id)===String(d.evenement_id)))[0]));
+    const rendu = lignes.map(({d,ev,etat}) => {
+      const journal = devisJournal.filter(j => String(j.evenement_id) === String(d.evenement_id));
+      const estEnAttente = ["attente", "rappel", "relance"].includes(etat[0]);
+      const date = ev?.date ? fmtLong(ev.date) : "Date non disponible";
+      const nom = ev?.parent || ev?.enfant || "Client non précisé";
+      const titre = ev?.titre || ev?.theme || "Animation";
+      const reponse = [d.reponse_motif, d.reponse_message].filter(Boolean).join(" · ");
+      return `<div class="devis-gestion-row">
+        <div class="dv-top"><div><b>${esc(nom)} · ${esc(titre)}</b><div class="dv-meta">📅 ${esc(date)}</div></div><span class="dv-status">${etat[1]}</span></div>
+        <div class="dv-meta">📨 Envoyé : ${esc(dateDevis(d.envoye_le))}${d.relance_nombre ? ` · 🔔 ${d.relance_nombre} relance${d.relance_nombre>1?"s":""} (dernière : ${esc(dateDevis(d.relance_le))})` : ""}${d.reponse_le ? ` · Réponse : ${esc(dateDevis(d.reponse_le))}` : ""}</div>
+        ${reponse ? `<p style="margin:7px 0;color:var(--txt)">💬 ${esc(reponse)}</p>` : ""}
+        <div class="dv-actions"><button type="button" class="sig" data-devis-ouvrir="${esc(d.evenement_id)}">📋 Voir la fiche</button>
+          ${estEnAttente && ev?.email ? `<button type="button" class="sig" data-devis-relancer="${esc(d.evenement_id)}">📨 Relancer le client</button>` : ""}</div>
+        ${journal.length ? `<details><summary>🕘 Historique (${journal.length})</summary>${journal.map(j => `<div style="padding:5px 0">${esc(dateDevis(j.cree_le))} · ${esc(({envoi:"Devis envoyé",relance:"Relance envoyée",accepte:"Accepté",refuse:"Refusé",modification:"Modification demandée"})[j.action] || j.action)}${j.detail ? " · " + esc(j.detail) : ""}</div>`).join("")}</details>` : ""}
+      </div>`;
+    }).join("");
+    $("devisGestionBody").innerHTML = `<p class="hint" style="margin:8px 0"><b>${actifs.length}</b> devis à suivre · <b>${urgents.length}</b> réponse(s) ou relance(s) à traiter.</p>`
+      + (rendu || `<p class="hint">Aucun devis dans ce filtre. ✨</p>`);
+  }
+  async function chargerSuiviDevis() {
+    if (!isResp()) return;
+    $("devisGestionBody").textContent = "✨ Chargement des réponses clients…";
+    if (DEMO) { devisClients = []; devisJournal = []; afficherSuiviDevis(); return; }
+    const {data,error}=await sb.from("devis")
+      .select("evenement_id,envoye_le,accepte_le,reponse_client,reponse_motif,reponse_message,reponse_le,relance_le,relance_nombre")
+      .not("envoye_le","is",null).order("envoye_le",{ascending:false}).limit(1000);
+    if (error) { $("devisGestionBody").textContent = "⚠️ Suivi indisponible : activer le script supabase_suivi_devis_clients.sql dans Supabase. " + error.message; return; }
+    devisClients = data || [];
+    const hist = await sb.from("devis_suivi_actions").select("evenement_id,action,detail,cree_le").order("cree_le",{ascending:false}).limit(1500);
+    devisJournal = hist.error ? [] : (hist.data || []);
+    afficherSuiviDevis();
+  }
+  $("gDevis").onclick = () => {
+    $("gDevisPanel").classList.remove("hidden");
+    $("gDevisPanel").scrollIntoView({behavior:"smooth",block:"start"});
+    chargerSuiviDevis().catch(err => { $("devisGestionBody").textContent = "Erreur de chargement : " + (err.message || err); });
+  };
+  $("gDevisClose").onclick = () => $("gDevisPanel").classList.add("hidden");
+  $("devisFiltre").addEventListener("change", afficherSuiviDevis);
+  $("devisActualiser").onclick = () => chargerSuiviDevis().catch(err => toast("Erreur devis : " + (err.message || err)));
+  $("devisGestionBody").addEventListener("click", async e => {
+    const ouvrir=e.target.closest("[data-devis-ouvrir]");
+    if (ouvrir) { const ev=events.find(x=>String(x.id)===ouvrir.dataset.devisOuvrir); if(ev)openForm(ev); return; }
+    const b=e.target.closest("[data-devis-relancer]");
+    if (!b || !isResp()) return;
+    const ev=events.find(x=>String(x.id)===b.dataset.devisRelancer);
+    if (!ev || !confirm(`Renvoyer le devis à ${ev.parent || "ce client"} (${ev.email}) ?`))return;
+    b.disabled=true;
+    try {
+      const {data,error}=await sb.functions.invoke("notifier",{body:{type:"DEVIS",evId:ev.id,relance:true}});
+      if(error || !data?.ok)throw error || new Error(data?.erreur || "Envoi non confirmé");
+      toast("📨 Relance envoyée au client !");
+      await chargerSuiviDevis();
+    }catch(err){toast("⚠️ Relance impossible : "+(err.message||err));b.disabled=false;}
   });
 
   function renderGestionPaies() {

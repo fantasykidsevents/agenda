@@ -77,6 +77,14 @@
   .ok-btn{display:block;width:100%;border:0;border-radius:16px;padding:16px;font:700 18px "Fredoka",sans-serif;color:#fff;cursor:pointer;
     background:linear-gradient(110deg,#00b4ff,#a020ff,#d63fd0,#ff7f7f);background-size:200% 100%;animation:flow 4s linear infinite alternate;box-shadow:0 10px 26px rgba(160,32,255,.35)}
   .note{color:var(--muted);font-size:14px;text-align:center;margin:10px 0 0}
+  .dv-choices{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+  .dv-choice{border:1px solid #ddc9f3;border-radius:13px;padding:12px 8px;background:#faf5ff;color:#653090;font:600 15px "Fredoka",sans-serif;cursor:pointer}
+  .dv-choice:focus-visible,.dv-send:focus-visible{outline:3px solid #b995f8;outline-offset:2px}
+  .dv-response{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:16px;background:#fbf8ff}
+  .dv-response select{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:white;font:inherit;color:inherit}
+  .dv-response textarea{margin:8px 0 12px;min-height:100px}
+  .dv-send{width:100%;border:0;border-radius:13px;padding:13px;background:#7343b1;color:white;font:700 16px "Fredoka",sans-serif;cursor:pointer}
+  .dv-cancel{display:block;margin:9px auto 0;border:0;background:none;color:#6b6385;font:600 14px "Fredoka",sans-serif;cursor:pointer}
 </style>
 </head>
 <body>
@@ -100,6 +108,21 @@
       <p style="margin:0 0 12px;font-size:16px">Tout vous convient ? Un petit clic et on s'occupe de la suite 💖</p>
       <button type="button" class="ok-btn" id="okBtn">✅ J'accepte le devis</button>
       <p class="note">Vous recevrez ensuite par e-mail les infos pour l'acompte, afin de bloquer la date rien que pour vous 🔒</p>
+      <div class="dv-choices">
+        <button type="button" class="dv-choice" data-reponse="modification">💬 Demander une modification</button>
+        <button type="button" class="dv-choice" data-reponse="refuse">❌ Refuser le devis</button>
+      </div>
+      <div class="dv-response hidden" id="reponseBox">
+        <h2 id="reponseTitre">Votre réponse</h2>
+        <div id="reponseMotifBox" class="hidden">
+          <label class="q" for="reponseMotif">Pour quelle raison ? (facultatif)</label>
+          <select id="reponseMotif"><option value="">Je préfère ne pas préciser</option><option>Le budget ne convient pas</option><option>La date a changé</option><option>Le projet est annulé</option><option>J'ai choisi une autre solution</option><option>Autre raison</option></select>
+        </div>
+        <label class="q" for="reponseMessage" id="reponseMessageLabel">Votre message (facultatif)</label>
+        <textarea id="reponseMessage" maxlength="1000" placeholder="Un petit mot pour notre équipe…"></textarea>
+        <button type="button" class="dv-send" id="reponseEnvoyer">Envoyer ma réponse</button>
+        <button type="button" class="dv-cancel" id="reponseAnnuler">↩ Retour aux choix</button>
+      </div>
       <p class="err" id="err"></p>
     </div>
   </div>
@@ -108,6 +131,7 @@
     <h2>Merci, c'est validé !</h2>
     <p>Youpi ! Vous allez recevoir dans quelques instants un e-mail avec les infos pour verser l'acompte.<br>Toute l'équipe a déjà hâte de vous retrouver ✨</p>
   </div>
+  <div class="card done hidden" id="reponseDone" role="status" aria-live="polite"></div>
 </div>
 <script>
 (() => {
@@ -151,6 +175,15 @@
       $("zoneOk").innerHTML = `<p style="margin:0;font-size:16px;text-align:center">✅ Ce devis est déjà accepté, merci ! 💖</p>`;
     }
   }
+  function afficherEtat(s) {
+    if (s?.accepte_le) {
+      $("zoneOk").innerHTML = `<p style="margin:0;text-align:center">✅ Ce devis a déjà été accepté, merci ! 💖</p>`;
+    } else if (s?.reponse_client === "refuse") {
+      $("zoneOk").innerHTML = `<p style="margin:0;text-align:center">💜 Nous avons bien reçu votre refus. Merci de nous avoir prévenus !</p>`;
+    } else if (s?.reponse_client === "modification") {
+      $("zoneOk").innerHTML = `<p style="margin:0;text-align:center">💬 Votre demande de modification a bien été transmise. Nous reviendrons vers vous.</p>`;
+    }
+  }
   async function charger() {
     if (DEMO) {
       $("demoBar").classList.remove("hidden");
@@ -159,10 +192,55 @@
       const { data, error } = await sb.rpc("devis_get", { p_token: token });
       if (error || !data) { $("loading").classList.add("hidden"); $("invalid").classList.remove("hidden"); return; }
       remplir(data);
+      try {
+        const { data: etat, error: errEtat } = await sb.rpc("devis_etat", { p_token: token });
+        if (!errEtat) afficherEtat(etat);
+        else {
+          document.querySelector(".dv-choices")?.classList.add("hidden");
+          $("zoneOk").insertAdjacentHTML("beforeend", '<p class="note">Pour refuser ce devis ou demander une modification, vous pouvez répondre directement à notre e-mail.</p>');
+        }
+      } catch (_) { /* l'ancien système d'acceptation continue de fonctionner */ }
     }
     $("loading").classList.add("hidden"); $("devis").classList.remove("hidden");
   }
   $("devis").addEventListener("click", async (e) => {
+    const choix = e.target.closest("[data-reponse]");
+    if (choix) {
+      $("reponseBox").classList.remove("hidden");
+      $("reponseBox").dataset.choix = choix.dataset.reponse;
+      const refus = choix.dataset.reponse === "refuse";
+      $("reponseTitre").textContent = refus ? "❌ Refuser ce devis" : "💬 Votre demande de modification";
+      $("reponseMotifBox").classList.toggle("hidden", !refus);
+      $("reponseMessageLabel").textContent = refus ? "Un message pour nous ? (facultatif)" : "Que souhaitez-vous modifier ?";
+      $("reponseMessage").placeholder = refus ? "Vous pouvez nous laisser un petit mot…" : "Expliquez-nous la modification souhaitée…";
+      $("reponseEnvoyer").textContent = refus ? "Confirmer mon refus" : "Envoyer ma demande";
+      $("err").textContent = "";
+      $("reponseBox").scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
+    if (e.target.id === "reponseAnnuler") { $("reponseBox").classList.add("hidden"); $("err").textContent = ""; return; }
+    if (e.target.id === "reponseEnvoyer") {
+      const reponse = $("reponseBox").dataset.choix;
+      const message = $("reponseMessage").value.trim();
+      if (reponse === "modification" && message.length < 5) { $("err").textContent = "Précisez ce que vous souhaitez modifier (au moins 5 caractères)."; return; }
+      const b = e.target; b.disabled = true; b.textContent = "✨ Envoi en cours…"; $("err").textContent = "";
+      try {
+        if (!DEMO) {
+          const { data, error } = await sb.rpc("devis_repondre", {
+            p_token: token, p_reponse: reponse, p_motif: reponse === "refuse" ? $("reponseMotif").value : "", p_message: message,
+          });
+          if (error || !data?.ok) throw error || new Error("Enregistrement non confirmé");
+          // La notification est déjà enregistrée en base ; ceci ajoute le push mobile si activé.
+          sb.functions.invoke("notifier", { body: { type: "DEVIS_REPONSE", token } }).catch(() => {});
+        }
+        $("devis").classList.add("hidden");
+        $("reponseDone").innerHTML = reponse === "refuse"
+          ? `<div class="big">💜</div><h2>Merci de nous avoir prévenus !</h2><p>Votre refus est enregistré. Nous espérons vous retrouver pour une autre aventure magique.</p>`
+          : `<div class="big">💬</div><h2>Message bien reçu !</h2><p>Votre demande est transmise à notre équipe. Nous reviendrons vers vous dès que possible.</p>`;
+        $("reponseDone").classList.remove("hidden"); scrollTo({ top: 0, behavior: "smooth" }); burst();
+      } catch (err) { $("err").textContent = "Votre réponse n'a pas pu être enregistrée. Réessayez ou répondez à notre e-mail."; b.disabled = false; b.textContent = reponse === "refuse" ? "Confirmer mon refus" : "Envoyer ma demande"; }
+      return;
+    }
     if (e.target.id !== "okBtn") return;
     const b = e.target; b.disabled = true; b.textContent = "✨ Validation…"; $("err").textContent = "";
     try {

@@ -729,10 +729,15 @@ const OPTIONS_PRIX = { hors_zone: ["🚗 Forfait hors zone", 25], enfant: ["👧
   perso_flash: ["🎭 Personnage supplémentaire · Flash (30 min)", 40], perso_magic: ["🎭 Personnage supplémentaire · Magic (1 h)", 65],
   perso_fantastic: ["🎭 Personnage supplémentaire · Fantastic (1 h 30)", 80], perso_celebration: ["🎭 Personnage supplémentaire · Célébration (2 h)", 90],
   mascotte: ["🐭 Mascotte surprise (30 min)", 100], perso_30: ["🎤 Personnage supplémentaire · 30 min", 40], perso_1h: ["🎤 Personnage supplémentaire · 1 h", 45] };
-async function envoyerDevis(ev) {
+async function envoyerDevis(ev, { relance = false } = {}) {
   if (!ev.email || !APP_URL) return "pas d'e-mail";
   let { data: d } = await sb.from("devis").select("*").eq("evenement_id", ev.id).maybeSingle();
   if (!d) { const r = await sb.from("devis").insert({ evenement_id: ev.id, token: jeton() }).select().single(); if (r.error) throw r.error; d = r.data; }
+  if (!("reponse_client" in d) || !("relance_nombre" in d))
+    return "Activer d'abord le script SQL de suivi des devis dans Supabase";
+  if (["confirme", "termine", "annule"].includes(ev.statut) || d.accepte_le)
+    return "la prestation n'attend plus de devis";
+  if (relance && (d.reponse_client || !d.envoye_le)) return "ce devis n'est pas en attente de réponse";
   const pv = await lirePrive(ev.id), prix = +(pv.prix || 0), acompte = +(pv.acompte || 0);
   const optionsFacturees = Object.entries(ev.options || {}).reduce((t,[k,n]) => t + (k === "tatouage" ? 0 : (OPTIONS_PRIX[k]?.[1] || 0) * (+n || 0)),0);
   const kmInclus = pv.km_detail?.fraisInclusPrix === true || (pv.km_detail?.fraisInclusPrix == null && String(pv.notes_privees || "").includes("Déplacement client : "));
@@ -741,9 +746,9 @@ async function envoyerDevis(ev) {
   const lien = `${APP_URL}/devis.html?t=${d.token}`, enfant = ev.enfant ? ` de ${ev.enfant}` : "";
   const lignesOpt = Object.entries(ev.options || {}).filter(([, n]) => +n > 0).map(([k, n]) => { const o = OPTIONS_PRIX[k]; return o ? `<tr><td style="padding:3px 0">${esc(o[0])}${+n > 1 ? ` × ${n}` : ""}</td><td style="text-align:right;padding:3px 0">${k === "tatouage" ? `${euros0(o[1])} / enfant` : euros0(o[1] * n)}</td></tr>` : ""; }).join("");
   const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1f1735">${BANDE}
-    <h2 style="margin:18px 0 6px">📜 Votre devis magique est prêt !</h2>
+    <h2 style="margin:18px 0 6px">${relance ? "💌 Petit rappel concernant votre devis" : "📜 Votre devis magique est prêt !"}</h2>
     ${bonjour(ev.parent)}
-    <p style="font-size:16px">Merci pour votre demande 💖 Voici le détail de l'animation que nous avons préparée${ev.enfant ? ` pour <b>${esc(ev.enfant)}</b>` : ""}. Prenez le temps de tout regarder ✨</p>
+    <p style="font-size:16px">${relance ? "Nous nous permettons de revenir vers vous car nous n'avons pas encore reçu votre réponse à notre devis 💜 Il vous suffit de choisir l'option qui vous convient, même si vous ne souhaitez plus réserver." : `Merci pour votre demande 💖 Voici le détail de l'animation que nous avons préparée${ev.enfant ? ` pour <b>${esc(ev.enfant)}</b>` : ""}. Prenez le temps de tout regarder ✨`}</p>
     ${recapAnim(ev)}
     <table style="width:100%;font-size:15px;border-collapse:collapse;background:#f8f2ff;border-radius:12px;padding:10px">
       <tr><td style="padding:3px 0">✨ ${esc(ev.theme || "Animation")} · formule</td><td style="text-align:right;padding:3px 0">${euros0(formule)}</td></tr>${lignesOpt}
@@ -751,16 +756,73 @@ async function envoyerDevis(ev) {
       ${prix ? `<tr><td style="padding:8px 0 3px;border-top:1px solid #dcc6ff"><b>Total</b></td><td style="text-align:right;padding:8px 0 3px;border-top:1px solid #dcc6ff"><b>${euros0(prix)}</b></td></tr>` : ""}
       ${acompte ? `<tr><td style="padding:3px 0;color:#6b6385">dont acompte à la réservation</td><td style="text-align:right;color:#6b6385">${euros0(acompte)}</td></tr>` : ""}
     </table>
-    <p style="font-size:16px;margin-top:16px">Tout vous convient ? Il suffit d'un clic pour valider 👇</p>
-    <p><a href="${lien}" style="display:inline-block;background:linear-gradient(110deg,#00b4ff,#a020ff,#d63fd0);color:#fff;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:16px">✅ Voir et accepter mon devis</a></p>
-    <p style="font-size:14px;color:#6b6385">Dès votre accord, nous vous envoyons les infos pour l'acompte afin de bloquer la date rien que pour vous 🔒 Une modification à faire ? Répondez simplement à ce mail.</p>
+    <p style="font-size:16px;margin-top:16px">Vous pouvez nous répondre en quelques clics 👇</p>
+    <p><a href="${lien}" style="display:inline-block;background:linear-gradient(110deg,#00b4ff,#a020ff,#d63fd0);color:#fff;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:16px">📜 Consulter et répondre à mon devis</a></p>
+    <p style="font-size:14px;color:#6b6385">Vous pouvez <b>accepter</b>, <b>refuser</b> ou <b>demander une modification</b> directement sur cette page. Dès votre accord, nous vous envoyons les infos pour l'acompte afin de bloquer la date 🔒</p>
     ${SIGNATURE}</div>`;
   const detailTexte = [`Formule ${ev.theme || "Animation"} : ${euros0(formule)}`, ...Object.entries(ev.options || {}).filter(([k,n]) => +n>0 && OPTIONS_PRIX[k]).map(([k,n]) => `${OPTIONS_PRIX[k][0]}${+n>1 ? " × "+n : ""} : ${k === "tatouage" ? euros0(OPTIONS_PRIX[k][1])+" / enfant (payé sur place)" : euros0(OPTIONS_PRIX[k][1]*n)}`), ...(deplacement ? [`Frais de déplacement : ${euros0(deplacement)}`] : [])].join("\n");
-  const texte = `Bonjour,\n\nVoici votre devis pour l'animation${enfant} : ${quand(ev)}.\n\n${detailTexte}\nTotal : ${euros0(prix)}${acompte ? `\nAcompte : ${euros0(acompte)}` : ""}\n\nPour l'accepter en un clic :\n${lien}\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
-  await envoyerEmail(ev.email, `📜 Votre devis Fantasy Kids Events${enfant}`, html, texte, [],
+  const introTexte = relance ? `Petit rappel : nous n'avons pas encore reçu de réponse à votre devis pour l'animation${enfant} prévue ${quand(ev)}.`
+    : `Voici votre devis pour l'animation${enfant} : ${quand(ev)}.`;
+  const texte = `Bonjour,\n\n${introTexte}\n\n${detailTexte}\nTotal : ${euros0(prix)}${acompte ? `\nAcompte : ${euros0(acompte)}` : ""}\n\nPour l'accepter, le refuser ou demander une modification :\n${lien}\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
+  await envoyerEmail(ev.email, `${relance ? "💌 Rappel de votre devis" : "📜 Votre devis Fantasy Kids Events"}${enfant}`, html, texte, [],
     { canal: "client" });
-  await sb.from("devis").update({ envoye_le: new Date().toISOString() }).eq("evenement_id", ev.id);
+  const horodatage = new Date().toISOString();
+  const changements: Record<string, unknown> = { envoye_le: horodatage };
+  if (relance) {
+    changements.relance_le = horodatage;
+    changements.relance_nombre = (Number(d.relance_nombre) || 0) + 1;
+  } else {
+    // Une nouvelle proposition rouvre le devis et réinitialise la réponse précédente.
+    Object.assign(changements, { reponse_client: null, reponse_motif: null, reponse_message: null,
+      reponse_le: null, reponse_push_le: null, relance_le: null, relance_nombre: 0 });
+  }
+  const { error: errMaj } = await sb.from("devis").update(changements).eq("evenement_id", ev.id);
+  if (errMaj) throw errMaj;
+  const {error:errJournal} = await sb.from("devis_suivi_actions").insert({
+    evenement_id: ev.id, action: relance ? "relance" : "envoi",
+    detail: `Envoyé à ${ev.email}`,
+  });
+  if (errJournal) console.error("Historique devis", errJournal.message);
+  if (!relance) await classerRappels(ev.id, "devis");
   return "devis envoyé";
+}
+
+// Un rappel dans la cloche à J+3 puis à J+5 après le dernier envoi / la dernière relance.
+// Aucune annulation automatique et aucun mail supplémentaire au client.
+async function rappelsDevisClients(equipe) {
+  const {data:devis,error} = await sb.from("devis")
+    .select("evenement_id,envoye_le,accepte_le,reponse_client,relance_le")
+    .not("envoye_le","is",null).is("accepte_le",null).is("reponse_client",null)
+    .order("envoye_le",{ascending:false}).limit(1000);
+  if (error) { console.error("Rappels devis (migration nécessaire)",error.message); return []; }
+  if (!devis?.length) return [];
+  const {data:evenements,error:errEv} = await sb.from("evenements")
+    .select("id,date,statut,titre,enfant,parent")
+    .in("id",devis.map(d=>d.evenement_id));
+  if (errEv) throw errEv;
+  const evMap=new Map((evenements||[]).map(e=>[String(e.id),e]));
+  const responsables=(equipe||[]).filter(m=>m.responsable&&m.email);
+  const cibles=responsables.some(m=>norm(m.prenom)==="jordan")
+    ? responsables.filter(m=>norm(m.prenom)==="jordan") : responsables;
+  const notifications=[];
+  for (const d of devis) {
+    const ev=evMap.get(String(d.evenement_id));
+    if(!ev||ev.statut!=="en_attente"||ev.date<aujourdhui())continue;
+    const dernier=d.relance_le||d.envoye_le,jours=Math.floor((Date.now()-new Date(dernier).getTime())/86400000);
+    if(jours<3)continue;
+    const etape=jours>=5?5:3;
+    const titre=etape===5?"⏰ Devis sans réponse depuis 5 jours":"⏰ Devis à suivre depuis 3 jours";
+    const nom=ev.parent||"Le client",presta=ev.titre||ev.enfant||"Animation";
+    for(const m of cibles){
+      const cle=`devis-rappel-${etape}-${d.evenement_id}-${dernier.replace(/[^0-9]/g,"").slice(0,14)}-${m.email}`;
+      const payload={title:titre,body:`${nom} · ${presta}\n${quand(ev)}\nLa réponse du client manque toujours. Tu peux le relancer dans Gestion > Devis clients.`,url:`./index.html?ev=${ev.id}`,tag:`devis-rappel-${ev.id}`};
+      const garde=await garderDansCloche(m.email,payload,"devis",ev.id,cle);
+      if(garde.deja)continue;
+      const pushs=await envoyerPush(m.email,payload,{categorie:"administration",dejaEnCloche:true});
+      notifications.push({devis:d.evenement_id,etape,pushs});
+    }
+  }
+  return notifications;
 }
 
 // ---------- 📸 Après l'animation : photos + avis Google + diplôme au client ----------
@@ -1673,6 +1735,35 @@ Deno.serve(async (req) => {
       return json({ ok: true, ...r });
     }
 
+    // Le token du devis donne droit à une seule notification de réponse.
+    // Le client a déjà enregistré sa décision via la fonction SQL sécurisée.
+    if (p.type === "DEVIS_REPONSE") {
+      const token=String(p.token||"");
+      if(token.length<24||token.length>128)return json({ok:false,erreur:"Lien invalide"},400);
+      const {data:d,error:errDevis}=await sb.from("devis")
+        .select("evenement_id,reponse_client,reponse_motif,reponse_message,reponse_le,reponse_push_le")
+        .eq("token",token).maybeSingle();
+      if(errDevis||!d||!["refuse","modification"].includes(d.reponse_client)||!d.reponse_le)
+        return json({ok:false,erreur:"Réponse introuvable"},404);
+      if(Date.now()-new Date(d.reponse_le).getTime()>24*3600_000)
+        return json({ok:true,ancien:true});
+      const {data:prise,error:errPrise}=await sb.from("devis")
+        .update({reponse_push_le:new Date().toISOString()})
+        .eq("evenement_id",d.evenement_id).is("reponse_push_le",null)
+        .select("evenement_id").maybeSingle();
+      if(errPrise)throw errPrise;
+      if(!prise)return json({ok:true,dejaEnvoye:true});
+      const {data:ev}=await sb.from("evenements").select("titre,enfant,parent").eq("id",d.evenement_id).maybeSingle();
+      const {data:equipe}=await sb.from("equipe").select("prenom,email,responsable").eq("responsable",true);
+      const titre=d.reponse_client==="refuse"?"❌ Devis refusé":"💬 Modification demandée";
+      const body=`${ev?.parent||"Le client"} · ${ev?.titre||ev?.enfant||"Animation"}${d.reponse_motif?"\n"+d.reponse_motif:""}${d.reponse_message?"\n"+d.reponse_message:""}`;
+      let pushs=0;
+      for(const m of equipe||[])if(m.email)
+        pushs+=await envoyerPush(m.email,{title:titre,body,url:`./index.html?ev=${d.evenement_id}`,tag:`devis-reponse-${d.evenement_id}`},
+          {categorie:"administration",sansCloche:true});
+      return json({ok:true,pushs});
+    }
+
     // Rappels 1h avant (appelé toutes les 5 minutes par la tâche planifiée)
     if (p.type === "RAPPELS") {
       const { data: aVenir, error } = await sb.rpc("rappels_a_envoyer");
@@ -1683,6 +1774,9 @@ Deno.serve(async (req) => {
       // ⏳ Demandes clients non traitées : rappels quotidiens pour Jordan.
       try { resultats.push(...(await relancerDemandesAnimation(equipe))); }
       catch (err) { console.error("Relances demandes d'animation", err); }
+      // 📜 Devis envoyés sans réponse : un avis à 3 jours puis à 5 jours.
+      try { resultats.push(...(await rappelsDevisClients(equipe))); }
+      catch (err) { console.error("Rappels devis clients", err); }
       // 🗳️ Rappels de sondages : J-7, J-2, J-1 et H-4.
       // Les notifications de la cloche peuvent avoir été créées par Cron ;
       // un petit registre SQL permet d'envoyer les pushs sans doublon.
@@ -1888,9 +1982,14 @@ Deno.serve(async (req) => {
 
     // Bouton « Envoyer la fiche par e-mail » dans l'app
     if (p.type === "DEVIS") {
+      const bearer=(req.headers.get("Authorization")||"").match(/^Bearer\s+(.+)$/i)?.[1];
+      const {data:identite,error:errIdentite}=bearer?await sb.auth.getUser(bearer):{data:null,error:new Error("Connexion requise")};
+      if(errIdentite||!identite?.user?.email)return json({ok:false,erreur:"Connexion requise"},401);
+      const {data:profil,error:errProfil}=await sb.from("equipe").select("responsable,gestionnaire").ilike("email",identite.user.email);
+      if(errProfil||!(profil||[]).some(m=>m.responsable||m.gestionnaire))return json({ok:false,erreur:"Réservé à la gestion"},403);
       const { data: e } = await sb.from("evenements").select("*").eq("id", p.evId).maybeSingle();
       if (!e) return json({ ok: false, erreur: "animation introuvable" }, 404);
-      const r = await envoyerDevis(e);
+      const r = await envoyerDevis(e,{relance:p.relance===true});
       return json({ ok: r === "devis envoyé", devis: r, erreur: r === "devis envoyé" ? undefined : r });
     }
     if (p.type === "FICHE") {
