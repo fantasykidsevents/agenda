@@ -1230,6 +1230,50 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .cc-empty{padding:10px;border-radius:11px;background:#eff9f1;color:#23693c;font-size:13px;font-weight:700}
 
 
+
+  /* Mon espace : priorités visibles d'abord sur téléphone, outils secondaires repliés. */
+  .m-overview{margin:12px 0 14px}
+  .m-hero{background:linear-gradient(125deg,#482578,#7354bf 64%,#aa75db);color:#fff;border-radius:19px;padding:18px 19px;box-shadow:0 9px 24px #5e31852b}
+  .m-hero .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.09em;opacity:.8;font-weight:750}
+  .m-hero h2{font-size:22px;line-height:1.22;margin:6px 0 9px;color:white}
+  .m-hero p{color:#ffffffd9;margin:6px 0;font-size:13px;line-height:1.55}
+  .m-hero .m-hero-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+  .m-hero .m-hero-actions button,.m-hero .m-hero-actions a{background:#fff;color:#56368d;border:0;border-radius:11px;padding:10px 12px;text-decoration:none;font-weight:800;font-size:12px;cursor:pointer}
+  .m-hero .m-hero-actions a{background:#ffffff26;border:1px solid #ffffff88;color:#fff}
+  .m-hero-empty{background:#f9f7fe;color:#5d4b76;border:1px solid #e8def4;box-shadow:none}
+  .m-hero-empty h2{color:#56368d}.m-hero-empty p{color:#716386}
+  .m-summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+  .m-summary span{background:#ffffff22;border:1px solid #ffffff4a;border-radius:100px;padding:5px 9px;font-size:11px;font-weight:800}
+  .m-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 17px}
+  .m-shortcuts button{min-width:0;border:1px solid #e6daf2;background:#fff;border-radius:14px;padding:12px 5px;color:#56368d;box-shadow:0 2px 9px #61408b0d;cursor:pointer;display:flex;align-items:center;flex-direction:column;gap:3px}
+  .m-shortcuts button>span{font-size:24px}.m-shortcuts b{font-size:12px}.m-shortcuts small{font-size:10px;color:#8b7d98}
+  .m-shortcuts button:focus-visible,.m-card button:focus-visible{outline:3px solid #ab6de9;outline-offset:2px}
+  .m-section{scroll-margin-top:125px;margin:14px 0 19px}
+  .m-section>.group-title{margin-bottom:11px}
+  .m-card{border:1px solid #e5daf4;background:#fff;border-radius:17px;padding:13px 14px;margin:10px 0;box-shadow:0 3px 12px #4935750e}
+  .m-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:#6c5c83}
+  .m-card-top b{font-size:13px;color:#603f96}
+  .m-card h3{margin:8px 0;font-size:17px;color:#34264f}
+  .m-card-info{display:grid;gap:5px;color:#655877;font-size:13px;line-height:1.48}
+  .m-card-info strong{color:#51357d}
+  .m-card-info a{color:#6a42a7;text-decoration:none;overflow-wrap:anywhere}
+  .m-card-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+  .m-card-actions button,.m-card-actions a{display:inline-flex;align-items:center;justify-content:center;border:1px solid #ded0ef;border-radius:10px;background:#f8f4ff;color:#654090;text-decoration:none;padding:8px 11px;font-weight:700;font-size:12px;cursor:pointer}
+  .m-card-actions .m-main{background:#6d45a7;color:white;border-color:#6d45a7}
+  .m-tenue-row{background:#faf8ff;border:1px solid #eae2f5;border-radius:12px;padding:10px 12px;margin:8px 0;font-size:13px;color:#59456f}
+  .m-tenue-row b{display:block;color:#44296f;margin-bottom:5px}
+  .m-tenue-row small{color:#76698b;display:block;margin:2px 0}
+  .m-tenue-row button{border:0;border-radius:8px;padding:7px 10px;background:#e9dbf9;color:#5a3588;font-weight:700;margin-top:7px;cursor:pointer}
+  .m-subdetails,.m-extras{margin:11px 0;border:1px solid #e8def4;border-radius:15px;background:#fff}
+  .m-subdetails summary,.m-extras summary{cursor:pointer;padding:13px 15px;color:#583783;font-weight:800}
+  .m-extras summary small{display:block;color:#9586a7;font-size:11px;font-weight:500;margin-top:4px}
+  .m-extras-body{padding:0 12px 13px}.m-extras .evt-tiles{margin-top:9px}
+  #indFold{scroll-margin-top:125px}
+  @media(max-width:420px){.m-shortcuts{gap:5px}.m-shortcuts button{padding:11px 3px}.m-shortcuts b{font-size:11px}.m-shortcuts small{font-size:9px}.m-card-actions button,.m-card-actions a{flex:1;min-width:110px}}
+  .m-year-totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:10px 0}
+  .m-year-totals>div{background:#faf6ff;border:1px solid #eadff7;border-radius:12px;padding:11px 12px}
+  .m-year-totals small{display:block;font-size:11px;color:#7e668c;margin-bottom:5px}
+  .m-year-totals b{display:block;font-size:18px;color:#53317e}
 </style>
 </head>
 <body>
@@ -1328,27 +1372,31 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <!-- Vue Mes animations -->
     <section id="viewMine" class="hidden">
       <div class="mine-head" id="mineHead"></div>
-      <div class="evt-tiles">
-        <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
-        <button type="button" class="evt-tile" id="musicOpenBtn"><span>🎵</span>Musiques</button>
-        <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span>📣</span>Infos équipe</button>
-        <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
-        <button type="button" class="evt-tile" id="myFavBtn"><span>⭐</span>Mes personnages</button>
-        <button type="button" class="evt-tile" id="myIdeasBtn"><span>💡</span>Boîte à idées</button>
-        <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
-      </div>
-      <a href="fantasy-match.html?v=20261116-2" class="mine-head" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;background:linear-gradient(110deg,#e0f5ff,#f0ddff 52%,#ffe0f1);border:1px solid #d8b5ff;box-shadow:0 5px 18px rgba(169,42,220,.13)">
-        <span aria-hidden="true" style="font-size:38px;line-height:1">💎</span>
-        <span style="flex:1"><b style="display:block;color:#8021bf;font-size:19px">Fantasy Match</b><small style="display:block;color:#6c5588;margin-top:3px">Le jeu magique de l'équipe · 200 niveaux · 5 vies</small></span>
-        <span aria-hidden="true" style="font-size:23px;color:#a52fe8">›</span>
-      </a>
+      <div id="memberOverview" class="m-overview" aria-live="polite"></div>
+      <nav class="m-shortcuts" aria-label="Accès rapide à mon espace">
+        <button type="button" data-member-jump="mineListSection"><span>🎭</span><b>Prestations</b><small>Mon planning</small></button>
+        <button type="button" data-member-jump="tenuesSection"><span>👗</span><b>Mes tenues</b><small>À préparer</small></button>
+        <button type="button" data-member-jump="gainsSection"><span>💶</span><b>Mes gains</b><small>Mes paiements</small></button>
+        <button type="button" data-member-jump="indFold"><span>🚫</span><b>Indispos</b><small>Mes absences</small></button>
+      </nav>
       <div class="mine-head post-actions hidden" id="postActions"></div>
       <div class="mine-head remises-jordan hidden" id="remisesJordan"></div>
       <div class="mine-head post-actions photos-jordan hidden" id="photosJordan"></div>
-      <div class="mine-head mine-calendar">
-        <div class="group-title">📆 Mes prestations sur mon téléphone</div>
-        <p class="hint" style="margin:0 0 10px">Retrouvez automatiquement vos animations dans Google Agenda ou le calendrier de l'iPhone.</p>
-        <div id="calBox"><button type="button" class="btn primary" id="calBtn" style="width:100%">📆 Ajouter mes prestations à mon calendrier</button></div>
+
+      <div class="m-section" id="mineListSection">
+        <div class="group-title">🎭 Mes prestations confirmées</div>
+        <div id="mineList"></div>
+      </div>
+      <div class="m-section" id="tenuesSection">
+        <div class="group-title">👗 Mes tenues et perruques</div>
+        <div id="memberTenues" class="m-tenues"></div>
+        <details class="m-subdetails"><summary>Voir aussi mes costumes personnels</summary>
+          <div class="mine-head"><div id="myCost"></div></div>
+        </details>
+      </div>
+      <div class="m-section" id="gainsSection">
+        <div class="group-title">💶 Mes gains et paiements</div>
+        <div class="mine-head"><div id="mesGains"></div></div>
       </div>
       <details class="fold mine-fold mine-ind" id="indFold">
         <summary class="fold-t">🚫 Mes indisponibilités <small>Signaler une absence en un clic</small></summary>
@@ -1367,12 +1415,33 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           </form>
         </div>
       </details>
-      <div id="mineList"></div>
-      <div class="group-title">💶 Mes gains</div>
-      <div class="mine-head"><div id="mesGains"></div></div>
-      <div class="group-title">👗 Mes costumes & perruques</div>
-      <div class="mine-head"><div id="myCost"></div></div>
 
+      <details class="m-extras" id="memberExtras">
+        <summary>🧰 Autres outils de l'équipe <small>Musiques, sondages, guide, stock…</small></summary>
+        <div class="m-extras-body">
+      <div class="evt-tiles">
+        <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
+        <button type="button" class="evt-tile" id="musicOpenBtn"><span>🎵</span>Musiques</button>
+        <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span>📣</span>Infos équipe</button>
+        <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
+        <button type="button" class="evt-tile" id="myFavBtn"><span>⭐</span>Mes personnages</button>
+        <button type="button" class="evt-tile" id="myIdeasBtn"><span>💡</span>Boîte à idées</button>
+        <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
+      </div>
+      <a href="fantasy-match.html?v=20261116-2" class="mine-head" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;background:linear-gradient(110deg,#e0f5ff,#f0ddff 52%,#ffe0f1);border:1px solid #d8b5ff;box-shadow:0 5px 18px rgba(169,42,220,.13)">
+        <span aria-hidden="true" style="font-size:38px;line-height:1">💎</span>
+        <span style="flex:1"><b style="display:block;color:#8021bf;font-size:19px">Fantasy Match</b><small style="display:block;color:#6c5588;margin-top:3px">Le jeu magique de l'équipe · 200 niveaux · 5 vies</small></span>
+        <span aria-hidden="true" style="font-size:23px;color:#a52fe8">›</span>
+      </a>
+
+      <div class="mine-head mine-calendar">
+        <div class="group-title">📆 Mes prestations sur mon téléphone</div>
+        <p class="hint" style="margin:0 0 10px">Retrouvez automatiquement vos animations dans Google Agenda ou le calendrier de l'iPhone.</p>
+        <div id="calBox"><button type="button" class="btn primary" id="calBtn" style="width:100%">📆 Ajouter mes prestations à mon calendrier</button></div>
+      </div>
+
+        </div>
+      </details>
     </section>
 
     <!-- Vue Chat -->
@@ -2960,14 +3029,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!me) {
       $("postActions").classList.add("hidden");
       $("mineHead").innerHTML = DEMO
-        ? `<b>Mes animations</b><p class="hint">Dans la vraie version, chacun voit ici ses propres animations. Pour essayer : ajoutez-vous dans <b>👥 Équipe</b>, puis choisissez votre prénom.</p>
+        ? `<b>Mon espace</b><p class="hint">Pour essayer l'espace membre, choisissez votre prénom.</p>
            <select id="demoMe" style="margin-top:4px"><option value="">— Choisir un prénom —</option>${members.map(m => `<option>${esc(m.prenom)}</option>`).join("")}</select>`
-        : `<b>Mes animations</b><p class="hint">Votre e-mail (${esc(currentUser?.email || "")}) n'est pas encore relié à un prénom. Ajoutez-vous dans <b>👥 Équipe</b>.</p>`;
+        : `<b>Mon espace</b><p class="hint">Votre e-mail (${esc(currentUser?.email || "")}) n'est pas encore relié à une fiche membre. Contactez Jordan.</p>`;
       $("mineList").innerHTML = "";
+      $("memberTenues").innerHTML = "";
+      $("memberOverview").innerHTML = "";
       if (DEMO && demoMe) { $("demoMe").value = demoMe; return renderMineFor(demoMe); }
       return;
     }
-    $("mineHead").innerHTML = `<b>Bonjour ${esc(me.prenom)} 👋</b><p class="hint" style="margin-bottom:0">Vos prochaines animations</p>`;
+    $("mineHead").innerHTML = `<b>Bonjour ${esc(me.prenom)} 👋</b><p class="hint" style="margin-bottom:0">Tout ce dont tu as besoin pour tes prochaines prestations.</p>`;
     renderMineFor(me.prenom);
   }
   let demoMe = "";
@@ -3261,27 +3332,132 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if (cible === lien) cible.focus();
     }, 200);
   });
+
+  // Mon espace membre : les données montrées proviennent seulement des missions confirmées
+  // auxquelles cette personne est réellement affectée.
+  function missionsConfirmees(prenom) {
+    const n = normName(prenom);
+    return events.filter(e => e.statut === "confirme" && jeVoisEv(e) &&
+      anims(e).some(a => normName(a) === n))
+      .sort((a, b) => (a.date + (a.heure_debut || "")).localeCompare(b.date + (b.heure_debut || "")));
+  }
+  function monRoleMission(e, prenom) {
+    return parseTeam(e.animateurs).find(p => normName(p.nom) === normName(prenom)) || null;
+  }
+  function memberCard(e, prenom) {
+    const p = monRoleMission(e, prenom);
+    const role = p?.role || "À préciser";
+    const h = p ? horaireDe(e, p.nom) : "";
+    const trajet = p ? voitureTxt(e, p.nom) : "";
+    const maps = e.adresse ? "https://maps.google.com/?q=" + encodeURIComponent(e.adresse) : "";
+    const isCost = p && estRoleCostume(p) && e.type_evenement !== "repetition";
+    const monCost = isCost ? pieceAttribuee(e, p, "costume") : null;
+    return `<article class="m-card">
+      <div class="m-card-top"><b>📅 ${esc(fmtLong(e.date))}</b><span>✅ Confirmée</span></div>
+      <h3>${esc(e.titre || e.enfant || "Prestation Fantasy")}</h3>
+      <div class="m-card-info">
+        <span>🕒 ${esc(h || (e.heure_debut ? hhmm(e.heure_debut) + (e.heure_fin ? " – " + hhmm(e.heure_fin) : "") : "Horaire à préciser"))}</span>
+        <span>🎭 Mon rôle : <strong>${esc(role)}</strong></span>
+        ${e.adresse ? `<span>📍 ${esc(e.adresse)}</span>` : ""}
+        ${trajet ? `<span>🚗 ${esc(trajet)}</span>` : ""}
+        ${isCost ? `<span>👗 ${monCost ? esc(nomDe(monCost)) : "Tenue à confirmer / choisir"}</span>` : ""}
+      </div>
+      <div class="m-card-actions">
+        <button type="button" class="m-main" data-member-open="${esc(e.id)}">📋 Ma fiche</button>
+        ${isCost ? `<button type="button" data-member-tenue="${esc(e.id)}">👗 Tenue</button>` : ""}
+        ${maps ? `<a href="${maps}" target="_blank" rel="noopener">📍 Itinéraire</a>` : ""}
+        ${jePeuxVoir(e) ? `<button type="button" data-member-chat="${esc(e.id)}">💬 Chat</button>` : ""}
+      </div>
+    </article>`;
+  }
+  function renderMemberOverview(prenom, prochaines) {
+    const box = $("memberOverview");
+    const prochain = prochaines.find(e => !animationTerminee(e));
+    const nb = prochaines.filter(e => !animationTerminee(e)).length;
+    const aFaire = notificationsApp.filter(n => !n.lue_le && !notificationsVuesIci.has(String(n.id)) &&
+      (n.type === "fin" || n.type === "demande")).length;
+    if (!prochain) {
+      box.innerHTML = `<div class="m-hero m-hero-empty">
+        <div class="eyebrow">✨ Mon planning</div><h2>Aucune prestation confirmée à venir</h2>
+        <p>Tu retrouveras ici tes prochaines missions dès que Jordan les aura confirmées.</p>
+      </div>`;
+      return;
+    }
+    const p = monRoleMission(prochain, prenom);
+    const heure = p ? horaireDe(prochain, p.nom) : "";
+    const maps = prochain.adresse ? "https://maps.google.com/?q=" + encodeURIComponent(prochain.adresse) : "";
+    box.innerHTML = `<div class="m-hero">
+      <div class="eyebrow">✨ Ma prochaine prestation</div>
+      <h2>${esc(prochain.titre || prochain.enfant || "Prestation Fantasy")}</h2>
+      <p>📅 ${esc(fmtLong(prochain.date))} ${esc(heure || (prochain.heure_debut ? "· " + hhmm(prochain.heure_debut) : ""))}<br>
+         🎭 ${esc(p?.role || "Rôle à confirmer")}${prochain.adresse ? `<br>📍 ${esc(prochain.adresse)}` : ""}</p>
+      <div class="m-summary"><span>${nb} prestation${nb > 1 ? "s" : ""} à venir</span>${aFaire ? `<span>🔔 ${aFaire} action${aFaire > 1 ? "s" : ""} à voir</span>` : ""}</div>
+      <div class="m-hero-actions">
+        <button type="button" data-member-open="${esc(prochain.id)}">📋 Préparer ma mission</button>
+        ${maps ? `<a href="${maps}" target="_blank" rel="noopener">📍 Itinéraire</a>` : ""}
+      </div>
+    </div>`;
+  }
+  function renderMemberTenues(prenom, prochaines) {
+    const box = $("memberTenues");
+    const lignes = prochaines.filter(e => !animationTerminee(e) && e.type_evenement !== "repetition")
+      .map(e => ({ e, p: monRoleMission(e, prenom) })).filter(x => x.p && estRoleCostume(x.p)).slice(0, 6);
+    box.innerHTML = lignes.length ? lignes.map(({ e, p }) => {
+      const pieces = ["costume", "perruque"].map(type => {
+        const attrib = pieceAttribuee(e, p, type);
+        const dispo = costDe(p.role, type);
+        const ancien = attributionPour(e, p, type);
+        if (!attrib && !dispo.length && !ancien) return "";
+        return attrib ? `${TYPES[type][0]} ${esc(nomDe(attrib))}${etatDe(attrib) !== "ok" ? " · ⚠️ " + esc(etatTxt(attrib)) : " · ✅ attribué"}`
+          : `${TYPES[type][0]} ${TYPES[type][1]} à confirmer`;
+      }).filter(Boolean);
+      return `<div class="m-tenue-row"><b>${esc(p.role)} · ${esc(fmtLong(e.date))}</b>
+        <small>${esc(e.titre || e.enfant || "Prestation")}</small>
+        ${pieces.length ? pieces.map(l => `<small>${l}</small>`).join("") : `<small>Choix des tenues à préciser.</small>`}
+        <button type="button" data-member-tenue="${esc(e.id)}">👗 Voir / signaler ma tenue</button>
+      </div>`;
+    }).join("") : `<p class="hint">Aucune tenue à préparer pour tes prochaines prestations confirmées.</p>`;
+  }
   function renderMineFor(prenom) {
-    // Une seule présentation : les prestations à clôturer rejoignent les cartes
-    // de « Mes animations » au lieu d'être répétées dans un encadré séparé.
     $("postActions").classList.add("hidden");
     $("postActions").innerHTML = "";
-    const t = todayISO(), n = normName(prenom);
-    const list = events.filter(e => e.date >= t && jeVoisEv(e) && e.statut !== "annule" && anims(e).some(a => normName(a) === n))
-      .sort((x,y) => (x.date + (x.heure_debut||"")).localeCompare(y.date + (y.heure_debut||"")));
+    const t = todayISO(), missions = missionsConfirmees(prenom);
+    const futures = missions.filter(e => e.date >= t && !animationTerminee(e));
     const recentDate = parseISO(t); recentDate.setDate(recentDate.getDate() - 3);
     const since = iso(recentDate);
-    const recent = events.filter(e => e.date < t && e.date >= since && jeVoisEv(e) && e.statut !== "annule" && anims(e).some(a => normName(a) === n))
-      .sort((x,y) => (y.date + (y.heure_debut||"")).localeCompare(x.date + (x.heure_debut||"")));
+    const recent = events.filter(e => e.date >= since && e.date <= t && jeVoisEv(e) &&
+      (e.statut === "confirme" || e.statut === "termine") && animationTerminee(e) &&
+      anims(e).some(a => normName(a) === normName(prenom)))
+      .sort((x, y) => (y.date + (y.heure_debut || "")).localeCompare(x.date + (x.heure_debut || "")));
     const limiteDate = parseISO(t); limiteDate.setDate(limiteDate.getDate() - 20);
-    const limite = iso(limiteDate);
-    const aCloturer = events.filter(e => e.date < since && e.date >= limite && modeDisponible(e) &&
-      animationTerminee(e) && prestationACloturer(e))
-      .sort((x,y) => (y.date + (y.heure_debut||"")).localeCompare(x.date + (x.heure_debut||"")));
-    $("mineList").innerHTML = (list.length ? list.map(e => card(e, true)).join("") : `<div class="empty">Aucune animation prévue pour ${esc(prenom)}.</div>`)
-      + (recent.length ? `<div class="group-title">Récemment terminées</div>` + recent.map(e => card(e, true)).join("") : "")
-      + (aCloturer.length ? `<div class="group-title">🏁 Prestations à clôturer</div>` + aCloturer.map(e => card(e, true)).join("") : "");
+    const aCloturer = events.filter(e => e.date < since && e.date >= iso(limiteDate) &&
+      modeDisponible(e) && animationTerminee(e) && prestationACloturer(e))
+      .sort((x, y) => (y.date + (y.heure_debut || "")).localeCompare(x.date + (x.heure_debut || "")));
+    renderMemberOverview(prenom, futures);
+    renderMemberTenues(prenom, futures);
+    $("mineList").innerHTML = (futures.length ? futures.map(e => memberCard(e, prenom)).join("") :
+      '<div class="empty">Aucune prestation confirmée à venir pour le moment.</div>')
+      + (recent.length ? '<div class="group-title">🕘 Récemment terminées</div>' + recent.map(e => memberCard(e, prenom)).join("") : "")
+      + (aCloturer.length ? '<div class="group-title">🏁 À clôturer</div>' + aCloturer.map(e => memberCard(e, prenom)).join("") : "");
   }
+  document.querySelectorAll("[data-member-jump]").forEach(b => b.addEventListener("click", () => {
+    const cible = $(b.dataset.memberJump);
+    if (!cible) return;
+    if (cible.tagName === "DETAILS") cible.open = true;
+    cible.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  }));
+  $("viewMine").addEventListener("click", e => {
+    const open = e.target.closest("[data-member-open]");
+    const tenue = e.target.closest("[data-member-tenue]");
+    const chat = e.target.closest("[data-member-chat]");
+    const btn = open || tenue || chat;
+    if (!btn) return;
+    const ev = events.find(x => String(x.id) === String(btn.dataset.memberOpen || btn.dataset.memberTenue || btn.dataset.memberChat));
+    if (!ev || !jeVoisEv(ev) || ev.statut === "en_attente") return;
+    if (open) openJour(ev);
+    else if (tenue) openCostAssign(ev);
+    else if (chat && jePeuxVoir(ev)) openChat("ev:" + ev.id);
+  });
   function renderModeAccueil() {
     const box = $("modeAccueil"); if (!box) return;
     const aujourd = todayISO();
@@ -3344,19 +3520,27 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const R = (isGest() ? resaSite : []).map(r => { const e = events.find(x => String(x.id) === String(r.evenement_id));
       return `<div class="dem-row"><b>🎟️ ${esc(r.nom || "Réservation")}</b> · ${r.places} place${r.places > 1 ? "s" : ""}${r.bebes ? ` + ${r.bebes} bébé${r.bebes > 1 ? "s" : ""}` : ""}<br><small>${esc(e ? e.titre : "Événement")}${e ? " · " + esc(fmtLong(e.date)) : ""}</small>${r.notes ? `<br><small class="hint">${esc(String(r.notes).replace(/^🌐 Via le site[^:]*: /, "").slice(0, 160))}</small>` : ""}
       <div class="actions"><button type="button" class="btn" data-resa-ouvrir="${esc(r.evenement_id)}" data-id="${esc(r.id)}">👀 Ouvrir les réservations</button><button type="button" class="btn primary" data-resa-vu="${esc(r.id)}">✅ Vu</button></div></div>`; }).join("");
-    const mesNotifs = notificationsApp.filter(n => !n.lue_le && n.type !== "chat" && !notificationsVuesIci.has(String(n.id))).map(n => {
+    const lignesNotifs = notificationsApp.filter(n => !n.lue_le && n.type !== "chat" && !notificationsVuesIci.has(String(n.id))).map(n => {
       const ev = events.find(x => String(x.id) === String(n.evenement_id));
       const ouvrir = (ev && jeVoisEv(ev)) || !!n.lien;
       const date = new Date(n.cree_le).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-      return `<div class="dem-row" style="${n.lue_le ? "opacity:.7" : "border-left:4px solid #9a39ed;padding-left:10px"}">
+      const info = String(n.titre || "") + " " + String(n.type || "");
+      const cat = /paie|paiement|virement|défrai|defrai/i.test(info) ? "paie" :
+        /bilan|à faire|à remplir|action requise|tenue|costume|perruque|matériel manquant|materiel manquant/i.test(info) || n.type === "fin" || n.type === "demande" ? "action" : "info";
+      return { cat, html: `<div class="dem-row" style="${n.lue_le ? "opacity:.7" : "border-left:4px solid #9a39ed;padding-left:10px"}">
         <b>${esc(n.titre)}</b>${n.lue_le ? "" : " · <small>🔴 Nouveau</small>"}<br>
         <small style="white-space:normal">${esc(n.message || "").replace(/\n/g, "<br>")}</small><br>
         <small class="hint">${esc(date)}</small>
         <div class="actions">
           ${ouvrir ? `<button type="button" class="btn" data-notif-voir="${esc(n.id)}">👀 Ouvrir</button>` : ""}
           <button type="button" class="btn primary" data-notif-lu="${esc(n.id)}">${n.type === "demande" ? "✅ Vu" : "✅ Vu · retirer"}</button>
-        </div></div>`;
-    }).join("");
+        </div></div>` };
+    });
+    const mesNotifs = [["action", "🔴 À faire"], ["paie", "💶 Paiements"], ["info", "✨ Informations"]]
+      .map(([cat, label]) => {
+        const rows = lignesNotifs.filter(x => x.cat === cat).map(x => x.html).join("");
+        return rows ? `<div class="sec">${label}</div>` + rows : "";
+      }).join("");
     const nbNonLues = notificationsApp.filter(n => !n.lue_le && !notificationsVuesIci.has(String(n.id))).length;
     const notifSection = (mesNotifs ? `<div class="sec">✨ Mes notifications</div>` +
       (nbNonLues ? `<div class="actions"><button type="button" class="btn ghost" data-notif-tout>✅ Tout marquer comme lu (${nbNonLues})</button></div>` : "") +
@@ -9009,7 +9193,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const ym = `${gY}-${pad(gM + 1)}`, L = lignesGains(moi).filter(x => (x.date || "").startsWith(ym)).sort((a, b) => a.date.localeCompare(b.date));
     const pre = L.reduce((t, x) => t + x.pre, 0), dep = L.reduce((t, x) => t + x.dep, 0), du = L.filter(x => !x.paye).reduce((t, x) => t + x.pre + x.dep, 0);
     const pts = pointages.filter(p => normName(p.prenom) === normName(moi) && p.fin && p.debut.slice(0, 7) === ym).reduce((t, p) => t + pointsDe(p), 0);
+    const lignesAn = lignesGains(moi).filter(x => (x.date || "").startsWith(`${gY}-`));
+    const payeAn = lignesAn.filter(x => x.paye).reduce((total, x) => total + x.pre + x.dep, 0);
+    const attenteAn = lignesAn.filter(x => !x.paye).reduce((total, x) => total + x.pre + x.dep, 0);
     box.innerHTML = `<b>💶 Mes gains</b>
+      <div class="m-year-totals"><div><small>✅ Déjà payé en ${gY}</small><b>${euro(payeAn)}</b></div><div><small>⏳ Encore à recevoir</small><b>${euro(attenteAn)}</b></div></div>
+      <p class="hint" style="margin:4px 0 11px;font-size:11px">Selon les prestations et déplacements enregistrés pour ${gY}.</p>
       <div class="gains-nav"><button type="button" id="gPrev" aria-label="Mois précédent">‹</button><b>${new Date(gY, gM, 1).toLocaleDateString("fr-BE", { month: "long", year: "numeric" })}</b><button type="button" id="gNext" aria-label="Mois suivant">›</button></div>
       <div class="pt-pts"><div><b>${euro(pre + dep)}</b><small>total du mois</small></div><div><b style="color:${du ? "#b4123c" : "#17714f"}">${euro(du)}</b><small>${du ? "pas encore payé" : "tout est payé ✅"}</small></div></div>
       <div class="pt-pts" style="margin-top:6px"><div><b>${euro(pre)}</b><small>🎭 prestations</small></div><div><b>${euro(dep)}</b><small>🚗 déplacements</small></div><div><b>${pts}</b><small>⭐ points</small></div></div>
@@ -10931,7 +11120,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     majWho();
     $("logoutBtn").classList.toggle("hidden", DEMO);
     $("demoBar").classList.toggle("hidden", !DEMO);
+    const lienOuverture = !!location.search; // ne pas interrompre un lien direct vers une fiche ou un chat
     await reload();
+    // Un membre arrive d’abord sur son tableau de bord personnel ; les responsables gardent l’agenda.
+    if (!isGest() && !lienOuverture && view === "cal") document.querySelector('.tab[data-view="mine"]')?.click();
     ouvrirClocheAuDemarrage(user);
     await chargerChatMuets();
     await chatReload();
