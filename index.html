@@ -1278,10 +1278,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .m-preview-settings{background:#f8f3ff;border:1px solid #e6d8f4;border-radius:15px;padding:11px 13px;margin:3px 0 18px}
   .m-preview-settings .sec{margin-top:3px}
   .m-preview-settings>button{width:100%;margin:7px 0}
-  .m-preview-exit{position:fixed;z-index:95;right:14px;bottom:calc(15px + env(safe-area-inset-bottom,0px));
-    background:linear-gradient(120deg,#5f348f,#8758bf);color:#fff;border:1px solid #d4b3f7;
-    border-radius:16px;padding:13px 17px;font-size:13px;font-weight:800;box-shadow:0 7px 25px #32165966;
-    cursor:pointer;max-width:calc(100vw - 24px)}
+  .m-preview-exit{position:relative;z-index:1;display:block;margin:0 0 12px auto;
+    background:#f5efff;color:#65408f;border:1px solid #d8c6ed;
+    border-radius:100px;padding:9px 14px;font-size:12px;font-weight:800;box-shadow:none;
+    cursor:pointer;max-width:100%}
   .m-preview-exit:focus-visible{outline:3px solid #e8b8ff;outline-offset:3px}
 
   .m-visible-tools{margin:2px 0 20px}
@@ -1522,6 +1522,81 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   @media(prefers-reduced-motion:reduce){
     #viewMine .m-hero[data-mag-world]::before,.magic-victory,.magic-victory::after{animation:none!important}
   }
+  /* Identité magique : logo en lévitation, constellation lumineuse, sans château. */
+  .magic-intro-emblem{position:relative;isolation:isolate;display:grid;place-items:center;width:min(82vw,310px);height:240px}
+  .magic-intro-emblem::before{content:"";position:absolute;inset:9px 25px;border-radius:50%;z-index:-1;
+    background:radial-gradient(ellipse,#fff6cf57 0%,#dcadff45 27%,#b7ceff1a 55%,transparent 75%);filter:blur(8px);
+    animation:magicBreathe 3.2s ease-in-out infinite alternate}
+  .magic-intro-emblem::after{content:"";position:absolute;inset:18px 38px;border-radius:50%;
+    border:1px solid #f3dcff42;border-top:2px solid #ffe1a5bb;border-bottom:2px solid #bdeaff66;
+    box-shadow:0 0 25px #d9a9ff35,inset 0 0 27px #ffffff09;animation:magicOrbit 11s linear infinite}
+  .magic-intro-orbit{position:absolute;width:96%;height:67%;border:1px solid #e4c1ff55;border-radius:50%;
+    box-shadow:0 0 18px #e2b7ff1c;pointer-events:none;transform:rotate(-28deg)}
+  .magic-intro-orbit.orbit-two{width:95%;height:65%;border-color:#bfdbff44;transform:rotate(33deg)}
+  .magic-intro-rune{position:absolute;z-index:3;color:#ffe8b3;font-size:25px;text-shadow:0 0 16px #fff2c9;animation:fkMtwinkle 2s ease-in-out infinite alternate}
+  .magic-intro-rune.rune-one{top:7%;left:21%;font-size:29px}
+  .magic-intro-rune.rune-two{top:21%;right:5%;animation-delay:.8s;color:#d5edff}
+  .magic-intro-rune.rune-three{bottom:6%;right:19%;animation-delay:1.4s;font-size:21px}
+  .magic-intro-logo{position:relative;z-index:2;width:min(65vw,235px);max-height:132px;object-fit:contain;
+    filter:drop-shadow(0 5px 21px #e3beff88) drop-shadow(0 1px 5px #ffffff61);animation:magicLogoHover 3.8s ease-in-out infinite}
+  .mag-admin-art{position:relative;display:grid;place-items:center;border-radius:50%;
+    background:radial-gradient(circle,#f8e6ff 0%,#e8d6ff66 40%,transparent 72%);isolation:isolate}
+  .mag-admin-art svg{position:relative;z-index:1;width:70px;height:70px;color:#9670d2;
+    filter:drop-shadow(0 3px 9px #a978e565);animation:magicLogoHover 4s ease-in-out infinite}
+  .mag-admin-art span,.mag-admin-art i{position:absolute;font-style:normal;color:#e4ad56;font-size:26px;
+    text-shadow:0 0 12px #eecaff;animation:fkMtwinkle 2s ease-in-out infinite alternate}
+  .mag-admin-art span{top:0;right:8px}.mag-admin-art i{bottom:4px;left:9px;font-size:14px;animation-delay:.8s}
+  header::after{background-size:220% 100%;animation:magicHeaderBeam 11s linear infinite}
+  @keyframes magicHeaderBeam{from{background-position:0 0}to{background-position:220% 0}}
+  @keyframes magicOrbit{to{transform:rotate(360deg)}}
+  @keyframes magicBreathe{from{opacity:.68;transform:scale(.93)}to{opacity:1;transform:scale(1.1)}}
+  @keyframes magicLogoHover{0%,100%{transform:translateY(3px)}50%{transform:translateY(-5px)}}
+  @media(prefers-reduced-motion:reduce){.magic-intro-emblem::before,.magic-intro-emblem::after,
+    .magic-intro-rune,.magic-intro-logo,.mag-admin-art svg,.mag-admin-art span,.mag-admin-art i,header::after{animation:none!important}}
+  /* Cartes des missions : même finesse pastel et motifs que les fiches de l'agenda. */
+  #viewMine .m-card{--world-accent:#b284dd;--world-border:#e4d5ef;--world-text:#965abb;
+    position:relative;isolation:isolate;overflow:hidden;border:1.5px solid var(--world-border);
+    border-left:4px solid var(--world-accent);border-radius:20px;padding:14px 15px 13px 16px;margin:11px 0;
+    background:linear-gradient(145deg,#f7f2ff,#fff 68%);box-shadow:0 6px 21px #69458d17}
+  #viewMine .m-card::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.6;
+    background:radial-gradient(circle at 96% 18%,#fff 0 2px,transparent 3px),
+      radial-gradient(circle at 77% 7%,#b5a9e8 0 1px,transparent 2px),
+      radial-gradient(circle at 86% 69%,#d2b9ef 0 1px,transparent 2px)}
+  #viewMine .m-card::after{content:attr(data-mag-emoji);position:absolute;right:17px;top:53px;
+    font-size:47px;opacity:.17;pointer-events:none;transform-origin:center;
+    animation:magicCardFloat 5s ease-in-out infinite}
+  #viewMine .m-card>*{position:relative;z-index:1}
+  #viewMine .m-card-top{display:flex;align-items:center;justify-content:space-between;gap:6px;
+    font-size:11px;line-height:1.2;color:#635675}
+  #viewMine .m-card-top b{font-size:12px;color:#5c4785;text-transform:capitalize;font-weight:800}
+  #viewMine .m-card-status{flex:none;border-radius:100px;background:#d9f9e9;border:1px solid #bcecd6;
+    color:#087d59;font-size:10.5px;font-weight:800;padding:5px 8px;white-space:nowrap}
+  #viewMine .m-card h3{font-size:16.5px;line-height:1.28;font-weight:800;color:#29203d;margin:10px 0 4px;
+    overflow-wrap:anywhere;hyphens:auto}
+  #viewMine .m-card-worldtag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;
+    color:var(--world-text);font-weight:800;line-height:1.2;margin:0 0 9px}
+  #viewMine .m-card-info{display:grid;gap:5px;color:#625a70;font-size:12.5px;line-height:1.35}
+  #viewMine .m-card-info strong{color:#51347a}
+  #viewMine .m-card-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;padding-top:10px;
+    border-top:1px solid #a18db026}
+  #viewMine .m-card-actions button,#viewMine .m-card-actions a{flex:0 1 auto;min-width:0;min-height:37px;
+    border:1px solid #e4d6f0;background:#ffffffb8;color:#66438b;border-radius:12px;
+    padding:8px 11px;font-size:11.5px;font-weight:800;box-shadow:0 2px 6px #6e44a60b}
+  #viewMine .m-card-actions .m-main{background:#7445af;color:#fff;border-color:#7445af;box-shadow:0 3px 10px #7445af24}
+  #viewMine .m-card[data-mag-world="frozen"]{--world-accent:#62bedf;--world-border:#b2e7fb;--world-text:#488bb9;
+    background:radial-gradient(circle at 90% 22%,#d8f5ff,transparent 55%),linear-gradient(150deg,#e9f9ff,#fff 75%)}
+  #viewMine .m-card[data-mag-world="lanterns"]{--world-accent:#ecb36f;--world-border:#f0d7b3;--world-text:#a476aa;
+    background:radial-gradient(circle at 91% 14%,#ffe8b9,transparent 54%),linear-gradient(150deg,#fff4e8,#fff1fa 83%)}
+  #viewMine .m-card[data-mag-world="ocean"]{--world-accent:#40b8c6;--world-border:#ace3e7;--world-text:#258f9d;
+    background:radial-gradient(circle at 92% 16%,#c4f7f0,transparent 53%),linear-gradient(150deg,#e7fbff,#fff 80%)}
+  #viewMine .m-card[data-mag-world="halloween"]{--world-accent:#dba06a;--world-border:#edcdad;--world-text:#ae6b48;
+    background:radial-gradient(circle at 89% 20%,#ffe1bc,transparent 50%),linear-gradient(150deg,#fff2e5,#fff9f5 84%)}
+  #viewMine .m-card[data-mag-world="noel"]{--world-accent:#77bea2;--world-border:#b7e0cd;--world-text:#418d75;
+    background:radial-gradient(circle at 89% 20%,#f9ebc6,transparent 48%),linear-gradient(145deg,#ecfcf5,#fff8f2 84%)}
+  #viewMine .m-card[data-mag-world="nuit"]{--world-accent:#4fc4de;--world-border:#badff4;--world-text:#a14bcc;
+    background:radial-gradient(circle at 92% 12%,#e5d6ff,transparent 53%),linear-gradient(150deg,#e5f7ff,#f9edff 76%,#fff)}
+  @keyframes magicCardFloat{0%,100%{transform:translateY(2px) rotate(-8deg)}50%{transform:translateY(-5px) rotate(5deg)}}
+  @media(prefers-reduced-motion:reduce){#viewMine .m-card::after{animation:none!important}}
 </style>
 </head>
 <body>
@@ -1591,8 +1666,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 <div id="magicIntro" class="magic-intro hidden" role="dialog" aria-label="Bienvenue chez Fantasy Kids Events">
   <div class="magic-intro-halo" aria-hidden="true"></div>
   <div class="magic-intro-inner">
-    <svg class="magic-intro-castle" aria-hidden="true"><use href="#mag-icon-castle"></use></svg>
-    <img src="logo.png" alt="" class="magic-intro-logo" />
+    <div class="magic-intro-emblem" aria-hidden="true">
+      <span class="magic-intro-orbit orbit-one"></span><span class="magic-intro-orbit orbit-two"></span>
+      <span class="magic-intro-rune rune-one">✦</span><span class="magic-intro-rune rune-two">✧</span><span class="magic-intro-rune rune-three">✦</span>
+      <img src="logo.png" alt="" class="magic-intro-logo" />
+    </div>
     <div class="magic-intro-stars" aria-hidden="true"><i>✦</i><i>✧</i><i>✦</i><i>✧</i><i>✦</i></div>
     <p>De la magie plein les yeux</p>
   </div>
@@ -1618,7 +1696,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </div>
   </header>
   <div id="demoBar" class="demo hidden">Mode démo : les événements restent sur cet appareil. Ajoutez vos clés Supabase dans <b>config.js</b> pour partager avec l'équipe.</div>
-  <button type="button" class="m-preview-exit hidden" id="memberPreviewExit" aria-label="Revenir en mode responsable">👑 Revenir en mode responsable</button>
 
   <main>
     <div id="bdaySurprise" class="bday-surprise hidden" role="status" aria-live="polite"></div>
@@ -1665,30 +1742,31 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </section>
     <!-- Vue Mes animations -->
     <section id="viewMine" class="hidden">
+      <button type="button" class="m-preview-exit hidden" id="memberPreviewExit" aria-label="Revenir en mode responsable">👑 Retour responsable</button>
       <div class="mine-head" id="mineHead"></div>
       <div id="memberOverview" class="m-overview" aria-live="polite"></div>
       <div class="m-visible-tools" aria-label="Jeu et outils de l'équipe">
         <a href="fantasy-match.html?v=20261116-2" class="mine-head fantasy-game-banner">
-        <svg class="mag-game-gem" aria-hidden="true"><use href="#mag-icon-gem"></use></svg>
+        <span aria-hidden="true" style="font-size:38px;line-height:1">💎</span>
         <span style="flex:1"><b style="display:block;color:#8021bf;font-size:19px">Fantasy Match</b><small style="display:block;color:#6c5588;margin-top:3px">Le jeu magique de l'équipe · 200 niveaux · 5 vies</small></span>
         <span aria-hidden="true" style="font-size:23px;color:#a52fe8">›</span>
       </a>
         <div class="group-title">✨ Les outils de l'équipe</div>
         <div class="evt-tiles">
-        <button type="button" class="evt-tile" id="myCostBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-hanger"></use></svg></span>Costumes</button>
-        <button type="button" class="evt-tile" id="musicOpenBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-music"></use></svg></span>Musiques</button>
-        <button type="button" class="evt-tile" id="stockBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-box"></use></svg></span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-poll"></use></svg></span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-message"></use></svg></span>Infos équipe</button>
-        <button type="button" class="evt-tile" id="guideBtn2"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-book"></use></svg></span>Guide</button>
-        <button type="button" class="evt-tile" id="myFavBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-stars"></use></svg></span>Mes personnages</button>
-        <button type="button" class="evt-tile" id="myIdeasBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-idea"></use></svg></span>Boîte à idées</button>
-        <button type="button" class="evt-tile hidden" id="recapBtnEq"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-stars"></use></svg></span>Fantasy en chiffres</button>
+        <button type="button" class="evt-tile" id="myCostBtn"><span>👗</span>Costumes</button>
+        <button type="button" class="evt-tile" id="musicOpenBtn"><span>🎵</span>Musiques</button>
+        <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span>📣</span>Infos équipe</button>
+        <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
+        <button type="button" class="evt-tile" id="myFavBtn"><span>⭐</span>Mes personnages</button>
+        <button type="button" class="evt-tile" id="myIdeasBtn"><span>💡</span>Boîte à idées</button>
+        <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
       </div>
       </div>
       <nav class="m-shortcuts" aria-label="Accès rapide à mon espace">
-        <button type="button" data-member-jump="mineListSection"><span class="mag-shortcut-symbol"><svg aria-hidden="true"><use href="#mag-icon-calendar"></use></svg></span><b>Prestations</b><small>Mon planning</small></button>
-        <button type="button" data-member-jump="tenuesSection"><span class="mag-shortcut-symbol"><svg aria-hidden="true"><use href="#mag-icon-hanger"></use></svg></span><b>Mes tenues</b><small>À préparer</small></button>
-        <button type="button" data-member-jump="gainsSection"><span class="mag-shortcut-symbol"><svg aria-hidden="true"><use href="#mag-icon-coins"></use></svg></span><b>Mes gains</b><small>Mes paiements</small></button>
-        <button type="button" data-member-jump="indFold"><span class="mag-shortcut-symbol"><svg aria-hidden="true"><use href="#mag-icon-away"></use></svg></span><b>Indispos</b><small>Mes absences</small></button>
+        <button type="button" data-member-jump="mineListSection"><span>🎭</span><b>Prestations</b><small>Mon planning</small></button>
+        <button type="button" data-member-jump="tenuesSection"><span>👗</span><b>Mes tenues</b><small>À préparer</small></button>
+        <button type="button" data-member-jump="gainsSection"><span>💶</span><b>Mes gains</b><small>Mes paiements</small></button>
+        <button type="button" data-member-jump="indFold"><span>🚫</span><b>Indispos</b><small>Mes absences</small></button>
       </nav>
       <div class="mine-head post-actions hidden" id="postActions"></div>
       <div class="mine-head remises-jordan hidden" id="remisesJordan"></div>
@@ -1757,7 +1835,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue Chiffres (responsables) -->
     <section id="viewStats" class="hidden">
-      <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-message"></use></svg></span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-idea"></use></svg></span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-calendar"></use></svg></span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-coins"></use></svg></span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-coins"></use></svg></span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-coins"></use></svg></span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-coins"></use></svg></span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-hanger"></use></svg></span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-box"></use></svg></span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-book"></use></svg></span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-team"></use></svg></span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-poll"></use></svg></span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-stars"></use></svg></span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-clock"></use></svg></span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-calendar"></use></svg></span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span class="mag-tile-symbol"><svg aria-hidden="true"><use href="#mag-icon-stars"></use></svg></span>Réglages</button></div>
+      <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
       <a href="factures.html" class="mine-head" style="display:block;text-decoration:none;color:#653090;font-weight:800;text-align:center">🧾 Factures & devis · Créer, consulter et imprimer</a>
       <section id="gPaiesPanel" class="panel hidden" aria-label="Paiements de l'équipe">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -2751,7 +2829,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   function lancerIntroFantasy() {
     if (reduceMotion || !$("magicIntro")) return;
-    try { if (sessionStorage.getItem("fk_magic_intro_v1")) return; sessionStorage.setItem("fk_magic_intro_v1", "1"); } catch (_) {}
+    try { if (sessionStorage.getItem("fk_magic_intro_v2")) return; sessionStorage.setItem("fk_magic_intro_v1", "1"); } catch (_) {}
     introFantasyDebut = Date.now(); introFantasyActive = true;
     $("magicIntro").classList.remove("hidden", "closing");
   }
@@ -3715,9 +3793,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const maps = e.adresse ? "https://maps.google.com/?q=" + encodeURIComponent(e.adresse) : "";
     const isCost = p && estRoleCostume(p) && e.type_evenement !== "repetition";
     const monCost = isCost ? pieceAttribuee(e, p, "costume") : null;
-    return `<article class="m-card" data-mag-world="${mondeMagique(e)}">
-      <div class="m-card-top"><b>📅 ${esc(fmtLong(e.date))}</b><span>✅ Confirmée</span></div>
+    const monde = mondeMagique(e);
+    const mondeInfos = ({ frozen:["❄️","Le royaume des neiges"], lanterns:["🏮","Le royaume des lanternes"], ocean:["🫧","Le monde marin"], halloween:["🎃","Halloween"], noel:["🎄","La magie de Noël"], nuit:["🌙","La Nuit Magique"], fantasy:["✨","Fantasy Kids Events"] })[monde];
+    return `<article class="m-card" data-mag-world="${monde}" data-mag-emoji="${mondeInfos[0]}">
+      <div class="m-card-top"><b>📅 ${esc(fmtLong(e.date))}</b><span class="m-card-status">✅ Confirmée</span></div>
       <h3>${esc(e.titre || e.enfant || "Prestation Fantasy")}</h3>
+      <div class="m-card-worldtag">${mondeInfos[0]} ${esc(mondeInfos[1])}</div>
       <div class="m-card-info">
         <span>🕒 ${esc(h || (e.heure_debut ? hhmm(e.heure_debut) + (e.heure_fin ? " – " + hhmm(e.heure_fin) : "") : "Horaire à préciser"))}</span>
         <span>🎭 Mon rôle : <strong>${esc(role)}</strong></span>
@@ -4014,7 +4095,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <p>${prochain ? `Prochaine aventure : <b>${esc(prochain.titre || prochain.enfant || "Prestation")}</b>, le ${esc(fmtLong(prochain.date))}.` : "Aucune prestation à venir pour le moment. À toi d'écrire la prochaine aventure !"}</p>
       <span class="mag-admin-pill">${n ? `${n} prestation${n > 1 ? "s" : ""} à suivre` : "✨ Un agenda prêt pour la magie"}</span>
     </div>
-    <svg class="mag-admin-art" aria-hidden="true"><use href="#mag-icon-castle"></use></svg>`;
+    <div class="mag-admin-art" aria-hidden="true"><svg><use href="#mag-icon-stars"></use></svg><span>✧</span><i>✦</i></div>`;
   }
 
 
