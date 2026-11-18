@@ -1024,6 +1024,21 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   body.themed .cal-nav button,body.themed .icon-btn{background:var(--th-tint);color:var(--th-accent);border:1px solid var(--th-line)}
   body.themed .tab.on,body.themed .group-title,body.themed .day-title,body.themed .toggle-past{color:var(--th-accent)}
   body.themed .nuit-ban{border:1px solid var(--th-galon);box-shadow:0 10px 30px rgba(10,5,30,.35),inset 0 0 20px rgba(255,255,255,.08)}
+  /* L'ambiance est visible au premier plan, sans cacher les informations utiles. */
+  .theme-mood-strip{position:relative;display:flex;align-items:center;gap:12px;min-height:64px;margin:0 0 13px;padding:11px 18px;border-radius:18px;overflow:hidden;
+    color:#fff;background:var(--th-ban);border:1.5px solid var(--th-galon);box-shadow:0 8px 22px rgba(13,11,46,.24)}
+  .theme-mood-strip::before{content:"✧     ✦     ✧     ✦     ✧";position:absolute;top:6px;right:7px;font-size:18px;letter-spacing:11px;color:var(--th-galon);opacity:.55;pointer-events:none}
+  .theme-mood-strip .mood-icon{position:relative;flex:none;width:45px;height:45px;display:grid;place-items:center;border-radius:15px;
+    background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.38);font-size:29px;animation:moodFloat 4s ease-in-out infinite}
+  .theme-mood-strip .mood-copy{position:relative;min-width:0;z-index:1}
+  .theme-mood-strip b{display:block;font-size:16px;letter-spacing:.15px;line-height:1.25;color:#fff}
+  .theme-mood-strip small{display:block;font-size:12px;line-height:1.4;color:#fff;opacity:.95}
+  body.themed .cal{border-top:4px solid var(--th-secondary);background:linear-gradient(180deg,var(--th-tint),#fff 95px)}
+  body.themed .cal-nav h2{color:var(--th-accent);font-weight:800}
+  body.themed .seg.vue-seg span{border-color:var(--th-line)}
+  body.themed .seg.vue-seg input:checked+span{background:var(--th-tint);color:var(--th-accent);border-color:var(--th-secondary)}
+  @keyframes moodFloat{50%{transform:translateY(-4px) rotate(-6deg)}}
+  @media(prefers-reduced-motion:reduce){.theme-mood-strip .mood-icon{animation:none}}
   body.themed :is(input,select,textarea):focus-visible,body.themed button:focus-visible{outline:3px solid var(--th-secondary);outline-offset:2px}
   body.themed #sky i{--c:var(--th-fx)!important;color:var(--th-fx)}
   /* Ne jamais appliquer le texte clair des bandeaux aux fiches blanches. */
@@ -1677,6 +1692,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   <main>
     <div id="bdaySurprise" class="bday-surprise hidden" role="status" aria-live="polite"></div>
     <button type="button" id="nextMagic" class="next-magic hidden"></button>
+    <div id="themeMoodStrip" class="theme-mood-strip hidden" aria-live="polite">
+      <span class="mood-icon" id="themeMoodIcon" aria-hidden="true"></span>
+      <span class="mood-copy"><b id="themeMoodTitle"></b><small id="themeMoodSubtitle"></small></span>
+    </div>
     <div class="filters">
       <input id="fSearch" type="search" placeholder="🔎 Rechercher" />
       <select id="fAnim"><option value="">Tous les animateurs</option></select>
@@ -10522,6 +10541,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     Object.keys(THEMES).forEach(x => document.body.classList.toggle("th-" + x, x === k));
     document.body.classList.toggle("themed", !!k);
     if (k) appliquerVars(document.body, k);
+    const bandeauTheme = $("themeMoodStrip");
+    bandeauTheme.classList.toggle("hidden", !k);
+    if (k) {
+      $("themeMoodIcon").textContent = THEMES[k].emoji;
+      $("themeMoodTitle").textContent = THEMES[k].nom;
+      $("themeMoodSubtitle").textContent = THEMES[k].jour;
+    }
     if (k !== themeActif) { themeActif = k; effets(k); }
     if (!force && duJour && themeFait !== t + k) { themeFait = t + k; rideau(duJour); }
     // bandeaux : prochain spectacle / événement à thème (jamais celui du jour)
