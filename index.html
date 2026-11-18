@@ -1017,9 +1017,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .day .lune{position:absolute;top:2px;right:3px;font-size:10px;filter:drop-shadow(0 0 4px #ffd86b)}
   .day{position:relative}
   .ev.spectacle{background:var(--th-carte,linear-gradient(160deg,#eaf8ff,#f2fbff))!important;box-shadow:0 0 0 1.5px var(--th-bord,rgba(80,190,235,.6)),0 8px 26px rgba(11,45,82,.18)!important}
-  body.themed{background:radial-gradient(900px 600px at 80% -10%,rgba(255,224,138,.12),transparent 60%),radial-gradient(900px 700px at 0% 100%,rgba(40,200,240,.18),transparent 60%),var(--th-fond)!important;background-attachment:fixed!important}
+  /* Les panneaux restent clairs et lisibles ; l'univers colore leur contour et les commandes. */
+  body.themed{background:radial-gradient(850px 520px at 90% 0%,var(--th-halo),transparent 72%),radial-gradient(800px 600px at 0% 95%,var(--th-halo2),transparent 70%),var(--th-fond)!important;background-attachment:fixed!important;--violet:var(--th-accent);--violet-d:var(--th-accent);--rose:var(--th-accent);--grad:linear-gradient(110deg,var(--th-accent),var(--th-secondary),var(--th-galon));--line:var(--th-line);--muted:#514763;--txt:#241b34}
+  body.themed header{background:linear-gradient(115deg,#fff,var(--th-tint));box-shadow:0 4px 22px rgba(24,12,48,.2)}
+  body.themed .cal,body.themed .mine-head,body.themed .stat,body.themed .ev:not(.spectacle){border:1px solid var(--th-line);box-shadow:0 5px 22px rgba(25,10,46,.16)}
+  body.themed .cal-nav button,body.themed .icon-btn{background:var(--th-tint);color:var(--th-accent);border:1px solid var(--th-line)}
+  body.themed .tab.on,body.themed .group-title,body.themed .day-title,body.themed .toggle-past{color:var(--th-accent)}
+  body.themed .nuit-ban{border:1px solid var(--th-galon);box-shadow:0 10px 30px rgba(10,5,30,.35),inset 0 0 20px rgba(255,255,255,.08)}
+  body.themed :is(input,select,textarea):focus-visible,body.themed button:focus-visible{outline:3px solid var(--th-secondary);outline-offset:2px}
   body.themed #sky i{--c:var(--th-fx)!important;color:var(--th-fx)}
-  body.themed .group-title,body.themed .day-title,body.themed .hint:not(.sheet .hint),body.themed .toggle-past{color:var(--th-txt)}
+  /* Ne jamais appliquer le texte clair des bandeaux aux fiches blanches. */
+  body.themed .hint:not(.sheet .hint){color:#514763}
   .rideau{position:fixed;inset:0;z-index:100;overflow:hidden;background:var(--th-scene);cursor:pointer;transition:opacity .8s}
   .rideau.fin{opacity:0}
   .rideau .scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;padding:24px}
@@ -2738,10 +2746,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     return "fantasy";
   }
   function appliquerSaisonFantasy() {
-    const mois = new Date().getMonth() + 1;
-    const saison = mois === 10 ? "halloween" : mois === 12 ? "noel" : mois === 2 ? "romance" : "fantasy";
+    const maintenant = new Date(), mois = maintenant.getMonth() + 1, jour = maintenant.getDate();
+    const saison = mois === 6 && jour === 26 ? "stitch" : mois === 10 ? "halloween" : mois === 12 ? "noel"
+      : mois === 2 && jour <= 14 ? "romance" : (mois === 2 || (mois === 3 && jour <= 10)) ? "carnaval"
+      : mois === 3 || mois === 4 ? "paques" : mois >= 6 && mois <= 8 ? "ete" : "fantasy";
     const forcage = themeApercu || reglages.theme_force || "";
-    document.body.dataset.magicSeason = ["halloween", "noel", "romance"].includes(forcage) ? forcage : saison;
+    document.body.dataset.magicSeason = THEMES[forcage] ? forcage : saison;
     if (forcage && (themeApercu || THEMES[forcage])) document.body.dataset.magicOverride = forcage;
     else delete document.body.dataset.magicOverride;
   }
@@ -10352,15 +10362,47 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     scene: "radial-gradient(ellipse at 50% 38%,#b77cb8,#694083 53%,#291a48)", rideau: ["#653987","#9565b1","#513071"], galon: "#f4d99b",
     jour: "Que les lanternes illuminent cette journée ✨", cri: "Que tes rêves brillent de mille feux ! 🏮", carte: "linear-gradient(155deg,#f9f0ff,#fff6e5)" };
   THEMES.romance = { nom: "Saint-Valentin", emoji: "💗", fx: ["💗", "🌸", "✦", "💕"], fxMode: "neige", fxCol: "#ffd3f1",
-    fond: "linear-gradient(180deg,#491b56,#9e568e 55%,#e8a3bb)", ban: "linear-gradient(135deg,#763b85,#cb76ad 55%,#f0adcf)", bord: "#ffe0ef", txt: "#fff6fb",
+    fond: "linear-gradient(180deg,#4b073f,#a51260 55%,#ed438f)", ban: "linear-gradient(135deg,#670743,#c20e72 55%,#ff599f)", bord: "#ffd36e", txt: "#fff6fb",
     scene: "radial-gradient(ellipse at 50% 38%,#d590bc,#8d477d 52%,#4a214e)", rideau: ["#9e467d","#ca619c","#7e356b"], galon: "#ffe0ef",
     jour: "Une journée pleine de douceur et de magie ✨", cri: "De l'amour et de la magie pour toute l'équipe ! 💗", carte: "linear-gradient(155deg,#fff0f9,#f8edff)" };
+  THEMES.princesse = { nom: "Princesse", emoji: "👑", fx: ["✦","✨","🌸","💎"], fxMode: "scintille", fxCol: "#ffe28b",
+    fond: "linear-gradient(165deg,#4c126c,#a22ca9 52%,#f14b9e)", ban: "linear-gradient(125deg,#68178c,#c326a5 60%,#fa669f)", bord: "#ffe28b", txt: "#fff6fc",
+    scene: "radial-gradient(ellipse at 50% 35%,#d749ba,#6d1a95 60%,#300d4b)", rideau: ["#9e247e","#dc379f","#74145e"], galon: "#ffe28b",
+    jour: "Une journée digne d'un conte de fées ✨", cri: "Que la magie commence ! 👑", carte: "linear-gradient(150deg,#fff0fa,#f4eaff)" };
+  THEMES.carnaval = { nom: "Carnaval", emoji: "🎭", fx: ["🎊","✦","🎉","⭐"], fxMode: "neige", fxCol: "#ffe767",
+    fond: "linear-gradient(160deg,#291271,#7333c9 48%,#f13c91)", ban: "linear-gradient(120deg,#4c1aa7,#f02c9c 56%,#ffab24)", bord: "#ffe767", txt: "#fffaff",
+    scene: "radial-gradient(ellipse at 50% 35%,#e13aa9,#6225ae 60%,#210a56)", rideau: ["#6531ab","#9b3fdb","#441c85"], galon: "#ffca35",
+    jour: "Place à la fête et aux couleurs ! 🎉", cri: "Un Carnaval haut en couleur ! 🎭", carte: "linear-gradient(155deg,#fff0fc,#fff5d9)" };
+  THEMES.ete = { nom: "Été · Océan de Vaiana", emoji: "🌺", fx: ["🌺","🌊","✦","🐚","🌴"], fxMode: "scintille", fxCol: "#ffe09b",
+    fond: "linear-gradient(160deg,#06365c,#007f9f 46%,#13bfb0 75%,#f59c65)", ban: "linear-gradient(120deg,#073d70,#0097ae 48%,#21c6b1 73%,#ff956f)", bord: "#ffe09b", txt: "#fffef3",
+    scene: "radial-gradient(ellipse at 50% 35%,#21c8c2,#007c9f 58%,#06345c)", rideau: ["#08719a","#16b0bd","#075777"], galon: "#ffdf8c",
+    jour: "L'océan t'appelle : un été plein de magie ! 🌺", cri: "Que les vagues de magie t'accompagnent ! 🌊", carte: "linear-gradient(155deg,#dffbff,#fff0df)" };
+  THEMES.stitch = { nom: "Stitch · Jour 626", emoji: "💙", fx: ["🌺","💙","✦","🌴","✨"], fxMode: "neige", fxCol: "#7cecff",
+    fond: "linear-gradient(155deg,#07285e,#0866ac 55%,#15c1ce)", ban: "linear-gradient(120deg,#09296a,#146bd3 50%,#08bcb4)", bord: "#8af7f1", txt: "#f3ffff",
+    scene: "radial-gradient(ellipse at 50% 35%,#2299d8,#164fa2 58%,#071c53)", rideau: ["#164aab","#297cda","#10367e"], galon: "#80f4df",
+    jour: "Joyeux 626 Day ! Ohana signifie famille 💙", cri: "Une journée intergalactiquement magique ! 🌺", carte: "linear-gradient(155deg,#e8f7ff,#e5fffb)" };
+  const PALETTES_THEMES = {
+    halloween:["#ed6511","#8734cf","#fff0df","#f3d5ff","rgba(255,117,22,.23)","rgba(146,53,212,.25)"],
+    noel:["#a51232","#08784e","#fff0e4","#f6d5b4","rgba(220,35,67,.2)","rgba(11,155,98,.25)"],
+    romance:["#be116d","#f3489b","#ffe4f1","#f8c4df","rgba(255,70,150,.25)","rgba(152,18,104,.25)"],
+    paques:["#7a2ba9","#249b80","#fff1dd","#dec8f8","rgba(201,78,177,.22)","rgba(80,194,143,.27)"],
+    carnaval:["#722ad0","#e32288","#fce7ff","#e4c5ff","rgba(231,49,160,.26)","rgba(255,169,35,.28)"],
+    ete:["#00788f","#df6948","#e3fbff","#a5e9e5","rgba(0,194,201,.3)","rgba(255,131,97,.27)"],
+    princesse:["#a9239c","#e34a95","#ffe8f5","#f6c8eb","rgba(244,73,170,.25)","rgba(165,73,227,.27)"],
+    nuit:["#146fba","#663fc6","#e6f5ff","#b6dcff","rgba(29,119,204,.28)","rgba(108,63,214,.25)"],
+    glace:["#126db1","#00a6bd","#e6faff","#b9eafa","rgba(37,168,224,.28)","rgba(154,226,255,.32)"],
+    stitch:["#1265be","#008c9e","#e5f9ff","#b5e6fa","rgba(22,128,223,.3)","rgba(9,219,202,.3)"]
+  };
+  for (const [key, values] of Object.entries(PALETTES_THEMES)) {
+    const T = THEMES[key]; [T.accent,T.secondary,T.tint,T.line,T.halo,T.halo2] = values;
+  }
   // Uniquement l'administrateur peut prévisualiser ou enregistrer l'ambiance pour l'équipe.
   const OPTIONS_AMBIANCES = [
-    ["auto","✨ Automatique (saisons et événements)"], ["noel","🎄 Noël"], ["halloween","🎃 Halloween"],
-    ["nuit","🌙 La Nuit Magique"], ["glace","❄️ Elsa · Royaume des glaces"],
+    ["auto","✨ Automatique (saisons et événements)"], ["halloween","🎃 Halloween"], ["noel","🎄 Noël"],
+    ["romance","💗 Saint-Valentin"], ["paques","🐣 Pâques"], ["carnaval","🎭 Carnaval"], ["ete","🌺 Été · Vaiana"],
+    ["princesse","👑 Princesse"], ["nuit","🌙 La Nuit Magique"], ["glace","❄️ Royaume des glaces"], ["stitch","💙 Stitch · Jour 626"],
     ["ocean","🧜‍♀️ Ariel · Océan"], ["lanterns","🏮 Raiponce · Lanternes"],
-    ["kpop","🎤 K-pop"], ["paques","🐣 Pâques"], ["romance","💗 Saint-Valentin"]
+    ["kpop","🎤 K-pop"]
   ];
   $("rgThemeChoice").innerHTML = OPTIONS_AMBIANCES.map(([k,label]) => '<option value="'+k+'">'+label+'</option>').join("");
   $("themePreviewQuick").innerHTML = OPTIONS_AMBIANCES.filter(([k]) => k !== "auto")
@@ -10431,7 +10473,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("themePreviewApply").onclick = () => activerThemeEquipe(themeApercu);
   $("themePreviewClose").onclick = arreterApercuTheme;
 
-  const THEME_LABELS = [["auto", "✨ Automatique (selon le titre)"], ["nuit", "🌙 La Nuit Magique"], ["noel", "🎄 Noël"], ["halloween", "🎃 Halloween"], ["kpop", "🎤 K-pop"], ["glace", "❄️ Royaume des glaces"], ["paques", "🐣 Pâques"], ["aucun", "Aucun thème"]];
+  const THEME_LABELS = [["auto", "✨ Automatique (selon le titre)"], ["nuit", "🌙 La Nuit Magique"], ["noel", "🎄 Noël"], ["halloween", "🎃 Halloween"], ["kpop", "🎤 K-pop"], ["glace", "❄️ Royaume des glaces"], ["paques", "🐣 Pâques"], ["romance", "💗 Saint-Valentin"], ["carnaval", "🎭 Carnaval"], ["ete", "☀️ Été"], ["stitch", "💙 Stitch · Jour 626"], ["princesse", "👑 Princesse"], ["aucun", "Aucun thème"]];
   $("theme_app").innerHTML = THEME_LABELS.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
   const estSpectacle = (e) => !!e && e.statut !== "annule" && /nuit magique/i.test((e.theme || "") + " " + (e.titre || "")) && /spectacle/i.test(e.titre || "");
   const lieuSpectacle = (e) => ((e.titre || "").match(/spectacle\s+(.+)$/i) || [])[1] || "";
@@ -10459,6 +10501,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     el.style.setProperty("--th-txt", T.txt); el.style.setProperty("--th-scene", T.scene); el.style.setProperty("--th-fx", T.fxCol);
     el.style.setProperty("--th-r1", T.rideau[0]); el.style.setProperty("--th-r2", T.rideau[1]); el.style.setProperty("--th-r3", T.rideau[2]);
     el.style.setProperty("--th-galon", T.galon); el.style.setProperty("--th-carte", T.carte);
+    el.style.setProperty("--th-accent", T.accent || "#6a2ad6"); el.style.setProperty("--th-secondary", T.secondary || T.bord);
+    el.style.setProperty("--th-tint", T.tint || "#f4edff"); el.style.setProperty("--th-line", T.line || "#e5d7f7");
+    el.style.setProperty("--th-halo", T.halo || "rgba(130,70,220,.2)"); el.style.setProperty("--th-halo2", T.halo2 || "rgba(220,90,190,.2)");
   }
   let themeFait = "", themeActif = null;
   function effets(k) {
