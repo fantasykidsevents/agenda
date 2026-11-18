@@ -114,6 +114,11 @@
   .group-title{margin:18px 4px 8px;font-size:14px;font-weight:750;color:var(--muted);text-transform:capitalize}
   .toggle-past{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);margin:4px 4px 0}
 
+  /* Une affectation provisoire reste visible, mais n'est pas une mission confirmée. */
+  .ev.attente-assign{border:1px solid #f2d4a3;background:linear-gradient(145deg,#fffdf5,#fff8f6);
+    box-shadow:0 5px 17px #b8743719}
+  .ev .attente-note{font-size:12px;font-weight:750;color:#9c5d16;background:#fff1d7;
+    padding:8px 10px;border-radius:11px;margin-top:9px;border:1px solid #f2d9ac}
   /* ---------- Stats ---------- */
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
   .stat{background:var(--card);border-radius:14px;padding:10px;text-align:center;box-shadow:0 2px 10px rgba(80,40,160,.05)}
@@ -3048,7 +3053,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // Agenda commun : événements/spectacles visibles par toute l'équipe ;
   // animations visibles uniquement si affecté. « Mon espace » conserve son
   // propre filtre strict sur les affectations, même pour les événements.
-  const jeVoisEv = (e) => isResp() || (e.statut !== "en_attente" && (isGest() || e.type_evenement === "evenement" || anims(e).some(a => normName(a) === normName(chatMe()))));
+  const jeVoisEv = (e) => {
+    if (isResp()) return true;
+    const affecte = anims(e).some(a => normName(a) === normName(chatMe()));
+    // Les animations non confirmées sont des propositions : seuls les membres affectés les voient.
+    // Les autres événements encore en attente restent cachés comme auparavant.
+    if (e.statut === "en_attente") return e.type_evenement === "animation" && affecte;
+    return isGest() || e.type_evenement === "evenement" || affecte;
+  };
   function isResp() {
     if (apercuMembre) return false;
     return estVraiResponsable();
@@ -3072,7 +3084,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   let mesAnimsAvant = null;
   function detecterNouvelles() {
     const me = myMember(); if (!me) return;
-    const t = todayISO(), ids = new Set(events.filter(e => e.date >= t && jeVoisEv(e) && e.statut !== "annule" && anims(e).some(a => normName(a) === normName(me.prenom))).map(e => String(e.id)));
+    const t = todayISO(), ids = new Set(events.filter(e => e.date >= t && jeVoisEv(e) && e.statut === "confirme" && anims(e).some(a => normName(a) === normName(me.prenom))).map(e => String(e.id)));
     if (mesAnimsAvant) { const nv = [...ids].filter(i => !mesAnimsAvant.has(i));
       if (nv.length) { const e = events.find(x => String(x.id) === nv[0]); son("notif"); toast(`✨ ${e?.type_evenement === "contrat_pro" ? "Nouveau contrat pro" : `Nouvelle ${e?.type_evenement === "repetition" ? "répétition" : e?.type_evenement === "evenement" ? "mission" : "animation"}`} pour toi : ${(e && (e.titre || e.enfant)) || ""}`.trim()); } }
     mesAnimsAvant = ids;
@@ -3290,18 +3302,21 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if(!interne && e.type_evenement === "animation")pay += badgeBilan(e);
     if (e.options && optTexte(e.options)) pay += `<span class="badge">✨ ${esc(optTexte(e.options))}</span>`;
     if (e.photos_envoyees) pay += `<span class="badge solde-ok">📸 Photos envoyées${e.photos_envoyees_par ? " · " + esc(e.photos_envoyees_par) : ""} · ${new Date(e.photos_envoyees).toLocaleDateString("fr-BE", { day: "numeric", month: "short" })}</span>`;
+    // Aucun montant à afficher aux membres sur une simple proposition.
+    if (e.statut === "en_attente" && !isGest()) pay = "";
     const canPhotos = past && peutEnvoyerPhotos() && !interne && e.type_evenement === "animation"; // photos : Jordan uniquement
     const canEnc = past && !interne && e.type_evenement === "animation" && (e.solde || extras(e) || isResp()) && (!e.solde_encaisse || e.solde_encaisse === "non" || isResp());
     const canTat = !interne && e.type_evenement === "animation" && e.date <= todayISO() && tatouagesDemandes(e) && peutGererTatouages(e);
     const missing = e.materiel_manquant ? `<div class="missing">⚠️ Matériel manquant : ${esc(e.materiel_manquant)}</div>` : "";
     const mat = e.materiel ? `<span style="white-space:pre-line">🎒 ${esc(e.materiel)}</span>` : "";
     const weekAgo = iso(new Date(Date.now() - 7*864e5));
-    const canSignal = !interne && e.type_evenement === "animation" && e.date <= todayISO() && e.date >= weekAgo && e.statut !== "annule";
+    const canSignal = !interne && e.type_evenement === "animation" && e.date <= todayISO() && e.date >= weekAgo && ["confirme", "termine"].includes(e.statut);
     const canMode = modeDisponible(e);
-    const canCost = e.type_evenement !== "repetition" && e.statut !== "annule" && parseTeam(e.animateurs).some(p => estRoleCostume(p) && (isResp() || estMoi(p.nom)));
+    const canCost = e.type_evenement !== "repetition" && e.statut !== "annule" && (e.statut !== "en_attente" || isGest()) && parseTeam(e.animateurs).some(p => estRoleCostume(p) && (isResp() || estMoi(p.nom)));
+    const attenteAttribuee = e.statut === "en_attente" && e.type_evenement === "animation" && !isGest();
     const U = universOf(e);
     const parts = U && !reduceMotion ? [0,1,2,3].map(i => `<i class="pt" style="left:${12 + i * 24 + Math.random() * 8}%;color:${U[4]};font-size:${9 + Math.random() * 8}px;animation-duration:${5 + Math.random() * 4}s;animation-delay:${-Math.random() * 8}s">${U[3]}</i>`).join("") : "";
-    return `<div class="ev ${U ? "u-" + U[0] : ""}${themeDe(e) ? " spectacle th-c-" + themeDe(e) : ""}" style="--c:${st.color}${themeDe(e) ? `;--th-carte:${THEMES[themeDe(e)].carte};--th-bord:${THEMES[themeDe(e)].bord}` : ""}" data-id="${esc(e.id)}" role="button" tabindex="0">${parts}${U ? `<span class="univ">${U[2]}</span>` : ""}<span class="sheen"></span>
+    return `<div class="ev ${U ? "u-" + U[0] : ""}${attenteAttribuee ? " attente-assign" : ""}${themeDe(e) ? " spectacle th-c-" + themeDe(e) : ""}" style="--c:${st.color}${themeDe(e) ? `;--th-carte:${THEMES[themeDe(e)].carte};--th-bord:${THEMES[themeDe(e)].bord}` : ""}" data-id="${esc(e.id)}" role="button" tabindex="0">${parts}${U ? `<span class="univ">${U[2]}</span>` : ""}<span class="sheen"></span>
       <div class="ev-top">
         <div class="ev-time">${showDate ? `<span style="text-transform:capitalize">${esc(fmtLong(e.date))}</span> · ` : ""}${h}</div>
         <span class="badge st" style="--c:${st.color}">${st.label}</span>
@@ -3317,6 +3332,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         ${e.notes ? `<span style="white-space:pre-line;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">📝 ${esc(e.notes)}</span>` : ""}
       </div>
       ${pay ? `<div class="badges">${pay}</div>` : ""}
+      ${attenteAttribuee ? `<div class="attente-note">⏳ Affectation provisoire · en attente de confirmation du client</div>` : ""}
       ${missing}
       ${canMode || canSignal || canEnc || canTat || canPhotos || canCost ? `<div class="ev-actions">
         ${canCost ? `<button type="button" class="sig" data-cost-assign="${esc(e.id)}">👗 ${isResp() ? "Attribuer les tenues" : "Mes tenues"}</button>` : ""}
@@ -3731,12 +3747,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }, 200);
   });
 
-  // Mon espace membre : les données montrées proviennent seulement des missions confirmées
-  // auxquelles cette personne est réellement affectée.
+  // Mon espace : les missions confirmées et les affectations provisoires sont séparées.
+  // Les actions de préparation restent réservées aux prestations confirmées.
   function missionsConfirmees(prenom) {
     const n = normName(prenom);
     return events.filter(e => e.statut === "confirme" && jeVoisEv(e) &&
       anims(e).some(a => normName(a) === n))
+      .sort((a, b) => (a.date + (a.heure_debut || "")).localeCompare(b.date + (b.heure_debut || "")));
+  }
+  function missionsEnAttente(prenom) {
+    const n = normName(prenom);
+    return events.filter(e => e.type_evenement === "animation" && e.statut === "en_attente" &&
+      jeVoisEv(e) && anims(e).some(a => normName(a) === n))
       .sort((a, b) => (a.date + (a.heure_debut || "")).localeCompare(b.date + (b.heure_debut || "")));
   }
   function monRoleMission(e, prenom) {
@@ -3747,7 +3769,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function memberCard(e, prenom) {
     return card(e, true).replace('class="ev ', 'class="ev member-agenda-card ');
   }
-  function renderMemberOverview(prenom, prochaines) {
+  function renderMemberOverview(prenom, prochaines, nbEnAttente = 0) {
     const box = $("memberOverview");
     const prochain = prochaines.find(e => !animationTerminee(e));
     const nb = prochaines.filter(e => !animationTerminee(e)).length;
@@ -3755,8 +3777,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       (n.type === "fin" || n.type === "demande")).length;
     if (!prochain) {
       box.innerHTML = `<div class="m-hero m-hero-empty">
-        <div class="eyebrow">✨ Mon planning</div><h2>Aucune prestation confirmée à venir</h2>
-        <p>Tu retrouveras ici tes prochaines missions dès que Jordan les aura confirmées.</p>
+        <div class="eyebrow">✨ Mon planning</div><h2>${nbEnAttente ? nbEnAttente + " affectation" + (nbEnAttente > 1 ? "s" : "") + " en attente" : "Aucune prestation confirmée à venir"}</h2>
+        <p>${nbEnAttente ? "Ces animations sont provisoires : tu les retrouveras plus bas et elles seront confirmées par Jordan." : "Tu retrouveras ici tes prochaines missions dès que Jordan les aura confirmées."}</p>
       </div>`;
       return;
     }
@@ -3768,7 +3790,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <h2>${esc(prochain.titre || prochain.enfant || "Prestation Fantasy")}</h2>
       <p>📅 ${esc(fmtLong(prochain.date))} ${esc(heure || (prochain.heure_debut ? "· " + hhmm(prochain.heure_debut) : ""))}<br>
          🎭 ${esc(p?.role || "Rôle à confirmer")}${prochain.adresse ? `<br>📍 ${esc(prochain.adresse)}` : ""}</p>
-      <div class="m-summary"><span>${nb} prestation${nb > 1 ? "s" : ""} à venir</span>${aFaire ? `<span>🔔 ${aFaire} action${aFaire > 1 ? "s" : ""} à voir</span>` : ""}</div>
+      <div class="m-summary"><span>${nb} prestation${nb > 1 ? "s" : ""} à venir</span>${nbEnAttente ? `<span>⏳ ${nbEnAttente} en attente</span>` : ""}${aFaire ? `<span>🔔 ${aFaire} action${aFaire > 1 ? "s" : ""} à voir</span>` : ""}</div>
       <div class="m-hero-actions">
         <button type="button" data-member-open="${esc(prochain.id)}">📋 Préparer ma mission</button>
         ${maps ? `<a href="${maps}" target="_blank" rel="noopener">📍 Itinéraire</a>` : ""}
@@ -3800,6 +3822,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("postActions").innerHTML = "";
     const t = todayISO(), missions = missionsConfirmees(prenom);
     const futures = missions.filter(e => e.date >= t && !animationTerminee(e));
+    const affectationsProvisoires = missionsEnAttente(prenom).filter(e => e.date >= t);
     const recentDate = parseISO(t); recentDate.setDate(recentDate.getDate() - 3);
     const since = iso(recentDate);
     const recent = events.filter(e => e.date >= since && e.date <= t && jeVoisEv(e) &&
@@ -3810,10 +3833,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const aCloturer = events.filter(e => e.date < since && e.date >= iso(limiteDate) &&
       modeDisponible(e) && animationTerminee(e) && prestationACloturer(e))
       .sort((x, y) => (y.date + (y.heure_debut || "")).localeCompare(x.date + (x.heure_debut || "")));
-    renderMemberOverview(prenom, futures);
+    renderMemberOverview(prenom, futures, affectationsProvisoires.length);
     renderMemberTenues(prenom, futures);
     $("mineList").innerHTML = (futures.length ? futures.map(e => memberCard(e, prenom)).join("") :
-      '<div class="empty">Aucune prestation confirmée à venir pour le moment.</div>')
+      (affectationsProvisoires.length ? "" : '<div class="empty">Aucune prestation confirmée à venir pour le moment.</div>'))
+      + (affectationsProvisoires.length ? '<div class="group-title">⏳ Animations attribuées · en attente de confirmation (' + affectationsProvisoires.length + ')</div>'
+          + '<p class="hint" style="margin:3px 3px 12px">Ces dates sont provisoires. Tu recevras la notification habituelle uniquement après confirmation.</p>'
+          + affectationsProvisoires.map(e => memberCard(e, prenom)).join("") : "")
       + (recent.length ? '<div class="group-title">🕘 Récemment terminées</div>' + recent.map(e => memberCard(e, prenom)).join("") : "")
       + (aCloturer.length ? '<div class="group-title">🏁 À clôturer</div>' + aCloturer.map(e => memberCard(e, prenom)).join("") : "");
   }
@@ -3828,7 +3854,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const carteAgenda = e.target.closest("#mineList .member-agenda-card");
     if (carteAgenda && !e.target.closest("button,a")) {
       const ev = events.find(x => String(x.id) === String(carteAgenda.dataset.id));
-      if (ev && jeVoisEv(ev)) { e.preventDefault(); e.stopPropagation(); openJour(ev); }
+      if (ev && jeVoisEv(ev)) { e.preventDefault(); e.stopPropagation(); ev.statut === "en_attente" ? openForm(ev) : openJour(ev); }
       return;
     }
     const open = e.target.closest("[data-member-open]");
@@ -3847,7 +3873,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const carte = e.target.closest("#mineList .member-agenda-card");
     if (!carte) return;
     const ev = events.find(x => String(x.id) === String(carte.dataset.id));
-    if (ev && jeVoisEv(ev)) { e.preventDefault(); e.stopPropagation(); openJour(ev); }
+    if (ev && jeVoisEv(ev)) { e.preventDefault(); e.stopPropagation(); ev.statut === "en_attente" ? openForm(ev) : openJour(ev); }
   });
   function renderModeAccueil() {
     const box = $("modeAccueil"); if (!box) return;
@@ -3877,10 +3903,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const jours = Math.round((parseISO(next.date) - parseISO(t)) / 864e5);
     const U = universOf(next);
     const cd = jours === 0 ? `<b>Auj.</b><small>${next.heure_debut ? hhmm(next.heure_debut) : ""}</small>` : jours === 1 ? `<b>Demain</b><small>${next.heure_debut ? hhmm(next.heure_debut) : ""}</small>` : `<b>${jours}</b><small>jours</small>`;
-    b.innerHTML = `<span class="big">${U ? U[2] : "🪄"}</span><span><small>${n ? "Ta prochaine magie" : "Prochaine magie"}</small><b>${esc(next.titre || next.enfant || "Animation")}</b><small style="text-transform:capitalize">${esc(fmtLong(next.date))}${next.heure_debut ? " · " + hhmm(next.heure_debut) : ""}</small></span><span class="cd">${cd}</span>`;
+    b.innerHTML = `<span class="big">${U ? U[2] : "🪄"}</span><span><small>${next.statut === "en_attente" ? "⏳ Affectation provisoire" : n ? "Ta prochaine magie" : "Prochaine magie"}</small><b>${esc(next.titre || next.enfant || "Animation")}</b><small style="text-transform:capitalize">${esc(fmtLong(next.date))}${next.heure_debut ? " · " + hhmm(next.heure_debut) : ""}</small></span><span class="cd">${cd}</span>`;
     b.dataset.id = next.id; b.dataset.magWorld = mondeMagique(next); b.classList.remove("hidden");
   }
-  $("nextMagic").addEventListener("click", () => { const ev = events.find(x => String(x.id) === $("nextMagic").dataset.id); if (ev) { magicBurst(); setTimeout(() => openJour(ev), 150); } });
+  $("nextMagic").addEventListener("click", () => { const ev = events.find(x => String(x.id) === $("nextMagic").dataset.id); if (ev) { magicBurst(); setTimeout(() => ev.statut === "en_attente" && !isGest() ? openForm(ev) : openJour(ev), 150); } });
 
   const slugP = (n) => String(n || "").normalize("NFD").replace(/[^\x00-\x7f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   // 🦸 petite photo ronde du personnage préféré (ou rien si pas de photo)
@@ -4178,7 +4204,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     document.querySelectorAll("#evForm details.fold-auto").forEach(d => d.open = !ev);   // nouvelle fiche : tout ouvert ; fiche existante : replié
     $("formTitle").textContent = ev ? (ev.type_evenement === "evenement" ? "Modifier l'événement" : ev.type_evenement === "repetition" ? "Modifier la répétition" : ev.type_evenement === "contrat_pro" ? "Modifier le contrat pro" : "Modifier l'animation") : "Nouvelle animation";
     $("delBtn").classList.toggle("hidden", !ev);
-    $("evChatBtn").classList.toggle("hidden", !ev || !jePeuxVoir(ev));
+    $("evChatBtn").classList.toggle("hidden", !ev || !jePeuxVoir(ev) || (ev.statut === "en_attente" && !isGest()));
     $("evCostAssignBtn").classList.toggle("hidden", !ev || ev.type_evenement === "repetition" || !isResp() || !parseTeam(ev.animateurs).some(estRoleCostume));
     $("formErr").textContent = "";
     setTimeout(() => {
@@ -4244,8 +4270,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     renderFiche(ev); renderEtapeFiche(ev); renderDevis(ev);
     renderMonTrajet(ev);
     if (ev) $("bilanBox").innerHTML = bilanHtml(ev);
-    $("jourBtnBox").classList.toggle("hidden", !ev || ev.statut === "annule" || ev.type_evenement !== "animation");
-    const passe = ev && ev.date <= todayISO() && ev.statut !== "annule";
+    $("jourBtnBox").classList.toggle("hidden", !ev || ["annule", "en_attente"].includes(ev.statut) || ev.type_evenement !== "animation");
+    const passe = ev && ev.date <= todayISO() && ["confirme", "termine"].includes(ev.statut);
     $("afterBox").classList.toggle("hidden", !passe || ev.type_evenement !== "animation");
     if (passe && ev.type_evenement === "animation") {
       ["fPhotos","fEnc","fSig"].forEach(id => $(id).disabled = false);
@@ -4895,6 +4921,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     } catch (e) { return null; }
   }
   function openJour(ev) {
+    if (ev.statut === "en_attente" && !isGest()) return openForm(ev);
     $("jourBg").classList.remove("mode-active");
     $("jourChat").dataset.id = ev.id; $("jourChat").classList.toggle("hidden", !jePeuxVoir(ev));
     const U = universOf(ev), r = (ev.fiche && ev.fiche.reponses) || {};
