@@ -1397,7 +1397,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .mag-shortcut-symbol svg{width:26px;height:26px;color:#8355b6;display:block;filter:drop-shadow(0 2px 4px #a879bd50)}
   .mag-game-gem{width:47px;height:47px;flex:none;color:#7954cf;filter:drop-shadow(0 3px 7px #a879df62);animation:fkMfloat 3.8s ease-in-out infinite}
   #viewMine .fantasy-game-banner .mag-game-gem{position:relative;z-index:1}
-  #viewMine .fantasy-game-banner span:first-child{animation:none}
+  #viewMine .fantasy-game-banner>span:first-child{animation:fkMfloat 3.8s ease-in-out infinite;filter:drop-shadow(0 3px 8px #aa5ce488)}
   .magic-intro{position:fixed;inset:0;z-index:999;display:grid;place-items:center;overflow:hidden;
     background:radial-gradient(circle at 50% 70%,#7455b9 0%,#3a236f 49%,#180d39 100%);color:#fff;
     opacity:1;transition:opacity .36s ease}
@@ -1546,13 +1546,43 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .mag-admin-art span,.mag-admin-art i{position:absolute;font-style:normal;color:#e4ad56;font-size:26px;
     text-shadow:0 0 12px #eecaff;animation:fkMtwinkle 2s ease-in-out infinite alternate}
   .mag-admin-art span{top:0;right:8px}.mag-admin-art i{bottom:4px;left:9px;font-size:14px;animation-delay:.8s}
-  header::after{background-size:220% 100%;animation:magicHeaderBeam 11s linear infinite}
-  @keyframes magicHeaderBeam{from{background-position:0 0}to{background-position:220% 0}}
+  header::after{background:var(--grad-loop);background-size:300% 100%;animation:flow 9s ease-in-out infinite alternate;filter:drop-shadow(0 0 5px #bb7cff70)}
   @keyframes magicOrbit{to{transform:rotate(360deg)}}
   @keyframes magicBreathe{from{opacity:.68;transform:scale(.93)}to{opacity:1;transform:scale(1.1)}}
   @keyframes magicLogoHover{0%,100%{transform:translateY(3px)}50%{transform:translateY(-5px)}}
   @media(prefers-reduced-motion:reduce){.magic-intro-emblem::before,.magic-intro-emblem::after,
     .magic-intro-rune,.magic-intro-logo,.mag-admin-art svg,.mag-admin-art span,.mag-admin-art i,header::after{animation:none!important}}
+  /* Restaurer les animations des bandeaux et des boutons après le retour aux emojis. */
+  #viewMine .fantasy-game-banner{
+    animation:fkMappear .5s ease both,magicGameBannerGlow 5s ease-in-out infinite}
+  #viewMine .fantasy-game-banner::after{animation-duration:5.5s}
+  #viewMine .fantasy-game-banner>span:first-child{display:inline-block;
+    animation:fkMfloat 3s ease-in-out infinite;filter:drop-shadow(0 4px 11px #b76bea99)}
+  #viewMine .m-hero::before{animation-duration:4.2s}
+  #viewMine .m-shortcuts button>span,
+  #viewMine .m-visible-tools .evt-tile>span,
+  #viewStats .g-tiles .evt-tile>span{display:inline-block;transform-origin:center;
+    animation:magicEmojiBob 3.6s ease-in-out infinite}
+  #viewMine .m-shortcuts button:nth-child(2n)>span,
+  #viewMine .m-visible-tools .evt-tile:nth-child(2n)>span,
+  #viewStats .g-tiles .evt-tile:nth-child(2n)>span{animation-delay:-1.8s}
+  #viewMine .m-shortcuts button:nth-child(3n)>span,
+  #viewMine .m-visible-tools .evt-tile:nth-child(3n)>span,
+  #viewStats .g-tiles .evt-tile:nth-child(3n)>span{animation-delay:-.9s}
+  #viewMine .m-shortcuts button:active,#viewMine .m-visible-tools .evt-tile:active,
+  #viewStats .g-tiles .evt-tile:active,.btn.primary:active,
+  #viewMine .m-hero-actions button:active{transform:translateY(1px) scale(.96)!important;
+    filter:brightness(1.08);box-shadow:0 2px 13px #af79e764}
+  #viewMine .fantasy-game-banner:active{transform:scale(.985)}
+  .magic-tap-spark{font-size:16px;text-shadow:0 0 12px #f3dbff,0 0 5px #fff;animation-duration:.85s}
+  @keyframes magicEmojiBob{0%,100%{transform:translateY(1px) rotate(-2deg)}50%{transform:translateY(-3px) rotate(2deg)}}
+  @keyframes magicGameBannerGlow{0%,100%{box-shadow:0 8px 25px #985ed228,0 0 0 1px #fff9}
+    50%{box-shadow:0 11px 30px #9966df55,0 0 0 1px #ffeaff}}
+  @media(prefers-reduced-motion:reduce){
+    #viewMine .fantasy-game-banner,#viewMine .fantasy-game-banner>span:first-child,
+    #viewMine .m-shortcuts button>span,#viewMine .m-visible-tools .evt-tile>span,
+    #viewStats .g-tiles .evt-tile>span{animation:none!important}
+  }
 </style>
 </head>
 <body>
@@ -2785,7 +2815,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   function lancerIntroFantasy() {
     if (reduceMotion || !$("magicIntro")) return;
-    try { if (sessionStorage.getItem("fk_magic_intro_v3")) return; sessionStorage.setItem("fk_magic_intro_v1", "1"); } catch (_) {}
+    try { const introKey = "fk_magic_intro_v4"; if (sessionStorage.getItem(introKey)) return; sessionStorage.setItem(introKey, "1"); } catch (_) {}
     introFantasyDebut = Date.now(); introFantasyActive = true;
     $("magicIntro").classList.remove("hidden", "closing");
   }
@@ -2809,14 +2839,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   // Des étoiles au toucher, sans perturber les boutons ni déclencher de nouvelles actions.
   document.addEventListener("pointerup", e => {
-    if (reduceMotion || !e.isTrusted || !e.target.closest?.(".evt-tile,.btn.primary,.m-shortcuts button,.g-tiles button")) return;
-    for (let i = 0; i < 4; i++) {
+    if (reduceMotion || !e.isTrusted || !e.target.closest?.(".evt-tile,.btn.primary,.m-shortcuts button,.g-tiles button,.fantasy-game-banner,.m-hero-actions button,.m-hero-actions a,.next-magic,.sig")) return;
+    for (let i = 0; i < 6; i++) {
       const star = document.createElement("span"); star.className = "magic-tap-spark";
       star.textContent = i % 2 ? "✧" : "✦";
       star.style.left = e.clientX + "px"; star.style.top = e.clientY + "px";
       star.style.setProperty("--dx", (Math.cos(i * 1.57) * (17 + i * 5)) + "px");
       star.style.setProperty("--dy", (Math.sin(i * 1.57) * (17 + i * 5)) + "px");
-      document.body.appendChild(star); setTimeout(() => star.remove(), 650);
+      document.body.appendChild(star); setTimeout(() => star.remove(), 950);
     }
   }, { passive: true });
   function fillSky(el, n) {
