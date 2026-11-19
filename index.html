@@ -1699,7 +1699,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   body.dark .regie-row,body.dark .regie-check{border-color:#594373;color:#f5e9fc}
   body.dark .regie-kpi span,body.dark .regie-block p,body.dark .regie-live,body.dark .regie-row small{color:#dfcde9}
   body.dark .regie-actions button,body.dark .regie-refresh{background:#4a3469;color:#fff;border-color:#8a69a9}
-  @media(max-width:680px){.tabs{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.tabs::-webkit-scrollbar{display:none}.tabs .tab{flex:0 0 auto;min-width:62px;padding-left:5px;padding-right:5px}}
   @media(max-width:380px){.regie-hero h2{font-size:23px}.regie-grid{gap:7px}.regie-kpi{padding:11px 9px}.regie-kpi b{font-size:22px}.regie-actions{gap:7px}}
 </style>
 </head>
@@ -1841,6 +1840,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <!-- 🎛️ Régie : suivi opérationnel des événements, réservé aux responsables. -->
     <section id="viewRegie" class="hidden" aria-label="Mode Régie des événements">
       <div class="regie-hero"><small>✦ FANTASY KIDS EVENTS ✦</small><h2>🎛️ Ma régie</h2><p>Ton événement en un coup d'œil : accueil, caisses, équipe et préparatifs.</p></div>
+      <button type="button" class="btn ghost" id="regieBack" style="margin-top:12px">← Retour à Gestion</button>
       <div class="regie-pick"><label for="regieEvent">Événement à piloter<select id="regieEvent"></select></label><button type="button" class="regie-refresh" id="regieRefresh">↻ Actualiser</button></div>
       <div class="regie-live" id="regieStatus" role="status" aria-live="polite"></div>
       <div id="regieBody"></div>
@@ -1941,6 +1941,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <!-- Vue Chiffres (responsables) -->
     <section id="viewStats" class="hidden">
       <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gClients"><span>👤</span>Clients</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
+      <button type="button" id="gRegie" class="mine-head" style="width:100%;border:1px solid #d5b4f8;text-align:center;color:#653090;font:800 17px Fredoka,sans-serif;cursor:pointer">🎛️ Régie des événements</button>
       <a href="factures.html" class="mine-head" style="display:block;text-decoration:none;color:#653090;font-weight:800;text-align:center">🧾 Factures & devis · Créer, consulter et imprimer</a>
       <button type="button" id="gDevis" class="mine-head" style="width:100%;border:1px solid #d5b4f8;text-align:center;color:#653090;font:800 17px Fredoka,sans-serif;cursor:pointer">📜 Devis clients · Réponses et relances</button>
       <section id="gClientsPanel" class="panel hidden" aria-label="Historique des clients">
@@ -7431,6 +7432,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     ({ resa: () => openResa(id), caisse: () => openCaisse(id), tourn: () => openTournante(id), bilan: () => openBilan(id), borne: () => ouvrirBorne(ev), fiche: () => openForm(ev) })[b.dataset.qt]();
   });
   $("gEvts").onclick = openEvts;
+  $("gRegie").onclick = () => document.querySelector('.tab[data-view="regie"]')?.click();
+  $("regieBack").onclick = () => document.querySelector('.tab[data-view="stats"]')?.click();
   $("gCaisseLibre").onclick = async () => {
     let h = events.find(estHors);
     if (!h) {
@@ -7558,7 +7561,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       $("hcList").textContent = ""; $("hcDetail").textContent = "";
     }
     $("statsTab").classList.toggle("hidden", !r);
-    $("regieTab").classList.toggle("hidden", !r);
     $("addBtn").classList.toggle("hidden", !isGest());
     $("gCaissePresta").classList.toggle("hidden", !peutConfirmerRemise());
     // 📋 Liste : onglet pour 👑 et ⭐ ; cachée pour les animateurs
