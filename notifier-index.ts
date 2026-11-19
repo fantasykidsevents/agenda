@@ -493,6 +493,7 @@ async function importerDemandes() {
       email: v.e_mail_05euw2 || null,
       statut: "en_attente",
       notes,
+      options: perso ? { personnages_client: perso } : null,
       source: "site",
       wix_submission_id: s.id,
     };
@@ -574,8 +575,16 @@ async function wix(method, path, body) {
 }
 async function syncDateSite(d) {
   if (!d || !env("WIX_API_KEY") || !env("WIX_SITE_ID") || d < aujourdhui()) return null;
-  const { data: evs } = await sb.from("evenements").select("statut,site_affichage").eq("date", d);
-  const visibles = (evs || []).filter((e) => e.statut !== "annule" && e.site_affichage !== "cache");
+  const { data: evs } = await sb.from("evenements").select("id,statut,site_affichage").eq("date", d);
+  const ids=(evs||[]).filter(e=>e.statut==="en_attente").map(e=>e.id);
+  let anticipes = new Set<string>();
+  if (ids.length) {
+    const {data:suivis,error:errSuivi}=await sb.from("demandes_anticipees")
+      .select("evenement_id,statut").in("evenement_id",ids);
+    if (!errSuivi) anticipes=new Set((suivis||[]).filter(x=>x.statut!=="cloturee").map(x=>String(x.evenement_id)));
+  }
+  // Une simple demande d'intérêt ne prend aucune date dans « Dates prises ».
+  const visibles = (evs || []).filter((e) => e.statut !== "annule" && e.site_affichage !== "cache" && !anticipes.has(String(e.id)));
   const complet = visibles.some((e) => (e.statut === "confirme" || e.statut === "termine") && e.site_affichage !== "partiel")
     || visibles.some((e) => e.site_affichage === "complet" && e.statut !== "en_attente");
   const { data: lien } = await sb.from("dates_site").select("*").eq("date", d).maybeSingle();
@@ -1166,9 +1175,22 @@ async function relancerDemandesAnimation(equipe) {
     && (ev.source === "site" || ev.parent || ev.email || ev.telephone));
   if (!demandes.length) return [];
 
+  // Le parcours anticipé possède son propre calendrier de rappels. Ne pas
+  // envoyer les anciennes relances quotidiennes avant l'ouverture à 3 mois.
+  const { data: suiviAnticipe, error: erreurSuivi } = await sb.from("demandes_anticipees")
+    .select("evenement_id,statut").in("evenement_id", demandes.map(e => e.id));
+  if (erreurSuivi) {
+    // Avant installation du SQL, l'ancien comportement doit rester inchangé.
+    if (erreurSuivi.code !== "42P01" && erreurSuivi.code !== "PGRST205") console.error("Suivi anticipé", erreurSuivi.message);
+  }
+  const anticipationsEnAttente = new Set((suiviAnticipe || [])
+    .filter(d => !["reconfirmee", "a_traiter"].includes(d.statut)).map(d => String(d.evenement_id)));
+  const demandesActives = demandes.filter(ev => !anticipationsEnAttente.has(String(ev.id)));
+  if (!demandesActives.length) return [];
+
   // La notification initiale permet de ne pas relancer une nouvelle demande
   // quelques minutes après sa réception (et sans ajouter de colonne SQL).
-  const ids = demandes.map(ev => String(ev.id));
+  const ids = demandesActives.map(ev => String(ev.id));
   const { data: precedentes, error: errPrecedentes } = await sb.from("notifications_app")
     .select("evenement_id,cree_le").eq("type", "demande")
     .in("evenement_id", ids).order("cree_le", { ascending: true }).limit(5000);
@@ -1180,7 +1202,7 @@ async function relancerDemandesAnimation(equipe) {
   }
 
   const resultats = [];
-  for (const ev of demandes) {
+  for (const ev of demandesActives) {
     const cree = ev.created_at || ev.cree_le || premieres.get(String(ev.id));
     if (cree && Date.now() - new Date(cree).getTime() < 24 * 60 * 60_000) continue;
     for (const m of destinataires) {
@@ -1431,6 +1453,179 @@ function quiPrevenir(type, ev, ancien) {
 }
 
 // ---------- 💌 Mailing informatif aux réservations d'un événement ----------
+// ---------- ✨ Cycle des demandes d'animation anticipées ----------
+const ANTICIPATION_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ANTICIPATION_MAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const anticipationJours = (date: string, n: number) => {
+  const d = new Date(date + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+const anticipationDateBelge = (date: string) => new Intl.DateTimeFormat("sv-SE", {
+  timeZone: "Europe/Brussels", year: "numeric", month: "2-digit", day: "2-digit",
+}).format(new Date(date));
+const anticipationPersonnages = (ev: any) => String(ev.options?.personnages_client ||
+  String(ev.notes || "").match(/Personnage souhaité\s*:\s*([^\n]+)/i)?.[1] || "À préciser").trim();
+const anticipationPrenom = (ev: any) => String(ev.parent || "").trim().split(/\s+/)[0] || "";
+const anticipationHex = (bytes: Uint8Array) => Array.from(bytes, b => b.toString(16).padStart(2,"0")).join("");
+async function anticipationJeton(evenementId: string, version: number) {
+  // HMAC stable : les anciens liens restent valables après un rappel manuel,
+  // mais deviennent caducs lors d'un changement de date (version +1).
+  const secret = env("ANTICIPATION_LINK_SECRET") || env("SUPABASE_SERVICE_ROLE_KEY");
+  const cle = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret),
+    { name:"HMAC", hash:"SHA-256" }, false, ["sign"]);
+  const jeton = anticipationHex(new Uint8Array(await crypto.subtle.sign("HMAC", cle,
+    new TextEncoder().encode(`fantasy-anticipation:${evenementId}:${version}`))));
+  const empreinte = anticipationHex(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(jeton))));
+  return { jeton, empreinte };
+}
+
+async function envoyerMailAnticipation(evenementId: string, etape: "accuse" | "ouverture" | "j7" | "manuel") {
+  const [repEv, repSuivi] = await Promise.all([
+    sb.from("evenements").select("*").eq("id", evenementId).maybeSingle(),
+    sb.from("demandes_anticipees").select("*").eq("evenement_id", evenementId).maybeSingle(),
+  ]);
+  if (repEv.error || repSuivi.error) throw repEv.error || repSuivi.error;
+  const ev = repEv.data, suivi = repSuivi.data;
+  if (!ev || !suivi || ev.statut !== "en_attente" || (ev.type_evenement && ev.type_evenement !== "animation") || suivi.statut !== "anticipee")
+    return { ignore: "demande non active" };
+  const aujourd = aujourdhuiBelgique();
+  if (etape === "accuse" && suivi.premier_email_le) return { ignore: "accusé déjà envoyé" };
+  if (etape === "ouverture" && (suivi.ouverture_envoyee_le || suivi.date_ouverture > aujourd)) return { ignore: "pas encore ouverte" };
+  if (etape === "j7" && (!suivi.ouverture_envoyee_le || suivi.rappel_j7_le ||
+      anticipationJours(anticipationDateBelge(suivi.ouverture_envoyee_le), 7) > aujourd))
+    return { ignore: "rappel à 7 jours non dû" };
+  if (etape === "manuel" && !ANTICIPATION_UUID.test(evenementId)) return { ignore: "identifiant invalide" };
+  if (etape === "manuel" && suivi.date_ouverture > aujourd) return { ignore: "rappel manuel disponible à partir de trois mois avant la date" };
+  const email = String(ev.email || "").trim();
+  if (!ANTICIPATION_MAIL.test(email)) return { ignore: "adresse du client absente ou invalide" };
+  if (!getMailer()) throw new Error("Gmail professionnel non configuré");
+  if (etape !== "accuse" && !APP_URL) throw new Error("APP_URL requis pour les boutons de réponse");
+
+  // Réservation atomique d'une étape avant toute connexion SMTP. Si une
+  // exécution est interrompue, elle ne sera PAS renvoyée silencieusement.
+  const { data: journal, error: erreurClaim } = await sb.from("demandes_anticipees_emails")
+    .insert({ evenement_id: evenementId, etape, version: suivi.version, destinataire: email })
+    .select("id").single();
+  if (erreurClaim?.code === "23505") {
+    // Si le mail avait bien été journalisé, mais que la mise à jour du suivi
+    // avait échoué juste après, réparer le compteur SANS renvoyer le mail.
+    const {data:precedent}=await sb.from("demandes_anticipees_emails")
+      .select("statut,envoye_le").eq("evenement_id",evenementId)
+      .eq("etape",etape).eq("version",suivi.version).maybeSingle();
+    if (precedent?.statut === "envoye" && precedent.envoye_le) {
+      const champ=etape==="accuse" ? "premier_email_le" : etape==="ouverture" ? "ouverture_envoyee_le" : "rappel_j7_le";
+      await sb.from("demandes_anticipees").update({[champ]:precedent.envoye_le})
+        .eq("evenement_id",evenementId).eq("version",suivi.version).eq("statut","anticipee").is(champ,null);
+    }
+    return { ignore: "étape déjà prise (aucun doublon)" };
+  }
+  if (erreurClaim) throw erreurClaim;
+  const premier = anticipationPrenom(ev);
+  const dateTexte = quand(ev), personnage = anticipationPersonnages(ev), formule = ev.theme || "À préciser";
+  let sujet = "✨ Votre demande d'animation a bien été conservée";
+  let texte = `Bonjour${premier ? " " + premier : ""},\n\nNous vous remercions pour votre demande d’animation ! ✨\n\nNotre agenda n’est pas encore ouvert aux réservations pour cette période.\n\nCependant, nous conservons précieusement votre demande et nous reprendrons automatiquement contact avec vous 3 mois avant votre événement afin de savoir si vous êtes toujours intéressé(e).\n\nAucune démarche n’est nécessaire de votre côté pour le moment.\n\nVotre demande : ${dateTexte}\nPersonnage(s) : ${personnage}\n\nÀ très bientôt !\nL’équipe Fantasy Kids Events`;
+  let boutons = "";
+  try {
+    if (etape !== "accuse") {
+      const { jeton, empreinte } = await anticipationJeton(evenementId, suivi.version);
+      const { data: jetonSauve, error: erreurJeton } = await sb.from("demandes_anticipees")
+        .update({ token_hash: empreinte, modifie_le: new Date().toISOString() })
+        .eq("evenement_id", evenementId).eq("version", suivi.version).eq("statut", "anticipee")
+        .select("evenement_id").maybeSingle();
+      if (erreurJeton || !jetonSauve) throw erreurJeton || new Error("Demande modifiée avant l'envoi");
+      const base = `${APP_URL}/anticipation.html?t=${jeton}`;
+      const oui = `${base}&choix=oui`, non = `${base}&choix=non`;
+      boutons = `<p style="margin:24px 0"><a href="${oui}" style="display:inline-block;padding:14px 17px;border-radius:12px;background:#288a5b;color:#fff;text-decoration:none;font-weight:bold">✅ Je confirme mon intérêt</a> <a href="${non}" style="display:inline-block;padding:14px 17px;border-radius:12px;background:#f4e7ea;color:#a32943;text-decoration:none;font-weight:bold">❌ Je ne suis plus intéressé(e)</a></p>`;
+      sujet = etape === "j7" ? "💌 Petit rappel : votre projet d'animation" : "✨ Votre projet d'animation : êtes-vous toujours intéressé(e) ?";
+      texte = `Bonjour${premier ? " " + premier : ""},\n\n${etape === "j7" ? "Nous revenons vers vous, n'ayant pas encore reçu votre réponse.\n\n" : "Comme promis, nous vous recontactons trois mois avant votre événement.\n\n"}Êtes-vous toujours intéressé(e) par une animation Fantasy Kids Events ?\n\nDate souhaitée : ${dateTexte}\nPersonnage(s) : ${personnage}\nFormule : ${formule}\n\n✅ Je confirme mon intérêt : ${oui}\n❌ Je ne suis plus intéressé(e) : ${non}\n\nVotre réponse est une indication d'intérêt, pas une confirmation de réservation. Nous devons encore vérifier la disponibilité.\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
+    }
+    const html = `<div style="font-family:Arial,sans-serif;max-width:540px;margin:auto;color:#291c42">${BANDE}
+      <h2 style="margin:20px 0 10px">✨ Fantasy Kids Events</h2>
+      <p style="font-size:15px;line-height:1.7;white-space:pre-line">${esc(texte.split("\n\nVotre demande :")[0].split("\n\n✅ Je confirme")[0])}</p>
+      <div style="background:#f6efff;border-radius:12px;padding:14px;margin:15px 0">
+        <b>📅 ${esc(dateTexte)}</b><br>🎭 ${esc(personnage)}<br>✨ ${esc(formule)}</div>
+      ${boutons}${etape !== "accuse" ? `<p style="font-size:13px;color:#71587e">Confirmer votre intérêt ne réserve pas la date : nous vérifierons ensuite la disponibilité.</p>` : ""}
+      ${SIGNATURE}</div>`;
+    await envoyerEmail(email, sujet, html, texte, [], { canal: "client" });
+    const maintenant = new Date().toISOString();
+    const { error: errMail } = await sb.from("demandes_anticipees_emails").update({ statut:"envoye", envoye_le:maintenant }).eq("id", journal.id);
+    if (errMail) throw new Error("Mail parti, mais journal non mis à jour : vérification manuelle nécessaire.");
+    const champs: Record<string, unknown> = { modifie_le: maintenant };
+    if (etape === "accuse") champs.premier_email_le = maintenant;
+    if (etape === "manuel" && !suivi.premier_email_le) champs.premier_email_le = maintenant;
+    if (etape === "ouverture" || (etape === "manuel" && !suivi.ouverture_envoyee_le)) champs.ouverture_envoyee_le = maintenant;
+    if (etape === "j7") champs.rappel_j7_le = maintenant;
+    if (etape === "manuel" && suivi.ouverture_envoyee_le &&
+        anticipationJours(anticipationDateBelge(suivi.ouverture_envoyee_le),7) <= aujourd) champs.rappel_j7_le = maintenant;
+    const { error: errSuivi } = await sb.from("demandes_anticipees")
+      .update(champs).eq("evenement_id", evenementId).eq("version", suivi.version).eq("statut", "anticipee");
+    if (errSuivi) throw errSuivi;
+    return { evenementId, etape, email: "envoyé" };
+  } catch (err) {
+    // Si le SMTP a répondu succès mais que le journal échoue, la campagne
+    // reste bloquée en_cours (jamais reprogrammée automatiquement).
+    if (!String(err?.message || "").startsWith("Mail parti"))
+      await sb.from("demandes_anticipees_emails").update({ statut:"erreur", erreur:String(err?.message || err).slice(0,500) }).eq("id", journal.id);
+    throw err;
+  }
+}
+
+async function notifierReponsesAnticipees(equipe: any[]) {
+  const { data, error } = await sb.from("demandes_anticipees")
+    .select("evenement_id,statut,reponse_le").in("statut",["reconfirmee","abandonnee"])
+    .is("admin_notifie_le",null).limit(50);
+  if (error) throw error;
+  const resultat = [];
+  for (const d of data || []) {
+    if (!d.reponse_le) continue;
+    const { data: pris } = await sb.from("demandes_anticipees")
+      .update({ admin_notifie_le: new Date().toISOString() })
+      .eq("evenement_id", d.evenement_id).eq("statut",d.statut).is("admin_notifie_le",null)
+      .select("evenement_id").maybeSingle();
+    if (!pris) continue;
+    const { data: ev } = await sb.from("evenements").select("titre,parent,date").eq("id",d.evenement_id).maybeSingle();
+    for (const m of (equipe || []).filter(x => x.responsable && x.email)) {
+      await envoyerPush(m.email,{title:d.statut === "reconfirmee" ? "✅ Intérêt reconfirmé : à traiter" : "❌ Demande anticipée abandonnée",
+        body:`${ev?.parent || "Client"} · ${ev?.titre || "Animation"} · ${ev?.date || ""}`,
+        url:`./index.html?ev=${d.evenement_id}`,tag:`anticipation-reponse-${d.evenement_id}`},
+        {categorie:"administration",sansCloche:true});
+    }
+    resultat.push({ reponse: d.evenement_id, statut: d.statut });
+  }
+  return resultat;
+}
+
+async function traiterAnticipations(equipe: any[]) {
+  const heure = Number(new Intl.DateTimeFormat("en-GB", {timeZone:"Europe/Brussels",hour:"2-digit",hourCycle:"h23"}).format(new Date()));
+  const aujourd = aujourdhuiBelgique();
+  const resultats = await notifierReponsesAnticipees(equipe);
+  if (heure < 9) return resultats;
+  const { data: demandes, error } = await sb.from("demandes_anticipees")
+    .select("evenement_id,statut,date_ouverture,premier_email_le,ouverture_envoyee_le,rappel_j7_le")
+    .eq("statut","anticipee").order("date_ouverture",{ascending:true}).limit(1000);
+  if (error) throw error;
+  let envois = 0;
+  for (const d of demandes || []) {
+    if (envois >= 12) break;
+    const etape = !d.premier_email_le ? "accuse" :
+      d.date_ouverture <= aujourd && !d.ouverture_envoyee_le ? "ouverture" :
+      d.ouverture_envoyee_le && !d.rappel_j7_le &&
+      anticipationJours(anticipationDateBelge(d.ouverture_envoyee_le),7) <= aujourd ? "j7" : null;
+    if (etape) {
+      try { const r = await envoyerMailAnticipation(d.evenement_id, etape); resultats.push(r); if (!r.ignore) envois++; }
+      catch(err) { console.error("Mail anticipé",d.evenement_id,etape,err);resultats.push({anticipation:d.evenement_id,erreur:String(err?.message||err)}); }
+    }
+    if (d.ouverture_envoyee_le && anticipationJours(anticipationDateBelge(d.ouverture_envoyee_le),14) <= aujourd) {
+      const { error: errSansRep } = await sb.from("demandes_anticipees")
+        .update({statut:"sans_reponse",modifie_le:new Date().toISOString()})
+        .eq("evenement_id",d.evenement_id).eq("statut","anticipee").is("reponse_le",null);
+      if (errSansRep) console.error("Sans réponse", errSansRep.message);
+    }
+  }
+  return resultats;
+}
+
 const MAILING_FILTRES = ["tous", "confirmes", "acomptes_manquants"];
 const MAILING_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAILING_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1563,6 +1758,20 @@ Deno.serve(async (req) => {
 
     if (["MAILING_EVENEMENT_PREVIEW", "MAILING_EVENEMENT_SEND", "MAILING_EVENEMENT_HISTORY"].includes(p.type))
       return await mailingRequete(req, p);
+
+    if (p.type === "ANTICIPATION_MANUEL") {
+      const bearer = (req.headers.get("Authorization") || "").match(/^Bearer\s+(.+)$/i)?.[1];
+      if (!bearer) return json({ok:false,erreur:"Connexion requise"},401);
+      const {data:identite,error:errAuth} = await sb.auth.getUser(bearer);
+      if (errAuth || !identite?.user?.email) return json({ok:false,erreur:"Session invalide"},401);
+      const {data:responsables,error:errResp} = await sb.from("equipe")
+        .select("id").ilike("email",identite.user.email).eq("responsable",true).limit(1);
+      if (errResp || !responsables?.length) return json({ok:false,erreur:"Réservé aux responsables"},403);
+      const id = String(p.evenementId || "").trim();
+      if (!ANTICIPATION_UUID.test(id)) return json({ok:false,erreur:"Animation invalide"},400);
+      const resultat = await envoyerMailAnticipation(id,"manuel");
+      return json({ok: !resultat.ignore, ...resultat, erreur: resultat.ignore || undefined});
+    }
 
     // 🗳️ Push à toute l'équipe lors de la création d'un sondage.
     // La cloche est déjà enregistrée par la fonction SQL.
@@ -1924,6 +2133,10 @@ Deno.serve(async (req) => {
       const { data: equipe } = await sb.from("equipe").select("prenom,email,responsable");
       const parNom = new Map((equipe || []).map((m) => [norm(m.prenom), m]));
       const resultats = [];
+      // 💌 Le parcours 3 mois / J+7 / J+14 s'exécute côté serveur, même
+      // lorsque l'agenda est fermé. La cloche des réponses est créée en SQL.
+      try { resultats.push(...(await traiterAnticipations(equipe))); }
+      catch (err) { console.error("Rappels anticipés",err); }
       // ⏳ Demandes clients non traitées : rappels quotidiens pour Jordan.
       try { resultats.push(...(await relancerDemandesAnimation(equipe))); }
       catch (err) { console.error("Relances demandes d'animation", err); }
