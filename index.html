@@ -5693,7 +5693,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // ---------- Choix des animateurs ----------
   // Personnages du site fantasykidsevents.be (formulaire de réservation)
   const PERSONNAGES = Object.fromEntries(Object.entries({"Contes de fées": ["Elsa", "Anna", "Raiponce", "Aurore", "Belle", "Cendrillon", "Blanche-Neige", "Ariel", "Jasmine", "Vaiana", "Tiana", "Alice", "Mérida", "Elena", "Esmeralda", "Asha", "Mirabel", "Pepa", "Aladdin", "Le Génie", "Flynn Rider", "Kristoff", "Prince Philippe", "Merlin", "Peter Pan", "La Fée bleue"], "Super-héros": ["Spider-Man", "Wanda", "Captain America", "Captain Marvel", "Black Widow"], "Mascottes": ["Stitch", "Olaf", "Woody", "Buzz l’Éclair", "Jack Skellington"], "K-pop": ["Rumi", "Mira", "Zoey"]}).map(([g, l]) => [g, [...l].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }))]));  // ordre alphabétique
-  const PERSONNAGES_PROFIL = Object.fromEntries(Object.entries({ ...PERSONNAGES, "Contes de fées": [...PERSONNAGES["Contes de fées"], "Mulan"], "Mascottes": [...PERSONNAGES["Mascottes"], "Sally", "Mushu", "Pua", "Hei Hei", "Basile"] }).map(([g,l]) => [g, [...l].sort((a,b) => a.localeCompare(b, "fr", { sensitivity: "base" }))]));
+  const PERSONNAGES_PROFIL = Object.fromEntries(Object.entries({ ...PERSONNAGES, "Contes de fées": [...PERSONNAGES["Contes de fées"], "Mulan"] }).map(([g,l]) => [g, [...l].sort((a,b) => a.localeCompare(b, "fr", { sensitivity: "base" }))]));
   const FORMULES = ["Flash · 30 min", "Magic · 1 h", "Fantastic · 1 h 30", "Célébration · 2 h", "Surprise · 1 h", "Rising Star (K-pop) · 30 min", "Idol Party (K-pop) · 1 h", "Superstar Experience (K-pop) · 2 h"];
   const ROLES_EVT = ["Responsable sur place", "Accueil / caisse", "Billetterie", "Technique / son", "Montage / démontage", "Bar", "Buffet", "Photo"];
   const ROLE_OPTS = `<option value="">— Rôle —</option><optgroup label="Équipe"><option value="acc">acc</option></optgroup><optgroup label="Événements">${ROLES_EVT.map(r => `<option>${r}</option>`).join("")}</optgroup>` +
@@ -8053,26 +8053,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // 🧸 Fiches d'habillage des mascottes, partagées entre les membres.
   const LS_MASCOTTES = "fk_habillage_mascottes_demo", MASCOTTE_BUCKET = "habillage-mascottes";
   let mascotteNom = null, mascotteFiche = null, mascotteEdition = false, mascotteEtapes = [], mascotteBusy = false;
-  let mascotteImages = new Map(), mascottePreviews = [], mascottePhotoIndex = -1, nomsMascottesEnregistres = [];
-  function nomsMascottes() {
-    return [...new Set([...(PERSONNAGES_PROFIL["Mascottes"] || []), "Bourriquet",
-      ...nomsMascottesEnregistres, ...costumes.filter(c => /mascotte/i.test(c.nom || "")).map(c => c.personnage).filter(Boolean)])]
-      .sort((a, b) => a.localeCompare(b, "fr"));
-  }
+  let mascotteImages = new Map(), mascottePreviews = [], mascottePhotoIndex = -1;
+  // Les cinq mascottes réellement présentes chez Fantasy Kids Events.
+  const MASCOTTES_FANTASY = ["Olaf", "Stitch", "Jack Skellington", "Woody", "Buzz l’Éclair"];
+  const nomsMascottes = () => MASCOTTES_FANTASY;
   function afficherListeMascottes() {
-    $("mascotteListe").innerHTML = nomsMascottes().map(n => `<button type="button" data-mascotte="${esc(n)}">🧸 ${esc(n)}</button>`).join("")
-      + (isResp() ? '<button type="button" id="mascotteAutre">➕ Autre mascotte…</button>' : "");
-  }
-  async function chargerNomsMascottes() {
-    try {
-      if (DEMO) nomsMascottesEnregistres = Object.keys(JSON.parse(localStorage.getItem(LS_MASCOTTES) || "{}"));
-      else {
-        const { data, error } = await sb.from("mascotte_habillage").select("personnage");
-        if (error) throw error;
-        nomsMascottesEnregistres = (data || []).map(x => x.personnage);
-      }
-      if (!$("costBg").classList.contains("hidden")) afficherListeMascottes();
-    } catch (e) { console.warn("Catalogue des mascottes non disponible", e); }
+    $("mascotteListe").innerHTML = nomsMascottes().map(n => `<button type="button" data-mascotte="${esc(n)}">🧸 ${esc(n)}</button>`).join("");
   }
   const mascotteStore = {
     async lire(nom) {
@@ -8136,7 +8122,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (mascotteFiche?.maj_le && !mascotteEdition) $("mascotteContenu").insertAdjacentHTML("beforeend", `<p class="hint">Dernière mise à jour par ${esc(mascotteFiche.maj_par || "l'équipe")} · ${esc(new Date(mascotteFiche.maj_le).toLocaleDateString("fr-BE"))}</p>`);
   }
   async function ouvrirMascotte(nom) {
-    if (!nom) return;
+    if (!nomsMascottes().includes(nom)) return;
     mascotteNom = nom; mascotteEdition = false; mascotteFiche = null; libererPhotosMascottes();
     $("mascotteContenu").textContent = "Chargement de la fiche…";
     $("mascotteTitre").textContent = `🧸 Habillage : ${nom}`;
@@ -8145,7 +8131,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     catch (e) { $("mascotteContenu").innerHTML = `<p class="hint">⚠️ Fiches indisponibles. Il faut d'abord installer le SQL des mascottes dans Supabase.<br>${esc(e.message || String(e))}</p>`; }
   }
   function fermerMascotte() { if (mascotteBusy) return; libererPhotosMascottes(); $("mascotteBg").classList.add("hidden"); document.body.style.overflow = $("costBg").classList.contains("hidden") ? "" : "hidden"; }
-  $("mascotteListe").addEventListener("click", e => { const b = e.target.closest("[data-mascotte]"); if (b) ouvrirMascotte(b.dataset.mascotte); else if (e.target.closest("#mascotteAutre") && isResp()) { const n = prompt("Nom de la nouvelle mascotte :"); if (n?.trim()) ouvrirMascotte(n.trim().slice(0, 80)); } });
+  $("mascotteListe").addEventListener("click", e => { const b = e.target.closest("[data-mascotte]"); if (b) ouvrirMascotte(b.dataset.mascotte); });
   $("mascotteFermer").onclick = fermerMascotte;
   $("mascotteBg").addEventListener("click", e => { if (e.target.id === "mascotteBg") fermerMascotte(); });
   $("mascotteAnnuler").onclick = () => { if (mascotteBusy) return; mascotteEdition = false; libererPhotosMascottes(); renderMascotte(); };
@@ -8191,8 +8177,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       }
       const anciens = (mascotteFiche?.etapes || []).map(s => s.photo_path).filter(Boolean);
       mascotteFiche = await mascotteStore.sauver(mascotteNom, etapes);
-      if (!nomsMascottesEnregistres.includes(mascotteNom)) nomsMascottesEnregistres.push(mascotteNom);
-      if (!$("costBg").classList.contains("hidden")) afficherListeMascottes();
       const utilises = new Set(etapes.map(s => s.photo_path));
       await mascotteStore.supprimer(anciens.filter(p => !utilises.has(p)).filter(p => !/^data:/.test(p))).catch(e => console.warn("Anciennes photos", e));
       mascotteEdition = false; libererPhotosMascottes(); await preparerPhotosMascotte();
@@ -8435,7 +8419,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }
     document.querySelectorAll('input[name="costSourceR"]').forEach(i => { i.checked = i.value === costSource; });
   }
-  function openCost() { costFiltre = ""; $("costSearch").value = ""; costSource = isResp() ? "fantasy" : "perso"; costType = ""; costEditId = null; renderCost(); afficherListeMascottes(); $("costBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; chargerNomsMascottes(); }
+  function openCost() { costFiltre = ""; $("costSearch").value = ""; costSource = isResp() ? "fantasy" : "perso"; costType = ""; costEditId = null; renderCost(); afficherListeMascottes(); $("costBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; }
   function closeCost() { costEditId = null; $("costBg").classList.add("hidden"); document.body.style.overflow = ""; render(); }
   $("costClose").onclick = closeCost;
   $("costBg").addEventListener("click", async (e) => {
