@@ -379,6 +379,18 @@
   .member .info{flex:1;min-width:0}
   .member .info b{display:block}
   .member .info span{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+  /* Équipe : les commandes ne doivent jamais comprimer les noms et les rôles. */
+  #teamList .member-actions{display:flex;flex:none;align-items:center;gap:6px;flex-wrap:wrap}
+  #teamList .member-actions button{white-space:nowrap;flex:none}
+  @media(max-width:760px){
+    #teamList .member{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px 10px;align-items:start;padding:12px}
+    #teamList .member>.av{grid-column:1;grid-row:1;width:44px;height:44px}
+    #teamList .member>.info{grid-column:2;grid-row:1;min-width:0;overflow-wrap:anywhere}
+    #teamList .member-actions{grid-column:1/-1;grid-row:2;min-width:0;width:100%;gap:6px}
+    #teamList .member-actions button{min-height:36px;padding:7px 9px}
+    #teamList .member-actions .crown{min-width:36px;padding:7px}
+    #teamList .member-actions [data-del]{margin-left:auto}
+  }
   .badge.jbl_bleu{background:#dbeafe;color:#1d4ed8}
   .badge.jbl_rouge{background:#fee2e2;color:#b91c1c}
   .missing{margin-top:8px;padding:8px 10px;border-radius:12px;background:#fff1f2;color:#be123c;font-weight:600;font-size:14px;border:1px dashed #fda4af;white-space:pre-line}
@@ -6509,11 +6521,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="member">
         ${m.perso_prefere ? persoImg(m.perso_prefere, "av mem-av", `<div class="av">${esc((m.prenom || "?")[0].toUpperCase())}</div>`) : `<div class="av">${esc((m.prenom || "?")[0].toUpperCase())}</div>`}
         <div class="info"><b>${esc(m.prenom)}</b>${m.perso_prefere ? `<small class="mem-alias">alias ${esc(m.perso_prefere)}</small>` : ""}<span>${m.email ? esc(m.email) : (isResp() ? "✉️ e-mail à compléter" : "")}</span><span class="addr">${m.adresse ? "📍 " + esc(m.adresse) : (isResp() ? "📍 adresse à compléter" : "")}</span>${isResp() && naissDe(m.prenom) ? `<span class="addr">🎂 ${esc(jourMois(naissDe(m.prenom)))}</span>` : ""}${equipesTypes().filter(t=>membreDansTeam(m,t)).length?`<small style="color:var(--violet-d);margin-top:4px">🎭 ${equipesTypes().filter(t=>membreDansTeam(m,t)).map(t=>esc(t.nom)).join(" · ")}</small>`:""}</div>
-        ${isGest() ? `<button type="button" class="sig photo" data-member-info="${esc(m.id)}" style="font-size:12px">📋 Fiche</button>` : ""}
-        ${isResp() ? `<button type="button" class="crown ed" data-addr="${esc(m.id)}" title="Adresse">📍</button>` : ""}
-        ${isResp() ? `<button type="button" class="crown ${m.gestionnaire ? "on" : ""}" data-star="${esc(m.id)}" title="Gestionnaire : voit tout l'agenda et gère le planning">⭐</button>` : ""}
-        ${isResp() ? `<button type="button" class="crown ${m.responsable ? "on" : ""}" data-crown="${esc(m.id)}" title="Responsable">👑</button>
-        <button type="button" data-del="${esc(m.id)}">Retirer</button>` : (m.responsable ? "👑" : m.gestionnaire ? "⭐" : "")}
+        <div class="member-actions">
+          ${isGest() ? `<button type="button" class="sig photo" data-member-info="${esc(m.id)}" style="font-size:12px">📋 Fiche</button>` : ""}
+          ${isResp() ? `<button type="button" class="crown ed" data-addr="${esc(m.id)}" title="Adresse">📍</button>` : ""}
+          ${isResp() ? `<button type="button" class="crown ${m.gestionnaire ? "on" : ""}" data-star="${esc(m.id)}" title="Gestionnaire : voit tout l'agenda et gère le planning">⭐</button>` : ""}
+          ${isResp() ? `<button type="button" class="crown ${m.responsable ? "on" : ""}" data-crown="${esc(m.id)}" title="Responsable">👑</button>
+          <button type="button" data-del="${esc(m.id)}">Retirer</button>` : (m.responsable ? "👑" : m.gestionnaire ? "⭐" : "")}
+        </div>
       </div>`).join("") : (isResp() ? `<p class="hint">Personne pour l'instant. Ajoutez chaque animateur ci-dessous.</p>` : ""));
     const ps = $("monPersoSel"); if (ps) ps.onchange = async () => {
       const choice=ps.value;ps.disabled=true;
