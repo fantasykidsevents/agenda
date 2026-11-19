@@ -3642,25 +3642,26 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="stat"><b>${upcoming.filter(e=>e.date<=in30).length}</b><span>dans 30 jours</span></div>
       <div class="stat"><b>${upcoming.filter(e=>e.statut==="en_attente"&&!anticipationActive(e)).length}</b><span>en attente</span></div>
       ${isResp() ? `<div class="stat"><b>${unpaid}</b><span>acomptes à recevoir</span></div>`
-        : `<div class="stat"><b>${upcoming.filter(e => e.materiel_manquant).length}</b><span>matériel manquant</span></div>`}`;
-    const nbMissing = upcoming.filter(e => e.materiel_manquant).length;
+        : `<div class="stat"><b>${upcoming.filter(e => String(e.materiel_manquant || "").trim()).length}</b><span>matériel manquant</span></div>`}`;
+    const animationsMaterielManquant = upcoming.filter(e => String(e.materiel_manquant || "").trim());
+    const nbMissing = animationsMaterielManquant.length;
     const d14 = iso(new Date(Date.now() - 14*864e5)), in10 = iso(new Date(Date.now() + 10*864e5));
     const photosAEnvoyer = events.filter(e => e.date < t && e.date >= d14 && e.statut !== "annule" && estClient(e) && !e.photos_envoyees)
       .sort((a,b) => b.date.localeCompare(a.date));
     const nbPhotos = photosAEnvoyer.length;
     const in3 = iso(new Date(Date.now() + 3*864e5));
-    const reste = events.some(e => e.statut !== "annule" && (e.materiel_manquant || "").trim());
-    const nbSoon = isResp() && reste ? events.filter(e => e.statut !== "annule" && e.date >= t && e.date <= in3).length : 0;
+    const materielUrgent = isResp() ? animationsMaterielManquant.filter(e => e.date <= in3) : [];
+    const nbSoon = materielUrgent.length;
     const in14 = iso(new Date(Date.now() + 14*864e5));
     const fichesManquantes = isResp() ? events.filter(e => e.statut === "confirme" && e.date >= t && e.date <= in14 && estClient(e) && !(e.fiche && e.fiche.recue_le))
       .sort((a,b) => a.date.localeCompare(b.date)) : [];
     const nbFiche = fichesManquantes.length;
     const nbAcompte = isResp() ? events.filter(e => e.statut === "confirme" && e.date >= t && e.date <= in10 && +e.acompte && !e.acompte_paye).length : 0;
     const alerteCliquable = (liste, type, couleur, message) => `<details class="alert-group"><summary class="alert-bar ${couleur}">${message}<span class="alert-voir">Afficher les ${liste.length} animation${liste.length > 1 ? "s" : ""} concernée${liste.length > 1 ? "s" : ""}</span></summary>
-      <div class="alert-cibles">${liste.map(e => `<button type="button" class="alert-cible" data-alert-ev="${esc(e.id)}" data-alert-type="${type}"><span><b>${esc(e.titre || e.enfant || "Animation")}</b><small>📅 ${esc(fmtLong(e.date))}</small></span><span class="fleche" aria-hidden="true">›</span></button>`).join("")}</div></details>`;
+      <div class="alert-cibles">${liste.map(e => `<button type="button" class="alert-cible" data-alert-ev="${esc(e.id)}" data-alert-type="${type}"><span><b>${esc(e.titre || e.enfant || "Animation")}</b><small>📅 ${esc(fmtLong(e.date))}</small>${type === "materiel" ? `<small>🎒 ${esc(String(e.materiel_manquant || "").trim().replace(/\s*\n\s*/g, " · "))}</small>` : ""}</span><span class="fleche" aria-hidden="true">›</span></button>`).join("")}</div></details>`;
     let nbC = 0, nbP = 0;
-    const bar = bandeauCK() + (nbMissing ? `<div class="alert-bar">⚠️ ${nbMissing} animation${nbMissing>1?"s":""} avec du matériel manquant</div>` : "")
-      + (nbSoon ? `<div class="alert-bar">🚨 Matériel toujours manquant et ${nbSoon} animation${nbSoon>1?"s":""} dans les 3 prochains jours</div>` : "")
+    const bar = bandeauCK() + (nbMissing ? alerteCliquable(animationsMaterielManquant, "materiel", "", `⚠️ ${nbMissing} animation${nbMissing>1?"s":""} avec du matériel manquant`) : "")
+      + (nbSoon ? alerteCliquable(materielUrgent, "materiel", "", `🚨 Matériel toujours manquant pour ${nbSoon} animation${nbSoon>1?"s":""} dans les 3 prochains jours`) : "")
       + (nbFiche ? alerteCliquable(fichesManquantes, "fiche", "gold", `📝 ${nbFiche} fiche${nbFiche>1?"s":""} anniversaire pas encore remplie${nbFiche>1?"s":""} (animations dans les 14 jours)`) : "")
       + (nbAcompte ? `<div class="alert-bar gold">💰 ${nbAcompte} acompte${nbAcompte>1?"s":""} pas encore reçu${nbAcompte>1?"s":""} à moins de 10 jours</div>` : "")
       + ((nbP = nbPasPrets()) ? `<div class="alert-bar" data-cost-open>🧺 ${nbP} costume${nbP > 1 ? "s" : ""}/perruque${nbP > 1 ? "s" : ""} à préparer (laver, recoiffer, réparer) pour une animation dans les ${+(reglages.costumes_jours ?? 7) || 7} jours</div>` : "")
