@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="theme-color" content="#faf6ff" />
+  <title>💜 Votre proposition de places · Fantasy Kids Events</title>
+  <link rel="icon" href="icon-192.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 10% 0%,#e6d9ff,transparent 55%),radial-gradient(ellipse at 100% 100%,#ffdef4,transparent 60%),#faf6ff;color:#2b1c40;font:16px Fredoka,system-ui,sans-serif}
+    main{max-width:540px;margin:auto;padding:28px 18px 55px}header{text-align:center;margin-bottom:23px}header img{width:min(250px,70vw);height:auto}h1{font-size:27px;line-height:1.2;color:#7328c8;margin:12px 0 5px}
+    .card{border:1px solid #e9d6fa;border-radius:20px;padding:21px;background:#fff;box-shadow:0 8px 27px #5c35921c}.sub,.note{color:#786586}.note{font-size:14px;line-height:1.55}.recap{background:#f5edff;border-radius:14px;padding:15px;margin:14px 0;line-height:1.8}
+    button{width:100%;border:0;border-radius:13px;padding:15px;margin:12px 0;cursor:pointer;font:700 17px Fredoka,system-ui;background:linear-gradient(110deg,#20b7d9,#8c3fed);color:#fff}button:disabled{opacity:.55;cursor:wait}
+    .err{color:#ad273d;line-height:1.45}.hidden{display:none!important}.center{text-align:center}.big{font-size:50px}
+  </style>
+</head>
+<body>
+<main>
+  <header><img src="logo.png" alt="Fantasy Kids Events" /><h1>💜 Des places pour vous !</h1>
+    <p class="sub">Une petite touche de magie se libère…</p></header>
+  <div class="card" id="chargement">⏳ Vérification de votre proposition…</div>
+  <section class="card hidden" id="proposition">
+    <h2 id="bonjour">Bonjour !</h2>
+    <p>Des places se sont libérées pour votre événement. Vous pouvez maintenant confirmer votre réservation.</p>
+    <div class="recap" id="details"></div>
+    <button type="button" id="confirmer">🎟️ Je confirme ma réservation</button>
+    <p class="note">Les places seront revérifiées au moment où vous confirmez. Une fois votre réponse enregistrée, vous recevrez notre e-mail habituel avec les informations d'acompte.</p>
+    <p class="err" role="alert" id="erreur"></p>
+  </section>
+  <section class="card center hidden" id="resultat" role="status"><div class="big" id="icone">💜</div>
+    <h2 id="titreResultat"></h2><p id="messageResultat"></p></section>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id), token = new URLSearchParams(location.search).get('t') || '';
+  const cfg = window.APP_CONFIG || {};
+  const sb = cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && window.supabase
+    ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { auth: { persistSession: false } }) : null;
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const afficher = id => { ['chargement','proposition','resultat'].forEach(x => $(x).classList.toggle('hidden',x!==id)); };
+  function resultat(ok, titre, message) {
+    $('icone').textContent = ok ? '✅' : '💌';
+    $('titreResultat').textContent = titre; $('messageResultat').textContent = message;
+    afficher('resultat');
+  }
+  async function action(type) {
+    const { data, error } = await sb.functions.invoke('notifier', { body: { type, token } });
+    if (error || !data?.ok) throw new Error(data?.erreur || error?.message || 'Un problème est survenu.');
+    return data;
+  }
+  async function initialiser() {
+    if (!sb || !/^[A-Za-z0-9_-]{32}$/.test(token)) {
+      resultat(false, 'Lien invalide', 'Veuillez utiliser le lien reçu dans votre e-mail.'); return;
+    }
+    try {
+      const d = await action('ATTENTE_ETAT');
+      if (d.statut === 'acceptee') {
+        resultat(true, 'Votre réservation est confirmée !', 'Merci ! Votre réponse a déjà été enregistrée.'); return;
+      }
+      if (d.statut !== 'proposee') {
+        resultat(false, 'Cette proposition n’est plus disponible', 'Elle a peut-être expiré. Répondez à notre e-mail pour nous contacter.'); return;
+      }
+      $('bonjour').textContent = `Bonjour ${d.nom || ''} !`;
+      $('details').innerHTML = `🎉 <b>${esc(d.titre)}</b><br>🎟️ <b>${Number(d.places) || 0} place(s)</b><br>⌛ À confirmer avant le ${esc(new Date(d.expireLe).toLocaleString('fr-BE', {dateStyle:'long',timeStyle:'short'}))}`;
+      afficher('proposition');
+    } catch (_) {
+      resultat(false, 'Vérification impossible', 'Réessayez dans quelques instants ou répondez à notre e-mail.');
+    }
+  }
+  $('confirmer').onclick = async () => {
+    $('confirmer').disabled = true;
+    $('erreur').textContent = '⏳ Confirmation en cours…';
+    try {
+      await action('ATTENTE_CONFIRMER');
+      resultat(true, 'Votre réservation est confirmée !', 'Merci ! Votre réservation est enregistrée. Vous recevrez les instructions pour l’acompte par e-mail.');
+    } catch (e) {
+      $('erreur').textContent = e.message || 'Impossible de confirmer. Réessayez ou contactez-nous.';
+      $('confirmer').disabled = false;
+    }
+  };
+  initialiser();
+})();
+</script>
+</body>
+</html>

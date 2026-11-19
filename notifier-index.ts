@@ -563,6 +563,65 @@ async function importerResaSite() {
   return crees;
 }
 
+// ---------- 💜 Formulaire Wix « Liste d'attente » : jamais dans reservations ----------
+// L'identifiant n'est connu qu'après publication du formulaire Wix. En son
+// absence l'import est simplement désactivé ; le formulaire Contact reste intact.
+async function importerListeAttente() {
+  const formId = env("WIX_FORM_ATTENTE_ID");
+  if (!formId || !env("WIX_API_KEY") || !env("WIX_SITE_ID")) return [];
+  const { data: param, error: errParam } = await sb.from("parametres")
+    .select("valeur").eq("cle", "import_attente_depuis").maybeSingle();
+  if (errParam) throw errParam;
+  const depuis = param?.valeur || new Date(Date.now() - 24 * 3600e3).toISOString();
+  const rep = await fetch("https://www.wixapis.com/form-submission-service/v4/submissions/namespace/query", {
+    method: "POST",
+    headers: { Authorization: env("WIX_API_KEY"), "wix-site-id": env("WIX_SITE_ID"), "Content-Type": "application/json" },
+    body: JSON.stringify({ query: { filter: { namespace: "wix.form_app.form", formId },
+      sort: [{ fieldName: "createdDate", order: "DESC" }], cursorPaging: { limit: 50 } } }),
+  });
+  if (!rep.ok) throw new Error("Wix liste d'attente " + rep.status + " : " + (await rep.text()));
+  const { submissions = [] } = await rep.json();
+  const auj = new Date().toISOString().slice(0, 10);
+  const { data: evs, error: errEvs } = await sb.from("evenements")
+    .select("id,titre,theme,theme_app,date,type_evenement,statut").eq("type_evenement", "evenement")
+    .gte("date", auj).neq("statut", "annule").order("date");
+  if (errEvs) throw errEvs;
+  const normaliser = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  let dernier = depuis;
+  const crees = [];
+  for (const s of submissions.filter((x) => x.createdDate > depuis).reverse()) {
+    const v = s.submissions || {};
+    const sujet = String(v.evenement_attente || "").trim();
+    const ev = (evs || []).find((e) => sujet && normaliser(e.titre).includes(normaliser(sujet)) &&
+      e.theme_app !== "nuit" &&
+      !/montage|repetition|generale|nuit\s*magique/.test(normaliser(`${e.titre} ${e.theme || ""}`)));
+    const adultes = Number(v.adultes_attente), enfants = Number(v.enfants_attente), bebes = Number(v.bebes_attente || 0);
+    if (!ev || !Number.isInteger(adultes) || adultes < 1 ||
+      !Number.isInteger(enfants) || enfants < 0 || !Number.isInteger(bebes) || bebes < 0 ||
+      !String(v.nom_attente || "").trim() || !String(v.email_attente || "").trim() ||
+      !String(v.telephone_attente || "").trim()) {
+      // Ne pas perdre la soumission : l'import suivant pourra réessayer.
+      console.warn("Liste d'attente Wix à vérifier", s.id, sujet);
+      break;
+    }
+    const o = { evenement_id: ev.id, evenement_texte: sujet,
+      nom: String(v.nom_attente).trim(), email: String(v.email_attente).trim(),
+      telephone: String(v.telephone_attente).trim(), adultes, enfants,
+      places: adultes + enfants, bebes, notes: String(v.message_attente || "").slice(0, 1500),
+      source: "site", wix_submission_id: s.id };
+    const { error } = await sb.from("liste_attente").insert(o);
+    if (error && error.code !== "23505") throw error;
+    if (!error) crees.push({ ...o, titre: ev.titre });
+    if (s.createdDate > dernier) dernier = s.createdDate;
+  }
+  if (dernier !== depuis) {
+    const { error } = await sb.from("parametres")
+      .upsert({ cle: "import_attente_depuis", valeur: dernier });
+    if (error) throw error;
+  }
+  return crees;
+}
+
 // ---------- « Dates prises » sur le site : 🟠 en attente / 🔴 confirmé ----------
 async function wix(method, path, body) {
   const r = await fetch("https://www.wixapis.com" + path, {
@@ -752,6 +811,183 @@ async function mailsReservation(type, r, avant) {
   const texte = `Bonjour,\n\nVotre réservation pour ${ev.titre} (${quandEv}) est confirmée : ${places} place(s)${bebes}.\n${total ? `Total : ${euros0(total)}\n\n${texteVirement(aVerser, comm, "Acompte à verser (50 %)")}\n\nLe solde (${euros0(total - moitie)}) sera à payer en liquide sur place.` : ""}\n\nÀ très bientôt !\nL'équipe Fantasy Kids Events`;
   await envoyerEmail(r.email, `🎟️ ${ev.titre} – réservation confirmée, acompte à verser`, html, texte, [], { canal: "client" });
   return "mail confirmation + acompte";
+}
+
+// ---------- 💜 Propositions de la liste d'attente (jetons hachés, décisions serveur) ----------
+const ATTENTE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ATTENTE_LIEN_BASE = APP_URL || "https://fantasykidsevents.github.io/agenda";
+async function hashJetonAttente(token: string) {
+  const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+  return Array.from(new Uint8Array(h), b => b.toString(16).padStart(2, "0")).join("");
+}
+async function responsablesAttente() {
+  const { data, error } = await sb.from("equipe").select("email,prenom").eq("responsable", true);
+  if (error) throw error;
+  return (data || []).filter(m => m.email);
+}
+async function notifierResponsablesAttente(payload, evId: string, cle?: string) {
+  let n = 0;
+  for (const m of await responsablesAttente()) {
+    // La cloche est créée aussi quand le push est désactivé. La clé prévient
+    // les doublons si le même webhook est rejoué.
+    const uniqueParMembre = cle ? `${cle}:${String(m.email).trim().toLowerCase()}` : null;
+    const { deja } = await garderDansCloche(m.email, payload, "administration", evId, uniqueParMembre);
+    if (!deja) n += await envoyerPush(m.email, payload, { categorie: "administration", dejaEnCloche: true });
+  }
+  return n;
+}
+async function placesRestantesAttente(evenementId: string) {
+  const { data, error } = await sb.rpc("places_evenements_calcul");
+  if (error) throw new Error("Calcul des places indisponible (SQL à activer) : " + error.message);
+  const ev = (data || []).find(x => String(x.evenement_id) === evenementId);
+  return ev ? Number(ev.restantes) : null;
+}
+async function notifierLiberationAttente(type, apres, avant) {
+  if (type !== "UPDATE" && type !== "DELETE") return 0;
+  const nombreActif = r => Math.max(0, (Number(r?.places) || 0) -
+    (Array.isArray(r?.annulations) ? r.annulations.reduce((s, a) => s + Math.max(0, Number(a?.n) || 0), 0) : 0));
+  const evenementId = String(avant?.evenement_id || apres?.evenement_id || "");
+  if (!ATTENTE_ID.test(evenementId) || !avant || !Object.hasOwn(avant, "places")) return 0;
+  const avantN = nombreActif(avant), apresN = type === "DELETE" ? 0 : nombreActif(apres);
+  if (avantN <= apresN) return 0;
+  const restantes = await placesRestantesAttente(evenementId);
+  if (!(restantes > 0)) return 0;
+  const { count, error } = await sb.from("liste_attente")
+    .select("id", { count: "exact", head: true }).eq("evenement_id", evenementId).eq("statut", "en_attente");
+  if (error) throw error;
+  if (!count) return 0;
+  const { data: ev, error: errEv } = await sb.from("evenements")
+    .select("titre").eq("id", evenementId).maybeSingle();
+  if (errEv) throw errEv;
+  const titre = ev?.titre || "cet événement";
+  const payload = { title: `🎟️ ${restantes} place(s) libérée(s) pour ${titre}`,
+    body: `${count} personne(s) en liste d'attente – choisissez à qui proposer les places.`,
+    url: `./index.html?ev=${encodeURIComponent(evenementId)}`, tag: `attente-liberee-${evenementId}` };
+  // Le contenu précédent du webhook fait partie de la clé : une retransmission
+  // n'envoie pas plusieurs avis, un autre changement de capacité en envoie un.
+  const cle = `attente-liberee:${evenementId}:${avant?.id}:${type}:${avantN}:${apresN}:${String(apres?.updated_at || avant?.updated_at || "")}`;
+  return await notifierResponsablesAttente(payload, evenementId, cle);
+}
+async function responsableDepuisRequete(req: Request) {
+  const bearer = (req.headers.get("Authorization") || "").match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!bearer) return false;
+  const { data: identite, error } = await sb.auth.getUser(bearer);
+  if (error || !identite?.user?.email) return false;
+  const { data: membres, error: errMembres } = await sb.from("equipe")
+    .select("id").ilike("email", identite.user.email).eq("responsable", true).limit(1);
+  if (errMembres) throw errMembres;
+  return !!membres?.length;
+}
+async function attenteActionResponsable(req: Request, p: any) {
+  if (!(await responsableDepuisRequete(req))) return json({ ok: false, erreur: "Réservé aux responsables" }, 403);
+  const id = String(p.attenteId || "");
+  if (!ATTENTE_ID.test(id)) return json({ ok: false, erreur: "Identifiant invalide" }, 400);
+  const { data: a, error: errAttente } = await sb.from("liste_attente").select("*").eq("id", id).maybeSingle();
+  if (errAttente) throw errAttente;
+  if (!a) return json({ ok: false, erreur: "Demande introuvable" }, 404);
+
+  if (p.type === "ATTENTE_RETIRER" || p.type === "ATTENTE_EXPIRER") {
+    const statut = p.type === "ATTENTE_EXPIRER" ? "expiree" : "annulee";
+    const permis = p.type === "ATTENTE_EXPIRER" ? ["proposee"] : ["en_attente", "proposee"];
+    if (!permis.includes(a.statut)) return json({ ok: false, erreur: "Cette demande ne peut plus être modifiée." }, 409);
+    const { data, error } = await sb.from("liste_attente").update({ statut, jeton_hash: null,
+      proposition_expire_le: null, reponse_le: new Date().toISOString() })
+      .eq("id", id).in("statut", permis).select("id").maybeSingle();
+    if (error) throw error;
+    return data ? json({ ok: true }) : json({ ok: false, erreur: "La demande a changé. Actualisez." }, 409);
+  }
+  if (p.type !== "ATTENTE_PROPOSER") return json({ ok: false, erreur: "Action inconnue" }, 400);
+  if (a.statut !== "en_attente" || !a.email || !Number.isInteger(Number(a.places)) || Number(a.places) < 1)
+    return json({ ok: false, erreur: "Cette demande ne peut pas recevoir de proposition." }, 409);
+  const restantes = await placesRestantesAttente(String(a.evenement_id));
+  if (restantes === null || restantes < Number(a.places))
+    return json({ ok: false, erreur: `Pas assez de places : ${restantes ?? "aucune"} disponible(s) pour ${a.places} demandée(s).` }, 409);
+  const { data: ev, error: errEv } = await sb.from("evenements")
+    .select("titre,date").eq("id", a.evenement_id).maybeSingle();
+  if (errEv) throw errEv;
+  if (!ev) return json({ ok: false, erreur: "Événement introuvable" }, 404);
+  const token = jeton(), hash = await hashJetonAttente(token), maintenant = new Date();
+  const expireLe = new Date(maintenant.getTime() + 48 * 3600e3).toISOString();
+  const { data: mise, error: errMise } = await sb.from("liste_attente")
+    .update({ statut: "proposee", proposee_le: maintenant.toISOString(), proposition_expire_le: expireLe, jeton_hash: hash })
+    .eq("id", id).eq("statut", "en_attente").select("id").maybeSingle();
+  if (errMise) throw errMise;
+  if (!mise) return json({ ok: false, erreur: "Cette demande a déjà été traitée." }, 409);
+  const lien = `${ATTENTE_LIEN_BASE}/attente.html?t=${encodeURIComponent(token)}`;
+  const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1f1735">${BANDE}
+    <h2>💜 Des places se sont libérées !</h2><p>Bonjour ${esc(a.nom)},</p>
+    <p>Nous pouvons vous proposer <b>${a.places} place(s)</b> pour <b>${esc(ev.titre)}</b>.</p>
+    <p>Souhaitez-vous confirmer votre réservation ? Vous avez <b>48 heures</b> pour répondre ;
+    cette proposition ne constitue pas encore une réservation confirmée.</p>
+    <p><a href="${lien}" style="display:inline-block;background:#793bd3;color:white;padding:14px 20px;border-radius:10px;text-decoration:none">🎟️ Je confirme</a></p>
+    <p>Si vous ne souhaitez plus venir, vous pouvez simplement ne pas répondre.</p>${SIGNATURE}</div>`;
+  try {
+    await envoyerEmail(a.email, `💜 Des places pour ${ev.titre} – réponse sous 48 h`, html,
+      `Bonjour ${a.nom},\n\n${a.places} place(s) se sont libérées pour ${ev.titre}.\nPour confirmer sous 48 heures : ${lien}\n\nCe n'est pas encore une réservation confirmée.\n\nFantasy Kids Events`, [], { canal: "client" });
+  } catch (err) {
+    // Le mail n'est pas parti : la demande redevient sélectionnable. Ne jamais
+    // laisser un jeton valide associé à une proposition non envoyée.
+    await sb.from("liste_attente").update({ statut: "en_attente", proposee_le: null,
+      proposition_expire_le: null, jeton_hash: null }).eq("id", id).eq("statut", "proposee").eq("jeton_hash", hash);
+    return json({ ok: false, erreur: "Mail non envoyé : " + String(err?.message || err) }, 503);
+  }
+  return json({ ok: true, expireLe });
+}
+async function attenteConfirmer(p: any) {
+  const token = String(p.token || "");
+  if (!/^[A-Za-z0-9_-]{32}$/.test(token)) return json({ ok: false, erreur: "Lien de confirmation invalide." }, 400);
+  const hash = await hashJetonAttente(token);
+  const { data, error } = await sb.rpc("confirmer_liste_attente", { p_jeton_hash: hash });
+  if (error) { console.error("Confirmation liste d'attente", error); return json({ ok: false, erreur: "Confirmation temporairement indisponible." }, 503); }
+  const etat = data?.etat;
+  if (etat === "insuffisant") {
+    try {
+      const { data: a } = await sb.from("liste_attente").select("id,nom,places,evenement_id")
+        .eq("jeton_hash", hash).maybeSingle();
+      if (a) {
+        const { data: ev } = await sb.from("evenements").select("titre").eq("id", a.evenement_id).maybeSingle();
+        await notifierResponsablesAttente({ title: "⚠️ Liste d'attente : plus assez de places",
+          body: `${a.nom} · ${a.places} place(s) – ${ev?.titre || "événement"} : confirmation bloquée.`,
+          url: `./index.html?ev=${a.evenement_id}`, tag: `attente-capacite-${a.id}` },
+          String(a.evenement_id), `attente-capacite:${a.id}`);
+      }
+    } catch (e) { console.error("Alerte capacité liste d'attente", e); }
+    return json({ ok: false, erreur: "Les dernières places ont été prises entre-temps. Notre équipe a été prévenue ; contactez Fantasy Kids Events." }, 409);
+  }
+  if (etat === "expiree") return json({ ok: false, erreur: "Cette proposition a expiré. Contactez Fantasy Kids Events." }, 410);
+  if (etat !== "confirmee" && etat !== "deja_confirmee") return json({ ok: false, erreur: "Ce lien n'est plus valable." }, 410);
+  if (etat === "confirmee") {
+    try {
+      const payload = { title: "💜 Liste d'attente confirmée", body: `${data.nom} · ${data.places} place(s) – ${data.titre}`,
+        url: `./index.html?ev=${data.evenement_id}`, tag: `attente-confirmee-${data.reservation_id}` };
+      await notifierResponsablesAttente(payload, String(data.evenement_id), `attente-confirmee:${data.reservation_id}`);
+    } catch (e) { console.error("Alerte confirmation attente", e); }
+    // La création de la réservation avec confirmee_le déclenche le webhook
+    // reservations habituel, donc mailsReservation (confirmation + acompte).
+  }
+  return json({ ok: true, dejaConfirmee: etat === "deja_confirmee" });
+}
+async function attenteEtat(p: any) {
+  const token = String(p.token || "");
+  if (!/^[A-Za-z0-9_-]{32}$/.test(token)) return json({ ok: false, erreur: "Lien invalide" }, 400);
+  const { data: a, error } = await sb.from("liste_attente")
+    .select("evenement_id,nom,places,statut,proposition_expire_le")
+    .eq("jeton_hash", await hashJetonAttente(token)).maybeSingle();
+  if (error) throw error;
+  if (!a) return json({ ok: false, erreur: "Lien introuvable" }, 404);
+  const { data: ev } = await sb.from("evenements").select("titre,date").eq("id", a.evenement_id).maybeSingle();
+  return json({ ok: true, statut: a.statut === "proposee" &&
+    (!a.proposition_expire_le || a.proposition_expire_le <= new Date().toISOString()) ? "expiree" : a.statut,
+    nom: a.nom, places: a.places, titre: ev?.titre || "votre événement", date: ev?.date,
+    expireLe: a.proposition_expire_le });
+}
+async function expirerPropositionsAttente() {
+  const { data, error } = await sb.from("liste_attente")
+    .update({ statut: "expiree", reponse_le: new Date().toISOString(), jeton_hash: null })
+    .eq("statut", "proposee").lt("proposition_expire_le", new Date().toISOString())
+    .select("id");
+  if (error) throw error;
+  return data?.length || 0;
 }
 
 // ---------- 📨 Devis au client (à accepter en ligne) ----------
@@ -1759,6 +1995,11 @@ Deno.serve(async (req) => {
     if (["MAILING_EVENEMENT_PREVIEW", "MAILING_EVENEMENT_SEND", "MAILING_EVENEMENT_HISTORY"].includes(p.type))
       return await mailingRequete(req, p);
 
+    if (p.type === "ATTENTE_ETAT") return await attenteEtat(p);
+    if (p.type === "ATTENTE_CONFIRMER") return await attenteConfirmer(p);
+    if (["ATTENTE_PROPOSER", "ATTENTE_RETIRER", "ATTENTE_EXPIRER"].includes(p.type))
+      return await attenteActionResponsable(req, p);
+
     if (p.type === "ANTICIPATION_MANUEL") {
       const bearer = (req.headers.get("Authorization") || "").match(/^Bearer\s+(.+)$/i)?.[1];
       if (!bearer) return json({ok:false,erreur:"Connexion requise"},401);
@@ -1916,8 +2157,13 @@ Deno.serve(async (req) => {
     }
     // 🎟️ Réservation d'événement confirmée / acompte reçu → mails au client
     if (p.table === "reservations") {
-      if (p.type === "DELETE") return json({ ok: true });
-      try { return json({ ok: true, resa: await mailsReservation(p.type, p.record, p.old_record) }); }
+      let liberation = 0;
+      try { liberation = await notifierLiberationAttente(p.type, p.record, p.old_record); }
+      catch (e) { console.error("Alerte places libérées", e); }
+      try {
+        const resa = p.type === "DELETE" ? "réservation supprimée" : await mailsReservation(p.type, p.record, p.old_record);
+        return json({ ok: true, resa, liberation });
+      }
       catch (e) { console.error("résa", e); return json({ ok: false, resa: "erreur : " + (e?.message || e) }); }
     }
 
@@ -2342,6 +2588,19 @@ Deno.serve(async (req) => {
           }
         }
       } catch (e) { console.error("import résa", e); resultats.push({ erreur_import_resa: String(e?.message || e) }); }
+
+      // 💜 Même cadence que les réservations Wix, sans toucher à reservations.
+      try {
+        const expirees = await expirerPropositionsAttente();
+        if (expirees) resultats.push({ attente_expirees: expirees });
+        const attentes = await importerListeAttente();
+        for (const a of attentes) {
+          const payload = { title: `💜 Liste d'attente : ${a.nom}`,
+            body: `${a.places} place(s) – ${a.titre}`, url: `./index.html?ev=${a.evenement_id}`,
+            tag: `attente-wix-${a.wix_submission_id}` };
+          resultats.push(await notifierResponsablesAttente(payload, String(a.evenement_id), `attente-wix:${a.wix_submission_id}`));
+        }
+      } catch (e) { console.error("import liste d'attente", e); resultats.push({ erreur_import_attente: String(e?.message || e) }); }
       console.log("rappels", JSON.stringify(resultats));
       return json({ ok: true, rappels: resultats });
     }
