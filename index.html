@@ -1652,6 +1652,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .hc-entry small{display:block;color:#725d87;line-height:1.5;margin:3px 0}
   .hc-entry button{margin-top:7px}
   @media(max-width:700px){.hc-grid{grid-template-columns:minmax(0,1fr)}.hc-list{max-height:240px}.hc-detail{padding:12px}}
+  .badge.places-dispo{background:#e6f8ed;color:#176740;border:1px solid #b5e6c9}
+  .badge.places-complet{background:#ffe9ee;color:#ad254b;border:1px solid #f6bfcd}
+  .badge.places-surplus{background:#fff0dc;color:#965000;border:1px solid #f5d19b}
+  .evt-places{display:inline-block;margin-top:7px;padding:7px 11px;border-radius:11px;font-weight:800;font-size:13px;background:#eaf9f0;color:#16683b}
+  .evt-places.complet{background:#ffe9ee;color:#a32147}
+  .evt-places.surplus{background:#fff0dc;color:#9a5300}
 </style>
 </head>
 <body>
@@ -3248,6 +3254,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // Jordan confirme lui-même la remise physique des espèces de l'équipe.
   function peutConfirmerRemise() { return peutEnvoyerPhotos(); }
   let events = [];
+  let placesParEvenement = new Map();
   let suivisAnticipes = new Map(), anticipationsDisponibles = DEMO;
   async function chargerSuivisAnticipes() {
     if (DEMO || !isGest()) { suivisAnticipes = new Map(); return; }
@@ -3407,7 +3414,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     try { members = await team.list(); } catch (e) { console.error(e); ok = false; }
     try { events = await store.list(); }
     catch (e) { console.error(e); ok = false; }
-    try { await chargerSuivisAnticipes(); } catch(e) { console.warn("Suivi anticipé",e); }
+    await Promise.all([
+      chargerSuivisAnticipes().catch(e => console.warn("Suivi anticipé",e)),
+      chargerPlacesDispo().catch(e => console.warn("Places des événements",e)),
+    ]);
     try { resaSite = (!DEMO && isResp()) ? ((await sb.from("reservations").select("id,evenement_id,nom,places,bebes,notes,created_at").eq("source", "site").is("vue_le", null).order("created_at")).data || []) : []; }
     catch (e) { resaSite = []; }
     resaSite = resaSite.filter(r => { const e = events.find(x => String(x.id) === String(r.evenement_id)); return e && e.date >= todayISO(); });
@@ -3491,6 +3501,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if(!interne && e.type_evenement === "animation")pay += badgeBilan(e);
     if (e.options && optTexte(e.options)) pay += `<span class="badge">✨ ${esc(optTexte(e.options))}</span>`;
     if (e.photos_envoyees) pay += `<span class="badge solde-ok">📸 Photos envoyées${e.photos_envoyees_par ? " · " + esc(e.photos_envoyees_par) : ""} · ${new Date(e.photos_envoyees).toLocaleDateString("fr-BE", { day: "numeric", month: "short" })}</span>`;
+    if (isResp() && e.type_evenement === "evenement" && !estNM(e)) pay += placesBadge(e);
     // Aucun montant à afficher aux membres sur une simple proposition.
     if (e.statut === "en_attente" && !isGest()) pay = "";
     const canPhotos = past && peutEnvoyerPhotos() && !interne && e.type_evenement === "animation"; // photos : Jordan uniquement
@@ -7348,10 +7359,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function openEvts() {
     const t = iso(new Date(Date.now() - 2 * 864e5));
     const l = events.filter(e => e.type_evenement === "evenement" && e.statut !== "annule" && !estHors(e) && !estNM(e) && e.date >= t).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 30);
-    $("evtsBody").innerHTML = l.length ? l.map(e => `<div class="mine-head" style="margin-bottom:10px"><b>${esc(e.titre || "Événement")}</b><br><small style="text-transform:capitalize">${esc(fmtLong(e.date))}${e.heure_debut ? " · " + hhmm(e.heure_debut) : ""}</small>
+    const afficher = () => { $("evtsBody").innerHTML = l.length ? l.map(e => `<div class="mine-head" style="margin-bottom:10px"><b>${esc(e.titre || "Événement")}</b><br><small style="text-transform:capitalize">${esc(fmtLong(e.date))}${e.heure_debut ? " · " + hhmm(e.heure_debut) : ""}</small><br>${placesResume(e)}
       <div class="evt-tiles" style="margin-top:8px"><button type="button" class="evt-tile" data-qt="resa" data-id="${esc(e.id)}"><span>🎟️</span>Réservations</button><button type="button" class="evt-tile" data-qt="caisse" data-id="${esc(e.id)}"><span>🛒</span>Caisse</button><button type="button" class="evt-tile" data-qt="tourn" data-id="${esc(e.id)}"><span>🔄</span>Tournante</button><button type="button" class="evt-tile" data-qt="bilan" data-id="${esc(e.id)}"><span>📊</span>Bilan</button><button type="button" class="evt-tile" data-qt="borne" data-id="${esc(e.id)}"><span>📟</span>Borne</button><button type="button" class="evt-tile" data-qt="fiche" data-id="${esc(e.id)}"><span>📝</span>Fiche</button></div></div>`).join("")
-      : `<p class="hint">Aucun événement à venir dans l'agenda.</p>`;
+      : `<p class="hint">Aucun événement à venir dans l'agenda.</p>`; };
+    afficher();
     $("evtsBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
+    // Une ouverture de ce panneau vérifie à nouveau les réservations Wix et
+    // manuelles, même si l'agenda était déjà affiché depuis longtemps.
+    chargerPlacesDispo().then(() => {
+      if (!$("evtsBg").classList.contains("hidden")) { afficher(); if (view === "cal") renderCal(); else if (view === "list") renderList(); }
+    }).catch(err => console.warn("Actualisation des places",err));
   }
   const closeEvts = () => { $("evtsBg").classList.add("hidden"); document.body.style.overflow = ""; };
   $("evtsClose").onclick = closeEvts; $("evtsBg").addEventListener("click", (e) => { if (e.target.id === "evtsBg") closeEvts(); });
@@ -8487,6 +8504,60 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     let c = ev && ev.resa_tables; if (typeof c === "string") { try { c = JSON.parse(c); } catch (e) { c = null; } }
     return Array.isArray(c) && c.length ? c.map(x => Math.min(10, Math.max(1, +x || 8))) : Array(12).fill(8);
   }
+  function placesDispo(ev) {
+    if (!ev || !placesParEvenement.has(String(ev.id))) return null;
+    const capacite = capsDe(ev).reduce((s, x) => s + x, 0);
+    const reservees = placesParEvenement.get(String(ev.id)) || 0;
+    return { capacite, reservees, restantes: Math.max(0, capacite - reservees), surplus: Math.max(0, reservees - capacite) };
+  }
+  function placesBadge(ev) {
+    const p = placesDispo(ev); if (!p) return "";
+    const classe = p.surplus ? "places-surplus" : p.restantes ? "places-dispo" : "places-complet";
+    const texte = p.surplus ? `⚠️ ${p.surplus} place${p.surplus > 1 ? "s" : ""} au-delà de la capacité`
+      : p.restantes ? `🎟️ ${p.restantes} place${p.restantes > 1 ? "s" : ""} disponible${p.restantes > 1 ? "s" : ""}` : "🎟️ Complet";
+    return `<span class="badge ${classe}">${texte} · ${p.reservees}/${p.capacite}</span>`;
+  }
+  function placesResume(ev) {
+    const p = placesDispo(ev); if (!p) return '<span class="hint">🎟️ Places disponibles : actualisation…</span>';
+    const classe = p.surplus ? "surplus" : p.restantes ? "" : "complet";
+    const texte = p.surplus ? `⚠️ ${p.surplus} place${p.surplus > 1 ? "s" : ""} au-delà de la capacité`
+      : p.restantes ? `🎟️ ${p.restantes} place${p.restantes > 1 ? "s" : ""} disponible${p.restantes > 1 ? "s" : ""}` : "🎟️ COMPLET";
+    return `<span class="evt-places ${classe}">${texte} · ${p.reservees}/${p.capacite} réservées</span>`;
+  }
+  // Les places sont réservées dès leur encodage, avant même l'acompte ; un
+  // bébé sans siège ne consomme pas de place. Les annulations en libèrent.
+  async function chargerPlacesDispo() {
+    if (!isResp()) { placesParEvenement = new Map(); return; }
+    let lignes = [];
+    if (DEMO) lignes = resaStore._all();
+    else {
+      const taille = 500;
+      for (let debut = 0; debut < 10000; debut += taille) {
+        const { data, error } = await sb.from("reservations")
+          .select("id,evenement_id,places,annulations").order("id").range(debut, debut + taille - 1);
+        if (error) throw error;
+        lignes.push(...(data || []));
+        if ((data || []).length < taille) break;
+        if (debut + taille >= 10000) throw new Error("Trop de réservations pour calculer toutes les places.");
+      }
+      // Prendre aussi en compte les changements encore hors ligne sur cet appareil.
+      const R = new Map(lignes.map(r => [String(r.id), r]));
+      for (const op of resaFile()) {
+        if (op.op === "save") R.set(String(op.r.id), op.r);
+        else if (op.op === "del") R.delete(String(op.id));
+      }
+      lignes = [...R.values()];
+    }
+    const parEv = new Map(events.filter(e => e.type_evenement === "evenement" && !estNM(e))
+      .map(e => [String(e.id), 0]));
+    lignes.forEach(r => {
+      const id = String(r.evenement_id);
+      if (!parEv.has(id)) return;
+      const annulees = Array.isArray(r.annulations) ? r.annulations.reduce((s, a) => s + Math.max(0, +a.n || 0), 0) : 0;
+      parEv.set(id, parEv.get(id) + Math.max(0, (+r.places || 0) - annulees));
+    });
+    placesParEvenement = parEv;
+  }
   const evDeResa = (r) => events.find(e => String(e.id) === String(r.evenement_id));
   function calcResa(r, ev) {
     const P = prixPlace(ev), places = +r.places || 0, acompte = +r.acompte_recu || 0, ppp = places ? acompte / places : 0;
@@ -8515,6 +8586,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   async function resaReload() {
     if (!resaEv) return;
     try { resas = await resaStore.list(resaEv.id); } catch (e) { console.error(e); resas = []; }
+    if (isResp()) {
+      // Le compteur de l'agenda suit immédiatement les modifications faites
+      // dans cette fiche, y compris une annulation ou un encodage hors ligne.
+      const reservees = resas.reduce((n, r) => n + Math.max(0, (+r.places || 0) -
+        (Array.isArray(r.annulations) ? r.annulations.reduce((s, a) => s + Math.max(0, +a.n || 0), 0) : 0)), 0);
+      placesParEvenement.set(String(resaEv.id), reservees);
+      if (view === "cal") renderCal(); else if (view === "list") renderList();
+    }
     if (isResp()) { try { resasTout = await resaStore.tout(); } catch (e) { resasTout = resas; } }
   }
   async function openResa(evId, onglet) {
@@ -8539,9 +8618,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const arrives = C.reduce((t, x) => t + (+x.r.arrives || 0), 0), attendus = C.filter(x => x.c.actives).length;
     const familles = C.filter(x => x.r.arrives != null).length;
     const enc = C.reduce((t, x) => t + (+x.r.acompte_recu || 0) + (+x.r.paye_jour || 0), 0), reste = C.reduce((t, x) => t + x.c.reste, 0);
+    const disponibles = Math.max(0, capTot - actives), depassement = Math.max(0, actives - capTot);
     const aPlacer = C.reduce((t, x) => t + x.c.aPlacer, 0);
     $("resaStats").innerHTML = `<div class="resa-kpis">
       <div><b>${actives}/${capTot}</b><small>places réservées${bebes ? ` + ${bebes} bébé${bebes > 1 ? "s" : ""}` : ""}</small></div>
+      <div><b style="color:${depassement ? "#a65b00" : disponibles ? "#17714f" : "#b4123c"}">${depassement ? "−" + depassement : disponibles}</b><small>${depassement ? "⚠️ places en trop" : disponibles ? "🎟️ places disponibles" : "🎟️ COMPLET"}</small></div>
       <div><b>${arrives}</b><small>arrivés · ${familles}/${attendus} familles</small></div>
       ${isResp() ? `<div><b>${euro(enc)}</b><small>encaissé (acomptes + jour J)</small></div>
       <div><b style="color:${reste ? "#b4123c" : "#17714f"}">${euro(reste)}</b><small>💰 reste à réclamer</small></div>` : ""}
@@ -8699,7 +8780,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       try { for (const r of res.changes) await resaStore.save(r); await resaReload(); renderResa(); toast(res.rate ? `⚠️ ${res.rate} place${res.rate > 1 ? "s" : ""} sans table (plus assez de place)` : "✨ Tout le monde est placé"); } catch (err) { toast("Erreur : " + (err.message || err)); } return; }
     const cp = e.target.closest("[data-tcap]");
     if (cp) { e.stopPropagation(); const i = +cp.dataset.tcap, caps = capsDe(resaEv); caps[i] = caps[i] >= 10 ? 8 : caps[i] + 1;
-      try { await store.patch(resaEv.id, { resa_tables: caps }); resaEv.resa_tables = caps; renderResa(); toast(`Table ${i + 1} : ${caps[i]} places`); } catch (err) { toast("Erreur : " + (err.message || err)); } return; }
+      try { await store.patch(resaEv.id, { resa_tables: caps }); resaEv.resa_tables = caps; renderResa(); if (view === "cal") renderCal(); else if (view === "list") renderList(); toast(`Table ${i + 1} : ${caps[i]} places`); } catch (err) { toast("Erreur : " + (err.message || err)); } return; }
     if (!isResp()) return;
     if (e.target.id === "tRetirer") { const r = resas.find(x => x.id === resaSel); if (r) { r.placement = []; await resaStore.save(r); resaSel = null; await resaReload(); renderResa(); } return; }
     const s = e.target.closest("[data-tsel]"); if (s) { e.stopPropagation(); resaSel = resaSel === s.dataset.tsel ? null : s.dataset.tsel; renderResa(); return; }
@@ -12397,7 +12478,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         .on("postgres_changes", { event: "*", schema: "public", table: "costume_attributions" }, async () => { await costAttributionReload(); if (!$("costBg").classList.contains("hidden")) renderCost(); if (!$("costAssignBg").classList.contains("hidden")) renderCostAssign(); render(); })
         .on("postgres_changes", { event: "*", schema: "public", table: "costume_demandes" }, async () => { await costDemandeReload(); if (!$("costAssignBg").classList.contains("hidden")) renderCostAssign(); render(); })
         .on("postgres_changes", { event: "*", schema: "public", table: "pointages" }, () => ptReload())
-        .on("postgres_changes", { event: "*", schema: "public", table: "reservations" }, async () => { if (resaEv) { await resaReload(); renderResa(); } })
+        .on("postgres_changes", { event: "*", schema: "public", table: "reservations" }, async () => {
+          if (!isResp()) return;
+          try { await chargerPlacesDispo(); } catch (err) { console.warn("Places disponibles",err); }
+          if (resaEv) { await resaReload(); renderResa(); }
+          if (!$("evtsBg").classList.contains("hidden")) openEvts();
+          if (view === "cal") renderCal(); else if (view === "list") renderList();
+        })
         .on("postgres_changes", { event: "*", schema: "public", table: "stock" }, async () => { await stockReload(); if (!$("stockBg").classList.contains("hidden")) renderStock(); render(); })
         .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (p) => chatReload(p.eventType === "INSERT" ? p.new : null)).subscribe();
     }
