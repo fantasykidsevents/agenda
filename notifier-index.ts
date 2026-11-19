@@ -1430,10 +1430,139 @@ function quiPrevenir(type, ev, ancien) {
   return out;
 }
 
+// ---------- 💌 Mailing informatif aux réservations d'un événement ----------
+const MAILING_FILTRES = ["tous", "confirmes", "acomptes_manquants"];
+const MAILING_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAILING_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+async function mailingDestinataires(evenementId: string, filtre: string) {
+  const { data: ev, error: erreurEv } = await sb.from("evenements")
+    .select("id,titre,date,type_evenement,resa_prix").eq("id", evenementId).maybeSingle();
+  if (erreurEv) throw erreurEv;
+  if (!ev || ev.type_evenement !== "evenement")
+    throw new Error("Cet événement n'a pas de réservations gérées dans l'agenda.");
+  // Une limite haute détecte un jeu de données trop grand au lieu d'omettre
+  // silencieusement des familles (pagination nécessaire au-delà de 499).
+  const { data: lignes, error: erreurResa } = await sb.from("reservations")
+    .select("id,nom,email,places,acompte_recu,confirmee_le,annulations")
+    .eq("evenement_id", evenementId).order("id").limit(500);
+  if (erreurResa) throw erreurResa;
+  if ((lignes || []).length >= 500) throw new Error("Plus de 499 réservations : contacte l'administrateur avant l'envoi.");
+  let sansEmail = 0, doublons = 0;
+  const parEmail = new Map<string, { id: string; nom: string; email: string }>();
+  for (const r of lignes || []) {
+    const places = Math.max(0, Number(r.places) || 0);
+    const annulees = Array.isArray(r.annulations) ? r.annulations.reduce((n, a) => n + Math.max(0, Number(a?.n) || 0), 0) : 0;
+    const actives = Math.max(0, places - annulees);
+    if (!actives || (filtre !== "tous" && !r.confirmee_le)) continue;
+    if (filtre === "acomptes_manquants") {
+      const prix = Math.max(0, Number(ev.resa_prix) || 0);
+      if (!prix || Number(r.acompte_recu || 0) >= actives * prix / 2 - 0.005) continue;
+    }
+    const email = String(r.email || "").trim().toLowerCase();
+    if (!MAILING_EMAIL.test(email) || email.length > 254) { sansEmail++; continue; }
+    if (parEmail.has(email)) { doublons++; continue; }
+    parEmail.set(email, { id: String(r.id), nom: String(r.nom || "Famille"), email });
+  }
+  const destinataires = [...parEmail.values()].sort((a, b) => a.email.localeCompare(b.email));
+  if (destinataires.length > 200) throw new Error("Plus de 200 destinataires : l'envoi doit être réparti en plusieurs lots.");
+  const empreinte = new TextEncoder().encode(JSON.stringify([evenementId, filtre, destinataires.map(r => [r.id, r.email])]));
+  const h = await crypto.subtle.digest("SHA-256", empreinte);
+  const cle = Array.from(new Uint8Array(h), b => b.toString(16).padStart(2, "0")).join("");
+  return { ev, destinataires, sansEmail, doublons, cle };
+}
+
+async function mailingRequete(req: Request, p: any) {
+  const bearer = (req.headers.get("Authorization") || "").match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!bearer) return json({ ok: false, erreur: "Connexion requise" }, 401);
+  const { data: identite, error: erreurAuth } = await sb.auth.getUser(bearer);
+  const email = identite?.user?.email;
+  if (erreurAuth || !email) return json({ ok: false, erreur: "Session invalide" }, 401);
+  const { data: responsables, error: erreurProfil } = await sb.from("equipe")
+    .select("id").ilike("email", email).eq("responsable", true).limit(1);
+  if (erreurProfil || !responsables?.length) return json({ ok: false, erreur: "Réservé aux responsables" }, 403);
+
+  const evenementId = String(p.evenementId || "").trim();
+  if (!MAILING_UUID.test(evenementId)) return json({ ok: false, erreur: "Événement invalide" }, 400);
+  if (p.type === "MAILING_EVENEMENT_HISTORY") {
+    const { data: ev, error: evErr } = await sb.from("evenements").select("id,type_evenement").eq("id", evenementId).maybeSingle();
+    if (evErr || !ev || ev.type_evenement !== "evenement") return json({ ok: false, erreur: "Événement introuvable" }, 404);
+    const { data, error } = await sb.from("mailings_evenements")
+      .select("id,sujet,filtre,statut,destinataires_total,envoyes,erreurs,cree_le")
+      .eq("evenement_id", evenementId).order("cree_le", { ascending: false }).limit(20);
+    if (error) throw new Error("Historique indisponible : exécute d'abord mailings-evenements.sql dans Supabase.");
+    return json({ ok: true, envois: data || [] });
+  }
+  const filtre = String(p.filtre || "");
+  if (!MAILING_FILTRES.includes(filtre)) return json({ ok: false, erreur: "Sélection de destinataires invalide" }, 400);
+  const { ev, destinataires, sansEmail, doublons, cle } = await mailingDestinataires(evenementId, filtre);
+  if (p.type === "MAILING_EVENEMENT_PREVIEW")
+    return json({ ok: true, total: destinataires.length, sansEmail, doublons, cle,
+      destinataires: destinataires.map(r => ({ nom: r.nom, email: r.email })) });
+
+  if (p.type !== "MAILING_EVENEMENT_SEND") return json({ ok: false, erreur: "Action inconnue" }, 400);
+  const campagneId = String(p.campagneId || "").trim();
+  const sujet = String(p.sujet || "").trim(), message = String(p.message || "").trim();
+  if (!MAILING_UUID.test(campagneId) || !/^[a-f0-9]{64}$/i.test(String(p.cle || "")) || p.cle !== cle)
+    return json({ ok: false, erreur: "La liste des destinataires a changé. Recommence l'aperçu avant d'envoyer." }, 409);
+  if (sujet.length < 3 || sujet.length > 140 || /[\r\n]/.test(sujet) || message.length < 10 || message.length > 4000)
+    return json({ ok: false, erreur: "Objet ou message invalide" }, 400);
+  if (!destinataires.length) return json({ ok: false, erreur: "Aucun destinataire" }, 400);
+  if (!getMailer()) return json({ ok: false, erreur: "Gmail professionnel non configuré : aucun mail envoyé." }, 503);
+
+  // Insert atomique avant tout SMTP : deux requêtes avec le même identifiant
+  // ne peuvent jamais lancer deux fois la campagne.
+  const { error: erreurCreation } = await sb.from("mailings_evenements").insert({
+    id: campagneId, evenement_id: evenementId, filtre, sujet, message,
+    destinataires_total: destinataires.length, statut: "en_cours", cree_par: email.toLowerCase(),
+  });
+  if (erreurCreation) {
+    if (erreurCreation.code !== "23505")
+      return json({ ok: false, erreur: "Journal d'envoi indisponible : aucun mail envoyé. Active mailings-evenements.sql." }, 503);
+    const { data: ancien } = await sb.from("mailings_evenements")
+      .select("evenement_id,destinataires_total,envoyes,erreurs,statut").eq("id", campagneId).maybeSingle();
+    if (!ancien || ancien.evenement_id !== evenementId) return json({ ok: false, erreur: "Identifiant déjà utilisé" }, 409);
+    return json({ ok: true, dejaEnvoye: true, total: ancien.destinataires_total,
+      envoyes: ancien.envoyes, erreurs: ancien.erreurs, statut: ancien.statut });
+  }
+
+  let envoyes = 0, erreurs = 0;
+  const echecs: Array<{ email: string; raison: string }> = [];
+  for (const r of destinataires) {
+    try {
+      const html = `<div style="font-family:Arial,sans-serif;max-width:540px;margin:auto;color:#251b3e">${BANDE}
+        <h2 style="margin:20px 0 8px">💜 ${esc(ev.titre || "Fantasy Kids Events")}</h2>
+        <p style="font-size:15px;line-height:1.7">${esc(message).replace(/\n/g, "<br>")}</p>
+        <p style="font-size:13px;color:#776b88">Ce message concerne votre réservation à l'événement ${esc(ev.titre || "Fantasy Kids Events")}.</p>
+        ${SIGNATURE}</div>`;
+      const texte = `${message}\n\nCe message concerne votre réservation à l'événement ${ev.titre || "Fantasy Kids Events"}.\nL'équipe Fantasy Kids Events`;
+      await envoyerEmail(r.email, sujet, html, texte, [], { canal: "client" });
+      envoyes++;
+    } catch (err) {
+      erreurs++;
+      echecs.push({ email: r.email, raison: String(err?.message || err).slice(0, 180) });
+    }
+    // Le progrès est conservé après chaque destinataire, même si la fonction
+    // est interrompue. Une campagne interrompue n'est jamais relancée d'office.
+    const { error: erreurJournal } = await sb.from("mailings_evenements").update({
+      envoyes, erreurs, details: echecs, modifie_le: new Date().toISOString(),
+    }).eq("id", campagneId);
+    if (erreurJournal) throw new Error("Envoi interrompu : progression non enregistrée. Vérifie le journal avant toute nouvelle tentative.");
+  }
+  const { error: erreurFin } = await sb.from("mailings_evenements").update({
+    statut: erreurs ? (envoyes ? "partiel" : "erreur") : "termine", termine_le: new Date().toISOString(),
+  }).eq("id", campagneId);
+  if (erreurFin) throw new Error("Mails traités mais clôture du journal impossible : vérifie l'historique.");
+  return json({ ok: true, total: destinataires.length, envoyes, erreurs });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
     const p = await req.json();
+
+    if (["MAILING_EVENEMENT_PREVIEW", "MAILING_EVENEMENT_SEND", "MAILING_EVENEMENT_HISTORY"].includes(p.type))
+      return await mailingRequete(req, p);
 
     // 🗳️ Push à toute l'équipe lors de la création d'un sondage.
     // La cloche est déjà enregistrée par la fonction SQL.
