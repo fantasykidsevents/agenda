@@ -1658,6 +1658,49 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .evt-places{display:inline-block;margin-top:7px;padding:7px 11px;border-radius:11px;font-weight:800;font-size:13px;background:#eaf9f0;color:#16683b}
   .evt-places.complet{background:#ffe9ee;color:#a32147}
   .evt-places.surplus{background:#fff0dc;color:#9a5300}
+  /* 🎛️ Régie : centre de commande lisible sur iPhone, sans données dupliquées. */
+  #viewRegie{color:#352347}
+  .regie-hero{padding:18px;border-radius:23px;background:linear-gradient(130deg,#352052,#693a9e 65%,#9a63c0);color:#fff;box-shadow:0 12px 28px #42236830}
+  .regie-hero small{color:#f2dfff;font-weight:700}
+  .regie-hero h2{font-size:26px;line-height:1.12;margin:6px 0;color:#fff}
+  .regie-hero p{font-size:13px;color:#f8efff;margin:6px 0 0;line-height:1.45}
+  .regie-pick{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:end;margin:14px 0 10px}
+  .regie-pick label{display:block;margin:0;font-weight:800;font-size:13px;color:var(--ink)}
+  #regieEvent{width:100%;min-width:0;margin:5px 0 0;background:#fff;color:#332343;border:1px solid #c8a9e8;border-radius:13px;padding:12px 9px;font-size:15px}
+  .regie-refresh{min-height:44px;background:#ede1fb;color:#57278a;border:1px solid #c9abe9;border-radius:13px;padding:0 12px;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer}
+  .regie-refresh:disabled{opacity:.6}
+  .regie-live{font-size:12px;line-height:1.45;color:#72558c;margin:9px 1px 13px}
+  .regie-warning{margin:10px 0;padding:11px 13px;border-radius:13px;background:#fff1dc;border:1px solid #f0d39d;color:#7b4b08;font-size:13px;font-weight:650;line-height:1.45}
+  .regie-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 13px}
+  .regie-kpi{background:#fff;border:1px solid #e5d9f2;border-radius:17px;padding:14px 11px;box-shadow:0 4px 14px #5833890b;min-width:0}
+  .regie-kpi b{display:block;color:#562d81;font-size:25px;line-height:1.2;overflow-wrap:anywhere}
+  .regie-kpi span{display:block;color:#665273;font-size:12px;font-weight:650;margin-top:5px}
+  .regie-kpi.wide{grid-column:1/-1;background:#f5ebff}
+  .regie-block{border:1px solid #e5d9f2;background:#fff;border-radius:19px;padding:15px;margin:12px 0}
+  .regie-block h3{font-size:18px;color:#48236d;margin:0 0 11px}
+  .regie-block p{font-size:13px;line-height:1.45;color:#665273}
+  .regie-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .regie-actions button{min-height:57px;border-radius:13px;border:1px solid #d9c1f2;background:#f7efff;color:#4e2877;padding:10px 8px;text-align:center;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;line-height:1.35}
+  .regie-actions button:active,.regie-refresh:active{transform:scale(.98)}
+  .regie-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #f0e8f5;font-size:13px}
+  .regie-row:last-child{border-bottom:0}
+  .regie-row b{color:#49236d;overflow-wrap:anywhere;text-align:right}
+  .regie-row small{display:block;color:#7c658e;margin-top:2px}
+  .regie-check{display:flex;gap:11px;align-items:center;padding:11px 0;border-bottom:1px solid #f0e8f5;color:#442b5c;font-size:14px;line-height:1.4}
+  .regie-check:last-child{border-bottom:0}
+  .regie-check input{width:23px;height:23px;flex-shrink:0;accent-color:#7d3cb2}
+  .regie-check.checked span{text-decoration:line-through;color:#7a6d82}
+  .regie-meter{height:9px;background:#eadff5;border-radius:30px;overflow:hidden;margin:9px 0}
+  .regie-meter>span{display:block;height:100%;background:linear-gradient(90deg,#7a37b3,#c17fe4);border-radius:inherit}
+  body.dark #viewRegie{color:#f7eafb}
+  body.dark .regie-block,body.dark .regie-kpi{background:#2d2042;border-color:#5b4579}
+  body.dark .regie-kpi.wide{background:#48305c}
+  body.dark .regie-block h3,body.dark .regie-row b,body.dark .regie-kpi b,body.dark .regie-pick label{color:#f4e5ff}
+  body.dark .regie-row,body.dark .regie-check{border-color:#594373;color:#f5e9fc}
+  body.dark .regie-kpi span,body.dark .regie-block p,body.dark .regie-live,body.dark .regie-row small{color:#dfcde9}
+  body.dark .regie-actions button,body.dark .regie-refresh{background:#4a3469;color:#fff;border-color:#8a69a9}
+  @media(max-width:680px){.tabs{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.tabs::-webkit-scrollbar{display:none}.tabs .tab{flex:0 0 auto;min-width:62px;padding-left:5px;padding-right:5px}}
+  @media(max-width:380px){.regie-hero h2{font-size:23px}.regie-grid{gap:7px}.regie-kpi{padding:11px 9px}.regie-kpi b{font-size:22px}.regie-actions{gap:7px}}
 </style>
 </head>
 <body>
@@ -1729,6 +1772,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </div>
     <div class="tabs">
       <button class="tab on" data-view="cal"><i>📅</i> Agenda</button>
+      <button class="tab hidden" data-view="regie" id="regieTab"><i>🎛️</i> Régie</button>
       <button class="tab hidden" data-view="list"><i>📋</i> Liste</button>
       <button class="tab" data-view="mine"><i>⭐</i> Mon espace</button>
       <button class="tab" data-view="pt"><i>⏱️</i> Pointage</button>
@@ -1793,6 +1837,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="stats" id="stats"></div>
       <label class="toggle-past"><input type="checkbox" id="showPast" style="width:18px;height:18px" /> Afficher les événements passés</label>
       <div id="list"></div>
+    </section>
+    <!-- 🎛️ Régie : suivi opérationnel des événements, réservé aux responsables. -->
+    <section id="viewRegie" class="hidden" aria-label="Mode Régie des événements">
+      <div class="regie-hero"><small>✦ FANTASY KIDS EVENTS ✦</small><h2>🎛️ Ma régie</h2><p>Ton événement en un coup d'œil : accueil, caisses, équipe et préparatifs.</p></div>
+      <div class="regie-pick"><label for="regieEvent">Événement à piloter<select id="regieEvent"></select></label><button type="button" class="regie-refresh" id="regieRefresh">↻ Actualiser</button></div>
+      <div class="regie-live" id="regieStatus" role="status" aria-live="polite"></div>
+      <div id="regieBody"></div>
     </section>
     <!-- Vue Mes animations -->
     <section id="viewMine" class="hidden">
@@ -4251,7 +4302,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   });
 
-  function render() { appliquerSaisonFantasy(); majWho(); majCloche(); modeNuit(); renderThemePreviewUI(); renderBirthdaySurprise(); renderNext(); renderMagicAdminWelcome(); renderModeAccueil(); renderCentreControle(); renderAnticipationsPanel(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
+  function render() { appliquerSaisonFantasy(); majWho(); majCloche(); modeNuit(); renderThemePreviewUI(); renderBirthdaySurprise(); renderNext(); renderMagicAdminWelcome(); renderModeAccueil(); renderCentreControle(); renderAnticipationsPanel(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : view === "regie" ? renderRegie() : renderMine(); if (chatLoaded) chatBadges(); }
   function renderMagicAdminWelcome() {
     const box = $("magicAdminWelcome"); if (!box) return;
     if (!isResp() || view !== "cal") { box.classList.add("hidden"); return; }
@@ -5526,18 +5577,21 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   // ================= Événements UI =================
   document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", (ev) => {
+    if (b.dataset.view === "regie" && !isResp()) return;
     if (ev.isTrusted) { const r = b.getBoundingClientRect(); magicBurst(r.left + r.width / 2, r.top + r.height / 2); }
     document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === b));
     document.querySelectorAll('input[name="vueAg"]').forEach(r => r.checked = r.value === b.dataset.view);
     view = b.dataset.view;
     $("viewCal").classList.toggle("hidden", view !== "cal");
+    $("viewRegie").classList.toggle("hidden", view !== "regie");
     $("viewList").classList.toggle("hidden", view !== "list");
     $("viewMine").classList.toggle("hidden", view !== "mine");
     $("viewStats").classList.toggle("hidden", view !== "stats");
     $("viewChat").classList.toggle("hidden", view !== "chat");
     $("viewPt").classList.toggle("hidden", view !== "pt");
-    document.querySelector(".filters").classList.toggle("hidden", view === "mine" || view === "stats" || view === "chat" || view === "pt");
+    document.querySelector(".filters").classList.toggle("hidden", view === "mine" || view === "stats" || view === "chat" || view === "pt" || view === "regie");
     render();
+    if (view === "regie") actualiserRegie();
     if (view === "chat" && (currentUser || DEMO)) { chargerChatMuets(); chargerChatFavoris(); }
   }));
   $("prevM").onclick = () => { if (--curM < 0) { curM = 11; curY--; } render(); };
@@ -7495,6 +7549,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function applyRole() {
     const r = isResp();
     if (!r) {
+      regieData = null;
+      $("regieBody").replaceChildren(); $("regieStatus").textContent = "";
       // L'historique complet ne reste jamais affiché après une déconnexion,
       // un changement de compte ou le passage en aperçu membre.
       hcChargement++; hcProfils = []; hcEvenements = new Map(); hcReservations = new Map();
@@ -7502,6 +7558,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       $("hcList").textContent = ""; $("hcDetail").textContent = "";
     }
     $("statsTab").classList.toggle("hidden", !r);
+    $("regieTab").classList.toggle("hidden", !r);
     $("addBtn").classList.toggle("hidden", !isGest());
     $("gCaissePresta").classList.toggle("hidden", !peutConfirmerRemise());
     // 📋 Liste : onglet pour 👑 et ⭐ ; cachée pour les animateurs
@@ -7513,7 +7570,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("memberPreviewSettings").classList.toggle("hidden", !estVraiResponsable() || DEMO);
     $("memberPreviewToggle").textContent = apercuMembre ? "👑 Revenir en mode responsable" : "🎭 Tester la vue membre";
     $("memberPreviewExit").classList.toggle("hidden", !apercuMembre);
-    if (!r && view === "stats") document.querySelector('.tab[data-view="cal"]').click();
+    if (!r && (view === "stats" || view === "regie")) document.querySelector('.tab[data-view="cal"]').click();
   }
   try { $("sonsChk").checked = sonsOn(); } catch (e) {}
   $("sonsChk").addEventListener("change", () => { try { localStorage.setItem("fk_sons", $("sonsChk").checked ? "1" : "0"); } catch (e) {} if ($("sonsChk").checked) son("notif"); });
@@ -11575,6 +11632,176 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (view === "stats") renderStats();
     if (!$("borneBg").classList.contains("hidden")) renderBorne();
   }
+  // 🎛️ Régie mobile : données existantes uniquement (réservations, ventes,
+  // équipe, pointages et check-list). Aucune nouvelle table Supabase nécessaire.
+  let regieId = null, regieData = null, regieEnCours = false;
+  const regieListe = () => {
+    const min = new Date(); min.setDate(min.getDate() - 45);
+    const L = events.filter(e => e.type_evenement === "evenement" && e.statut !== "annule" && !estHors(e) && e.date >= iso(min))
+      .sort((a, b) => (a.date + (a.heure_debut || "")).localeCompare(b.date + (b.heure_debut || "")));
+    return L.length ? L : events.filter(e => e.type_evenement === "evenement" && e.statut !== "annule" && !estHors(e))
+      .sort((a,b) => b.date.localeCompare(a.date)).slice(0, 10);
+  };
+  function regieSelection() {
+    const L = regieListe();
+    if (!L.length) { regieId = null; return null; }
+    if (!regieId) { try { regieId = localStorage.getItem("fk_regie_evenement"); } catch (e) {} }
+    if (!L.some(e => String(e.id) === String(regieId))) {
+      const auj = todayISO(); regieId = String((L.find(e => e.date === auj) || L.find(e => e.date > auj) || L[0]).id);
+    }
+    return L.find(e => String(e.id) === String(regieId));
+  }
+  function renderRegie() {
+    if (view !== "regie") return;
+    const zone = $("regieBody"), status = $("regieStatus"), selection = $("regieEvent");
+    if (!isResp()) { zone.textContent = "Accès réservé aux responsables."; status.textContent = ""; return; }
+    const ev = regieSelection(), L = regieListe();
+    const options = L.map(e => `<option value="${esc(e.id)}">${esc(fmtLong(e.date))} · ${esc(e.titre || "Événement")}</option>`).join("");
+    if (selection.innerHTML !== options) selection.innerHTML = options;
+    if (ev) selection.value = String(ev.id);
+    selection.disabled = !ev;
+    if (!ev) { zone.innerHTML = `<div class="regie-block"><h3>🎪 Aucun événement</h3><p>Ajoute d'abord un événement dans l'agenda pour piloter son déroulement ici.</p></div>`; status.textContent = ""; return; }
+    const D = regieData?.id === String(ev.id) ? regieData : null;
+    const frais = !navigator.onLine && !DEMO;
+    status.textContent = `${regieEnCours ? "⏳ Actualisation… · " : ""}${D?.at ? "Dernière lecture : " + D.at.toLocaleTimeString("fr-BE", {hour:"2-digit",minute:"2-digit",second:"2-digit"}) : "Première lecture en cours"} · ${frais ? "📶 Hors ligne : données locales" : "🔄 Actualisation toutes les 30 secondes"}`;
+    if (!D) { zone.innerHTML = `<div class="regie-block"><h3>✨ Préparation de la régie…</h3><p>Chargement des réservations, ventes et pointages de cet événement.</p></div>`; return; }
+    const R = D.resas, V = D.ventes, P = D.pointages, produitsRegie = D.produits;
+    const billetsExternes = estNM(ev);
+    const toutesResa = R?.map(r => ({r,c:calcResa(r,ev)})) || [];
+    const actives = toutesResa.filter(x => x.c.actives > 0);
+    const places = actives.reduce((s,x) => s + x.c.actives, 0);
+    const arrives = actives.reduce((s,x) => s + Math.max(0,+x.r.arrives || 0), 0);
+    const famillesArrivees = actives.filter(x => x.r.arrives != null).length;
+    const encaissesResa = toutesResa.reduce((s,x) => s + (+x.r.acompte_recu || 0) + (+x.r.paye_jour || 0), 0);
+    const restesResa = toutesResa.reduce((s,x) => s + x.c.reste, 0);
+    const Vok = V?.filter(v => !v.annulee) || [];
+    const totalVentes = Vok.reduce((s,v) => s + (+v.total || 0), 0);
+    const cash = Vok.filter(v => v.mode === "cash").reduce((s,v) => s + (+v.total || 0), 0);
+    const tombola = Vok.filter(estVenteTombola).reduce((s,v) => s + (+v.total || 0), 0);
+    const equipe = parseTeam(ev.animateurs).filter(p => p.nom);
+    const pointsEv = (P || []).filter(p => String(p.evenement_id) === String(ev.id));
+    const pointes = new Set(pointsEv.map(p => normName(p.prenom)));
+    const actifs = new Set(pointsEv.filter(p => !p.fin).map(p => normName(p.prenom)));
+    const listeProduits = produitsRegie ? produitsRegie.filter(p => p.actif !== false).map(p => {
+      const cfg = cfgCaisse(ev)[p.id] || {};
+      const stock = cfg.stock != null ? +cfg.stock : null;
+      const vendus = Vok.reduce((n,v) => n + (v.lignes || []).filter(l => String(l.id) === String(p.id)).reduce((m,l) => m + (+l.qte || 0),0),0);
+      return {...p, stock, vendus, reste:stock == null ? null : stock - vendus, masquee:!!cfg.off};
+    }).filter(p => !p.masquee && p.stock != null) : [];
+    const manquants = listeProduits.filter(p => p.reste <= seuilBas(p));
+    const items = itemsCK(), coches = ckDe(ev), faits = items.filter(t => coches[t]).length;
+    const dataOk = x => x !== null && x !== undefined;
+    const kpi = (val, libelle, large = false) => `<div class="regie-kpi ${large ? "wide" : ""}"><b>${val}</b><span>${libelle}</span></div>`;
+    const pasDeBilletterie = billetsExternes ? `<div class="regie-warning">🎟️ Les billets de La Nuit Magique sont suivis sur la billetterie externe : ils ne figurent pas dans ces chiffres.</div>` : "";
+    zone.innerHTML = `${frais ? `<div class="regie-warning">📶 Hors connexion : les ventes des autres appareils et les nouvelles arrivées peuvent ne pas encore apparaître.</div>` : ""}
+      ${D.erreurs.length ? `<div class="regie-warning">⚠️ Données non récupérées : ${D.erreurs.map(esc).join(", ")}. Les chiffres correspondants restent indisponibles.</div>` : ""}
+      ${pasDeBilletterie}
+      <div class="regie-grid">
+        ${kpi(!billetsExternes && dataOk(R) ? places : "—", "🎟️ Places réservées")}
+        ${kpi(!billetsExternes && dataOk(R) ? arrives : "—", "✅ Personnes arrivées")}
+        ${kpi(dataOk(V) ? euro(r2(totalVentes)) : "—", "🛒 Caisse de vente (hors réservations)", true)}
+        ${kpi(dataOk(V) ? euro(r2(cash)) : "—", "💶 Espèces caisse")}
+        ${kpi(dataOk(V) ? euro(r2(totalVentes - cash)) : "—", "💳 SumUp / autres")}
+        ${kpi(dataOk(V) ? Vok.length : "—", "🧾 Transactions enregistrées", true)}
+      </div>
+      <div class="regie-block"><h3>⚡ Accès rapide</h3><div class="regie-actions">
+        ${billetsExternes ? "" : `<button type="button" data-regie-action="accueil">🎟️ Accueil / arrivées</button><button type="button" data-regie-action="reservations">📋 Réservations</button>`}
+        <button type="button" data-regie-action="suivi">📊 Suivi des ventes</button>
+        <button type="button" data-regie-action="caisse">🛒 Ouvrir la caisse</button>
+        <button type="button" data-regie-action="fiche">📝 Fiche de l'événement</button>
+        <button type="button" data-regie-action="equipe">👥 Équipe</button>
+        <button type="button" data-regie-action="chat">💬 Chat</button>
+        <button type="button" data-regie-action="notif">🔔 Notifications</button>
+      </div></div>
+      <div class="regie-block"><h3>🕒 Déroulement et accueil</h3>
+        <div class="regie-row"><span>📅 Date</span><b>${esc(fmtLong(ev.date))}</b></div>
+        <div class="regie-row"><span>⏰ Horaires prévus</span><b>${ev.heure_debut ? esc(hhmm(ev.heure_debut)) : "Non définis"}${ev.heure_fin ? " → " + esc(hhmm(ev.heure_fin)) : ""}</b></div>
+        ${!billetsExternes ? `<div class="regie-row"><span>👨‍👩‍👧‍👦 Familles présentes</span><b>${dataOk(R) ? `${famillesArrivees}/${actives.length}` : "—"}</b></div>
+        <div class="regie-row"><span>💰 Acomptes + encaissements à l'accueil</span><b>${dataOk(R) ? euro(r2(encaissesResa)) : "—"}</b></div>
+        <div class="regie-row"><span>💳 Reste à encaisser sur les réservations</span><b>${dataOk(R) ? euro(r2(restesResa)) : "—"}</b></div>` : ""}
+        ${ev.materiel_manquant ? `<div class="regie-warning">🎒 Matériel signalé manquant : ${esc(String(ev.materiel_manquant).slice(0,240))}</div>` : ""}
+      </div>
+      <div class="regie-block"><h3>👥 L'équipe sur place</h3>
+        <p>${equipe.length} mission${equipe.length > 1 ? "s" : ""} prévue${equipe.length > 1 ? "s" : ""} · ${dataOk(P) ? `${pointes.size} membre${pointes.size > 1 ? "s" : ""} pointé${pointes.size > 1 ? "s" : ""} au moins une fois` : "Pointages indisponibles"}</p>
+        ${equipe.length ? equipe.map(p => `<div class="regie-row"><span><b style="color:inherit">${esc(p.nom)}</b><small>${esc(p.role || "Mission à confirmer")}</small></span><b>${!dataOk(P) ? "—" : actifs.has(normName(p.nom)) ? "🟢 En service" : pointes.has(normName(p.nom)) ? "✅ Pointé" : "○ Non pointé"}</b></div>`).join("") : `<p>Aucun membre affecté : complète l'équipe depuis la fiche.</p>`}
+      </div>
+      <div class="regie-block"><h3>📦 Alerte stock & ventes</h3>
+        <div class="regie-row"><span>🎟️ Tombola (incluse dans la caisse)</span><b>${dataOk(V) ? euro(r2(tombola)) : "—"}</b></div>
+        ${listeProduits.length && dataOk(V) ? (manquants.length ? manquants.map(p => `<div class="regie-row"><span>⚠️ ${esc(p.nom)}</span><b>${p.reste <= 0 ? "Épuisé" : p.reste + " restant(s)"}</b></div>`).join("") : `<p>✅ Aucun produit sous le seuil d'alerte.</p>`) : `<p>Les alertes apparaîtront quand les stocks seront renseignés dans la caisse.</p>`}
+      </div>
+      <div class="regie-block"><h3>✅ Check-list de préparation</h3>
+        <p>${faits}/${items.length} vérifications terminées. Les cases sont enregistrées dans la fiche événement.</p>
+        <div class="regie-meter" aria-hidden="true"><span style="width:${items.length ? Math.round(faits/items.length*100) : 0}%"></span></div>
+        ${items.map(t => `<label class="regie-check ${coches[t] ? "checked" : ""}"><input type="checkbox" data-regie-check="${esc(t)}" ${coches[t] ? "checked" : ""}/><span>${esc(t)}</span></label>`).join("") || `<p>Ajoute des vérifications dans les réglages de Fantasy.</p>`}
+      </div>`;
+  }
+  async function actualiserRegie(manuel = false) {
+    if (!isResp() || view !== "regie" || regieEnCours || (document.hidden && !manuel)) return;
+    const ev = regieSelection(); if (!ev) { renderRegie(); return; }
+    const id = String(ev.id);
+    regieEnCours = true; renderRegie();
+    try {
+      const [r,v,p,t] = await Promise.allSettled([
+        estNM(ev) ? Promise.resolve([]) : resaStore.list(ev.id),
+        caisseStore.ventes(ev.id), caisseStore.produits(),
+        DEMO ? Promise.resolve(ptStore._l().filter(x => String(x.evenement_id) === id))
+          : sb.from("pointages").select("prenom,evenement_id,debut,fin").eq("evenement_id",ev.id).limit(600).then(({data,error}) => { if(error) throw error; return data || []; }),
+      ]);
+      if (String(regieId) !== id || view !== "regie") return;
+      const precedent = regieData?.id === id ? regieData : null, erreurs = [];
+      const valeur = (rep, cle, nom) => { if (rep.status === "fulfilled") return rep.value; erreurs.push(nom); return precedent?.[cle] ?? null; };
+      regieData = {id, resas:valeur(r,"resas","réservations"), ventes:valeur(v,"ventes","caisse"),
+        produits:valeur(p,"produits","produits"), pointages:valeur(t,"pointages","pointages"),
+        at:new Date(), erreurs};
+      if (manuel) toast(erreurs.length ? "⚠️ Certaines données sont indisponibles" : "🎛️ Régie actualisée");
+    } catch (err) { console.warn("Régie",err); if(manuel) toast("Actualisation impossible : " + (err.message || err)); }
+    finally {
+      regieEnCours = false; renderRegie();
+      // L'utilisateur a pu choisir un autre événement pendant la requête.
+      if (view === "regie" && regieId && String(regieId) !== id) setTimeout(() => actualiserRegie(), 0);
+    }
+  }
+  $("regieEvent").addEventListener("change", e => {
+    regieId = e.target.value; regieData = null;
+    try { localStorage.setItem("fk_regie_evenement",regieId); } catch(err) {}
+    renderRegie(); actualiserRegie(true);
+  });
+  $("regieRefresh").addEventListener("click", () => actualiserRegie(true));
+  $("regieBody").addEventListener("change",async e => {
+    const cb = e.target.closest("[data-regie-check]"); if(!cb || !isResp()) return;
+    const ev = regieSelection(); if(!ev) return;
+    const avant = ev.checklist, c = {...ckDe(ev)};
+    if(cb.checked)c[cb.dataset.regieCheck]=true;else delete c[cb.dataset.regieCheck];
+    cb.disabled = true; ev.checklist = JSON.stringify(c);
+    try { await store.patchPrive(ev.id,{checklist:ev.checklist}); toast("✅ Check-list enregistrée"); }
+    catch(err) { ev.checklist = avant; toast("Impossible d'enregistrer : " + (err.message || err)); }
+    renderRegie();
+  });
+  $("regieBody").addEventListener("click",async e => {
+    const b = e.target.closest("[data-regie-action]"); if(!b || !isResp()) return;
+    const ev = regieSelection();if(!ev)return;
+    try {
+      switch(b.dataset.regieAction){
+        case "accueil": await openResa(ev.id,"accueil");break;
+        case "reservations": await openResa(ev.id,"liste");break;
+        case "suivi": {
+          await openCaisse(ev.id);
+          const tab = document.querySelector('input[name="caisseTab"][value="suivi"]');
+          if(tab){tab.checked=true;tab.dispatchEvent(new Event("change",{bubbles:true}));}
+          break;
+        }
+        case "caisse":await openCaisse(ev.id);break;
+        case "fiche":openForm(ev);break;
+        case "equipe":openTeamSheet("equipe");break;
+        case "chat":document.querySelector('.tab[data-view="chat"]')?.click();break;
+        case "notif":openCloche();break;
+      }
+    } catch(err) { toast("Impossible d'ouvrir cet outil : " + (err.message || err)); }
+  });
+  // Le réseau peut changer à tout moment pendant un événement : vérification
+  // régulière uniquement lorsque la Régie est visible sur l'appareil.
+  setInterval(() => { if (view === "regie" && isResp() && !document.hidden && navigator.onLine) actualiserRegie(); }, 30000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && view === "regie" && isResp()) actualiserRegie(); });
   // ⏱️ Le pointage ne sert que pour les ÉVÉNEMENTS (pas les animations d'anniversaire)
   const evDuJourPour = (nom) => events.find(e => e.date === todayISO() && e.statut !== "annule" && e.type_evenement === "evenement" && (!nom || anims(e).some(a => normName(a) === normName(nom))));
   function feteMagique(titre, sous) {
@@ -12493,6 +12720,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("app").classList.add("hidden"); $("loginScreen").classList.remove("hidden");
     clocheAutoPour = null;
     notificationsApp = [];
+    regieData = null; regieId = null;
+    $("regieBody").replaceChildren(); $("regieStatus").textContent = "";
     if (channel) { sb.removeChannel(channel); channel = null; }
   }
 
