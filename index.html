@@ -1929,6 +1929,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </section>
     <section id="viewChat" class="hidden">
       <input id="chatSearch" type="search" placeholder="🔎 Rechercher un message ou une conversation…" aria-label="Rechercher dans les chats" />
+      <div id="appOnlineChat" class="hint" style="margin:7px 0 4px" aria-live="polite">🟢 Connexions en cours…</div>
       <button type="button" id="chatCreate" class="btn primary hidden" style="width:100%;margin:9px 0">➕ Nouvelle conversation privée</button>
       <div class="chat-tools" style="margin-top:8px">
         <button type="button" data-chat-mode="actifs" class="on">💬 Actuels</button>
@@ -2401,6 +2402,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </div>
     </div>
     <div id="teamManage" class="hidden">
+    <div id="appOnlineTeam" class="mine-head" style="margin:0 0 12px" aria-live="polite">🟢 Connexions en cours…</div>
     <div id="teamsEditor" class="team-preset-box hidden" style="margin-bottom:15px">
       <div class="sec" style="margin-top:0">🎭 Mes teams</div>
       <p class="hint" style="margin-top:0">Retrouvez vos teams ici. Ouvrez « Modifier les membres » uniquement quand vous voulez changer leur composition.</p>
@@ -2766,6 +2768,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div class="grab"></div>
     <h2>👗 Costumes & perruques</h2>
     <p class="hint" style="margin-top:0">L'état de chaque costume et perruque. Sale ou abîmé : touchez <b>🧺 À laver</b>, <b>💇 À recoiffer</b> ou <b>🪡 À réparer</b> (et dites ce qui ne va pas). Quand c'est réglé : <b>✅ Prêt</b>.</p>
+    <details style="margin:12px 0" id="mascotteListeDetails">
+      <summary class="btn ghost" style="cursor:pointer;list-style:none">🧸 Fiches d'habillage des mascottes</summary>
+      <p class="hint">Étapes et photos pour enfiler chaque mascotte, accessibles à toute l'équipe.</p>
+      <div id="mascotteListe" class="g-list"></div>
+    </details>
     <div class="seg" id="costSources" style="margin-bottom:10px">
       <label><input type="radio" name="costSourceR" value="fantasy" checked /><span>🏰 Stock Fantasy</span></label>
       <label><input type="radio" name="costSourceR" value="perso" /><span>👤 Matériel personnel</span></label>
@@ -2789,6 +2796,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="actions" style="margin-top:8px"><button type="submit" class="btn ghost">➕ Ajouter</button></div>
     </form>
     <div class="actions"><button type="button" class="btn primary" id="costClose">Fermer</button></div>
+  </div>
+</div>
+
+<!-- ============ 🧸 HABILLAGE DES MASCOTTES ============ -->
+<div id="mascotteBg" class="sheet-bg hidden" style="z-index:65">
+  <div class="sheet" style="max-width:760px">
+    <div class="grab"></div>
+    <h2 id="mascotteTitre">🧸 Fiche d'habillage</h2>
+    <p class="hint" id="mascotteInfo">Les étapes pour enfiler le costume dans le bon ordre.</p>
+    <div id="mascotteContenu"></div>
+    <input id="mascottePhoto" type="file" accept="image/*" class="hidden" aria-label="Prendre ou choisir une photo depuis le téléphone" />
+    <div class="actions"><button type="button" class="btn ghost hidden" id="mascotteAnnuler">Annuler les modifications</button><button type="button" class="btn primary" id="mascotteFermer">Fermer</button></div>
   </div>
 </div>
 
@@ -6785,6 +6804,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           <button type="button" data-del="${esc(m.id)}">Retirer</button>` : (m.responsable ? "👑" : m.gestionnaire ? "⭐" : "")}
         </div>
       </div>`).join("") : (isResp() ? `<p class="hint">Personne pour l'instant. Ajoutez chaque animateur ci-dessous.</p>` : ""));
+    $("teamList").querySelectorAll(".member").forEach((row, i) => {
+      const email = String(visibles[i]?.email || "").toLowerCase();
+      if (email) row.querySelector(".info b")?.insertAdjacentHTML("beforeend", ` <span data-online-email="${esc(email)}"></span>`);
+    });
+    afficherEnLigneApp();
     const ps = $("monPersoSel"); if (ps) ps.onchange = async () => {
       const choice=ps.value;ps.disabled=true;
       try { await team.monPerso(choice); members = await team.list(); majWho(); renderTeam(); toast(choice ? `🦸 Bonjour ${moi.prenom} alias ${choice} !` : "Personnage retiré"); }
@@ -6995,6 +7019,53 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   };
   $("teamBtn").onclick = () => openTeamSheet("profil");
   const closeTeam = () => { teamDetailsExpanded=false; $("teamBg").classList.add("hidden"); document.body.style.overflow = ""; };
+  // 🟢 Présence globale : en temps réel, sans journal ni table Supabase.
+  let appOnlineChannel = null, appOnlineEmails = new Set();
+  function afficherEnLigneApp() {
+    const connectes = members.filter(m => appOnlineEmails.has(String(m.email || "").trim().toLowerCase()));
+    const noms = [...new Set(connectes.map(m => m.prenom).filter(Boolean))];
+    const compte = noms.length;
+    const etat = compte ? `🟢 ${compte} en ligne : ${noms.map(esc).join(", ")}` : "⚪ Aucun membre en ligne pour le moment";
+    $("appOnlineChat").innerHTML = etat;
+    $("appOnlineTeam").innerHTML = `<b>🟢 Membres en ligne (${compte})</b><br><span>${compte ? noms.map(esc).join(" · ") : "Aucun membre connecté pour le moment"}</span>`;
+    $("teamList").querySelectorAll("[data-online-email]").forEach(el => {
+      el.textContent = appOnlineEmails.has(el.dataset.onlineEmail) ? "🟢" : "";
+      el.title = el.textContent ? "Dans l'application maintenant" : "";
+    });
+  }
+  function actualiserEnLigneApp() {
+    appOnlineEmails = new Set();
+    if (DEMO) { if (myMember()?.email) appOnlineEmails.add(myMember().email.toLowerCase()); }
+    else if (appOnlineChannel) {
+      const etats = appOnlineChannel.presenceState();
+      Object.entries(etats).forEach(([email, sessions]) => {
+        if (sessions.some(s => s.visible)) appOnlineEmails.add(email.toLowerCase());
+      });
+    }
+    afficherEnLigneApp();
+  }
+  async function suivrePresenceApp() {
+    if (DEMO || !sb || !currentUser?.email || appOnlineChannel) { actualiserEnLigneApp(); return; }
+    const email = currentUser.email.toLowerCase();
+    const canal = sb.channel("fantasy-app-en-ligne", { config: { presence: { key: email } } });
+    appOnlineChannel = canal;
+    canal.on("presence", { event: "sync" }, actualiserEnLigneApp)
+      .on("presence", { event: "join" }, actualiserEnLigneApp)
+      .on("presence", { event: "leave" }, actualiserEnLigneApp)
+      .subscribe(async status => {
+        if (status === "SUBSCRIBED" && !document.hidden && navigator.onLine) {
+          try { await canal.track({ visible: true, nom: chatMe() }); } catch (e) { console.warn("Présence de l'app", e); }
+        }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") actualiserEnLigneApp();
+      });
+  }
+  document.addEventListener("visibilitychange", async () => {
+    const c = appOnlineChannel; if (!c) return;
+    try { if (document.hidden) await c.untrack(); else if (navigator.onLine) await c.track({ visible: true, nom: chatMe() }); }
+    catch (e) { console.warn("Mise à jour de présence", e); }
+  });
+  window.addEventListener("online", () => { if (appOnlineChannel && !document.hidden) appOnlineChannel.track({ visible: true, nom: chatMe() }).catch(() => {}); });
+  window.addEventListener("offline", () => { appOnlineEmails = new Set(); afficherEnLigneApp(); });
   let basculeApercuEnCours = false;
   async function basculerApercuMembre() {
     if (basculeApercuEnCours || !estVraiResponsable() || DEMO) return;
@@ -7979,6 +8050,158 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     },
   };
   async function costReload() { try { costumes = await costStore.list(); } catch (e) { console.error(e); costumes = []; } }
+  // 🧸 Fiches d'habillage des mascottes, partagées entre les membres.
+  const LS_MASCOTTES = "fk_habillage_mascottes_demo", MASCOTTE_BUCKET = "habillage-mascottes";
+  let mascotteNom = null, mascotteFiche = null, mascotteEdition = false, mascotteEtapes = [], mascotteBusy = false;
+  let mascotteImages = new Map(), mascottePreviews = [], mascottePhotoIndex = -1, nomsMascottesEnregistres = [];
+  function nomsMascottes() {
+    return [...new Set([...(PERSONNAGES_PROFIL["Mascottes"] || []), "Bourriquet",
+      ...nomsMascottesEnregistres, ...costumes.filter(c => /mascotte/i.test(c.nom || "")).map(c => c.personnage).filter(Boolean)])]
+      .sort((a, b) => a.localeCompare(b, "fr"));
+  }
+  function afficherListeMascottes() {
+    $("mascotteListe").innerHTML = nomsMascottes().map(n => `<button type="button" data-mascotte="${esc(n)}">🧸 ${esc(n)}</button>`).join("")
+      + (isResp() ? '<button type="button" id="mascotteAutre">➕ Autre mascotte…</button>' : "");
+  }
+  async function chargerNomsMascottes() {
+    try {
+      if (DEMO) nomsMascottesEnregistres = Object.keys(JSON.parse(localStorage.getItem(LS_MASCOTTES) || "{}"));
+      else {
+        const { data, error } = await sb.from("mascotte_habillage").select("personnage");
+        if (error) throw error;
+        nomsMascottesEnregistres = (data || []).map(x => x.personnage);
+      }
+      if (!$("costBg").classList.contains("hidden")) afficherListeMascottes();
+    } catch (e) { console.warn("Catalogue des mascottes non disponible", e); }
+  }
+  const mascotteStore = {
+    async lire(nom) {
+      if (DEMO) { const tout = JSON.parse(localStorage.getItem(LS_MASCOTTES) || "{}"); return tout[nom] || null; }
+      const { data, error } = await sb.from("mascotte_habillage").select("*").eq("personnage", nom).maybeSingle();
+      if (error) throw error; return data;
+    },
+    async sauver(nom, etapes) {
+      const fiche = { personnage: nom, etapes, maj_par: chatMe(), maj_le: new Date().toISOString() };
+      if (DEMO) { const tout = JSON.parse(localStorage.getItem(LS_MASCOTTES) || "{}"); tout[nom] = fiche; localStorage.setItem(LS_MASCOTTES, JSON.stringify(tout)); return fiche; }
+      const { data, error } = await sb.from("mascotte_habillage").upsert(fiche).select().single();
+      if (error) throw error; return data;
+    },
+    async photo(nom, blob) {
+      if (DEMO) return await new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ko; r.readAsDataURL(blob); });
+      const code = normName(nom).replace(/[^a-z0-9]+/g, "-").slice(0, 45);
+      const path = `${currentUser.id}/${code}-${crypto.randomUUID()}.jpg`;
+      const { error } = await sb.storage.from(MASCOTTE_BUCKET).upload(path, blob, { contentType: "image/jpeg" });
+      if (error) throw error; return path;
+    },
+    async url(path) {
+      if (DEMO || /^data:image\//.test(path)) return path;
+      const { data, error } = await sb.storage.from(MASCOTTE_BUCKET).createSignedUrl(path, 3600);
+      if (error) throw error; return data.signedUrl;
+    },
+    async supprimer(paths) {
+      if (!DEMO && paths.length) await sb.storage.from(MASCOTTE_BUCKET).remove(paths);
+    },
+  };
+  function libererPhotosMascottes() { mascottePreviews.forEach(url => URL.revokeObjectURL(url)); mascottePreviews = []; }
+  async function preparerPhotosMascotte() {
+    mascotteImages = new Map();
+    const chemins = [...new Set((mascotteFiche?.etapes || []).map(s => s.photo_path).filter(Boolean))];
+    await Promise.all(chemins.map(async path => {
+      try { mascotteImages.set(path, await mascotteStore.url(path)); }
+      catch (e) { console.warn("Photo d'habillage indisponible", e); }
+    }));
+  }
+  function renderMascotte() {
+    $("mascotteTitre").textContent = `🧸 Habillage : ${mascotteNom}`;
+    $("mascotteAnnuler").classList.toggle("hidden", !mascotteEdition);
+    const liste = mascotteEdition ? mascotteEtapes : (mascotteFiche?.etapes || []);
+    $("mascotteInfo").textContent = mascotteEdition ? "Numérote les gestes dans l'ordre. Une photo peut accompagner chaque étape." : "Suis les étapes dans l'ordre pour enfiler la mascotte.";
+    $("mascotteContenu").innerHTML = (mascotteEdition ? liste.map((s, i) => {
+      const image = s.preview || mascotteImages.get(s.photo_path);
+      return `<div class="mine-head" style="margin:10px 0;padding:12px"><b>Étape ${i + 1}</b>
+        <textarea data-mascotte-texte="${i}" rows="3" maxlength="1200" placeholder="Ex. Enfiler la combinaison puis fermer la fermeture éclair…" style="margin:8px 0">${esc(s.texte || "")}</textarea>
+        ${image ? `<img src="${esc(image)}" alt="Photo étape ${i + 1}" style="width:100%;max-width:320px;max-height:300px;object-fit:contain;border-radius:12px;margin:5px 0" />` : ""}
+        <div class="actions" style="justify-content:flex-start;gap:6px;flex-wrap:wrap">
+          <button type="button" class="btn ghost" data-mascotte-photo="${i}">📷 ${image ? "Changer la photo" : "Ajouter une photo"}</button>
+          ${image ? `<button type="button" class="btn ghost" data-mascotte-sans-photo="${i}">✕ Photo</button>` : ""}
+          <button type="button" class="btn ghost" data-mascotte-haut="${i}" ${i === 0 ? "disabled" : ""}>↑</button>
+          <button type="button" class="btn ghost" data-mascotte-bas="${i}" ${i === liste.length - 1 ? "disabled" : ""}>↓</button>
+          <button type="button" class="btn ghost" data-mascotte-suppr="${i}">🗑️</button>
+        </div></div>`;
+    }).join("") : liste.map((s, i) => `<div class="mine-head" style="margin:10px 0;padding:12px"><b>Étape ${i + 1}</b><p style="white-space:pre-wrap;margin:7px 0 10px">${esc(s.texte || "Étape")}</p>
+      ${s.photo_path ? (mascotteImages.has(s.photo_path) ? `<img src="${esc(mascotteImages.get(s.photo_path))}" alt="Étape ${i + 1} : ${esc(s.texte || "habillage")}" style="width:100%;max-height:410px;object-fit:contain;border-radius:12px" loading="lazy" />` : '<p class="hint">Photo indisponible pour le moment.</p>') : ""}</div>`).join(""))
+      || (mascotteEdition ? '<p class="hint">Ajoute ta première étape.</p>' : '<p class="hint">Aucune fiche pour cette mascotte pour le moment.</p>');
+    if (mascotteEdition) $("mascotteContenu").insertAdjacentHTML("beforeend", `<div class="actions" style="justify-content:flex-start"><button type="button" class="btn ghost" id="mascotteAjouter" ${liste.length >= 20 ? "disabled" : ""}>➕ Ajouter une étape</button><button type="button" class="btn primary" id="mascotteSauver" ${mascotteBusy ? "disabled" : ""}>${mascotteBusy ? "⏳ Enregistrement…" : "💾 Enregistrer la fiche"}</button></div>`);
+    else if (isResp()) $("mascotteContenu").insertAdjacentHTML("beforeend", '<div class="actions"><button type="button" class="btn primary" id="mascotteModifier">✏️ Modifier la fiche</button></div>');
+    if (mascotteFiche?.maj_le && !mascotteEdition) $("mascotteContenu").insertAdjacentHTML("beforeend", `<p class="hint">Dernière mise à jour par ${esc(mascotteFiche.maj_par || "l'équipe")} · ${esc(new Date(mascotteFiche.maj_le).toLocaleDateString("fr-BE"))}</p>`);
+  }
+  async function ouvrirMascotte(nom) {
+    if (!nom) return;
+    mascotteNom = nom; mascotteEdition = false; mascotteFiche = null; libererPhotosMascottes();
+    $("mascotteContenu").textContent = "Chargement de la fiche…";
+    $("mascotteTitre").textContent = `🧸 Habillage : ${nom}`;
+    $("mascotteBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
+    try { mascotteFiche = await mascotteStore.lire(nom); await preparerPhotosMascotte(); renderMascotte(); }
+    catch (e) { $("mascotteContenu").innerHTML = `<p class="hint">⚠️ Fiches indisponibles. Il faut d'abord installer le SQL des mascottes dans Supabase.<br>${esc(e.message || String(e))}</p>`; }
+  }
+  function fermerMascotte() { if (mascotteBusy) return; libererPhotosMascottes(); $("mascotteBg").classList.add("hidden"); document.body.style.overflow = $("costBg").classList.contains("hidden") ? "" : "hidden"; }
+  $("mascotteListe").addEventListener("click", e => { const b = e.target.closest("[data-mascotte]"); if (b) ouvrirMascotte(b.dataset.mascotte); else if (e.target.closest("#mascotteAutre") && isResp()) { const n = prompt("Nom de la nouvelle mascotte :"); if (n?.trim()) ouvrirMascotte(n.trim().slice(0, 80)); } });
+  $("mascotteFermer").onclick = fermerMascotte;
+  $("mascotteBg").addEventListener("click", e => { if (e.target.id === "mascotteBg") fermerMascotte(); });
+  $("mascotteAnnuler").onclick = () => { if (mascotteBusy) return; mascotteEdition = false; libererPhotosMascottes(); renderMascotte(); };
+  $("mascotteContenu").addEventListener("input", e => { if (e.target.matches("[data-mascotte-texte]")) mascotteEtapes[+e.target.dataset.mascotteTexte].texte = e.target.value; });
+  $("mascottePhoto").addEventListener("change", async e => {
+    const file = e.target.files?.[0], idx = mascottePhotoIndex; e.target.value = "";
+    if (!file || !mascotteEtapes[idx] || !mascotteEdition) return;
+    if (file.size > 18 * 1024 * 1024) { toast("Photo trop volumineuse (18 Mo maximum)"); return; }
+    try {
+      const blob = await reduirePhoto(file, 1400), preview = URL.createObjectURL(blob);
+      mascottePreviews.push(preview);
+      Object.assign(mascotteEtapes[idx], { blob, preview });
+      renderMascotte();
+    } catch (err) { toast("Photo illisible : " + (err.message || err)); }
+  });
+  $("mascotteContenu").addEventListener("click", async e => {
+    if (!mascotteEdition && e.target.closest("#mascotteModifier") && isResp()) {
+      mascotteEdition = true; mascotteEtapes = (mascotteFiche?.etapes || []).map(s => ({ ...s })); renderMascotte(); return;
+    }
+    if (!mascotteEdition || mascotteBusy) return;
+    if (e.target.closest("#mascotteAjouter")) { if (mascotteEtapes.length < 20) mascotteEtapes.push({ texte: "", photo_path: null }); renderMascotte(); return; }
+    const actions = [["mascotteSuppr", "suppr"], ["mascotteHaut", "haut"], ["mascotteBas", "bas"], ["mascotteSansPhoto", "sans-photo"], ["mascottePhoto", "photo"]];
+    for (const [cle, action] of actions) {
+      const b = e.target.closest(`[data-${cle.replace(/[A-Z]/g, x => "-" + x.toLowerCase())}]`);
+      if (!b) continue;
+      const i = +b.dataset[cle]; if (!mascotteEtapes[i]) return;
+      if (action === "photo") { mascottePhotoIndex = i; $("mascottePhoto").click(); return; }
+      if (action === "suppr") mascotteEtapes.splice(i, 1);
+      if (action === "haut" && i > 0) [mascotteEtapes[i - 1], mascotteEtapes[i]] = [mascotteEtapes[i], mascotteEtapes[i - 1]];
+      if (action === "bas" && i < mascotteEtapes.length - 1) [mascotteEtapes[i + 1], mascotteEtapes[i]] = [mascotteEtapes[i], mascotteEtapes[i + 1]];
+      if (action === "sans-photo") Object.assign(mascotteEtapes[i], { photo_path: null, blob: null, preview: null });
+      renderMascotte(); return;
+    }
+    if (!e.target.closest("#mascotteSauver") || !isResp()) return;
+    if (!mascotteEtapes.length || mascotteEtapes.some(s => !s.texte?.trim())) { toast("Ajoute au moins une étape et remplis tous les textes."); return; }
+    mascotteBusy = true; renderMascotte(); const ajoutes = [];
+    try {
+      const etapes = [];
+      for (const s of mascotteEtapes) {
+        let path = s.photo_path || null;
+        if (s.blob) { path = await mascotteStore.photo(mascotteNom, s.blob); ajoutes.push(path); }
+        etapes.push({ texte: s.texte.trim(), photo_path: path });
+      }
+      const anciens = (mascotteFiche?.etapes || []).map(s => s.photo_path).filter(Boolean);
+      mascotteFiche = await mascotteStore.sauver(mascotteNom, etapes);
+      if (!nomsMascottesEnregistres.includes(mascotteNom)) nomsMascottesEnregistres.push(mascotteNom);
+      if (!$("costBg").classList.contains("hidden")) afficherListeMascottes();
+      const utilises = new Set(etapes.map(s => s.photo_path));
+      await mascotteStore.supprimer(anciens.filter(p => !utilises.has(p)).filter(p => !/^data:/.test(p))).catch(e => console.warn("Anciennes photos", e));
+      mascotteEdition = false; libererPhotosMascottes(); await preparerPhotosMascotte();
+      toast("🧸 Fiche d'habillage enregistrée !");
+    } catch (err) {
+      await mascotteStore.supprimer(ajoutes.filter(p => !/^data:/.test(p))).catch(() => {});
+      toast("Enregistrement impossible : " + (err.message || err));
+    } finally { mascotteBusy = false; renderMascotte(); }
+  });
   const costAttributionStore = {
     async list() {
       if (DEMO) { try { return JSON.parse(localStorage.getItem(LS_COST_ASSIGN) || "[]"); } catch { return []; } }
@@ -8212,7 +8435,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }
     document.querySelectorAll('input[name="costSourceR"]').forEach(i => { i.checked = i.value === costSource; });
   }
-  function openCost() { costFiltre = ""; $("costSearch").value = ""; costSource = isResp() ? "fantasy" : "perso"; costType = ""; costEditId = null; renderCost(); $("costBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; }
+  function openCost() { costFiltre = ""; $("costSearch").value = ""; costSource = isResp() ? "fantasy" : "perso"; costType = ""; costEditId = null; renderCost(); afficherListeMascottes(); $("costBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; chargerNomsMascottes(); }
   function closeCost() { costEditId = null; $("costBg").classList.add("hidden"); document.body.style.overflow = ""; render(); }
   $("costClose").onclick = closeCost;
   $("costBg").addEventListener("click", async (e) => {
@@ -10114,6 +10337,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       $("guideBody").innerHTML = `<h2>📖 ${esc(f.nom)}</h2>
         <button type="button" class="g-fav-inline" data-guide-fav="${esc(f.nom)}">${mesFavoris.has(f.nom) ? "⭐ Dans mes personnages" : "☆ Ajouter à mes personnages"}</button>
         ${galerieMaquillages(f.nom)}
+        ${nomsMascottes().some(n => gNorm(n) === gNorm(f.nom)) ? `<button type="button" class="btn ghost" data-guide-mascotte="${esc(f.nom)}" style="width:100%;margin:10px 0">🧸 Voir la fiche d'habillage et les photos</button>` : ""}
         ${G_SECS.map(([k, t]) => guideEdit ? `<div class="g-sec ${k}"><h4>${t}</h4><textarea data-gk="${k}">${esc(f[k] || "")}</textarea></div>`
           : f[k] ? `<div class="g-sec ${k}"><h4>${t}</h4><p>${esc(f[k])}</p></div>` : "").join("")}
         ${f._maj ? `<p class="hint">Modifié par ${esc(f._maj.maj_par || "?")}${f._maj.maj_le ? " le " + new Date(f._maj.maj_le).toLocaleDateString("fr-BE") : ""}</p>` : ""}
@@ -10144,6 +10368,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("guideRetour").onclick = () => { guideSel = null; guideEdit = false; renderGuide(); };
   $("guideBg").addEventListener("click", async (e) => {
     if (e.target.id === "guideBg") { closeGuide(); return; }
+    const mascotte = e.target.closest("[data-guide-mascotte]"); if (mascotte) { closeGuide(); ouvrirMascotte(mascotte.dataset.guideMascotte); return; }
     const g = e.target.closest("[data-guide]"); if (g) { guideSel = g.dataset.guide; guideEdit = false; renderGuide(); $("guideBg").querySelector(".sheet").scrollTop = 0; return; }
     if (e.target.id === "gEdit") { guideEdit = true; renderGuide(); return; }
     if (e.target.id === "gCancel") { guideEdit = false; renderGuide(); return; }
@@ -12872,6 +13097,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("demoBar").classList.toggle("hidden", !DEMO);
     const lienOuverture = !!location.search; // ne pas interrompre un lien direct vers une fiche ou un chat
     await reload();
+    await suivrePresenceApp();
     // Un membre arrive d’abord sur son tableau de bord personnel ; les responsables gardent l’agenda.
     if (!isGest() && !lienOuverture && view === "cal") document.querySelector('.tab[data-view="mine"]')?.click();
     ouvrirClocheAuDemarrage(user);
@@ -12911,6 +13137,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     regieData = null; regieId = null;
     $("regieBody").replaceChildren(); $("regieStatus").textContent = "";
     if (channel) { sb.removeChannel(channel); channel = null; }
+    if (appOnlineChannel) { sb.removeChannel(appOnlineChannel); appOnlineChannel = null; }
+    appOnlineEmails = new Set(); afficherEnLigneApp();
   }
 
   // Connexion : code à 6 chiffres par e-mail (par défaut) ou mot de passe
