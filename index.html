@@ -1630,6 +1630,28 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   #mineHead.ny-active h2{margin:0 0 9px;font-size:21px;line-height:1.2;color:#5b328f}
   #mineHead.ny-active p{margin:0;max-width:95%;font-size:13px;line-height:1.5;color:#725c8e}
   @media(prefers-reduced-motion:reduce){#mineHead.ny-active::before,#mineHead.ny-active::after{animation:none!important}}
+  /* 👥 Historique clients : lecture seule, réservé à Jordan. */
+  .hc-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .hc-head h3{margin:0;color:#513077}
+  .hc-kpis{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+  .hc-kpis span{flex:1;min-width:105px;padding:10px 12px;border-radius:14px;background:#f3ecff;color:#614184;font-size:12px;font-weight:700}
+  .hc-kpis b{display:block;font-size:22px;color:#4b267d}
+  .hc-grid{display:grid;grid-template-columns:minmax(200px,0.9fr) minmax(0,1.5fr);gap:12px;align-items:start}
+  .hc-list{max-height:560px;overflow:auto;display:grid;gap:7px;align-content:start}
+  .hc-client{border:1px solid #e3d5f3;border-radius:14px;background:#fff;padding:12px;text-align:left;color:#382253;cursor:pointer;font:inherit}
+  .hc-client b,.hc-client small{display:block;overflow-wrap:anywhere}
+  .hc-client small{font-size:12px;color:#806998;margin-top:5px}
+  .hc-client.on{border-color:#9b6ee2;background:#f3eafd;box-shadow:0 0 0 2px #d8b9ff66}
+  .hc-detail{border:1px solid #e3d5f3;border-radius:16px;background:linear-gradient(145deg,#fff,#fbf8ff);padding:15px;min-width:0}
+  .hc-detail h4{font-size:21px;margin:0 0 7px;color:#422267;overflow-wrap:anywhere}
+  .hc-contact{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0 15px}
+  .hc-contact a,.hc-contact span{font-size:12px;color:#6b3b9c;background:#f0e8fc;padding:7px 9px;border-radius:10px;overflow-wrap:anywhere}
+  .hc-section{font-weight:800;font-size:14px;color:#67408b;margin:16px 0 7px}
+  .hc-entry{border-left:3px solid #cba7f5;padding:8px 10px;margin:7px 0;background:#f8f3ff;border-radius:0 12px 12px 0}
+  .hc-entry b{display:block;overflow-wrap:anywhere}
+  .hc-entry small{display:block;color:#725d87;line-height:1.5;margin:3px 0}
+  .hc-entry button{margin-top:7px}
+  @media(max-width:700px){.hc-grid{grid-template-columns:minmax(0,1fr)}.hc-list{max-height:240px}.hc-detail{padding:12px}}
 </style>
 </head>
 <body>
@@ -1861,9 +1883,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue Chiffres (responsables) -->
     <section id="viewStats" class="hidden">
-      <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
+      <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gClients"><span>👤</span>Clients</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
       <a href="factures.html" class="mine-head" style="display:block;text-decoration:none;color:#653090;font-weight:800;text-align:center">🧾 Factures & devis · Créer, consulter et imprimer</a>
       <button type="button" id="gDevis" class="mine-head" style="width:100%;border:1px solid #d5b4f8;text-align:center;color:#653090;font:800 17px Fredoka,sans-serif;cursor:pointer">📜 Devis clients · Réponses et relances</button>
+      <section id="gClientsPanel" class="panel hidden" aria-label="Historique des clients">
+        <div class="hc-head"><h3>👤 Historique des clients</h3><div class="after-btns"><button type="button" class="sig" id="gClientsRefresh">🔄 Actualiser</button><button type="button" class="sig" id="gClientsClose">✕ Fermer</button></div></div>
+        <p class="hint">Animations, devis et réservations d'événements retrouvés par email ou téléphone. Les homonymes ne sont jamais fusionnés automatiquement.</p>
+        <label for="hcSearch">🔎 Rechercher un client</label>
+        <input id="hcSearch" type="search" autocomplete="off" placeholder="Nom, email, téléphone ou personnage…" />
+        <div id="hcCounts" class="hc-kpis"></div>
+        <div class="hc-grid"><div id="hcList" class="hc-list" aria-label="Liste des clients"></div><div id="hcDetail" class="hc-detail" aria-live="polite">Choisis un client pour consulter son historique.</div></div>
+        <p id="hcError" class="err" role="status"></p>
+      </section>
       <section id="gDevisPanel" class="panel hidden" aria-label="Suivi des devis clients">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
           <h3 style="margin:0">📜 Suivi des devis clients</h3>
@@ -6912,15 +6943,197 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("rgClose").onclick = closeRg; $("rgBg").addEventListener("click", (e) => { if (e.target.id === "rgBg") closeRg(); });
   $("gReglages").onclick = openRg;
   const gestionGroupes={
-    prestas:["gEvts","gCaissePresta","gCaisseLibre"],
+    prestas:["gEvts","gCaissePresta","gCaisseLibre","gClients"],
     equipe:["gEquipe","gPaies","gHeures","gPolls","gInfos"],
     finances:["gFin","gPaies","gExport","gRecap","gCaissePresta","gCaisseLibre"],
-    orga:["costBtn","gStock","guideBtn","gIdeas","gReglages"]
+    orga:["costBtn","gStock","guideBtn","gIdeas","gReglages","gClients"]
   };
   $("gCategories").addEventListener("change",e=>{
     if(e.target.name!=="gCategorie")return;
     const ids=gestionGroupes[e.target.value];
     $("viewStats").querySelectorAll(".g-tiles .evt-tile").forEach(b=>b.classList.toggle("hidden",!!ids&&!ids.includes(b.id)));
+  });
+
+  // 👤 Historique clients : rapprochement en lecture seule depuis les fiches et
+  // les réservations EXISTANTES. Pas de fusion sur le nom (homonymes).
+  // Le téléphone permet aussi de rapprocher une réservation sans e-mail.
+  let hcProfils = [], hcSelection = -1, hcEvenements = new Map(), hcReservations = new Map();
+  let hcChargement = 0, hcDevisDisponibles = true;
+  const hcEmail = s => String(s || "").trim().toLowerCase();
+  const hcTel = s => {
+    let n = String(s || "").replace(/\D/g, "");
+    if (n.startsWith("0032")) n = "0" + n.slice(4);
+    else if (n.startsWith("32")) n = "0" + n.slice(2);
+    return n.length >= 9 ? n : "";
+  };
+  const hcDate = d => /^\d{4}-\d{2}-\d{2}$/.test(d || "")
+    ? parseISO(d).toLocaleDateString("fr-BE", {day:"numeric",month:"long",year:"numeric"}) : "Date non précisée";
+  async function hcPages(table, champs, ordre) {
+    const lignes = [], taille = 500, maximum = 10000;
+    for (let debut = 0; debut < maximum; debut += taille) {
+      const { data, error } = await sb.from(table).select(champs).order(ordre).range(debut, debut + taille - 1);
+      if (error) throw error;
+      lignes.push(...(data || []));
+      if ((data || []).length < taille) return lignes;
+    }
+    throw new Error(`Plus de ${maximum} entrées dans ${table} : le chargement est limité pour éviter un historique incomplet.`);
+  }
+  function hcRegrouper(fiches, reservations, devis) {
+    const D = new Map(devis.map(d => [String(d.evenement_id), d]));
+    const lignes = [];
+    fiches.forEach(e => {
+      if (!["animation", "contrat_pro"].includes(e.type_evenement || "animation") ||
+          !(e.parent || e.email || e.telephone) ||
+          (e.type_evenement !== "contrat_pro" && estEvenementInterne(e))) return;
+      lignes.push({ genre:"animation", id:String(e.id), date:e.date || "", nom:String(e.parent || "").trim(),
+        email:hcEmail(e.email), telephone:String(e.telephone || "").trim(), evenement:e, devis:D.get(String(e.id)) });
+    });
+    reservations.forEach(r => {
+      const evenement = hcEvenements.get(String(r.evenement_id));
+      if (!evenement || !(r.nom || r.email || r.telephone)) return;
+      lignes.push({ genre:"reservation", id:String(r.id), date:evenement.date || "", nom:String(r.nom || "").trim(),
+        email:hcEmail(r.email), telephone:String(r.telephone || "").trim(), evenement, reservation:r });
+    });
+    const racine = lignes.map((_, i) => i), parEmail = new Map(), parTel = new Map();
+    const trouver = i => { while (racine[i] !== i) { racine[i] = racine[racine[i]]; i = racine[i]; } return i; };
+    const joindre = (a, b) => { const x = trouver(a), y = trouver(b); if (x !== y) racine[y] = x; };
+    lignes.forEach((l, i) => {
+      const tel = hcTel(l.telephone);
+      if (l.email) { if (parEmail.has(l.email)) joindre(i, parEmail.get(l.email)); else parEmail.set(l.email, i); }
+      if (tel) { if (parTel.has(tel)) joindre(i, parTel.get(tel)); else parTel.set(tel, i); }
+    });
+    const groupes = new Map();
+    lignes.forEach((l, i) => {
+      const k = trouver(i);
+      if (!groupes.has(k)) groupes.set(k, []);
+      groupes.get(k).push(l);
+    });
+    return [...groupes.values()].map((items, i) => {
+      items.sort((a, b) => b.date.localeCompare(a.date));
+      const noms = [...new Set(items.map(l => l.nom).filter(Boolean))];
+      const emails = [...new Set(items.map(l => l.email).filter(Boolean))];
+      const telephones = [...new Set(items.map(l => l.telephone).filter(Boolean))];
+      const nom = noms[0] || emails[0] || telephones[0] || "Client sans coordonnées";
+      return { id:i, nom, noms, emails, telephones, items,
+        animations:items.filter(l => l.genre === "animation").length,
+        reservations:items.filter(l => l.genre === "reservation").length,
+        recherche:normName([nom, ...noms, ...emails, ...telephones, ...items.map(l =>
+          l.genre === "animation" ? (l.evenement.options?.personnages_client || "") + " " + (l.evenement.theme || "") : l.evenement.titre || "")].join(" ")) };
+    }).sort((a, b) => a.nom.localeCompare(b.nom, "fr", {sensitivity:"base"}));
+  }
+  function hcLigne(l) {
+    const ev = l.evenement;
+    const estResa = l.genre === "reservation", r = l.reservation;
+    const s = estResa ? calcResa(r, ev) : null;
+    const titre = estResa ? `🎟️ ${ev.titre || "Événement"}` :
+      `${ev.type_evenement === "contrat_pro" ? "💼" : "🎭"} ${ev.titre || ev.enfant || "Animation"}`;
+    const personnage = !estResa ? String(ev.options?.personnages_client ||
+      String(ev.notes || "").match(/Personnage souhaité\s*:\s*([^\n]+)/i)?.[1] || "").trim() : "";
+    const detail = estResa
+      ? `${s.actives ? `${s.actives} place(s) active(s)` : "Réservation annulée"}${r.confirmee_le ? " · Confirmée" : " · À confirmer"}${+r.acompte_recu ? " · Acompte reçu " + euro(+r.acompte_recu) : ""}${+r.paye_jour ? " · Solde reçu " + euro(+r.paye_jour) : ""}`
+      : `${ev.statut === "confirme" ? "✅ Confirmée" : ev.statut === "termine" ? "✅ Terminée" : ev.statut === "annule" ? "❌ Annulée" : "⏳ En attente"}${ev.theme ? " · " + ev.theme : ""}${personnage ? " · Personnage(s) : " + personnage : ""}`;
+    const devis = l.devis, devisEtat = devis?.accepte_le ? "✅ Devis accepté" :
+      devis?.reponse_client === "refuse" ? "❌ Devis refusé" :
+      devis?.reponse_client === "modification" ? "💬 Modification demandée" :
+      devis?.envoye_le ? "📨 Devis envoyé" : "";
+    const paiement = !estResa && (ev.acompte != null || ev.solde != null)
+      ? `${ev.acompte != null ? (ev.acompte_paye ? "✅ Acompte reçu " : "⏳ Acompte prévu ") + euro(ev.acompte) : ""}${ev.solde != null ? " · " + (ev.solde_encaisse && ev.solde_encaisse !== "non" ? "✅ Solde encaissé" : "💶 Solde à vérifier") : ""}` : "";
+    return `<div class="hc-entry"><b>${esc(titre)} · ${esc(hcDate(l.date))}</b>
+      <small>${esc(detail)}</small>${devisEtat ? `<small>${esc(devisEtat)}</small>` : ""}${paiement ? `<small>${esc(paiement)}</small>` : ""}
+      <button type="button" class="sig" data-hc-${estResa ? "resa" : "ev"}="${esc(l.id)}">Ouvrir ${estResa ? "la réservation" : "la fiche"} ↗</button></div>`;
+  }
+  function hcAfficherDetail() {
+    const zone = $("hcDetail"), client = hcProfils.find(p => p.id === hcSelection);
+    if (!client) { zone.innerHTML = "<p class='hint'>Sélectionne un client pour voir ses animations et réservations.</p>"; return; }
+    const contacts = [
+      ...client.emails.filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)).map(e => `<a href="mailto:${esc(e)}">✉️ ${esc(e)}</a>`),
+      ...client.telephones.map(t => `<a href="tel:${esc(t.replace(/[^\d+]/g, ""))}">📞 ${esc(t)}</a>`),
+    ];
+    const aVenir = client.items.filter(l => l.date >= todayISO());
+    const anciennes = client.items.filter(l => l.date < todayISO());
+    zone.innerHTML = `<h4>👤 ${esc(client.nom)}</h4>
+      ${client.noms.length > 1 ? `<p class="hint">Noms liés aux mêmes coordonnées : ${esc(client.noms.join(" · "))}</p>` : ""}
+      <div class="hc-contact">${contacts.join("") || "<span>Coordonnées à compléter</span>"}</div>
+      <div class="hc-kpis"><span><b>${client.animations}</b>animations / contrats</span><span><b>${client.reservations}</b>réservations événement</span><span><b>${aVenir.length}</b>à venir</span></div>
+      <p class="hint" style="margin:8px 0">⭐ Les avantages de fidélité seront ajoutés quand l'app clients sera reliée à ces dossiers. Aucun solde d'étoiles n'est inventé.</p>
+      ${aVenir.length ? `<div class="hc-section">📅 À venir (${aVenir.length})</div>${aVenir.map(hcLigne).join("")}` : ""}
+      ${anciennes.length ? `<div class="hc-section">🕰️ Historique (${anciennes.length})</div>${anciennes.map(hcLigne).join("")}` : ""}`;
+  }
+  function hcAfficherListe() {
+    const q = normName($("hcSearch").value.trim()), trouvés = hcProfils.filter(p => !q || p.recherche.includes(q));
+    const visibles = trouvés.slice(0, 100);
+    $("hcCounts").innerHTML = `<span><b>${hcProfils.length}</b>fiches client</span><span><b>${trouvés.length}</b>résultat(s)</span><span><b>${hcProfils.reduce((n,p)=>n+p.items.length,0)}</b>prestations et réservations</span>`;
+    $("hcList").innerHTML = visibles.map(p => `<button type="button" class="hc-client ${hcSelection === p.id ? "on" : ""}" data-hc-client="${p.id}">
+      <b>${esc(p.nom)}</b><small>${p.animations} animation(s) · ${p.reservations} réservation(s)</small>
+      <small>${esc(p.emails[0] || p.telephones[0] || "Sans coordonnées · dossier non rapproché")}</small></button>`).join("") || "<p class='hint'>Aucun client correspondant.</p>";
+    if (trouvés.length > visibles.length) $("hcList").insertAdjacentHTML("beforeend", `<p class="hint">${trouvés.length - visibles.length} autre(s) client(s) : affine ta recherche pour les afficher.</p>`);
+    if (!trouvés.some(p => p.id === hcSelection)) hcSelection = trouvés[0]?.id ?? -1;
+    hcAfficherDetail();
+  }
+  async function hcCharger() {
+    if (!isResp() || $("gClientsPanel").classList.contains("hidden")) return;
+    const generation = ++hcChargement;
+    $("hcError").textContent = "";
+    $("hcList").textContent = "✨ Recherche des fiches et réservations…";
+    $("hcDetail").textContent = "Chargement de l'historique…";
+    $("gClientsRefresh").disabled = true;
+    try {
+      let fiches, reservations, privees = [], devis = [];
+      if (DEMO) { fiches = events; reservations = resaStore._all(); }
+      else {
+        [fiches, reservations] = await Promise.all([
+          hcPages("evenements", "*", "date"), hcPages("reservations", "*", "created_at"),
+        ]);
+        // Le suivi des paiements est privé : consultation réservée au responsable.
+        try { privees = await hcPages("evenements_prive", "id,prix,acompte,acompte_paye,solde", "id"); }
+        catch (err) { console.warn("Historique clients : montants privés indisponibles",err); }
+        try { devis = await hcPages("devis", "evenement_id,envoye_le,accepte_le,reponse_client", "evenement_id"); hcDevisDisponibles = true; }
+        catch (err) { hcDevisDisponibles = false; console.warn("Historique clients : devis indisponibles",err); }
+      }
+      if (generation !== hcChargement || !isResp()) return;
+      const P = new Map(privees.map(p => [String(p.id), p]));
+      fiches = fiches.map(e => ({...e,...(P.get(String(e.id)) || {})}));
+      hcEvenements = new Map(fiches.map(e => [String(e.id), e]));
+      hcReservations = new Map(reservations.map(r => [String(r.id), r]));
+      hcProfils = hcRegrouper(fiches, reservations, devis);
+      hcSelection = -1;
+      hcAfficherListe();
+      if (!hcDevisDisponibles) $("hcError").textContent = "Historique des devis indisponible ; les animations et réservations restent consultables.";
+    } catch (err) {
+      if (generation !== hcChargement) return;
+      $("hcList").textContent = "Impossible de charger les clients.";
+      $("hcDetail").textContent = "Vérifie les droits de lecture Supabase et réessaie.";
+      $("hcError").textContent = "⚠️ " + (err.message || err);
+    } finally { if (generation === hcChargement) $("gClientsRefresh").disabled = false; }
+  }
+  $("gClients").onclick = () => {
+    if (!isResp()) return;
+    $("gClientsPanel").classList.remove("hidden");
+    $("gClientsPanel").scrollIntoView({behavior:"smooth",block:"start"});
+    hcCharger();
+  };
+  $("gClientsClose").onclick = () => { hcChargement++; $("gClientsPanel").classList.add("hidden"); };
+  $("gClientsRefresh").onclick = hcCharger;
+  $("hcSearch").addEventListener("input", hcAfficherListe);
+  $("gClientsPanel").addEventListener("click", async e => {
+    if (!isResp()) return;
+    const client = e.target.closest("[data-hc-client]");
+    if (client) { hcSelection = +client.dataset.hcClient; hcAfficherListe(); return; }
+    const animation = e.target.closest("[data-hc-ev]");
+    const reservation = e.target.closest("[data-hc-resa]");
+    if (!animation && !reservation) return;
+    const fiche = animation ? hcEvenements.get(animation.dataset.hcEv) : hcEvenements.get(String(hcReservations.get(reservation.dataset.hcResa)?.evenement_id));
+    if (!fiche) { toast("Cette fiche n'est plus disponible."); return; }
+    // L'agenda principal peut limiter ses anciennes lignes : rendre la fiche
+    // consultable sans modifier ni dupliquer la base de données.
+    if (!events.some(x => String(x.id) === String(fiche.id))) events.push(fiche);
+    if (animation) openForm(events.find(x => String(x.id) === String(fiche.id)));
+    else {
+      await openResa(fiche.id, "liste");
+      const ligne = resas.find(r => String(r.id) === reservation.dataset.hcResa);
+      if (ligne) openResaForm(ligne);
+      else toast("Cette réservation n'est plus disponible.");
+    }
   });
 
   // 📜 Suivi des devis clients : seul le responsable voit les réponses et les relances.
@@ -7264,6 +7477,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // ================= Rôle (responsable / animateur) =================
   function applyRole() {
     const r = isResp();
+    if (!r) {
+      // L'historique complet ne reste jamais affiché après une déconnexion,
+      // un changement de compte ou le passage en aperçu membre.
+      hcChargement++; hcProfils = []; hcEvenements = new Map(); hcReservations = new Map();
+      $("gClientsPanel").classList.add("hidden");
+      $("hcList").textContent = ""; $("hcDetail").textContent = "";
+    }
     $("statsTab").classList.toggle("hidden", !r);
     $("addBtn").classList.toggle("hidden", !isGest());
     $("gCaissePresta").classList.toggle("hidden", !peutConfirmerRemise());
