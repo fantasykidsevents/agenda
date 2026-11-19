@@ -1700,6 +1700,36 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   body.dark .regie-kpi span,body.dark .regie-block p,body.dark .regie-live,body.dark .regie-row small{color:#dfcde9}
   body.dark .regie-actions button,body.dark .regie-refresh{background:#4a3469;color:#fff;border-color:#8a69a9}
   @media(max-width:380px){.regie-hero h2{font-size:23px}.regie-grid{gap:7px}.regie-kpi{padding:11px 9px}.regie-kpi b{font-size:22px}.regie-actions{gap:7px}}
+  /* ✨ Le grimoire : un espace optionnel, sans changer l'agenda. */
+  .grimoire-cover{background:linear-gradient(140deg,#402171,#8740ae 60%,#e39adf);color:#fff;border-radius:20px;padding:23px 16px;text-align:center;box-shadow:0 10px 25px #4d246130;margin:9px 0 16px}
+  .grimoire-cover h3{font-family:Georgia,serif;color:#fff;margin:8px 0;font-size:25px}
+  .grimoire-cover p{color:#fff9;margin:5px 0;font-size:13px}
+  .grimoire-page{background:linear-gradient(150deg,#fffaf0,#fff8fa);border:1px solid #ead7bf;border-radius:17px;padding:16px;margin:12px 0;animation:grimoireOuvre .35s ease both}
+  .grimoire-page h3{font-family:Georgia,serif;color:#633d70;margin:0 0 12px}
+  .grimoire-souvenir{border-left:3px solid #dab2de;padding:9px 0 9px 12px;margin:10px 0;color:#5f4a69}
+  .grimoire-souvenir b{display:block;margin-bottom:4px;color:#4f2d6c}
+  .grimoire-souvenir p{white-space:pre-wrap;line-height:1.5;margin:5px 0}
+  .grimoire-souvenir img{display:block;max-width:100%;max-height:320px;border-radius:12px;object-fit:contain;margin:7px 0}
+  .grimoire-nav{display:flex;align-items:center;justify-content:space-between;gap:9px;margin:12px 0}
+  .grimoire-nav button{border:0;background:#eee0f5;color:#5c277d;border-radius:12px;padding:11px;font-weight:800;cursor:pointer}
+  @keyframes grimoireOuvre{from{opacity:0;transform:rotateY(7deg) translateY(8px)}to{opacity:1;transform:none}}
+  /* Une petite étincelle pour Lumi, discrète et désactivable. */
+  .lumi-buddy{position:fixed;left:12px;bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:35;width:53px;height:53px;border-radius:50%;border:2px solid #ffffffca;background:radial-gradient(circle at 30% 25%,#fff7b0,#f9b9fa 37%,#9337de 85%);box-shadow:0 0 21px #c27bf9a8,0 4px 12px #5b257e55;color:#fff;font-size:27px;cursor:pointer;animation:lumiFlotte 3s ease-in-out infinite}
+  .lumi-buddy::after{content:'✦';position:absolute;right:-7px;top:-8px;color:#ffd96c;font-size:19px;animation:lumiFlotte 2s ease-in-out infinite reverse}
+  .lumi-bulle{position:fixed;left:14px;bottom:calc(149px + env(safe-area-inset-bottom,0px));z-index:36;max-width:min(280px,75vw);padding:13px;border-radius:16px 16px 16px 5px;background:#fff;color:#5d307d;box-shadow:0 8px 28px #49216640;font-size:13px;font-weight:650;line-height:1.45}
+  .lumi-bulle button{border:0;background:#f4e6ff;border-radius:8px;padding:5px 8px;color:#692d9f;margin-top:7px;font-weight:700}
+  @keyframes lumiFlotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .sort-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:7px 12px}
+  .sort-menu button{border:1px solid #e9ccf9;border-radius:12px;padding:10px 5px;background:#fcf5ff;color:#703490;font-weight:800;font-size:12px}
+  .sort-message{border:1px solid #e8b4f5;background:linear-gradient(120deg,#fff7fe,#f5e8ff);padding:11px;border-radius:12px;cursor:pointer;width:100%;text-align:center;color:#753397;font-weight:800}
+  .sort-reveal-bg{position:fixed;inset:0;background:#241038c9;z-index:220;display:grid;place-items:center;padding:18px}
+  .sort-reveal{position:relative;width:min(420px,95vw);text-align:center;border-radius:24px;padding:32px 18px;background:radial-gradient(circle at top,#ffe6fd,#fff9fc 65%);color:#51247b;box-shadow:0 0 75px #cc75f9;animation:grimoireOuvre .35s ease both}
+  .sort-reveal .em{font-size:72px;display:block;animation:lumiFlotte 2s infinite}
+  .sort-reveal h2{margin:10px 0;font-family:Georgia,serif}
+  .sort-reveal p{white-space:pre-wrap;font-size:16px;line-height:1.5}
+  .sort-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:24px}
+  .sort-stars i{position:absolute;color:#e8b23c;animation:lumiFlotte 1.2s ease-in-out infinite alternate;font-size:25px}
+  @media(prefers-reduced-motion:reduce){.lumi-buddy,.lumi-buddy::after,.sort-reveal .em,.sort-stars i,.grimoire-page{animation:none!important}}
 </style>
 </head>
 <body>
@@ -1863,6 +1893,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <button type="button" class="evt-tile" id="stockBtn"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="myPollsBtn"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="myInfosBtn"><span>📣</span>Infos équipe</button>
         <button type="button" class="evt-tile" id="guideBtn2"><span>📖</span>Guide</button>
         <button type="button" class="evt-tile" id="myFavBtn"><span>⭐</span>Mes personnages</button>
+        <button type="button" class="evt-tile" id="myGrimoireBtn"><span>📖✨</span>Mon grimoire</button>
         <button type="button" class="evt-tile" id="myIdeasBtn"><span>💡</span>Boîte à idées</button>
         <button type="button" class="evt-tile hidden" id="recapBtnEq"><span>✨</span>Fantasy en chiffres</button>
       </div>
@@ -1942,7 +1973,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue Chiffres (responsables) -->
     <section id="viewStats" class="hidden">
-      <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gClients"><span>👤</span>Clients</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
+      <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gClients"><span>👤</span>Clients</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gGrimoire"><span>📖✨</span>Grimoires</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
       <button type="button" id="gRegie" class="mine-head" style="width:100%;border:1px solid #d5b4f8;text-align:center;color:#653090;font:800 17px Fredoka,sans-serif;cursor:pointer">🎛️ Régie des événements</button>
       <a href="factures.html" class="mine-head" style="display:block;text-decoration:none;color:#653090;font-weight:800;text-align:center">🧾 Factures & devis · Créer, consulter et imprimer</a>
       <button type="button" id="gDevis" class="mine-head" style="width:100%;border:1px solid #d5b4f8;text-align:center;color:#653090;font:800 17px Fredoka,sans-serif;cursor:pointer">📜 Devis clients · Réponses et relances</button>
@@ -2346,6 +2377,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <h2 id="teamSheetTitle">👤 Mon profil</h2>
     <div id="profileSelf"></div>
     <div id="profilePrefs">
+    <div class="sec">✨ Lumi, la petite étoile Fantasy</div>
+    <p class="hint" style="margin-top:0">Lumi te glisse des petits mots magiques. Tu peux la masquer ou la retrouver à tout moment.</p>
+    <button type="button" class="btn ghost" id="lumiToggle" style="margin-bottom:12px">✨ Masquer Lumi</button>
     <div id="memberPreviewSettings" class="m-preview-settings hidden">
       <div class="sec">🎭 Aperçu de l’application</div>
       <p class="hint">Teste ce que voit un membre de l’équipe avec ton propre profil. Tes droits de responsable restent inchangés.</p>
@@ -2703,6 +2737,30 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 </div>
 
 <!-- ============ ⭐ MES PERSONNAGES FAVORIS ============ -->
+<!-- ============ 📖✨ GRIMOIRE DES SOUVENIRS ============ -->
+<div id="grimoireBg" class="sheet-bg hidden" style="z-index:69">
+  <div class="sheet" style="max-width:760px">
+    <div class="grab"></div>
+    <div class="grimoire-cover"><span style="font-size:35px">📖✨</span><h3 id="grimoireTitre">Mon grimoire enchanté</h3><p>Une aventure, des personnages, mille souvenirs…</p></div>
+    <div id="grimoireChoix" class="hidden"><label for="grimoireMembre">Choisir le membre</label><select id="grimoireMembre"></select></div>
+    <div id="grimoireMessage" class="hint" aria-live="polite"></div>
+    <div id="grimoireLivre"></div>
+    <div id="grimoireModeration" class="hidden"></div>
+    <details id="grimoireAjouter" style="margin:17px 0">
+      <summary class="btn ghost" style="cursor:pointer;list-style:none">✨ Ajouter un souvenir ancien</summary>
+      <p class="hint">Pour les souvenirs d'avant l'agenda, une année suffit : pas besoin de retrouver la date exacte.</p>
+      <form id="grimoireForm">
+        <label for="grimoireAnnee">Année du souvenir</label><input id="grimoireAnnee" type="number" min="1990" max="2100" required />
+        <label for="grimoireTitreInput">Titre</label><input id="grimoireTitreInput" maxlength="120" required placeholder="Ex. Ma première animation" />
+        <label for="grimoireTexte">Mon souvenir</label><textarea id="grimoireTexte" maxlength="1500" rows="4" placeholder="Raconte ce moment magique…"></textarea>
+        <label for="grimoirePhoto">Photo (facultative)</label><input id="grimoirePhoto" type="file" accept="image/*" />
+        <button type="submit" class="btn primary" id="grimoireEnvoyer" style="width:100%;margin-top:12px">💜 Proposer ce souvenir</button>
+      </form>
+    </details>
+    <div class="actions"><button type="button" class="btn primary" id="grimoireFermer">Fermer le grimoire</button></div>
+  </div>
+</div>
+
 <div id="favorisBg" class="sheet-bg hidden">
   <div class="sheet" style="max-width:760px">
     <div class="grab"></div>
@@ -2890,15 +2948,26 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div class="chat-typing hidden" id="chatTyping"><span class="dots"><i></i><i></i><i></i></span><span id="chatTypingTxt"></span></div>
     <div id="chatReply" class="chat-reply hidden"></div>
     <div id="chatVoicePreview" class="chat-voice-prev hidden"></div>
+    <div id="sortMenu" class="sort-menu hidden" aria-label="Messages enchantés"></div>
     <form class="chat-in" id="chatForm">
       <button type="button" class="ph" id="chatPhoto" aria-label="Envoyer une photo">📷</button>
       <button type="button" class="ph" id="chatVoice" aria-label="Enregistrer un message vocal" title="Message vocal">🎤</button>
+      <button type="button" class="ph" id="sortBtn" aria-label="Messages enchantés" title="Messages enchantés">🪄</button>
       <input type="file" id="chatFile" accept="image/*" class="hidden" />
       <textarea id="chatTxt" rows="1" placeholder="Écrire un message…" maxlength="2000"></textarea>
       <button type="submit" class="go" id="chatSend" aria-label="Envoyer" disabled>➤</button>
     </form>
   </div>
 </div>
+
+<div id="sortRevealBg" class="sort-reveal-bg hidden" role="dialog" aria-label="Message enchanté">
+  <div class="sort-reveal"><div class="sort-stars" aria-hidden="true"><i style="top:8%;left:12%">✦</i><i style="top:22%;right:10%;animation-delay:.4s">✧</i><i style="bottom:17%;left:15%;animation-delay:.8s">✦</i><i style="bottom:12%;right:18%">✧</i></div>
+    <span class="em" id="sortRevealEmoji">💜</span><h2 id="sortRevealTitle"></h2><p id="sortRevealText"></p>
+    <button type="button" class="btn primary" id="sortRevealClose" style="width:100%;margin-top:12px">✨ Refermer la magie</button>
+  </div>
+</div>
+<button type="button" id="lumiBuddy" class="lumi-buddy hidden" aria-label="Parler à Lumi" title="Lumi ✨">✧</button>
+<div id="lumiBulle" class="lumi-bulle hidden" role="status" aria-live="polite"></div>
 
 <div class="toast" id="toast"></div>
 
@@ -7109,7 +7178,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("gReglages").onclick = openRg;
   const gestionGroupes={
     prestas:["gEvts","gCaissePresta","gCaisseLibre","gClients"],
-    equipe:["gEquipe","gPaies","gHeures","gPolls","gInfos"],
+    equipe:["gEquipe","gGrimoire","gPaies","gHeures","gPolls","gInfos"],
     finances:["gFin","gPaies","gExport","gRecap","gCaissePresta","gCaisseLibre"],
     orga:["costBtn","gStock","guideBtn","gIdeas","gReglages","gClients"]
   };
@@ -10362,6 +10431,183 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const b = $("recapBtnEq"); if (b) { b.classList.toggle("hidden", !a2); if (a2) { b.dataset.recap = a2; b.innerHTML = `<span>✨</span>Fantasy en chiffres ${a2}`; } }
   }
 
+  // ================= 📖✨ Grimoire des souvenirs de l'équipe =================
+  const LS_GRIMOIRE = "fk_grimoire_demo", BUCKET_GRIMOIRE = "souvenirs-fantasy";
+  let grimoireRows = [], grimoireCible = "", grimoirePage = 0, grimoireDisponible = DEMO, grimoireUrls = new Map(), grimoireGestion = false;
+  const grimoireMe = () => String(currentUser?.email || myMember()?.email || (DEMO && members.find(m => normName(m.prenom) === normName(demoMe))?.email) || "").toLowerCase();
+  const grimoireNom = email => members.find(m => String(m.email || "").toLowerCase() === String(email).toLowerCase())?.prenom || String(email).split("@")[0];
+  const grimoireStore = {
+    async list() {
+      if (DEMO) { try { return JSON.parse(localStorage.getItem(LS_GRIMOIRE) || "[]"); } catch (_) { return []; } }
+      const { data, error } = await sb.from("souvenirs_fantasy").select("*").order("created_at", { ascending: false }).limit(1000);
+      if (error) throw error; return data || [];
+    },
+    async save(row) {
+      if (DEMO) { const a = await this.list(); a.unshift({ id: chatId(), ...row }); localStorage.setItem(LS_GRIMOIRE, JSON.stringify(a)); return; }
+      const { error } = await sb.from("souvenirs_fantasy").insert(row); if (error) throw error;
+    },
+    async valider(id, statut) {
+      if (DEMO) { const a = await this.list(), r = a.find(x => String(x.id) === String(id)); if (r) { r.statut = statut; r.valide_le = new Date().toISOString(); } localStorage.setItem(LS_GRIMOIRE, JSON.stringify(a)); return; }
+      const { data, error } = await sb.from("souvenirs_fantasy").update({ statut, valide_par_email: grimoireMe(), valide_le: new Date().toISOString() }).eq("id", id).select("id");
+      if (error) throw error; if (!data?.length) throw new Error("Validation non autorisée.");
+    },
+    async upload(file) {
+      const blob = await reduirePhoto(file, 1400);
+      if (DEMO) return await new Promise((ok, ko) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = ko; fr.readAsDataURL(blob); });
+      const path = `${currentUser.id}/${crypto.randomUUID ? crypto.randomUUID() : chatId()}.jpg`;
+      const { error } = await sb.storage.from(BUCKET_GRIMOIRE).upload(path, blob, { contentType: "image/jpeg" });
+      if (error) throw error; return path;
+    },
+    async url(path) {
+      if (DEMO || /^data:image\//.test(path)) return path;
+      const { data, error } = await sb.storage.from(BUCKET_GRIMOIRE).createSignedUrl(path, 3600);
+      if (error) throw error; return data.signedUrl;
+    },
+    async abandonner(path) { if (!DEMO && path) await sb.storage.from(BUCKET_GRIMOIRE).remove([path]); },
+  };
+  async function grimoireRecharger() {
+    try {
+      grimoireRows = await grimoireStore.list(); grimoireDisponible = true; grimoireUrls = new Map();
+      const chemins = [...new Set(grimoireRows.map(s => s.photo_path).filter(Boolean))];
+      await Promise.all(chemins.map(async p => { try { grimoireUrls.set(p, await grimoireStore.url(p)); } catch (e) { console.warn("Photo de souvenir", e); } }));
+    } catch (e) { grimoireRows = []; grimoireDisponible = false; console.warn("Grimoire indisponible", e); }
+  }
+  function souvenirsAutomatiques(email) {
+    const m = members.find(x => String(x.email || "").toLowerCase() === email);
+    if (!m) return [];
+    const nom = normName(m.prenom);
+    return events.filter(e => e.date && e.date < todayISO() && e.statut !== "annule"
+      && parseTeam(e.animateurs).some(p => normName(p.nom) === nom))
+      .map(e => {
+        const role = parseTeam(e.animateurs).find(p => normName(p.nom) === nom)?.role;
+        return { id: "ev:" + e.id, annee: +e.date.slice(0, 4), titre: e.titre || e.theme || "Une prestation Fantasy",
+          texte: `${fmtLong(e.date)}${role ? " · " + role : ""}`, created_at: e.date, automatique: true };
+      });
+  }
+  function renderGrimoire() {
+    if (!grimoireDisponible) {
+      $("grimoireMessage").textContent = "⚠️ Le grimoire sera disponible après l'installation du SQL fantasy-grimoire-souvenirs.sql dans Supabase.";
+      $("grimoireLivre").replaceChildren(); $("grimoireModeration").classList.add("hidden"); $("grimoireAjouter").classList.add("hidden"); return;
+    }
+    $("grimoireAjouter").classList.remove("hidden");
+    $("grimoireMessage").textContent = "Les prestations de l'agenda apparaissent automatiquement. Tu peux raconter les aventures plus anciennes, même sans date précise.";
+    $("grimoireTitre").textContent = `Le grimoire de ${grimoireNom(grimoireCible)}`;
+    const manuels = grimoireRows.filter(r => r.membre_email === grimoireCible);
+    const visibles = [...souvenirsAutomatiques(grimoireCible), ...manuels.filter(r => r.statut === "publie")];
+    const annees = [...new Set(visibles.map(x => x.annee).filter(Boolean))].sort((a, b) => a - b);
+    grimoirePage = Math.max(0, Math.min(grimoirePage, annees.length - 1));
+    const annee = annees[grimoirePage], lignes = visibles.filter(r => r.annee === annee).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+    $("grimoireLivre").innerHTML = annees.length ? `<div class="grimoire-nav"><button type="button" data-grimoire-page="-1" ${grimoirePage === 0 ? "disabled" : ""}>‹ Année précédente</button><b>${annee} · ${grimoirePage + 1}/${annees.length}</b><button type="button" data-grimoire-page="1" ${grimoirePage === annees.length - 1 ? "disabled" : ""}>Année suivante ›</button></div>
+      <div class="grimoire-page"><h3>✦ ${annee} ✦</h3>${lignes.map(r => `<div class="grimoire-souvenir"><b>${r.automatique ? "🎭" : "✨"} ${esc(r.titre)}</b>
+      ${r.texte ? `<p>${esc(r.texte)}</p>` : ""}${r.photo_path && grimoireUrls.has(r.photo_path) ? `<img src="${esc(grimoireUrls.get(r.photo_path))}" alt="Souvenir : ${esc(r.titre)}" loading="lazy" />` : ""}</div>`).join("")}</div>`
+      : '<div class="grimoire-page"><h3>✨ La première page reste à écrire…</h3><p>Les souvenirs d’avant Fantasy App pourront y prendre place, année après année.</p></div>';
+    const attentes = manuels.filter(r => r.statut === "attente");
+    if (attentes.length) $("grimoireLivre").insertAdjacentHTML("beforeend", `<details class="m-subdetails"><summary>⏳ ${attentes.length} souvenir${attentes.length > 1 ? "s" : ""} proposé${attentes.length > 1 ? "s" : ""}, en attente de validation</summary><div style="padding:0 12px 12px">${attentes.map(r => `<p class="hint">${esc(r.annee + " · " + r.titre)}</p>`).join("")}</div></details>`);
+    $("grimoireEnvoyer").textContent = isResp() ? "✨ Ajouter au grimoire" : "💜 Proposer à Jordan";
+    const moderation = $("grimoireModeration"); moderation.classList.toggle("hidden", !grimoireGestion || !isResp());
+    if (grimoireGestion && isResp()) {
+      const enAttente = grimoireRows.filter(r => r.statut === "attente");
+      moderation.innerHTML = `<div class="sec">🔮 Souvenirs à valider (${enAttente.length})</div>${enAttente.map(r => `<div class="mine-head" style="margin:9px 0"><b>${esc(grimoireNom(r.membre_email))} · ${esc(r.annee + " — " + r.titre)}</b><p style="white-space:pre-wrap">${esc(r.texte || "")}</p>
+        ${r.photo_path && grimoireUrls.has(r.photo_path) ? `<img src="${esc(grimoireUrls.get(r.photo_path))}" alt="Souvenir proposé" style="max-width:100%;max-height:200px;border-radius:12px" />` : ""}
+        <div class="actions"><button type="button" class="btn primary" data-grimoire-valider="${esc(r.id)}">✅ Valider</button><button type="button" class="btn ghost" data-grimoire-refuser="${esc(r.id)}">Refuser</button></div></div>`).join("") || '<p class="hint">Tout est validé ! ✨</p>'}`;
+    }
+  }
+  async function ouvrirGrimoire(gestion = false) {
+    grimoireGestion = !!gestion && isResp();
+    grimoireCible = grimoireMe(); grimoirePage = 999;
+    $("grimoireBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
+    const choix = $("grimoireChoix"); choix.classList.toggle("hidden", !grimoireGestion);
+    if (grimoireGestion) {
+      const liste = members.filter(m => m.email).sort((a,b) => String(a.prenom).localeCompare(String(b.prenom), "fr"));
+      $("grimoireMembre").innerHTML = liste.map(m => `<option value="${esc(m.email.toLowerCase())}">${esc(m.prenom)}</option>`).join("");
+      if (liste.some(m => m.email.toLowerCase() === grimoireCible)) $("grimoireMembre").value = grimoireCible;
+      else grimoireCible = $("grimoireMembre").value;
+    }
+    $("grimoireAnnee").value = new Date().getFullYear();
+    $("grimoireMessage").textContent = "Ouverture du grimoire…"; $("grimoireLivre").replaceChildren();
+    await grimoireRecharger(); renderGrimoire();
+  }
+  $("myGrimoireBtn").onclick = () => ouvrirGrimoire(false);
+  $("gGrimoire").onclick = () => ouvrirGrimoire(true);
+  $("grimoireMembre").onchange = e => { grimoireCible = e.target.value; grimoirePage = 999; renderGrimoire(); };
+  const fermerGrimoire = () => { $("grimoireBg").classList.add("hidden"); document.body.style.overflow = ""; };
+  $("grimoireFermer").onclick = fermerGrimoire;
+  $("grimoireBg").addEventListener("click", e => { if (e.target.id === "grimoireBg") fermerGrimoire(); });
+  $("grimoireLivre").addEventListener("click", e => { const b = e.target.closest("[data-grimoire-page]"); if (b) { grimoirePage += +b.dataset.grimoirePage; renderGrimoire(); } });
+  $("grimoireModeration").addEventListener("click", async e => {
+    const a = e.target.closest("[data-grimoire-valider], [data-grimoire-refuser]"); if (!a || !isResp()) return;
+    const id = a.dataset.grimoireValider || a.dataset.grimoireRefuser, statut = a.dataset.grimoireValider ? "publie" : "refuse";
+    a.disabled = true;
+    try { await grimoireStore.valider(id, statut); await grimoireRecharger(); renderGrimoire(); toast(statut === "publie" ? "✨ Souvenir ajouté au grimoire !" : "Souvenir refusé"); }
+    catch (err) { a.disabled = false; toast("Validation impossible : " + (err.message || err)); }
+  });
+  $("grimoireForm").addEventListener("submit", async e => {
+    e.preventDefault(); if (!grimoireDisponible || !grimoireCible) return;
+    const annee = +$("grimoireAnnee").value, titre = $("grimoireTitreInput").value.trim(), texte = $("grimoireTexte").value.trim(), photo = $("grimoirePhoto").files[0];
+    if (!Number.isInteger(annee) || annee < 1990 || annee > new Date().getFullYear() || !titre) return toast("Indique une année passée et un titre.");
+    if (photo && photo.size > 18 * 1024 * 1024) return toast("Photo trop volumineuse (18 Mo maximum).");
+    const btn = $("grimoireEnvoyer"); btn.disabled = true; let chemin = null;
+    try {
+      if (photo) chemin = await grimoireStore.upload(photo);
+      await grimoireStore.save({ membre_email: grimoireCible, annee, titre, texte: texte || null, photo_path: chemin,
+        cree_par_email: grimoireMe(), statut: isResp() ? "publie" : "attente", created_at: new Date().toISOString() });
+      $("grimoireForm").reset(); $("grimoireAnnee").value = new Date().getFullYear(); $("grimoireAjouter").open = false;
+      await grimoireRecharger();
+      const annees = [...new Set([...souvenirsAutomatiques(grimoireCible),
+        ...grimoireRows.filter(r => r.membre_email === grimoireCible && r.statut === "publie")]
+        .map(r => r.annee))].sort((a,b) => a - b);
+      grimoirePage = isResp() ? Math.max(0, annees.indexOf(annee)) : 999;
+      renderGrimoire();
+      toast(isResp() ? "✨ Souvenir enregistré !" : "💜 Souvenir envoyé à Jordan pour validation !");
+    } catch (err) { if (chemin) await grimoireStore.abandonner(chemin).catch(() => {}); toast("Souvenir non enregistré : " + (err.message || err)); }
+    finally { btn.disabled = false; }
+  });
+
+  // ================= ✨ Lumi : petite présence magique, jamais intrusive =================
+  let lumiIndex = 0;
+  const lumiPreference = () => "fk_lumi_visible_" + (currentUser?.email || "demo").toLowerCase();
+  const lumiEstVisible = () => { try { return localStorage.getItem(lumiPreference()) !== "non"; } catch (_) { return true; } };
+  function majLumi() {
+    const connecte = !$('app').classList.contains('hidden');
+    $("lumiBuddy").classList.toggle("hidden", !connecte || !lumiEstVisible());
+    if (!connecte || !lumiEstVisible()) $("lumiBulle").classList.add("hidden");
+    $("lumiToggle").textContent = lumiEstVisible() ? "🌙 Masquer Lumi" : "✨ Faire revenir Lumi";
+  }
+  function motsDeLumi() {
+    const me = myMember() || (DEMO ? members.find(m => normName(m.prenom) === normName(demoMe)) : null);
+    const prenom = me?.prenom || "toi";
+    const jour = todayISO();
+    const prochaines = events.filter(e => e.date >= jour && e.statut !== "annule" && me &&
+      parseTeam(e.animateurs).some(p => normName(p.nom) === normName(me.prenom)))
+      .sort((a,b) => a.date.localeCompare(b.date));
+    const phrases = [
+      `Coucou ${prenom} ! ✨ Je suis Lumi, une petite étincelle de Fantasy.`,
+      "Petit secret : chaque sourire que tu offres aux enfants recharge ma magie ! 💜",
+      "Même les plus grands magiciens ont commencé avec une toute petite étincelle. 🌟",
+      "Une pincée de courage, beaucoup de bonne humeur… et la magie opère ! 🪄"
+    ];
+    if (prochaines[0]) phrases.splice(1, 0, `Une belle aventure t'attend le ${fmtLong(prochaines[0].date)}. J'ai hâte ! 🎭`);
+    const anniversaire = mesChoixNotif?.anniversaire?.date || "";
+    if (anniversaire && anniversaire.slice(5) === jour.slice(5)) phrases.unshift(`Joyeux anniversaire, ${prenom} ! Une pluie d'étoiles rien que pour toi ! 🎂✨`);
+    return phrases;
+  }
+  function parlerAvecLumi() {
+    const phrases = motsDeLumi();
+    $("lumiBulle").innerHTML = `<b>✨ Lumi</b><p style="margin:7px 0;line-height:1.4">${esc(phrases[lumiIndex++ % phrases.length])}</p>
+      <button type="button" data-lumi-next>Encore ✨</button> <button type="button" data-lumi-close>Fermer</button>`;
+    $("lumiBulle").classList.remove("hidden");
+    const r = $("lumiBuddy").getBoundingClientRect(); magicBurst(r.left + r.width / 2, r.top);
+  }
+  $("lumiBuddy").onclick = () => $("lumiBulle").classList.contains("hidden") ? parlerAvecLumi() : $("lumiBulle").classList.add("hidden");
+  $("lumiBulle").addEventListener("click", e => {
+    if (e.target.closest("[data-lumi-next]")) parlerAvecLumi();
+    if (e.target.closest("[data-lumi-close]")) $("lumiBulle").classList.add("hidden");
+  });
+  $("lumiToggle").onclick = () => {
+    try { localStorage.setItem(lumiPreference(), lumiEstVisible() ? "non" : "oui"); } catch (_) {}
+    majLumi(); toast(lumiEstVisible() ? "✨ Lumi est de retour !" : "🌙 Lumi se repose. Tu peux la rappeler ici.");
+  };
+
   // ================= 📖 Guide d'interprétation des personnages =================
   // Base : le guide de Jordan (54 fiches, intégré à l'app) ; les modifications et nouvelles fiches des responsables sont dans la table « guide_fiches »
   const GUIDE_BASE = (() => { try { return JSON.parse($("guideData").textContent); } catch (e) { return []; } })();
@@ -12859,6 +13105,41 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (di === t) return "Aujourd'hui"; if (di === iso(new Date(Date.now() - 864e5))) return "Hier";
     return new Date(s).toLocaleDateString("fr-BE", { weekday: "long", day: "numeric", month: "long" });
   }
+  // ================= 🪄 Messages enchantés : fonctionnent avec le chat existant =================
+  const SORTS_CHAT = [
+    { emoji: "💜", nom: "Câlin magique", signature: "🪄💜 Câlin magique ✨", effet: "Un câlin rempli de douceur arrive jusqu'à toi !" },
+    { emoji: "🌟", nom: "Pluie d'étoiles", signature: "🪄🌟 Pluie d'étoiles ✨", effet: "Des milliers de petites étoiles illuminent ta journée !" },
+    { emoji: "🎁", nom: "Cadeau mystère", signature: "🪄🎁 Cadeau mystère ✨", effet: "Surprise ! Ce cadeau contient une bonne dose de magie." },
+    { emoji: "🌹", nom: "Rose enchantée", signature: "🪄🌹 Rose enchantée ✨", effet: "Une fleur enchantée rien que pour toi !" },
+    { emoji: "🎆", nom: "Explosion de magie", signature: "🪄🎆 Explosion de magie ✨", effet: "BOUM ! Une explosion de paillettes et de bonheur !" }
+  ];
+  function sortDuTexte(texte) {
+    if (!texte) return null;
+    const sort = SORTS_CHAT.find(s => texte === s.signature || texte.startsWith(s.signature + "\n"));
+    return sort ? { ...sort, note: texte.slice(sort.signature.length).trim() } : null;
+  }
+  $("sortMenu").innerHTML = SORTS_CHAT.map((s,i) => `<button type="button" data-sort-pick="${i}">${s.emoji} ${esc(s.nom)}</button>`).join("");
+  $("sortBtn").onclick = () => $("sortMenu").classList.toggle("hidden");
+  $("sortMenu").addEventListener("click", e => {
+    const b = e.target.closest("[data-sort-pick]"); if (!b) return;
+    const sort = SORTS_CHAT[+b.dataset.sortPick], champ = $("chatTxt"), deja = sortDuTexte(champ.value);
+    const textePersonnel = deja ? deja.note : champ.value.trim();
+    champ.value = (sort.signature + (textePersonnel ? "\n" + textePersonnel : "")).slice(0, 2000);
+    $("sortMenu").classList.add("hidden");
+    champ.dispatchEvent(new Event("input", { bubbles: true })); champ.focus();
+    toast("🪄 Sort prêt ! Ajoute ton mot et envoie-le.");
+  });
+  function ouvrirSort(m) {
+    const s = sortDuTexte(m.texte); if (!s) return;
+    $("sortRevealEmoji").textContent = s.emoji;
+    $("sortRevealTitle").textContent = s.nom;
+    $("sortRevealText").textContent = s.effet + (s.note ? "\n\n💌 " + s.note : "");
+    $("sortRevealBg").classList.remove("hidden");
+    const r = $("sortRevealEmoji").getBoundingClientRect(); magicBurst(r.left + r.width / 2, r.top + r.height / 2);
+  }
+  const fermerSort = () => $("sortRevealBg").classList.add("hidden");
+  $("sortRevealClose").onclick = fermerSort;
+  $("sortRevealBg").addEventListener("click", e => { if (e.target.id === "sortRevealBg") fermerSort(); });
   function renderMsgs(garderPos) {
     const box = $("msgs"), enBas = box.scrollHeight - box.scrollTop - box.clientHeight < 120, avant = box.scrollTop;
     const ev = evOfCanal(chatCanal), list = chatMsgs.filter(m => m.canal === chatCanal);
@@ -12888,7 +13169,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           ${m.reponse_a ? `<button type="button" class="quote" data-chat-scroll="${esc(m.reponse_a)}">↩️ ${original ? `<b>${esc(original.auteur || "?")}</b> · ${esc(chatResume(original))}` : "Message précédent"}</button>` : ""}
           ${m.photo_url ? `<img src="${esc(m.photo_url)}" alt="Photo" loading="lazy" data-zoom />` : ""}
           ${m.audio_path ? `<button type="button" class="audio-play" data-audio-play="${esc(m.id)}">🎤 Écouter le vocal</button><span class="audio-zone"></span>` : ""}
-          ${m.texte ? `<span class="t">${lier(m.texte)}</span>` : ""}
+          ${m.texte ? (sortDuTexte(m.texte) ? `<button type="button" class="sort-message" data-sort-reveal="${esc(m.id)}">${sortDuTexte(m.texte).emoji} Un message enchanté !<small style="display:block;font-size:11px;margin-top:5px">✨ Toucher pour découvrir ✨</small></button>` : `<span class="t">${lier(m.texte)}</span>`) : ""}
           <span class="h">${pad(d.getHours())}h${pad(d.getMinutes())}</span></div>
           ${rxHtml}${m.epingle_le || chatFavoris.has(String(m.id)) ? `<span class="flags">${m.epingle_le ? "📌 Épinglé" : ""}${m.epingle_le && chatFavoris.has(String(m.id)) ? " · " : ""}${chatFavoris.has(String(m.id)) ? "⭐ Favori" : ""}</span>` : ""}${rx.length ? `<div class="rx-who">${rx.map(([e, l]) => `${e} ${esc(l.join(", "))}`).join(" · ")}</div>` : ""}</div>${moi ? `<span class="who">${first ? emojiAuteur(m.auteur, ev) : ""}</span>` : ""}</div>`;
       if (chatPick === m.id) {
@@ -13025,6 +13306,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   function closeChat() {
     rtQuitter();
+    $("sortMenu").classList.add("hidden"); fermerSort();
     if (chatRecorder && chatRecorder.state === "recording") { chatRecorder.onstop = null; chatRecorder.stop(); }
     if (chatRecordStream) chatRecordStream.getTracks().forEach(t => t.stop());
     chatRecorder = null; chatRecordStream = null; clearTimeout(chatRecordTimer); clearVocal();
@@ -13102,12 +13384,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const saved = await chatStore.send(m);
       if (!chatMsgs.some(x => x.id === saved.id)) chatMsgs.push(saved);
       $("chatTxt").value = ""; $("chatTxt").style.height = "auto"; chatReplyId = null; majChatReply(); clearPhoto(); clearVocal();
+      $("sortMenu").classList.add("hidden");
       renderMsgs(); marquerLu(chatCanal); son("pop");
       const r = btn.getBoundingClientRect(); magicBurst(r.left + r.width / 2, r.top);
     } catch (err) { toast(navigator.onLine ? "Pas envoyé : " + (err.message || err) : "📶 Pas de réseau : message pas envoyé"); }
     finally { majSend(); }
   });
   $("msgs").addEventListener("click", async (e) => {
+    const sort = e.target.closest("[data-sort-reveal]");
+    if (sort) { const m = chatMsgs.find(x => String(x.id) === sort.dataset.sortReveal && x.canal === chatCanal); if (m) ouvrirSort(m); return; }
     const go = e.target.closest("[data-chat-scroll]"); if (go) { scrollerChat(go.dataset.chatScroll); return; }
     const rep = e.target.closest("[data-chat-reply]");
     if (rep) { chatReplyId = rep.dataset.chatReply; chatPick = null; majChatReply(); renderMsgs(true); $("chatTxt").focus(); return; }
@@ -13185,6 +13470,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("app").classList.remove("hidden");
     apercuMembre = false; // un nouveau début de session revient toujours aux droits affichés normaux
     currentUser = user;
+    majLumi();
     majWho();
     $("logoutBtn").classList.toggle("hidden", DEMO);
     $("demoBar").classList.toggle("hidden", !DEMO);
@@ -13225,6 +13511,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   function showLogin() {
     $("app").classList.add("hidden"); $("loginScreen").classList.remove("hidden");
+    majLumi();
     clocheAutoPour = null;
     notificationsApp = [];
     regieData = null; regieId = null;
