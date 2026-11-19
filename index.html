@@ -119,6 +119,18 @@
     box-shadow:0 5px 17px #b8743719}
   .ev .attente-note{font-size:12px;font-weight:750;color:#9c5d16;background:#fff1d7;
     padding:8px 10px;border-radius:11px;margin-top:9px;border:1px solid #f2d9ac}
+  .ev.demande-anticipee{background:linear-gradient(140deg,#fcf9ff,#f1e6ff);border:1px solid #dab9fb;box-shadow:0 4px 18px #7343b119}
+  .anticipation-note{border:1px solid #d9b5fb;border-radius:13px;background:#f3e9ff;color:#60329a;
+    padding:11px 13px;margin:10px 0;line-height:1.5;font-size:14px}
+  .anticipation-note b{color:#56238b}
+  .anticipations-panel{background:#fff;border:1px solid #d9b5fb;border-radius:16px;padding:13px;margin-bottom:15px;box-shadow:0 4px 16px #573e8217}
+  .anticipations-panel h2{margin:0;font-size:17px;color:#6d28d9}
+  .anticipations-panel .ant-counts{display:flex;gap:8px;flex-wrap:wrap;margin:9px 0}
+  .anticipations-panel .ant-counts span{padding:7px 11px;border-radius:12px;background:#efe3ff;color:#5f2d93;font-size:13px;font-weight:700}
+  .anticipations-panel details{margin-top:8px}.anticipations-panel summary{font-weight:750;color:#70419e;cursor:pointer}
+  .anticipations-panel .ant-line{border-top:1px solid #eee1f8;padding:10px 0;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .anticipations-panel .ant-line small{display:block;color:#79698e;font-size:12px;margin-top:4px;line-height:1.45}
+  .anticipations-panel button{border:1px solid #d5b5f4;background:#fff;color:#6d28a5;border-radius:10px;padding:8px 10px;font-weight:700;white-space:nowrap}
   /* ---------- Stats ---------- */
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
   .stat{background:var(--card);border-radius:14px;padding:10px;text-align:center;box-shadow:0 2px 10px rgba(80,40,160,.05)}
@@ -1029,6 +1041,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .day .lune{position:absolute;top:2px;right:3px;font-size:10px;filter:drop-shadow(0 0 4px #ffd86b)}
   .day{position:relative}
   .ev.spectacle{background:var(--th-carte,linear-gradient(160deg,#eaf8ff,#f2fbff))!important;box-shadow:0 0 0 1.5px var(--th-bord,rgba(80,190,235,.6)),0 8px 26px rgba(11,45,82,.18)!important}
+  /* Le violet des demandes anticipées prime sur les univers saisonniers. */
+  .ev.demande-anticipee,.ev.demande-anticipee.spectacle{background:linear-gradient(140deg,#fcf9ff,#f1e6ff)!important;
+    box-shadow:0 0 0 1.5px #d1aff9,0 6px 22px rgba(114,43,178,.17)!important}
   /* Les panneaux restent clairs et lisibles ; l'univers colore leur contour et les commandes. */
   body.themed{background:radial-gradient(850px 520px at 90% 0%,var(--th-halo),transparent 72%),radial-gradient(800px 600px at 0% 95%,var(--th-halo2),transparent 70%),var(--th-fond)!important;background-attachment:fixed!important;--violet:var(--th-accent);--violet-d:var(--th-accent);--rose:var(--th-accent);--grad:linear-gradient(110deg,var(--th-accent),var(--th-secondary),var(--th-galon));--line:var(--th-line);--muted:#514763;--txt:#241b34}
   body.themed header{background:linear-gradient(115deg,#fff,var(--th-tint));box-shadow:0 4px 22px rgba(24,12,48,.2)}
@@ -1714,6 +1729,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <select id="fStatut">
         <option value="">Tous les statuts</option>
         <option value="en_attente">En attente</option>
+        <option value="anticipations">💜 Demandes anticipées</option>
         <option value="confirme">Confirmé</option>
         <option value="termine">Terminé</option>
         <option value="annule">Annulé</option>
@@ -1726,6 +1742,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div id="magicAdminWelcome" class="magic-admin-welcome hidden" aria-label="Accueil Fantasy"></div>
       <div id="modeAccueil" class="mode-accueil hidden" aria-label="Mes prestations du jour"></div>
       <div id="centreControle" class="centre-controle hidden" aria-label="Mon centre de contrôle"></div>
+      <div id="anticipationsPanel" class="anticipations-panel hidden" aria-label="Suivi des demandes anticipées"></div>
       <div class="seg vue-seg"><label><input type="radio" name="vueAg" value="cal"><span>📅 Calendrier</span></label><label><input type="radio" name="vueAg" value="list"><span>📋 Liste</span></label></div>
       <div class="cal">
         <div class="cal-nav">
@@ -2072,6 +2089,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <option value="termine">🏁 Terminé</option>
       <option value="annule">❌ Annulé</option>
     </select>
+    <div id="anticipationFiche" class="anticipation-note hidden" aria-live="polite"></div>
 
     <details class="fold fold-auto anniv-only">
     <summary class="sec">🎒 Matériel (JBL, à prévoir, manquant)</summary>
@@ -2771,6 +2789,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     termine:    { label: "Terminé",    color: "var(--termine)" },
     annule:     { label: "Annulé",     color: "var(--annule)" },
   };
+  const STATUTS_ANTICIPATION = {
+    anticipee:   { label: "💜 Demande anticipée", color: "#843ad1" },
+    reconfirmee: { label: "✅ Demande reconfirmée", color: "#7431ba" },
+    abandonnee:  { label: "❌ Demande abandonnée", color: "#9885aa" },
+    sans_reponse:{ label: "⌛ Sans réponse", color: "#8e7da7" },
+    a_traiter:   { label: "📨 Demande à traiter", color: "#7431ba" },
+    cloturee:    { label: "Clôturée", color: "#909097" },
+  };
   const CHAMPS = ["titre","date","heure_debut","heure_fin","enfant","age","adresse","theme","animateurs",
                   "parent","telephone","prix","acompte","acompte_paye","statut","notes","enceinte","materiel","materiel_manquant","solde","notes_privees","site_affichage","email","conducteur","type_evenement","equipe_detail","theme_app","message_jour"];
   const PRIV = ["prix","acompte","acompte_paye","notes_privees","deplacement_client","km_detail","checklist","client_tva"];
@@ -2782,6 +2808,25 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   const parseISO = (s) => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
   const todayISO = () => iso(new Date());
+  const dateBelgeISO = () => new Intl.DateTimeFormat("sv-SE", {timeZone:"Europe/Brussels",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+  const ouvertureAnticipation = (s) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(s||""))) return "";
+    const [y,m,j]=s.split("-").map(Number), cible=new Date(Date.UTC(y,m-4,1));
+    const max=new Date(Date.UTC(cible.getUTCFullYear(),cible.getUTCMonth()+1,0)).getUTCDate();
+    return `${cible.getUTCFullYear()}-${pad(cible.getUTCMonth()+1)}-${pad(Math.min(j,max))}`;
+  };
+  const jourAnticipation = (date,n) => { if(!date)return "";const d=new Date(date+"T12:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10); };
+  const anticipationActive = (ev) => !!(ev?.anticipation && ev.statut === "en_attente" && ev.anticipation.statut !== "cloturee");
+  const anticipationNonBloquante = (ev) => anticipationActive(ev);
+  const statutAffiche = (ev) => anticipationActive(ev) ? STATUTS_ANTICIPATION[ev.anticipation.statut] || STATUTS.en_attente : STATUTS[ev.statut] || STATUTS.en_attente;
+  const personnageAnticipe = (ev) => String(ev?.options?.personnages_client || String(ev?.notes||"").match(/Personnage souhaité\s*:\s*([^\n]+)/i)?.[1] || "À préciser").trim();
+  const prochaineRelanceAnticipee = (d) => {
+    if(!d || d.statut!=="anticipee")return "—";
+    if(!d.premier_email_le)return "Accusé de réception en attente";
+    if(!d.ouverture_envoyee_le)return fmtLong(d.date_ouverture);
+    if(!d.rappel_j7_le)return fmtLong(jourAnticipation(d.ouverture_envoyee_le.slice(0,10),7));
+    return "Attente de réponse (J+14)";
+  };
   const hhmm = (t) => t ? t.slice(0,5).replace(":", "h") : "";
   const euro = (n) => n == null || n === "" ? "" : Number(n).toLocaleString("fr-BE", {style:"currency",currency:"EUR"});
   const fmtLong = (s) => parseISO(s).toLocaleDateString("fr-BE", {weekday:"long", day:"numeric", month:"long"});
@@ -3151,6 +3196,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // propre filtre strict sur les affectations, même pour les événements.
   const jeVoisEv = (e) => {
     if (isResp()) return true;
+    if (anticipationActive(e) && !isGest()) return false; // aucune mission provisoire imposée aux membres
     const affecte = anims(e).some(a => normName(a) === normName(chatMe()));
     // Les animations non confirmées sont des propositions : seuls les membres affectés les voient.
     // Les autres événements encore en attente restent cachés comme auparavant.
@@ -3171,6 +3217,21 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // Jordan confirme lui-même la remise physique des espèces de l'équipe.
   function peutConfirmerRemise() { return peutEnvoyerPhotos(); }
   let events = [];
+  let suivisAnticipes = new Map(), anticipationsDisponibles = DEMO;
+  async function chargerSuivisAnticipes() {
+    if (DEMO || !isGest()) { suivisAnticipes = new Map(); return; }
+    const { data, error } = await sb.from("demandes_anticipees")
+      .select("evenement_id,statut,date_ouverture,version,premier_email_le,ouverture_envoyee_le,rappel_j7_le,reponse_le,admin_notifie_le")
+      .limit(1000);
+    if (error) {
+      // L'ancienne app fonctionne toujours si le nouveau SQL n'est pas encore installé.
+      console.warn("Demandes anticipées : SQL à installer",error.message);
+      suivisAnticipes = new Map(); anticipationsDisponibles = false; return;
+    }
+    anticipationsDisponibles = true;
+    suivisAnticipes = new Map((data||[]).map(d => [String(d.evenement_id), d]));
+    events.forEach(e => { const d=suivisAnticipes.get(String(e.id));if(d)e.anticipation=d;else delete e.anticipation; });
+  }
   let view = "cal";
   const now = new Date();
   let curY = now.getFullYear(), curM = now.getMonth();
@@ -3315,6 +3376,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     try { members = await team.list(); } catch (e) { console.error(e); ok = false; }
     try { events = await store.list(); }
     catch (e) { console.error(e); ok = false; }
+    try { await chargerSuivisAnticipes(); } catch(e) { console.warn("Suivi anticipé",e); }
     try { resaSite = (!DEMO && isResp()) ? ((await sb.from("reservations").select("id,evenement_id,nom,places,bebes,notes,created_at").eq("source", "site").is("vue_le", null).order("created_at")).data || []) : []; }
     catch (e) { resaSite = []; }
     resaSite = resaSite.filter(r => { const e = events.find(x => String(x.id) === String(r.evenement_id)); return e && e.date >= todayISO(); });
@@ -3349,7 +3411,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const a = $("fAnim").value, s = $("fStatut").value;
     return events.filter(e => jeVoisEv(e) && !(e.titre === "Ventes hors événement" && e.date === "2000-01-01") &&
       (!a || anims(e).includes(a)) &&
-      (!s || e.statut === s) &&
+      (!s || (s === "anticipations" ? anticipationActive(e) : e.statut === s && !anticipationActive(e))) &&
       (!q || [e.titre,e.enfant,e.theme,e.adresse,e.parent,e.animateurs,e.notes,e.telephone].join(" ").toLowerCase().includes(q))
     ).sort((x,y) => (x.date + (x.heure_debut||"")).localeCompare(y.date + (y.heure_debut||"")));
   }
@@ -3372,7 +3434,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       + (moi ? `<span class="mon-poste">⭐ Ton poste : ${roleEmoji(moi.role)} <b>${esc(moi.role || "à définir")}</b>${horaireDe(e, moi.nom) ? " · 🕐 " + horaireDe(e, moi.nom) : ""}${voitureTxt(e, moi.nom) ? " · " + esc(voitureTxt(e, moi.nom)) : ""}</span>` : "");
   }
   function card(e, showDate) {
-    const st = STATUTS[e.statut] || STATUTS.en_attente;
+    const st = statutAffiche(e);
     const interne = estEvenementInterne(e);
     const h = e.heure_debut ? hhmm(e.heure_debut) + (e.heure_fin ? " – " + hhmm(e.heure_fin) : "") : "Toute la journée";
     const kid = e.enfant ? `${esc(e.enfant)}${e.age ? `, ${esc(e.age)} ans` : ""}` : "";
@@ -3412,7 +3474,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const attenteAttribuee = e.statut === "en_attente" && e.type_evenement === "animation" && !isGest();
     const U = universOf(e);
     const parts = U && !reduceMotion ? [0,1,2,3].map(i => `<i class="pt" style="left:${12 + i * 24 + Math.random() * 8}%;color:${U[4]};font-size:${9 + Math.random() * 8}px;animation-duration:${5 + Math.random() * 4}s;animation-delay:${-Math.random() * 8}s">${U[3]}</i>`).join("") : "";
-    return `<div class="ev ${U ? "u-" + U[0] : ""}${attenteAttribuee ? " attente-assign" : ""}${themeDe(e) ? " spectacle th-c-" + themeDe(e) : ""}" style="--c:${st.color}${themeDe(e) ? `;--th-carte:${THEMES[themeDe(e)].carte};--th-bord:${THEMES[themeDe(e)].bord}` : ""}" data-id="${esc(e.id)}" role="button" tabindex="0">${parts}${U ? `<span class="univ">${U[2]}</span>` : ""}<span class="sheen"></span>
+    return `<div class="ev ${U ? "u-" + U[0] : ""}${attenteAttribuee ? " attente-assign" : ""}${anticipationActive(e) ? " demande-anticipee" : ""}${themeDe(e) ? " spectacle th-c-" + themeDe(e) : ""}" style="--c:${st.color}${themeDe(e) ? `;--th-carte:${THEMES[themeDe(e)].carte};--th-bord:${THEMES[themeDe(e)].bord}` : ""}" data-id="${esc(e.id)}" role="button" tabindex="0">${parts}${U ? `<span class="univ">${U[2]}</span>` : ""}<span class="sheen"></span>
       <div class="ev-top">
         <div class="ev-time">${showDate ? `<span style="text-transform:capitalize">${esc(fmtLong(e.date))}</span> · ` : ""}${h}</div>
         <span class="badge st" style="--c:${st.color}">${st.label}</span>
@@ -3428,6 +3490,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         ${e.notes ? `<span style="white-space:pre-line;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">📝 ${esc(e.notes)}</span>` : ""}
       </div>
       ${pay ? `<div class="badges">${pay}</div>` : ""}
+      ${anticipationActive(e) ? `<div class="anticipation-note">💜 <b>${esc(st.label)}</b><br>${e.anticipation.statut === "anticipee" ? `Le client sera recontacté le <b>${esc(fmtLong(e.anticipation.date_ouverture))}</b>.` : e.anticipation.statut === "reconfirmee" ? "Le client est toujours intéressé : disponibilité à vérifier avant tout devis." : e.anticipation.statut === "a_traiter" ? "La demande est dans la période de réservation : à traiter manuellement." : "Cette demande reste dans l'historique, sans bloquer de date."}</div>` : ""}
       ${attenteAttribuee ? `<div class="attente-note">⏳ Affectation provisoire · en attente de confirmation du client</div>` : ""}
       ${missing}
       ${canMode || canSignal || canEnc || canTat || canPhotos || canCost ? `<div class="ev-actions">
@@ -3454,7 +3517,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const d = new Date(start); d.setDate(start.getDate() + i);
       const k = iso(d), evs = byDay[k] || [];
       if (i >= 35 && d.getMonth() !== curM) break;
-      const dots = evs.slice(0, 4).map(e => `<span class="dot" style="background:${(STATUTS[e.statut]||STATUTS.en_attente).color}"></span>`).join("");
+      const dots = evs.slice(0, 4).map(e => `<span class="dot" style="background:${statutAffiche(e).color}"></span>`).join("");
       const thj = (evs.find(themeDe) || null), spect = thj ? themeDe(thj) : "";
       html += `<button class="day ${spect?"spect th-d-"+spect:""} ${evs.length?"has":""} ${d.getMonth()!==curM?"out":""} ${k===t?"today":""} ${k===selDay?"sel":""}" data-day="${k}" aria-label="${esc(fmtLong(k))}${evs.length ? `, ${evs.length} activité${evs.length > 1 ? "s" : ""} prévue${evs.length > 1 ? "s" : ""}` : ", rien de prévu"}">
         <span class="n">${d.getDate()}</span>${spect ? `<span class="lune">${THEMES[spect].emoji}</span>` : ""}<span class="dots">${dots}</span>${evs.length ? `<span class="day-count">${evs.length}</span>` : ""}</button>`;
@@ -3463,7 +3526,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("dayTitle").textContent = fmtLong(selDay);
     const dayEvs = byDay[selDay] || [];
     const accesRapide=dayEvs.length?'<div class="mine-head" style="margin:8px 0 12px"><b>✨ '+dayEvs.length+' activité'+(dayEvs.length>1?'s':'')+' ce jour</b>'+dayEvs.map(e=>
-      '<div class="pay-row" style="margin-top:7px"><span class="who"><b>'+esc(e.titre||e.enfant||e.theme||"Prestation")+'</b><small>'+esc(e.heure_debut?hhmm(e.heure_debut):"Horaire à préciser")+' · '+esc((STATUTS[e.statut]||STATUTS.en_attente).label)+'</small></span><button type="button" class="sig" data-day-open="'+esc(e.id)+'">📋 Ouvrir</button></div>'
+      '<div class="pay-row" style="margin-top:7px"><span class="who"><b>'+esc(e.titre||e.enfant||e.theme||"Prestation")+'</b><small>'+esc(e.heure_debut?hhmm(e.heure_debut):"Horaire à préciser")+' · '+esc(statutAffiche(e).label)+'</small></span><button type="button" class="sig" data-day-open="'+esc(e.id)+'">📋 Ouvrir</button></div>'
       ).join("")+'</div>':"";
     $("dayList").innerHTML = dayEvs.length ? accesRapide + dayEvs.map(e => card(e, false)).join("")
       : `<div class="empty">🌙 Rien de prévu ce jour-là…<br>Un peu de magie à ajouter ?<br><br><button class="btn ghost" id="addHere" style="flex:none;padding:10px 16px">✨ Ajouter une animation</button></div>`;
@@ -3482,7 +3545,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const unpaid = upcoming.filter(e => e.prix && e.acompte && !e.acompte_paye && e.statut !== "termine").length;
     $("stats").innerHTML = `
       <div class="stat"><b>${upcoming.filter(e=>e.date<=in30).length}</b><span>dans 30 jours</span></div>
-      <div class="stat"><b>${upcoming.filter(e=>e.statut==="en_attente").length}</b><span>en attente</span></div>
+      <div class="stat"><b>${upcoming.filter(e=>e.statut==="en_attente"&&!anticipationActive(e)).length}</b><span>en attente</span></div>
       ${isResp() ? `<div class="stat"><b>${unpaid}</b><span>acomptes à recevoir</span></div>`
         : `<div class="stat"><b>${upcoming.filter(e => e.materiel_manquant).length}</b><span>matériel manquant</span></div>`}`;
     const nbMissing = upcoming.filter(e => e.materiel_manquant).length;
@@ -3509,7 +3572,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       + ((nbC = nbConflitsCostumes()) ? `<div class="alert-bar" data-cost-open>⚠️ ${nbC} conflit${nbC > 1 ? "s" : ""} de costume/perruque dans les 30 jours (demandé plus de fois qu'il n'en existe le même jour)</div>` : "")
       + (isResp() && stockAAcheter().length ? `<div class="alert-bar gold" data-stock-open>🛒 ${stockAAcheter().length} consommable${stockAAcheter().length > 1 ? "s" : ""} à racheter (${esc(stockAAcheter().slice(0, 3).map(x => x.nom).join(", "))}${stockAAcheter().length > 3 ? "…" : ""})</div>` : "")
       + (nbPhotos ? alerteCliquable(photosAEnvoyer, "photos", "blue", `📸 ${nbPhotos} animation${nbPhotos>1?"s":""} récente${nbPhotos>1?"s":""} : photos pas encore envoyées au client`) : "");
-    const list = $("showPast").checked ? all : all.filter(e => e.date >= t);
+    const list = $("showPast").checked || $("fStatut").value === "anticipations" ? all : all.filter(e => e.date >= t);
     if (!list.length) { $("list").innerHTML = bar + `<div class="empty">🌙 Aucune animation à afficher.</div>`; return; }
     let html = bar, lastMonth = "";
     list.forEach(e => {
@@ -4146,7 +4209,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   });
 
-  function render() { appliquerSaisonFantasy(); majWho(); majCloche(); modeNuit(); renderThemePreviewUI(); renderBirthdaySurprise(); renderNext(); renderMagicAdminWelcome(); renderModeAccueil(); renderCentreControle(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
+  function render() { appliquerSaisonFantasy(); majWho(); majCloche(); modeNuit(); renderThemePreviewUI(); renderBirthdaySurprise(); renderNext(); renderMagicAdminWelcome(); renderModeAccueil(); renderCentreControle(); renderAnticipationsPanel(); view === "cal" ? renderCal() : view === "list" ? renderList() : view === "stats" ? renderStats() : view === "chat" ? renderChatList() : view === "pt" ? renderPtVue() : renderMine(); if (chatLoaded) chatBadges(); }
   function renderMagicAdminWelcome() {
     const box = $("magicAdminWelcome"); if (!box) return;
     if (!isResp() || view !== "cal") { box.classList.add("hidden"); return; }
@@ -4180,7 +4243,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     prochaines.forEach(e => {
       const titre = e.titre || e.enfant || "Animation";
       const date = fmtLong(e.date);
-      if (estClient(e) && e.statut === "en_attente") ajouter(e, "📨", "Demande à traiter · " + titre, date + " · Confirmer ou mettre en attente depuis la fiche", 0);
+      if (anticipationActive(e)) {
+        if (["reconfirmee","a_traiter"].includes(e.anticipation.statut))
+          ajouter(e,"💜",e.anticipation.statut==="reconfirmee" ? "Intérêt reconfirmé · "+titre : "Demande anticipée à traiter · "+titre,
+            date+" · Vérifier la disponibilité avant le devis",0);
+      } else if (estClient(e) && e.statut === "en_attente") ajouter(e, "📨", "Demande à traiter · " + titre, date + " · Confirmer ou mettre en attente depuis la fiche", 0);
       if (e.type_evenement === "animation" && e.statut === "confirme" && !anims(e).length) ajouter(e, "🎭", "Équipe à attribuer · " + titre, date + " · Aucun membre affecté", 0);
       if (estClient(e) && e.statut === "confirme" && +e.acompte > 0 && !e.acompte_paye) ajouter(e, "💶", "Acompte à vérifier · " + titre, date + " · " + euro(e.acompte), 1);
       if (estClient(e) && e.statut === "confirme" && e.date <= limiteFiche && !(e.fiche && e.fiche.recue_le)) ajouter(e, "📝", "Fiche client à vérifier · " + titre, date + " · À contrôler avant l'animation", 1);
@@ -4205,6 +4272,26 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       try { await reload(); toast("🧭 Centre de contrôle actualisé"); }
       catch (err) { toast("Actualisation impossible : " + (err.message || err)); }
     }
+  });
+
+  // 💜 Vue de suivi des demandes anticipées (sans bloquer le calendrier).
+  function renderAnticipationsPanel() {
+    const zone=$("anticipationsPanel");if(!zone)return;
+    if(!isGest()||view!=="cal"){zone.classList.add("hidden");return;}
+    const liste=events.filter(anticipationActive).sort((a,b)=>a.date.localeCompare(b.date));
+    const attente=liste.filter(e=>e.anticipation.statut==="anticipee").length;
+    const reconf=liste.filter(e=>["reconfirmee","a_traiter"].includes(e.anticipation.statut)).length;
+    zone.classList.remove("hidden");
+    zone.innerHTML=`<h2>💜 Demandes anticipées</h2>
+      <div class="ant-counts"><span>${attente} en attente</span><span>${reconf} à traiter</span><span>${liste.length} au total</span></div>
+      <details><summary>Voir les ${liste.length} demandes et leur prochain rappel</summary>
+      ${liste.map(e=>`<div class="ant-line"><div style="min-width:0"><b>${esc(e.parent||"Client à compléter")}</b> · ${esc(fmtLong(e.date))}
+        <small>🎭 ${esc(personnageAnticipe(e))} · ${esc(STATUTS_ANTICIPATION[e.anticipation.statut]?.label||e.anticipation.statut)}<br>⏰ ${esc(prochaineRelanceAnticipee(e.anticipation))}</small></div>
+        <button type="button" data-ant-open="${esc(e.id)}">Ouvrir</button></div>`).join("")||`<p class="hint">Aucune demande anticipée pour l'instant.</p>`}</details>`;
+  }
+  $("anticipationsPanel").addEventListener("click",e=>{
+    const b=e.target.closest("[data-ant-open]");if(!b)return;
+    const ev=events.find(x=>String(x.id)===b.dataset.antOpen);if(ev)openForm(ev);
   });
 
   // ================= Formulaire =================
@@ -4365,6 +4452,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!gest) { $("delBtn").classList.add("hidden"); $("formTitle").textContent = $("type_evenement").value === "repetition" ? "Détails de la répétition" : $("type_evenement").value === "contrat_pro" ? "Détails du contrat pro" : estEvt() ? "Détails de l'événement" : "Détails de l'animation"; $("cancelBtn").textContent = "Fermer"; }
     else $("cancelBtn").textContent = "Annuler";
     renderFiche(ev); renderEtapeFiche(ev); renderDevis(ev);
+    afficherAnticipationFiche(ev);
     renderMonTrajet(ev);
     if (ev) $("bilanBox").innerHTML = bilanHtml(ev);
     $("jourBtnBox").classList.toggle("hidden", !ev || ["annule", "en_attente"].includes(ev.statut) || ev.type_evenement !== "animation");
@@ -4384,12 +4472,53 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("sheetBg").classList.remove("hidden");
     document.body.style.overflow = "hidden";
   }
+  function afficherAnticipationFiche(ev) {
+    const zone=$("anticipationFiche");if(!zone)return;
+    const type=$("type_evenement").value, d=$("date").value;
+    const suivi=ev && anticipationActive(ev) ? ev.anticipation : null;
+    const ouverture=ouvertureAnticipation(d);
+    const prevue=type==="animation" && $("statut").value==="en_attente" && ouverture>dateBelgeISO();
+    if (!suivi && !prevue) {zone.classList.add("hidden");zone.innerHTML="";return;}
+    zone.classList.remove("hidden");
+    if (!suivi) {
+      zone.innerHTML=`💜 <b>Réservation anticipée</b> — Cette nouvelle demande sera placée en attente.
+        <br>Le client sera automatiquement recontacté le <b>${esc(fmtLong(ouverture))}</b> (3 mois avant la prestation).`;
+      return;
+    }
+    const st=STATUTS_ANTICIPATION[suivi.statut]||STATUTS.en_attente;
+    const manuelle=isResp() && suivi.statut==="anticipee" && suivi.date_ouverture<=dateBelgeISO() && d===ev.date;
+    zone.innerHTML=`💜 <b>${esc(st.label)}</b><br>
+      ${suivi.statut==="anticipee" ? `Réservation anticipée – Le client sera automatiquement recontacté le <b>${esc(fmtLong(ouverture||suivi.date_ouverture))}</b>.`
+      : suivi.statut==="reconfirmee" ? "Le client a confirmé son intérêt. Vérifie la disponibilité, puis poursuis le devis habituel."
+      : suivi.statut==="a_traiter" ? "La prestation est dans les 3 prochains mois. Vérifie les disponibilités et reprends contact manuellement."
+      : "Demande conservée dans l'historique. Aucun nouveau rappel automatique."}
+      ${d!==ev.date ? `<p class="hint">⚠️ Enregistre la nouvelle date pour recalculer les rappels. Les anciens liens deviendront invalides.</p>` : ""}
+      ${manuelle ? `<button type="button" class="sig" id="anticipationRappelBtn" style="margin:10px 0">📩 Envoyer un rappel maintenant</button>` : ""}
+      <details style="margin-top:8px"><summary>🕓 Historique des e-mails</summary><div id="anticipationHistorique" class="hint">Chargement…</div></details>`;
+    if ($("anticipationRappelBtn")) $("anticipationRappelBtn").onclick=async()=>{
+      if (!confirm(`Envoyer maintenant un rappel à ${ev.email||"ce client"} ?\n\nCette réponse ne confirme pas la réservation.`))return;
+      const btn=$("anticipationRappelBtn");btn.disabled=true;
+      try {const {data,error}=await sb.functions.invoke("notifier",{body:{type:"ANTICIPATION_MANUEL",evenementId:ev.id}});
+        if(error||!data?.ok)throw error||new Error(data?.erreur||"Envoi impossible");
+        toast("📩 Rappel envoyé au client");await reload();const actuel=events.find(x=>String(x.id)===String(ev.id));if(actuel)openForm(actuel);
+      }catch(err){toast("⚠️ "+(err.message||err));btn.disabled=false;}
+    };
+    if ($("anticipationHistorique") && !DEMO && isGest()) {
+      const id=String(ev.id);
+      sb.from("demandes_anticipees_emails")
+        .select("etape,statut,cree_le,envoye_le,erreur")
+        .eq("evenement_id",ev.id).order("cree_le",{ascending:false}).limit(15)
+        .then(({data,error})=>{const cible=$("anticipationHistorique");if(!cible||String(editingId)!==id)return;
+          cible.innerHTML=error ? "Historique indisponible" : (data||[]).map(x=>`<p style="margin:6px 0">${esc(new Date(x.cree_le).toLocaleString("fr-BE"))} · <b>${esc(x.etape)}</b> · ${esc(x.statut)}${x.erreur ? ` · ⚠️ ${esc(x.erreur)}` : ""}</p>`).join("")||"Aucun email envoyé pour le moment.";
+        }).catch(()=>{});
+    }
+  }
   const toMin = (t) => t ? (+t.slice(0,2))*60 + (+t.slice(3,5)) : null;
   function checkJbl() {
     const w = $("jblWarn"), j = $("enceinte").value, d = $("date").value;
     if (!j || !d) { w.classList.add("hidden"); return; }
     const s1 = toMin($("heure_debut").value), e1 = toMin($("heure_fin").value) ?? (s1 != null ? s1 + 120 : null);
-    const clash = events.filter(x => x.id !== editingId && x.enceinte === j && x.date === d && x.statut !== "annule").filter(x => {
+    const clash = events.filter(x => x.id !== editingId && x.enceinte === j && x.date === d && x.statut !== "annule" && !anticipationNonBloquante(x)).filter(x => {
       const s2 = toMin(x.heure_debut), e2 = toMin(x.heure_fin) ?? (s2 != null ? s2 + 120 : null);
       if (s1 == null || s2 == null) return true;          // journée entière : on prévient
       return s1 < e2 + 60 && s2 < e1 + 60;                // chevauche (avec 1h de trajet)
@@ -4400,7 +4529,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   $("siteSeg").addEventListener("change", (e) => { $("site_affichage").value = e.target.value; });
   $("enceinteSeg").addEventListener("change", (e) => { $("enceinte").value = e.target.value; checkJbl(); });
-  ["date","heure_debut","heure_fin"].forEach(id => $(id).addEventListener("input", () => { checkJbl(); if (!$("sheetBg").classList.contains("hidden")) renderPicked(); }));
+  ["date","heure_debut","heure_fin"].forEach(id => $(id).addEventListener("input", () => { checkJbl(); if (!$("sheetBg").classList.contains("hidden")) renderPicked(); if(id==="date")afficherAnticipationFiche(events.find(x=>x.id===editingId)); }));
+  $("statut").addEventListener("change",()=>afficherAnticipationFiche(events.find(x=>x.id===editingId)));
   // ---------- Signalement rapide ----------
   let sigEv = null;
   function openSignal(ev) {
@@ -4480,7 +4610,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }
     box.classList.remove("hidden");
     let titre="",desc="",action="",cible="";
-    if(ev.statut==="annule"){titre="❌ Animation annulée";desc="Aucune action demandée.";action="";cible="";}
+    if(anticipationActive(ev) && !["reconfirmee","a_traiter"].includes(ev.anticipation.statut)){
+      titre=STATUTS_ANTICIPATION[ev.anticipation.statut]?.label||"💜 Demande anticipée";
+      desc=ev.anticipation.statut==="anticipee" ? "Le client sera recontacté automatiquement à l'ouverture des réservations. Aucun devis ni disponibilité confirmés." : "Demande conservée en historique, sans relance.";
+      action="";cible="";
+    }
+    else if(ev.statut==="annule"){titre="❌ Animation annulée";desc="Aucune action demandée.";action="";cible="";}
     else if(ev.statut==="en_attente"){
       if(!ev.email){titre="📧 Coordonnées du client";desc="Ajoute l'adresse e-mail du client pour pouvoir lui envoyer son devis.";action="Ajouter l'e-mail";cible="email";}
       else if(!(Number(ev.prix)>0)){titre="💶 Préparer le prix";desc="Vérifie le prix total, les options et les déplacements.";action="Vérifier les montants";cible="prix";}
@@ -4511,7 +4646,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
   async function renderDevis(ev) {
     const box = $("devisBox");
-    const ok = isResp() && ev && ev.id && ev.type_evenement === "animation" && !estEvenementInterne(ev);
+    const ok = isResp() && ev && ev.id && ev.type_evenement === "animation" && !estEvenementInterne(ev)
+      && (!anticipationActive(ev) || ["reconfirmee","a_traiter"].includes(ev.anticipation.statut));
     box.classList.toggle("hidden", !ok); if (!ok) { renderEtapeFiche(ev); return; }
     let d = null;
     if (!DEMO) { try { ({ data: d } = await sb.from("devis").select("envoye_le,accepte_le,reponse_client,reponse_motif,reponse_message,reponse_le,relance_le,relance_nombre").eq("evenement_id", ev.id).maybeSingle()); } catch (_) {} }
@@ -5228,6 +5364,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       else ev[k] = el.value.trim() === "" ? null : el.value.trim();
     });
     if (!ev.date) { $("formErr").textContent = "La date est obligatoire."; return; }
+    if (!editingId && ev.type_evenement === "animation" && ev.statut === "en_attente"
+        && ouvertureAnticipation(ev.date) > dateBelgeISO() && !anticipationsDisponibles) {
+      $("formErr").textContent = "💜 Active d'abord le script SQL des demandes anticipées dans Supabase : cette demande doit être suivie automatiquement.";
+      return;
+    }
     if (!soldeTouched && (ev.solde == null || isResp())) ev.solde = autoSolde();
     if (ev.type_evenement === "contrat_pro") {
       ev.parent = $("proClientNom").value.trim() || null;
@@ -6101,7 +6242,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     indispos.filter(x => normName(x.prenom) === n && x.debut <= d && (x.fin || x.debut) >= d)
       .forEach(x => out.push(`🚫 indisponible${x.note ? " (" + x.note + ")" : ""}`));
     const s1 = minOf($("heure_debut").value), e1 = minOf($("heure_fin").value) ?? (s1 != null ? s1 + 90 : null);
-    events.filter(x => x.id !== editingId && x.date === d && x.statut !== "annule" && anims(x).some(a => normName(a) === n))
+    events.filter(x => x.id !== editingId && x.date === d && x.statut !== "annule" && !anticipationNonBloquante(x) && anims(x).some(a => normName(a) === n))
       .forEach(x => {
         const s2 = minOf(x.heure_debut), e2 = minOf(x.heure_fin) ?? (s2 != null ? s2 + 90 : null);
         const chevauche = s1 == null || s2 == null || (s1 < e2 + 60 && s2 < e1 + 60);
