@@ -2811,6 +2811,16 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   </div>
 </div>
 
+<!-- ============ 🧼 HISTORIQUE ENTRETIEN COSTUMES ET PERRUQUES ============ -->
+<div id="entretienBg" class="sheet-bg hidden" style="z-index:66">
+  <div class="sheet" style="max-width:720px">
+    <div class="grab"></div>
+    <h2 id="entretienTitre">🧼 Carnet d'entretien</h2>
+    <div id="entretienBody"></div>
+    <div class="actions"><button type="button" class="btn primary" id="entretienFermer">Fermer</button></div>
+  </div>
+</div>
+
 <!-- ============ 👗 ATTRIBUTIONS PAR PRESTATION ============ -->
 <div id="costAssignBg" class="sheet-bg hidden">
   <div class="sheet">
@@ -8050,6 +8060,102 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     },
   };
   async function costReload() { try { costumes = await costStore.list(); } catch (e) { console.error(e); costumes = []; } }
+  // 🧼 Carnet d'entretien partagé pour chaque costume ET chaque perruque.
+  const LS_ENTRETIEN = "fk_cost_entretien_demo";
+  const ENTRETIENS = { lavage: "🧺 Lavage effectué", recoiffage: "💇 Recoiffage effectué", reparation: "🪡 Réparation effectuée", controle: "✅ Contrôle effectué", autre: "📝 Autre entretien" };
+  let entretiens = [], entretienPiece = null, entretienDisponible = DEMO, entretienEnCours = false;
+  const entretienStore = {
+    async list() {
+      if (DEMO) { try { return JSON.parse(localStorage.getItem(LS_ENTRETIEN) || "[]"); } catch (_) { return []; } }
+      const { data, error } = await sb.from("costume_entretiens").select("*").order("effectue_le", { ascending: false }).limit(3000);
+      if (error) throw error; return data || [];
+    },
+    async add(row) {
+      if (DEMO) { const liste = await this.list(); liste.unshift({ id: chatId(), ...row }); localStorage.setItem(LS_ENTRETIEN, JSON.stringify(liste)); return; }
+      const { error } = await sb.from("costume_entretiens").insert(row); if (error) throw error;
+    },
+    async seuil(c, valeur) {
+      if (DEMO) { await costStore._demo(a => a.map(x => String(x.id) === String(c.id) ? { ...x, entretien_seuil: valeur } : x)); return; }
+      const { data, error } = await sb.from("costumes").update({ entretien_seuil: valeur }).eq("id", c.id).select("id");
+      if (error) throw error; if (!data?.length) throw new Error("Modification non autorisée.");
+    },
+  };
+  async function entretienReload() {
+    try { entretiens = await entretienStore.list(); entretienDisponible = true; }
+    catch (err) { entretiens = []; entretienDisponible = false; console.warn("Carnet d'entretien à installer dans Supabase", err); }
+    if (!$("costBg").classList.contains("hidden")) renderCost();
+  }
+  const entretienPour = c => entretiens.filter(e => String(e.costume_id) === String(c.id))
+    .sort((a, b) => String(b.effectue_le).localeCompare(String(a.effectue_le)));
+  const seuilEntretien = c => c.entretien_seuil == null ? (typeDe(c) === "perruque" ? 1 : MASCOTTES_FANTASY.includes(c.personnage) ? 3 : 5) : +c.entretien_seuil;
+  function nbUtilisationsDepuisEntretien(c) {
+    const entretien = entretienPour(c).find(e => ["lavage", "recoiffage", "reparation", "controle"].includes(e.action));
+    const depuis = entretien?.effectue_le?.slice(0, 10) || "0000-01-01";
+    const IDs = new Set(costAttributions.filter(a => String(a.costume_id) === String(c.id)).map(a => String(a.evenement_id)));
+    return events.filter(e => IDs.has(String(e.id)) && e.date > depuis && e.date < todayISO() && e.statut !== "annule" && e.type_evenement !== "repetition").length;
+  }
+  const entreeDate = s => s ? new Date(s).toLocaleDateString("fr-BE", { day: "numeric", month: "long", year: "numeric" }) : "Jamais enregistré";
+  function renderEntretien() {
+    const c = entretienPiece && costumes.find(x => String(x.id) === String(entretienPiece)); if (!c) return;
+    $("entretienTitre").textContent = `🧼 ${nomDe(c)}`;
+    const liste = entretienPour(c), n = nbUtilisationsDepuisEntretien(c), seuil = seuilEntretien(c);
+    const dernier = action => liste.find(x => x.action === action)?.effectue_le;
+    const autorise = isResp() || !persoDe(c) || normName(persoDe(c)) === normName(chatMe());
+    $("entretienBody").innerHTML = !entretienDisponible ? `<p class="hint">⚠️ Le carnet d'entretien attend le SQL <b>fantasy-entretien-costumes.sql</b> dans Supabase.</p>` : `
+      <div class="mine-head" style="margin:10px 0"><b>🎭 ${n} prestation${n > 1 ? "s" : ""} depuis le dernier entretien enregistré</b>
+        <p class="hint" style="margin:5px 0">Calculé à partir des attributions de tenues dans l'agenda (prestations passées).</p>
+        ${seuil > 0 && n >= seuil ? '<p style="color:#a05200;font-weight:800;margin:6px 0">🟠 Entretien conseillé</p>' : ''}
+        <small>🧺 Dernier lavage : ${esc(entreeDate(dernier("lavage")))}</small><br>
+        ${typeDe(c) === "perruque" ? `<small>💇 Dernier recoiffage : ${esc(entreeDate(dernier("recoiffage")))}</small><br>` : ""}
+        <small>🪡 Dernière réparation : ${esc(entreeDate(dernier("reparation")))}</small>
+      </div>
+      ${isResp() ? `<label>Rappel après combien de prestations ? (0 = désactivé)
+        <input id="entretienSeuil" type="number" min="0" max="50" value="${seuil}" style="max-width:140px" /></label>
+        <button type="button" class="btn ghost" id="entretienSeuilSave" style="margin:6px 0 12px">💾 Enregistrer le seuil</button>` : ""}
+      ${autorise ? `<div class="sec">✅ Déclarer un entretien effectué</div>
+        <label for="entretienAction">Intervention</label><select id="entretienAction">
+          ${Object.entries(ENTRETIENS).filter(([k]) => k !== "recoiffage" || typeDe(c) === "perruque").map(([k, label]) => `<option value="${k}">${label}</option>`).join("")}</select>
+        <label for="entretienNote">Précisions (facultatif)</label>
+        <textarea id="entretienNote" rows="3" maxlength="1000" placeholder="Ex. Lavage complet, fermeture réparée, boucles remises en forme…"></textarea>
+        <button type="button" class="btn primary" id="entretienAjouter" style="width:100%;margin-top:9px" ${entretienEnCours ? "disabled" : ""}>${entretienEnCours ? "⏳ Enregistrement…" : "💾 Enregistrer l'entretien"}</button>` : ""}
+      <div class="sec">📋 Historique (${liste.length})</div>
+      ${liste.length ? liste.map(e => `<div class="mine-head" style="margin:8px 0;padding:11px"><b>${esc(ENTRETIENS[e.action] || "📝 " + e.action)}</b><br>
+        <small>${esc(entreeDate(e.effectue_le))} · ${esc(e.effectue_par || "Membre de l'équipe")}</small>${e.note ? `<p style="white-space:pre-wrap;margin:6px 0 0">${esc(e.note)}</p>` : ""}</div>`).join("") : '<p class="hint">Aucun entretien enregistré pour le moment.</p>'}`;
+  }
+  async function ouvrirEntretien(id) {
+    entretienPiece = String(id); entretienEnCours = false;
+    $("entretienBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
+    $("entretienBody").textContent = "Chargement de l'historique…";
+    await entretienReload(); renderEntretien();
+  }
+  const fermerEntretien = () => { if (entretienEnCours) return; $("entretienBg").classList.add("hidden"); document.body.style.overflow = $("costBg").classList.contains("hidden") ? "" : "hidden"; };
+  $("entretienFermer").onclick = fermerEntretien;
+  $("entretienBg").addEventListener("click", e => { if (e.target.id === "entretienBg") fermerEntretien(); });
+  $("entretienBody").addEventListener("click", async e => {
+    const c = costumes.find(x => String(x.id) === String(entretienPiece)); if (!c || !entretienDisponible || entretienEnCours) return;
+    if (e.target.closest("#entretienSeuilSave")) {
+      if (!isResp()) return;
+      const seuil = +$("entretienSeuil").value;
+      if (!Number.isInteger(seuil) || seuil < 0 || seuil > 50) return toast("Choisis un nombre de 0 à 50.");
+      try { await entretienStore.seuil(c, seuil); await costReload(); renderEntretien(); renderCost(); toast("✅ Seuil enregistré"); }
+      catch (err) { toast("Erreur : " + (err.message || err)); }
+      return;
+    }
+    if (!e.target.closest("#entretienAjouter")) return;
+    if (!isResp() && persoDe(c) && normName(persoDe(c)) !== normName(chatMe())) return;
+    const action = $("entretienAction").value, note = $("entretienNote").value.trim();
+    entretienEnCours = true; $("entretienAjouter").disabled = true;
+    try {
+      await entretienStore.add({ costume_id: String(c.id), action, note: note || null,
+        effectue_par: chatMe(), auteur_email: String(currentUser?.email || "").toLowerCase(), effectue_le: new Date().toISOString() });
+      await entretienReload();
+      let avertissement = "";
+      try { if (["lavage", "recoiffage", "reparation"].includes(action) && etatDe(c) !== "ok") await costStore.etat(c.id, "ok", null); }
+      catch (err) { avertissement = "Entretien enregistré, mais l'état Prêt doit être validé séparément."; console.warn("État de la tenue", err); }
+      await costReload(); toast(avertissement || "✅ Entretien enregistré !");
+    } catch (err) { toast("Impossible d'enregistrer : " + (err.message || err)); }
+    finally { entretienEnCours = false; renderEntretien(); if (!$("costBg").classList.contains("hidden")) renderCost(); }
+  });
   // 🧸 Fiches d'habillage des mascottes, partagées entre les membres.
   const LS_MASCOTTES = "fk_habillage_mascottes_demo", MASCOTTE_BUCKET = "habillage-mascottes";
   let mascotteNom = null, mascotteFiche = null, mascotteEdition = false, mascotteEtapes = [], mascotteBusy = false;
@@ -8399,10 +8505,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       .map(([v, t]) => `<button type="button" class="chip${costType === v ? " on" : ""}" data-ctype="${v}">${t}</button>`).join("");
     $("costList").innerHTML = l.length ? l.map((c, i) => `${costSource === "perso" && r && (i === 0 || normName(persoDe(c)) !== normName(persoDe(l[i - 1]))) ? `<div class="group-title">👤 ${esc(persoDe(c))}</div>` : ""}<div class="cost-row ${etatDe(c)}">
         <span class="em">${TYPES[typeDe(c)][0]}<i>${roleEmoji(c.personnage)}</i></span>
-        <div class="tx"><b class="cost-perso">${esc(c.personnage || nomDe(c))}</b><small class="cost-nom">${TYPES[typeDe(c)][1]}${c.nom && c.nom !== c.personnage ? ` · <b>${esc(c.nom)}</b>` : ""}</small><small>${persoDe(c) ? `👤 ${esc(persoDe(c))} · ${esc(ouEst(c))}` : esc(ouEst(c))}${c.maj_par ? ` · maj ${esc(c.maj_par)}` : ""}</small><small class="nx">${prochaineUtil(c)}</small></div>
+        <div class="tx"><b class="cost-perso">${esc(c.personnage || nomDe(c))}</b><small class="cost-nom">${TYPES[typeDe(c)][1]}${c.nom && c.nom !== c.personnage ? ` · <b>${esc(c.nom)}</b>` : ""}</small><small>${persoDe(c) ? `👤 ${esc(persoDe(c))} · ${esc(ouEst(c))}` : esc(ouEst(c))}${c.maj_par ? ` · maj ${esc(c.maj_par)}` : ""}</small><small class="nx">${prochaineUtil(c)}</small>${entretienDisponible && seuilEntretien(c) > 0 && nbUtilisationsDepuisEntretien(c) >= seuilEntretien(c) ? '<small style="color:#a05200;font-weight:800">🟠 Entretien conseillé</small>' : ""}</div>
         <div class="etat">${etatsPour(c).map(([k, [ic, t]]) => r || normName(persoDe(c)) === normName(moi) ? `<button type="button" class="${etatDe(c) === k ? "on " + k : ""}" data-etat="${k}" data-cid="${esc(c.id)}">${ic} ${t}</button>` : `<span class="badge ${etatDe(c) === k ? "ok" : ""}">${ic} ${t}</span>`).join("")}</div>
         ${etatDe(c) !== "ok" && (r || normName(persoDe(c)) === normName(moi)) ? `<input class="pb" type="text" data-pb="${esc(c.id)}" value="${esc(c.probleme || "")}" placeholder="${etatDe(c) === "reparer" ? "Quel problème ? (ex. fermeture cassée, ourlet décousu)" : "Précision (ex. tache de chocolat)"}" />` : ""}
         <div class="ac">
+          <button type="button" class="edit-btn" data-entretien-open="${esc(c.id)}" aria-label="Voir le carnet d'entretien de ${esc(nomDe(c))}" title="Carnet d'entretien">🧼 Carnet</button>
           ${r || normName(persoDe(c)) === normName(moi) ? `<select data-move="${esc(c.id)}" aria-label="Où est cette pièce ?">${opts(c)}</select>` : ""}
           ${r || normName(persoDe(c)) === normName(moi) ? `<button type="button" class="edit-btn" data-cost-edit-open="${esc(c.id)}" aria-label="Modifier ${esc(nomDe(c))}">✏️</button>` : ""}
           ${r || normName(persoDe(c)) === normName(moi) ? `<button type="button" class="x" data-cdel="${esc(c.id)}" title="Supprimer">🗑️</button>` : ""}
@@ -8419,11 +8526,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }
     document.querySelectorAll('input[name="costSourceR"]').forEach(i => { i.checked = i.value === costSource; });
   }
-  function openCost() { costFiltre = ""; $("costSearch").value = ""; costSource = isResp() ? "fantasy" : "perso"; costType = ""; costEditId = null; renderCost(); afficherListeMascottes(); $("costBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; }
+  function openCost() { costFiltre = ""; $("costSearch").value = ""; costSource = isResp() ? "fantasy" : "perso"; costType = ""; costEditId = null; renderCost(); afficherListeMascottes(); $("costBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; entretienReload(); }
   function closeCost() { costEditId = null; $("costBg").classList.add("hidden"); document.body.style.overflow = ""; render(); }
   $("costClose").onclick = closeCost;
   $("costBg").addEventListener("click", async (e) => {
     if (e.target.id === "costBg") return closeCost();
+    const carnet = e.target.closest("[data-entretien-open]");
+    if (carnet) { ouvrirEntretien(carnet.dataset.entretienOpen); return; }
     const ouvrir = e.target.closest("[data-cost-edit-open]");
     if (ouvrir) { costEditId = ouvrir.dataset.costEditOpen; renderCost(); return; }
     if (e.target.closest("[data-cost-edit-cancel]")) { costEditId = null; renderCost(); return; }
