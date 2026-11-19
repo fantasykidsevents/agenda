@@ -1929,6 +1929,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     </section>
     <section id="viewChat" class="hidden">
       <input id="chatSearch" type="search" placeholder="🔎 Rechercher un message ou une conversation…" aria-label="Rechercher dans les chats" />
+      <button type="button" id="chatCreate" class="btn primary hidden" style="width:100%;margin:9px 0">➕ Nouvelle conversation privée</button>
       <div class="chat-tools" style="margin-top:8px">
         <button type="button" data-chat-mode="actifs" class="on">💬 Actuels</button>
         <button type="button" data-chat-mode="archives">📂 Archives</button>
@@ -2829,6 +2830,21 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 </div>
 
 <!-- ============ 💬 CONVERSATION ============ -->
+<div id="chatCreateBg" class="sheet-bg hidden">
+  <div class="sheet" style="max-width:520px">
+    <h3>💬 Nouvelle conversation</h3>
+    <p class="hint">Choisis les membres qui participeront. Seuls eux et toi verront cette discussion.</p>
+    <label for="chatGroupName">Nom de la conversation</label>
+    <input id="chatGroupName" maxlength="80" placeholder="Ex. Préparation Bal de Noël" />
+    <label for="chatGroupSearch">Membres à ajouter</label>
+    <input id="chatGroupSearch" type="search" placeholder="🔎 Rechercher un membre…" />
+    <div id="chatGroupMembers" style="max-height:44vh;overflow:auto;margin:10px 0"></div>
+    <div class="actions" style="justify-content:space-between">
+      <button type="button" class="btn ghost" id="chatGroupCancel">Annuler</button>
+      <button type="button" class="btn primary" id="chatGroupSave" disabled>Créer la conversation</button>
+    </div>
+  </div>
+</div>
 <div id="chatBg" class="sheet-bg hidden">
   <div class="sheet">
     <div class="chat-top">
@@ -4269,7 +4285,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
             if (lien.origin !== location.origin) throw new Error("Lien de notification non autorisé");
             const qs = lien.searchParams, canal = qs.get("chat");
             if (canal) {
-              if (canal === "equipe" || evOfCanal(canal)) openChat(canal);
+              if (canal === "equipe" || evOfCanal(canal) || groupeDuCanal(canal)) openChat(canal);
               else toast("Cette conversation n'est plus disponible.");
             } else if (qs.has("infos")) openInfosEquipe(qs.get("infos"));
             else if (qs.has("idees")) ouvrirIdees(qs.get("idees"));
@@ -5595,7 +5611,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     document.querySelector(".filters").classList.toggle("hidden", view === "mine" || view === "stats" || view === "chat" || view === "pt" || view === "regie");
     render();
     if (view === "regie") actualiserRegie();
-    if (view === "chat" && (currentUser || DEMO)) { chargerChatMuets(); chargerChatFavoris(); }
+    if (view === "chat" && (currentUser || DEMO)) { chargerChatMuets(); chargerChatFavoris(); chargerChatGroupes(); }
   }));
   $("prevM").onclick = () => { if (--curM < 0) { curM = 11; curY--; } render(); };
   $("nextM").onclick = () => { if (++curM > 11) { curM = 0; curY++; } render(); };
@@ -7528,7 +7544,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(() => openCostAssign(ev), 50); return;
     }
     const canal = qs.get("chat");
-    if (canal) { if (canal !== "equipe" && !evOfCanal(canal)) return; linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(() => openChat(canal), 50); return; }
+    if (canal) { if (canal !== "equipe" && !evOfCanal(canal) && !groupeDuCanal(canal)) return; linkHandled = true; history.replaceState(null, "", location.pathname); setTimeout(() => openChat(canal), 50); return; }
     const id = qs.get("ev"); if (!id) return;
     const wantSignal = qs.get("signal") === "1";
     const ev = events.find(x => String(x.id) === id); if (!ev) return;
@@ -7546,7 +7562,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }
     if (e.data && e.data.checklist) { openCK(); return; }
     if (e.data && e.data.vue) { const tb = document.querySelector(`.tab[data-view="${e.data.vue}"]`); if (tb) tb.click(); return; }
-    if (e.data && e.data.chat) { closeForm(); openChat(e.data.chat); return; }
+    if (e.data && e.data.chat) { closeForm(); chargerChatGroupes().then(() => openChat(e.data.chat)); return; }
     if (e.data && e.data.ev) { const ev = events.find(x => String(x.id) === e.data.ev); if (ev) (e.data.signal ? openJour(ev) : openForm(ev)); }
   });
 
@@ -12143,9 +12159,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
 
   // ================= 💬 Chat =================
-  const LS_CHAT = "fk_agenda_chat_demo", LS_LU = "fk_chat_lu", LS_MUETS = "fk_chat_muets_demo", LS_CHAT_FAVORIS = "fk_chat_favoris_demo";
+  const LS_CHAT = "fk_agenda_chat_demo", LS_LU = "fk_chat_lu", LS_MUETS = "fk_chat_muets_demo", LS_CHAT_FAVORIS = "fk_chat_favoris_demo", LS_CHAT_GROUPES = "fk_chat_groupes_demo";
   const CHAT_RX = ["❤️", "👍", "😂", "✨", "😮", "🙏"];
   let chatMsgs = [], chatCanal = null, chatLoaded = false, chatPhoto = null, chatPick = null;
+  let chatGroupes = [], chatGroupSelection = new Set(), chatGroupesDisponibles = DEMO;
   let chatFavoris = new Set(), chatMode = "actifs", chatReplyId = null, chatVocal = null, chatRecorder = null, chatRecordStream = null, chatRecordTimer = null, chatPinIndex = 0;
   let chatLu = {}; try { chatLu = JSON.parse(localStorage.getItem(LS_LU) || "{}"); } catch (e) {}
   let chatMuets = new Set(), chatMuteEnCours = false;
@@ -12190,6 +12207,36 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     finally { chatMuteEnCours = false; majBoutonChatMuet(); }
   });
   const chatId = () => (crypto.randomUUID ? crypto.randomUUID() : "m" + Date.now() + Math.random().toString(16).slice(2));
+  const groupeDuCanal = (canal) => String(canal || "").startsWith("grp:")
+    ? chatGroupes.find(g => "grp:" + g.id === canal) : null;
+  const nomMembreEmail = (email) => members.find(m => String(m.email || "").toLowerCase() === String(email || "").toLowerCase())?.prenom || String(email || "").split("@")[0];
+  async function chargerChatGroupes() {
+    if (DEMO) { try { chatGroupes = JSON.parse(localStorage.getItem(LS_CHAT_GROUPES) || "[]"); } catch (_) { chatGroupes = []; } }
+    else if (sb && currentUser) {
+      const { data, error } = await sb.from("chat_groupes").select("id,nom,createur_email,created_at").order("created_at", { ascending: false });
+      if (error) {
+        console.warn("Conversations privées indisponibles", error);
+        chatGroupes = []; chatGroupesDisponibles = false;
+        if (view === "chat") renderChatList();
+        return;
+      }
+      const ids = (data || []).map(g => g.id);
+      let participants = [];
+      if (ids.length) {
+        const rep = await sb.from("chat_groupes_membres").select("groupe_id,email").in("groupe_id", ids);
+        if (rep.error) {
+          console.warn("Participants des conversations", rep.error);
+          chatGroupes = []; chatGroupesDisponibles = false;
+          if (view === "chat") renderChatList();
+          return;
+        }
+        participants = rep.data || [];
+      }
+      chatGroupes = (data || []).map(g => ({ ...g, emails: participants.filter(p => p.groupe_id === g.id).map(p => p.email) }));
+      chatGroupesDisponibles = true;
+    }
+    if (view === "chat") renderChatList();
+  }
   function chatMe() {
     const me = myMember(); if (me) return me.prenom;
     if (DEMO) return demoMe || (isResp() ? "Jordan" : "Moi");
@@ -12321,6 +12368,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const t = todayISO();
     const parCanal = new Map(); chatMsgs.forEach(m => parCanal.set(m.canal, m));
     const out = [{ canal: "equipe", nom: "Équipe Fantasy", sous: "Toute l'équipe", av: "✨", last: parCanal.get("equipe") }];
+    if (!archives) chatGroupes.forEach(g => out.push({ canal: "grp:" + g.id, nom: g.nom,
+      sous: (g.emails || []).map(nomMembreEmail).join(", "), av: "💬", groupe: g, last: parCanal.get("grp:" + g.id) }));
     const d30 = iso(new Date(Date.now() - 30 * 864e5));
     // 💬 Chat affiché 15 jours avant la prestation, ou dès qu'une conversation existe.
     // Ainsi une animation prévue bien plus tard reste visible si quelqu'un y a déjà écrit.
@@ -12341,7 +12390,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     try { chatFavoris = new Set(await chatStore.favoris()); if (view === "chat") renderChatList(); }
     catch (e) { console.warn("Favoris de chats", e); toast("Favoris indisponibles : vérifie la migration Supabase"); }
   }
-  const chatVisible = (m) => m.canal === "equipe" || !!(evOfCanal(m.canal) && jePeuxVoir(evOfCanal(m.canal)));
+  const chatVisible = (m) => m.canal === "equipe" || !!groupeDuCanal(m.canal) || !!(evOfCanal(m.canal) && jePeuxVoir(evOfCanal(m.canal)));
   const chatResume = (m) => String(m.texte || (m.audio_path ? "🎤 Message vocal" : m.photo_url ? "📸 Photo" : "Message")).replace(/\s+/g, " ").slice(0, 150);
   const nonLus = (canal) => chatMsgs.filter(m => m.canal === canal && !isMine(m) && m.created_at > (chatLu[canal] || "")).length;
   // 👀 Accusés de lecture : qui a lu jusqu'où (table chat_lu)
@@ -12382,13 +12431,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     return d.toLocaleDateString("fr-BE", { day: "numeric", month: "short" });
   };
   function renderChatList() {
+    $("chatCreate").classList.toggle("hidden", !isResp() || !chatGroupesDisponibles);
     const q = normName($("chatSearch").value.trim());
     $("viewChat").querySelectorAll("[data-chat-mode]").forEach(b => b.classList.toggle("on", b.dataset.chatMode === chatMode));
     if (q || chatMode === "favoris") {
-      const resultats = chatMsgs.filter(m => chatVisible(m) && (!q || normName(`${m.auteur} ${m.texte || ""} ${evOfCanal(m.canal)?.titre || ""}`).includes(q))
+      const resultats = chatMsgs.filter(m => chatVisible(m) && (!q || normName(`${m.auteur} ${m.texte || ""} ${evOfCanal(m.canal)?.titre || ""} ${groupeDuCanal(m.canal)?.nom || ""}`).includes(q))
         && (chatMode !== "favoris" || chatFavoris.has(String(m.id)))).slice(-150).reverse();
       $("chList").innerHTML = resultats.length ? resultats.map(m => `<button type="button" class="chat-search-result" data-chat-target="${esc(m.id)}" data-canal="${esc(m.canal)}">
-        <b>${esc(m.canal === "equipe" ? "Équipe Fantasy" : (evOfCanal(m.canal)?.titre || "Animation"))}</b>
+        <b>${esc(m.canal === "equipe" ? "Équipe Fantasy" : (groupeDuCanal(m.canal)?.nom || evOfCanal(m.canal)?.titre || "Animation"))}</b>
         <small>${esc(m.auteur || "?")} · ${esc(quandCourt(m.created_at))}${chatFavoris.has(String(m.id)) ? " · ⭐" : ""}</small>
         <span>${esc(chatResume(m))}</span></button>`).join("") : `<p class="hint" style="padding:14px">Aucun message trouvé.</p>`;
       chatBadges(); return;
@@ -12399,7 +12449,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const apercu = l ? `${isMine(l) ? "Vous" : esc(l.auteur || "?")} : ${esc(chatResume(l))}` : "Pas encore de message";
       return `<button type="button" class="ch${c.canal === "equipe" ? " equipe" : ""}${n ? " unread" : ""}" data-canal="${esc(c.canal)}">
         <span class="av">${c.av}</span>
-        <span class="tx"><b>${esc(c.nom)}</b>${c.ev ? `<small class="d" style="text-transform:capitalize">${esc(c.sous)}</small>` : ""}<small>${apercu}</small></span>
+        <span class="tx"><b>${esc(c.nom)}</b>${c.ev || c.groupe ? `<small class="d" style="text-transform:capitalize">${esc(c.sous)}</small>` : ""}<small>${apercu}</small></span>
         <span class="rt">${l ? quandCourt(l.created_at) : ""}${chatEstMuet(c.canal) ? '<span class="chat-muted-label" title="Notifications désactivées" aria-label="Notifications désactivées">🔕</span>' : ""}${n ? `<span class="nb">${n}</span>` : ""}</span></button>`;
     }).join("") : `<p class="hint" style="padding:14px">Aucune ancienne conversation pour le moment.</p>`;
     chatBadges();
@@ -12408,6 +12458,63 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("chatSearch").addEventListener("input", renderChatList);
   $("viewChat").addEventListener("click", e => { const b = e.target.closest("[data-chat-mode]"); if (!b) return;
     chatMode = b.dataset.chatMode; $("chatSearch").value = ""; renderChatList(); });
+
+  function participantsDisponibles() {
+    const moi = String(currentUser?.email || "").toLowerCase();
+    return members.filter(m => /^\S+@\S+\.\S+$/.test(String(m.email || "")) && String(m.email).toLowerCase() !== moi)
+      .sort((a, b) => String(a.prenom || "").localeCompare(String(b.prenom || ""), "fr"));
+  }
+  function renderChoixChat() {
+    const listeBox = $("chatGroupMembers"), position = listeBox.scrollTop;
+    const q = normName($("chatGroupSearch").value);
+    const liste = participantsDisponibles().filter(m => !q || normName(`${m.prenom} ${m.nom || ""} ${m.email}`).includes(q));
+    listeBox.innerHTML = liste.length ? liste.map(m => {
+      const email = String(m.email).toLowerCase(), checked = chatGroupSelection.has(email);
+      return `<label class="check" style="padding:9px 12px;margin:5px 0;background:#fff;border:1px solid #e9dcf5;border-radius:12px;cursor:pointer">
+        <input type="checkbox" data-chat-member="${esc(email)}" ${checked ? "checked" : ""} />
+        <span>${esc(m.prenom || email)} <small style="display:block;color:#827191">${esc(email)}</small></span></label>`;
+    }).join("") : '<p class="hint">Aucun membre trouvé avec une adresse e-mail.</p>';
+    listeBox.scrollTop = position;
+    $("chatGroupSave").disabled = chatGroupSelection.size === 0;
+    $("chatGroupSave").textContent = chatGroupSelection.size ? `Créer avec ${chatGroupSelection.size} membre${chatGroupSelection.size > 1 ? "s" : ""}` : "Choisir un membre";
+  }
+  function fermerChoixChat() { $("chatCreateBg").classList.add("hidden"); document.body.style.overflow = ""; }
+  $("chatCreate").addEventListener("click", () => {
+    if (!isResp()) return;
+    chatGroupSelection = new Set(); $("chatGroupName").value = ""; $("chatGroupSearch").value = "";
+    renderChoixChat(); $("chatCreateBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
+  });
+  $("chatGroupCancel").addEventListener("click", fermerChoixChat);
+  $("chatCreateBg").addEventListener("click", e => { if (e.target.id === "chatCreateBg") fermerChoixChat(); });
+  $("chatGroupSearch").addEventListener("input", renderChoixChat);
+  $("chatGroupMembers").addEventListener("change", e => {
+    const input = e.target.closest("[data-chat-member]"); if (!input) return;
+    if (input.checked) chatGroupSelection.add(input.dataset.chatMember); else chatGroupSelection.delete(input.dataset.chatMember);
+    renderChoixChat();
+  });
+  $("chatGroupSave").addEventListener("click", async () => {
+    if (!isResp() || !chatGroupSelection.size) return;
+    const emails = [...chatGroupSelection], moi = String(currentUser?.email || "").toLowerCase();
+    const noms = emails.map(nomMembreEmail);
+    const nom = ($("chatGroupName").value.trim() || `Discussion · ${noms.slice(0, 3).join(", ")}${noms.length > 3 ? "…" : ""}`).slice(0, 80);
+    const bouton = $("chatGroupSave"); bouton.disabled = true;
+    try {
+      let id;
+      if (DEMO) {
+        id = chatId();
+        chatGroupes.push({ id, nom, createur_email: moi, created_at: new Date().toISOString(), emails: [...emails, moi] });
+        localStorage.setItem(LS_CHAT_GROUPES, JSON.stringify(chatGroupes));
+      } else {
+        const { data, error } = await sb.rpc("creer_chat_groupe", { p_nom: nom, p_emails: emails });
+        if (error) throw error;
+        id = data;
+        await chargerChatGroupes();
+      }
+      fermerChoixChat(); renderChatList(); openChat("grp:" + id);
+      toast("💬 Conversation créée !");
+    } catch (e) { toast("Impossible de créer le chat : " + (e.message || e)); }
+    finally { renderChoixChat(); }
+  });
 
   const COULEURS = ["#0a8fd8", "#7a3cff", "#d63fd0", "#e2577a", "#1f9d74", "#c27a00", "#5b63f8", "#b0369e"];
   const couleurDe = (n) => { let h = 0; for (const c of normName(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COULEURS[h % COULEURS.length]; };
@@ -12424,6 +12531,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const lier = (t) => esc(t).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
     .replace(mentionRx(), (x, n) => `<span class="ment${normName(n) === "tous" || normName(n) === normName(chatMe()) ? " moi" : ""}">@${n}</span>`);
   function membresDuCanal() {
+    const groupe = groupeDuCanal(chatCanal);
+    if (groupe) return members.filter(m => (groupe.emails || []).includes(String(m.email || "").toLowerCase()));
     const ev = evOfCanal(chatCanal); if (!ev) return members.slice();
     const noms = anims(ev).map(normName); return members.filter(m => m.responsable || noms.includes(normName(m.prenom)));
   }
@@ -12443,7 +12552,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <button type="button" data-chat-scroll="${esc(p.id)}">Voir</button>${epingles.length > 1 ? '<button type="button" data-chat-pin-next="1" title="Épinglé suivant">›</button>' : ""}`;
     }
     if (!list.length) {
-      box.innerHTML = `<div class="empty-chat"><span class="em">${ev ? (universOf(ev) || [0, 0, "🎭"])[2] : "💬"}</span>${ev ? "Premier message pour l'équipe de cette animation !" : "Dites bonjour à toute l'équipe ✨"}</div>`;
+      box.innerHTML = `<div class="empty-chat"><span class="em">${ev ? (universOf(ev) || [0, 0, "🎭"])[2] : "💬"}</span>${ev ? "Premier message pour l'équipe de cette animation !" : groupeDuCanal(chatCanal) ? "Cette discussion est réservée aux membres choisis ✨" : "Dites bonjour à toute l'équipe ✨"}</div>`;
       return;
     }
     let html = "", jour = "", prev = null;
@@ -12540,13 +12649,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const b = e.target.closest("[data-chat-scroll]"); if (b) scrollerChat(b.dataset.chatScroll);
   });
   function openChat(canal, targetId = null) {
-    const ev = evOfCanal(canal);
-    if (canal !== "equipe" && !ev) { toast("Animation introuvable"); return; }
+    const ev = evOfCanal(canal), groupe = groupeDuCanal(canal);
+    if (canal !== "equipe" && !ev && !groupe) { toast("Conversation introuvable ou inaccessible"); return; }
     chatCanal = canal; chatPick = null; chatPinIndex = 0; chatReplyId = null; majChatReply();
-    $("chatTitle").textContent = ev ? (ev.titre || ev.enfant || "Animation") : "Équipe Fantasy";
+    $("chatTitle").textContent = ev ? (ev.titre || ev.enfant || "Animation") : groupe ? groupe.nom : "Équipe Fantasy";
     $("chatSub").textContent = ev ? `${fmtLong(ev.date)}${ev.heure_debut ? " · " + hhmm(ev.heure_debut) : ""} · ${anims(ev).join(", ") || "équipe à définir"}`
+      : groupe ? (groupe.emails || []).map(nomMembreEmail).join(", ")
       : `${members.length || ""} membre${members.length > 1 ? "s" : ""} · toute l'équipe`.trim();
-    $("chatAv").textContent = ev ? (universOf(ev) || [0, 0, "🎭"])[2] : "✨";
+    $("chatAv").textContent = ev ? (universOf(ev) || [0, 0, "🎭"])[2] : groupe ? "💬" : "✨";
     $("chatInfo").classList.toggle("hidden", !ev);
     majBoutonChatMuet();
     $("chatBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
@@ -12736,6 +12846,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   async function chatReload(nouveau) {
     try {
+      if (nouveau && String(nouveau.canal || "").startsWith("grp:") && !groupeDuCanal(nouveau.canal)) await chargerChatGroupes();
       if (nouveau && chatLoaded) {
         if (!chatMsgs.some(m => String(m.id) === String(nouveau.id))) chatMsgs.push(nouveau);
         chatMsgs.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
@@ -12765,6 +12876,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!isGest() && !lienOuverture && view === "cal") document.querySelector('.tab[data-view="mine"]')?.click();
     ouvrirClocheAuDemarrage(user);
     await chargerChatMuets();
+    await chargerChatGroupes();
+    openFromLink(); // Les liens des chats privés ne sont disponibles qu'après lecture des participants.
     await chatReload();
     await chargerChatFavoris();
     await ptReload();
