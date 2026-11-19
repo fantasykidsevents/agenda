@@ -2516,6 +2516,33 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 <div id="resaArriveeBg" class="sheet-bg hidden" style="z-index:70">
   <div class="sheet"><div class="grab"></div><div id="resaArrivee"></div></div>
 </div>
+<div id="resaMailBg" class="sheet-bg hidden" style="z-index:75">
+  <div class="sheet" style="max-width:660px">
+    <div class="grab"></div>
+    <h2>💌 Écrire aux participants</h2>
+    <p class="hint" id="resaMailEv"></p>
+    <label for="resaMailAudience">Destinataires</label>
+    <select id="resaMailAudience">
+      <option value="tous">Tous les inscrits (réservations actives)</option>
+      <option value="confirmes">Réservations confirmées</option>
+      <option value="acomptes_manquants">Confirmées · acompte de 50 % manquant</option>
+    </select>
+    <label for="resaMailSujet">Objet du mail</label>
+    <input id="resaMailSujet" type="text" maxlength="140" placeholder="Une petite info pour votre événement ✨" />
+    <label for="resaMailMessage">Message</label>
+    <textarea id="resaMailMessage" maxlength="4000" style="min-height:145px" placeholder="Bonjour,\n\nVoici les informations importantes pour notre événement…"></textarea>
+    <p class="hint">Chaque famille reçoit un mail individuel, sans voir les adresses des autres. Un seul mail par adresse, même en cas de réservations multiples. Réservé aux informations liées à cet événement.</p>
+    <div id="resaMailErr" class="err" aria-live="polite"></div>
+    <div id="resaMailPreview" class="hidden" aria-live="polite"></div>
+    <div class="actions" style="flex-wrap:wrap">
+      <button type="button" class="btn ghost" id="resaMailClose">Fermer</button>
+      <button type="button" class="btn ghost" id="resaMailPreviewBtn">👀 Vérifier les destinataires</button>
+      <button type="button" class="btn primary hidden" id="resaMailSend">📨 Confirmer l'envoi</button>
+    </div>
+    <div class="sec" style="margin-top:14px">🕓 Historique des envois</div>
+    <div id="resaMailHistory" class="hint">Chargement…</div>
+  </div>
+</div>
 <div id="resaTableBig" class="hidden"></div>
 <div id="clapBig" class="hidden"></div>
 
@@ -8152,7 +8179,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("resaBody").innerHTML = `${!prixPlace(ev) ? `<div class="alert-bar gold">💡 Indiquez le prix par place ci-dessous.</div>` : ""}
       <div class="row" style="align-items:end"><div><label for="resaPrix">Prix par place (€)</label><input id="resaPrix" type="text" inputmode="decimal" value="${prixPlace(ev) ? String(prixPlace(ev)).replace(".", ",") : ""}" placeholder="0,00" /></div>
         <div><small class="hint">Acompte 50 % = ${euro(prixPlace(ev) / 2)} / place</small></div></div>
-      <div class="after-btns" style="margin:8px 0"><button type="button" class="sig enc" id="resaNew">➕ Nouvelle réservation</button><button type="button" class="sig photo" id="resaColler">📋 Coller un message</button></div>
+      <div class="after-btns" style="margin:8px 0"><button type="button" class="sig enc" id="resaNew">➕ Nouvelle réservation</button><button type="button" class="sig photo" id="resaColler">📋 Coller un message</button><button type="button" class="sig enc" id="resaMailOpen">💌 Mail aux participants</button></div>
       <input id="resaSearch" type="search" placeholder="🔎 Nom ou téléphone…" value="${esc(resaFiltre)}" />
       ${L.map(({ r, c }) => `<div class="resa-row ${c.actives ? "" : "annul"} ${r.arrives != null ? "arrive" : ""}" data-resa-edit="${esc(r.id)}">
         <div class="tx"><b>${esc(r.nom || "?")}</b>${r.source && r.source !== "manuel" ? `<span class="tag">${esc({ site: "🌐 site", sms: "💬 SMS", facebook: "📘 Facebook" }[r.source] || r.source)}</span>` : ""}
@@ -8163,7 +8190,95 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("resaPrix").onchange = async () => { const v = num($("resaPrix").value); try { await store.patch(ev.id, { resa_prix: v || null }); ev.resa_prix = v || null; renderResa(); toast("💶 Prix enregistré"); } catch (err) { toast(erreurReseau(err) ? "📶 Pas de réseau : changez le prix quand le réseau revient" : "Erreur : " + (err.message || err)); } };
     $("resaNew").onclick = () => openResaForm(null);
     $("resaColler").onclick = () => openResaForm(null, true);
+    $("resaMailOpen").onclick = openResaMail;
   }
+
+  // 💌 Mailing par événement : l'aperçu est calculé côté serveur, sans confiance
+  // dans une liste de destinataires reçue du navigateur.
+  let resaMailApercu = null, resaMailEnCours = false, resaMailEventId = null;
+  function resaMailInvalider() {
+    resaMailApercu = null;
+    $("resaMailPreview").classList.add("hidden");
+    $("resaMailSend").classList.add("hidden");
+    $("resaMailErr").textContent = "";
+  }
+  async function resaMailAppel(type, details = {}) {
+    if (DEMO) throw new Error("Envoi de mails indisponible dans la démonstration.");
+    if (!navigator.onLine) throw new Error("Une connexion Internet est nécessaire pour envoyer des mails.");
+    const { data, error } = await sb.functions.invoke("notifier", { body: { type, evenementId: resaMailEventId, ...details } });
+    if (error) throw new Error(data?.erreur || error.message || "Le serveur ne répond pas.");
+    if (!data?.ok) throw new Error(data?.erreur || "Le serveur n'a pas validé l'opération.");
+    return data;
+  }
+  async function resaMailHistorique() {
+    const evId = resaMailEventId;
+    const zone = $("resaMailHistory");
+    zone.textContent = "Chargement de l'historique…";
+    try {
+      const rep = await resaMailAppel("MAILING_EVENEMENT_HISTORY");
+      if (resaMailEventId !== evId) return;
+      zone.innerHTML = (rep.envois || []).map(m => `<div class="park-row" style="display:block;margin:6px 0">
+        <b>${esc(m.sujet)}</b><br><small>${esc(new Date(m.cree_le).toLocaleString("fr-BE"))} · ${+m.envoyes || 0}/${+m.destinataires_total || 0} envoyé(s) · ${+m.erreurs || 0} erreur(s) · ${esc(m.statut)}</small>
+      </div>`).join("") || "Aucun mail envoyé pour cet événement.";
+    } catch (err) { if (resaMailEventId === evId) zone.textContent = "Historique indisponible : " + (err.message || err); }
+  }
+  function openResaMail() {
+    if (!resaEv || !isResp() || resaMailEnCours) return;
+    resaMailEventId = resaEv.id;
+    $("resaMailEv").textContent = `${resaEv.titre || "Événement"} · ${parseISO(resaEv.date).toLocaleDateString("fr-BE")}`;
+    $("resaMailAudience").value = "tous";
+    $("resaMailSujet").value = `Informations · ${resaEv.titre || "notre événement"}`;
+    $("resaMailMessage").value = "";
+    resaMailInvalider();
+    $("resaMailBg").classList.remove("hidden");
+    resaMailHistorique();
+  }
+  const resaMailFermer = () => { if (resaMailEnCours) return; $("resaMailBg").classList.add("hidden"); resaMailEventId = null; resaMailInvalider(); };
+  $("resaMailClose").onclick = resaMailFermer;
+  $("resaMailBg").addEventListener("click", e => { if (e.target.id === "resaMailBg") resaMailFermer(); });
+  ["resaMailAudience", "resaMailSujet", "resaMailMessage"].forEach(id => $(id).addEventListener("input", resaMailInvalider));
+  $("resaMailPreviewBtn").onclick = async () => {
+    if (resaMailEnCours || !resaMailEventId || !isResp()) return;
+    const sujet = $("resaMailSujet").value.trim(), message = $("resaMailMessage").value.trim(), filtre = $("resaMailAudience").value;
+    resaMailInvalider();
+    if (sujet.length < 3 || message.length < 10) { $("resaMailErr").textContent = "Indique un objet et un message d'au moins 10 caractères."; return; }
+    const evId = resaMailEventId;
+    $("resaMailPreviewBtn").disabled = true;
+    try {
+      const rep = await resaMailAppel("MAILING_EVENEMENT_PREVIEW", { filtre });
+      if (resaMailEventId !== evId) return;
+      resaMailApercu = { filtre, cle: rep.cle, sujet, message, total: rep.total, campagneId: uuid() };
+      $("resaMailPreview").innerHTML = `<div class="alert-bar blue" style="margin:10px 0"><b>👀 Aperçu avant envoi</b><br>
+        <b>${+rep.total || 0}</b> adresse(s) distincte(s) · ${+rep.sansEmail || 0} réservation(s) sans e-mail valide
+        ${rep.doublons ? ` · ${+rep.doublons} doublon(s) regroupé(s)` : ""}</div>
+        <div class="park-row" style="display:block"><b>Objet :</b> ${esc(sujet)}<br><br>${esc(message).replace(/\n/g, "<br>")}<br><br><small>Fantasy Kids Events 💜</small></div>
+        <details style="margin:10px 0"><summary>Voir les destinataires (${+rep.total || 0})</summary><p class="hint" style="white-space:pre-wrap">${(rep.destinataires || []).map(x => esc(`${x.nom} · ${x.email}`)).join("<br>")}</p></details>`;
+      $("resaMailPreview").classList.remove("hidden");
+      if (rep.total) $("resaMailSend").classList.remove("hidden");
+      else $("resaMailErr").textContent = "Aucun destinataire pour ce filtre. Rien ne sera envoyé.";
+    } catch (err) { $("resaMailErr").textContent = err.message || String(err); }
+    finally { $("resaMailPreviewBtn").disabled = false; }
+  };
+  $("resaMailSend").onclick = async () => {
+    const ap = resaMailApercu;
+    if (!ap || resaMailEnCours || !isResp() || !resaMailEventId) return;
+    if (ap.filtre !== $("resaMailAudience").value || ap.sujet !== $("resaMailSujet").value.trim() || ap.message !== $("resaMailMessage").value.trim()) { resaMailInvalider(); return; }
+    if (!confirm(`Envoyer « ${ap.sujet} » à ${ap.total} adresse(s) pour cet événement ?\n\nLes mails seront envoyés individuellement. Cette action est irréversible.`)) return;
+    resaMailEnCours = true;
+    $("resaMailSend").disabled = true;
+    $("resaMailPreviewBtn").disabled = true;
+    $("resaMailErr").textContent = "⏳ Envoi en cours, ne ferme pas la fenêtre…";
+    try {
+      const rep = await resaMailAppel("MAILING_EVENEMENT_SEND", { filtre: ap.filtre, cle: ap.cle, sujet: ap.sujet, message: ap.message, campagneId: ap.campagneId });
+      $("resaMailErr").textContent = rep.dejaEnvoye
+        ? `ℹ️ Campagne déjà démarrée (${rep.envoyes}/${rep.total} envoyé(s), état : ${rep.statut}). Aucun renvoi effectué.`
+        : `✅ ${rep.envoyes} mail(s) envoyé(s) sur ${rep.total}.${rep.erreurs ? ` ⚠️ ${rep.erreurs} échec(s) : consulte l'historique.` : ""}`;
+      resaMailApercu = null;
+      $("resaMailSend").classList.add("hidden");
+      await resaMailHistorique();
+    } catch (err) { $("resaMailErr").textContent = `⚠️ ${err.message || err} Si l'envoi a démarré, vérifie l'historique avant de recommencer.`; await resaMailHistorique(); }
+    finally { resaMailEnCours = false; $("resaMailSend").disabled = false; $("resaMailPreviewBtn").disabled = false; }
+  };
 
   // 🪑 Plan des tables
   function renderResaTables(C, caps) {
