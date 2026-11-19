@@ -115,17 +115,17 @@ grant execute on function public.autorise_canal_chat_prive(text) to authenticate
 alter table public.messages enable row level security;
 
 drop policy if exists messages_groupe_iso_select on public.messages;
-create policy messages_groupe_iso_select as restrictive on public.messages
+create policy messages_groupe_iso_select on public.messages as restrictive
   for select to authenticated using (public.autorise_canal_chat_prive(canal));
 drop policy if exists messages_groupe_iso_insert on public.messages;
-create policy messages_groupe_iso_insert as restrictive on public.messages
+create policy messages_groupe_iso_insert on public.messages as restrictive
   for insert to authenticated with check (public.autorise_canal_chat_prive(canal));
 drop policy if exists messages_groupe_iso_update on public.messages;
-create policy messages_groupe_iso_update as restrictive on public.messages
+create policy messages_groupe_iso_update on public.messages as restrictive
   for update to authenticated using (public.autorise_canal_chat_prive(canal))
   with check (public.autorise_canal_chat_prive(canal));
 drop policy if exists messages_groupe_iso_delete on public.messages;
-create policy messages_groupe_iso_delete as restrictive on public.messages
+create policy messages_groupe_iso_delete on public.messages as restrictive
   for delete to authenticated using (public.autorise_canal_chat_prive(canal));
 
 -- La permission explicite ci-dessous rend les groupes fonctionnels meme
