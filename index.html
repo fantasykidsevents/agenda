@@ -12322,12 +12322,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const parCanal = new Map(); chatMsgs.forEach(m => parCanal.set(m.canal, m));
     const out = [{ canal: "equipe", nom: "Équipe Fantasy", sous: "Toute l'équipe", av: "✨", last: parCanal.get("equipe") }];
     const d30 = iso(new Date(Date.now() - 30 * 864e5));
-    // 💬 Chat affiché à partir de 15 jours avant la prestation (et un mois après).
+    // 💬 Chat affiché 15 jours avant la prestation, ou dès qu'une conversation existe.
+    // Ainsi une animation prévue bien plus tard reste visible si quelqu'un y a déjà écrit.
     // L'accès reste limité à l'équipe affectée et aux responsables.
     const dOuv = iso(new Date(Date.now() + CHAT_JOURS_AVANT * 864e5));
     events.filter(e => jePeuxVoir(e) && (archives
       ? (e.date < d30 && e.date >= iso(new Date(Date.now() - 730 * 864e5)) && parCanal.has("ev:" + e.id))
-      : (e.statut !== "annule" && e.date >= d30 && e.date <= dOuv)))
+      : (e.statut !== "annule" && e.date >= d30 && (e.date <= dOuv || parCanal.has("ev:" + e.id)))))
       .forEach(e => { const U = universOf(e);
         out.push({ canal: "ev:" + e.id, ev: e, nom: e.titre || e.enfant || "Animation", av: U ? U[2] : "🎭",
           sous: `${fmtLong(e.date)}${e.heure_debut ? " · " + hhmm(e.heure_debut) : ""}${e.date < t ? " · terminée" : ""}`, last: parCanal.get("ev:" + e.id) }); });
