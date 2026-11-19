@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="robots" content="noindex,nofollow,noarchive" />
+<meta name="referrer" content="no-referrer" />
+<meta name="theme-color" content="#faf6ff" />
+<title>✨ Votre demande d’animation · Fantasy Kids Events</title>
+<link rel="icon" href="icon-192.png" />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{color-scheme:light;--purple:#7328c8;--ink:#2b1c40;--line:#e9d6fa}
+  *{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--ink);font:16px Fredoka,system-ui,sans-serif;
+    background:radial-gradient(ellipse at 10% 0%,#e6d9ff,transparent 55%),radial-gradient(ellipse at 100% 100%,#ffdef4,transparent 60%),#faf6ff}
+  main{max-width:540px;padding:28px 18px 55px;margin:auto}header{text-align:center;margin-bottom:23px}
+  header img{height:auto;width:min(250px,70vw);filter:drop-shadow(0 7px 15px #874dc72b)}
+  h1{font-size:27px;line-height:1.15;margin:12px 0 5px;color:var(--purple)}
+  .sub{margin:0;color:#786586}.card{border:1px solid var(--line);border-radius:20px;padding:20px;background:#fff;box-shadow:0 8px 27px #5c35921c}
+  .recap{border-radius:14px;background:#f5edff;padding:15px;margin:14px 0;line-height:1.8;color:#563481}
+  button{display:block;width:100%;border:0;border-radius:13px;padding:15px;margin:12px 0;font:700 17px Fredoka,system-ui;cursor:pointer}
+  button:disabled{opacity:.55;cursor:wait}.yes{background:linear-gradient(110deg,#20b7d9,#8c3fed);color:white}
+  .no{background:#f9ecf0;color:#9c3752}.selected{outline:3px solid #b58deb;outline-offset:2px}
+  .note{color:#766686;font-size:14px;line-height:1.5}.err{color:#ad273d;min-height:20px;line-height:1.4}
+  .hidden{display:none!important}.center{text-align:center}.big{font-size:50px}
+  @media(prefers-reduced-motion:no-preference){.card{animation:monte .35s ease}@keyframes monte{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}}
+</style>
+</head>
+<body>
+<main>
+  <header><img src="logo.png" alt="Fantasy Kids Events" /><h1>✨ Votre aventure magique</h1>
+    <p class="sub">Un petit mot avant de préparer la fête 💜</p></header>
+  <div class="card" id="loading">⏳ Vérification de votre lien sécurisé…</div>
+  <div class="card hidden" id="invalid"><h2>Ce lien n'est plus disponible 💌</h2><p>Si votre projet est toujours d'actualité, répondez simplement à notre e-mail pour nous contacter.</p></div>
+  <section class="card hidden" id="response">
+    <h2 id="hello">Bonjour ! ✨</h2>
+    <p>Vous aviez demandé une animation chez Fantasy Kids Events. Nous reprenons contact comme promis.</p>
+    <div class="recap" id="details"></div>
+    <p>Souhaitez-vous toujours organiser cette animation ?</p>
+    <button type="button" class="yes" id="oui">✅ Je confirme mon intérêt</button>
+    <button type="button" class="no" id="non">❌ Je ne suis plus intéressé(e)</button>
+    <p class="note">Important : confirmer votre intérêt ne réserve pas la date. Notre équipe vérifiera la disponibilité avant de préparer un devis et de confirmer la prestation.</p>
+    <p class="err" id="err" role="alert"></p>
+  </section>
+  <section class="card center hidden" id="done" role="status"><div class="big" id="doneIcon">💜</div><h2 id="doneTitle"></h2><p id="doneText"></p></section>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const cfg = window.APP_CONFIG || {}, params = new URLSearchParams(location.search);
+  const token = params.get('t') || '';
+  const choixURL = params.get('choix') || '';
+  const sb = cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && window.supabase
+    ? window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY,{auth:{persistSession:false}}) : null;
+  const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const date = s => { if(!s)return 'À préciser';const [y,m,d]=s.split('-').map(Number);
+    return new Date(Date.UTC(y,m-1,d,12)).toLocaleDateString('fr-BE',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}); };
+  const show = id => $(id).classList.remove('hidden');
+  async function charger() {
+    if(!sb || !/^[a-f0-9]{64}$/.test(token)) { $('loading').classList.add('hidden');show('invalid');return; }
+    try {
+      const {data,error}=await sb.rpc('anticipation_lire',{p_token:token});
+      if(error||!data)throw error||new Error('Lien expiré');
+      $('loading').classList.add('hidden');
+      if(data.statut==='reconfirmee'||data.statut==='abandonnee')return terminer(data.statut,true);
+      $('hello').textContent=`Bonjour${data.prenom?' '+data.prenom:''} ! ✨`;
+      $('details').innerHTML=`📅 <b>${esc(date(data.date))}</b><br>🕐 ${esc((data.heure||'Horaire à préciser').slice(0,5))}<br>🎭 ${esc(data.personnages||'À préciser')}<br>✨ ${esc(data.formule||'Formule à préciser')}`;
+      show('response');
+      if(choixURL==='oui'||choixURL==='non')$(choixURL).classList.add('selected');
+    } catch(_) { $('loading').classList.add('hidden');show('invalid'); }
+  }
+  function terminer(statut,deja=false){
+    $('response').classList.add('hidden');$('loading').classList.add('hidden');
+    $('doneIcon').textContent=statut==='reconfirmee'?'✅':'💜';
+    $('doneTitle').textContent=statut==='reconfirmee'?'Merci pour votre réponse !':'Merci de nous avoir prévenus !';
+    $('doneText').textContent=statut==='reconfirmee'
+      ? 'Votre intérêt est enregistré. Nous allons vérifier la disponibilité et reprendre contact avec vous. La réservation n’est pas encore confirmée.'
+      : 'Votre demande est conservée dans notre historique. Au plaisir de vous retrouver pour une autre fête magique !';
+    show('done');
+  }
+  async function repondre(choix) {
+    $('oui').disabled=$('non').disabled=true;$('err').textContent='Enregistrement de votre réponse…';
+    try {
+      const {data,error}=await sb.rpc('anticipation_repondre',{p_token:token,p_choix:choix});
+      if(error||!data?.ok)throw error||new Error(data?.erreur||'Réponse non enregistrée');
+      terminer(data.statut);
+    } catch(e) { $('err').textContent='Impossible d’enregistrer la réponse pour le moment. Réessayez ou répondez à notre e-mail.';$('oui').disabled=$('non').disabled=false; }
+  }
+  $('oui').onclick=()=>repondre('oui');$('non').onclick=()=>repondre('non');charger();
+})();
+</script>
+</body>
+</html>
