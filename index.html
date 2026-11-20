@@ -1700,24 +1700,98 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   body.dark .regie-kpi span,body.dark .regie-block p,body.dark .regie-live,body.dark .regie-row small{color:#dfcde9}
   body.dark .regie-actions button,body.dark .regie-refresh{background:#4a3469;color:#fff;border-color:#8a69a9}
   @media(max-width:380px){.regie-hero h2{font-size:23px}.regie-grid{gap:7px}.regie-kpi{padding:11px 9px}.regie-kpi b{font-size:22px}.regie-actions{gap:7px}}
-  /* ✨ Le grimoire : un espace optionnel, sans changer l'agenda. */
-  .grimoire-cover{background:linear-gradient(140deg,#402171,#8740ae 60%,#e39adf);color:#fff;border-radius:20px;padding:23px 16px;text-align:center;box-shadow:0 10px 25px #4d246130;margin:9px 0 16px}
-  .grimoire-cover h3{font-family:Georgia,serif;color:#fff;margin:8px 0;font-size:25px}
-  .grimoire-cover p{color:#fff9;margin:5px 0;font-size:13px}
-  .grimoire-page{background:linear-gradient(150deg,#fffaf0,#fff8fa);border:1px solid #ead7bf;border-radius:17px;padding:16px;margin:12px 0;animation:grimoireOuvre .35s ease both}
-  .grimoire-page h3{font-family:Georgia,serif;color:#633d70;margin:0 0 12px}
-  .grimoire-souvenir{border-left:3px solid #dab2de;padding:9px 0 9px 12px;margin:10px 0;color:#5f4a69}
-  .grimoire-souvenir b{display:block;margin-bottom:4px;color:#4f2d6c}
-  .grimoire-souvenir p{white-space:pre-wrap;line-height:1.5;margin:5px 0}
-  .grimoire-souvenir img{display:block;max-width:100%;max-height:320px;border-radius:12px;object-fit:contain;margin:7px 0}
-  .grimoire-nav{display:flex;align-items:center;justify-content:space-between;gap:9px;margin:12px 0}
-  .grimoire-nav button{border:0;background:#eee0f5;color:#5c277d;border-radius:12px;padding:11px;font-weight:800;cursor:pointer}
-  @keyframes grimoireOuvre{from{opacity:0;transform:rotateY(7deg) translateY(8px)}to{opacity:1;transform:none}}
-  /* Une petite étincelle pour Lumi, discrète et désactivable. */
-  .lumi-buddy{position:fixed;left:12px;bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:35;width:53px;height:53px;border-radius:50%;border:2px solid #ffffffca;background:radial-gradient(circle at 30% 25%,#fff7b0,#f9b9fa 37%,#9337de 85%);box-shadow:0 0 21px #c27bf9a8,0 4px 12px #5b257e55;color:#fff;font-size:27px;cursor:pointer;animation:lumiFlotte 3s ease-in-out infinite}
-  .lumi-buddy::after{content:'✦';position:absolute;right:-7px;top:-8px;color:#ffd96c;font-size:19px;animation:lumiFlotte 2s ease-in-out infinite reverse}
-  .lumi-bulle{position:fixed;left:14px;bottom:calc(149px + env(safe-area-inset-bottom,0px));z-index:36;max-width:min(280px,75vw);padding:13px;border-radius:16px 16px 16px 5px;background:#fff;color:#5d307d;box-shadow:0 8px 28px #49216640;font-size:13px;font-weight:650;line-height:1.45}
-  .lumi-bulle button{border:0;background:#f4e6ff;border-radius:8px;padding:5px 8px;color:#692d9f;margin-top:7px;font-weight:700}
+  /* 📖 Le grimoire est un véritable livre, avec couverture et feuillets. */
+  #grimoireBg{background:radial-gradient(ellipse at 52% 20%,#65408fdd,#1b0c36f5 58%,#0b0618f8);isolation:isolate}
+  #grimoireBg::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.6;background-image:radial-gradient(circle,#ffecc4 1px,transparent 2px),radial-gradient(circle,#a3dcff 1px,transparent 2px);background-position:0 0,43px 67px;background-size:103px 111px,151px 163px;animation:grimoireCiel 28s linear infinite}
+  #grimoireBg .grimoire-sheet{position:relative;max-width:980px;height:min(92vh,880px);max-height:92vh;padding:0 16px 24px;overflow-x:hidden;overflow-y:auto;color:#f8e9ca;background:radial-gradient(ellipse at 50% 6%,#39205e,#1c1036 58%,#100b23);box-shadow:0 24px 100px #0009,0 0 45px #d5a4ff50;border:1px solid #ad77a644;border-radius:25px}
+  .grimoire-top{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 5px;z-index:4;color:#e9c782;font-size:10px;letter-spacing:2.3px;font-weight:900;text-align:center;background:linear-gradient(#291844f7,#291844ed);border-bottom:1px solid #b88f6b38}
+  .grimoire-top button{border:1px solid #d9b57480;border-radius:50%;height:36px;width:36px;min-width:36px;background:#3d2853;color:#fff2ca;font-size:17px;cursor:pointer}
+  .grimoire-couverture-cont{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100% - 80px);padding:28px 12px 15px;perspective:1100px}
+  .grimoire-gardienne{position:absolute;right:max(0px,calc(50% - 275px));bottom:68px;width:116px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 7px 15px #ffd66bc2);animation:lumiFlotte 3s ease-in-out infinite}
+  #grimoireBg .grimoire-cover{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;gap:16px;width:min(390px,86vw);min-height:470px;padding:42px 27px 28px;color:#fce8a9;cursor:pointer;border:7px solid #6f3e71;border-left:15px solid #562959;border-radius:9px 23px 23px 9px;outline-offset:8px;background:radial-gradient(circle at 50% 40%,#8c4e85 0%,#3f204f 48%,#21122f 92%);box-shadow:inset 0 0 0 3px #ceae7e,inset 0 0 0 12px #331735,inset 0 0 0 14px #9e7a59,12px 9px 0 -5px #e5c99a,17px 11px 0 -6px #b08a69,22px 25px 46px #000b,0 0 45px #c78aff60;transform:rotate(-3deg);transition:transform .4s ease,box-shadow .4s ease}
+  #grimoireBg .grimoire-cover:hover,#grimoireBg .grimoire-cover:focus-visible{transform:rotate(0) translateY(-6px) scale(1.02);box-shadow:inset 0 0 0 3px #ffe3a0,inset 0 0 0 12px #331735,inset 0 0 0 14px #bfa165,12px 9px 0 -5px #e5c99a,17px 11px 0 -6px #b08a69,22px 30px 50px #000b,0 0 70px #f9cafa90}
+  #grimoireBg .grimoire-cover::before{content:"✦        ✧        ✦";white-space:pre;position:absolute;inset:23px;border:1px solid #dabc827d;border-radius:4px 13px 13px 4px;box-shadow:inset 0 0 12px #d9ad473a;pointer-events:none;color:#eec78190;padding-top:18px;font-size:13px;text-align:center}
+  #grimoireBg .grimoire-cover::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(105deg,transparent 33%,#fff5bf24 48%,transparent 61%);background-size:230% 100%;background-position:100% 0;pointer-events:none;animation:grimoireLueur 6s ease-in-out infinite}
+  .grimoire-cover-blason{display:grid;place-items:center;position:relative;width:132px;height:132px;border:2px solid #dbb974;border-radius:50%;font:75px Georgia,serif;color:#ffedb2;filter:drop-shadow(0 0 14px #f9c05b);text-shadow:0 0 30px #ffc968;animation:grimoirePulsation 3s ease-in-out infinite}
+  .grimoire-cover-blason::before{content:"";position:absolute;inset:10px;border:1px dotted #e6bb8f;border-radius:50%}
+  .grimoire-cover-blason span{position:absolute;font-size:20px;top:8px;left:-11px}.grimoire-cover-blason span:last-child{left:auto;right:-12px;top:auto;bottom:13px}
+  .grimoire-cover-ornement,.grimoire-cover-surtitre{font-family:Georgia,serif;font-size:12px;letter-spacing:2px;color:#f5c88c}
+  .grimoire-cover-surtitre{font-size:10px;font-weight:900}
+  #grimoireBg .grimoire-cover strong{display:block;max-width:100%;font:italic 700 clamp(27px,5vw,37px)/1.18 Georgia,serif;color:#ffeec6;text-shadow:0 2px 15px #ffce9f80;text-align:center}
+  .grimoire-cover-ligne{font:italic 14px Georgia,serif;color:#e9c99e;text-align:center}
+  .grimoire-cover-sceau{display:inline-block;border:1px solid #d6b37790;border-radius:50px;padding:10px 14px;color:#fff1bf;font-size:10px;letter-spacing:1.1px;font-weight:900;animation:grimoirePulsation 2.8s ease-in-out infinite}
+  .grimoire-legende{font:italic 14px Georgia,serif;text-align:center;color:#d5b0db;margin:24px 2px 0;max-width:380px}
+  .grimoire-couverture-cont.feuillete .grimoire-cover{animation:grimoireCouvertureTourne .72s ease-in forwards;transform-origin:0 50%}
+  .grimoire-corps{padding:8px 4px 20px;animation:grimoireApparait .6s ease both}
+  .grimoire-preambule{display:flex;align-items:center;justify-content:center;gap:18px;margin:8px 0 18px;text-align:center}
+  .grimoire-preambule small{font-size:9px;letter-spacing:2.5px;color:#e8c38a;font-weight:900}
+  #grimoireTitrePages{margin:4px 0 0;font:italic 600 clamp(24px,4vw,34px)/1.25 Georgia,serif;color:#ffe3b3}
+  .grimoire-preambule-rune{font-size:28px;color:#f9d587;filter:drop-shadow(0 0 11px #f6b6ff);animation:lumiFlotte 3s ease-in-out infinite}
+  #grimoireChoix{margin:0 auto 13px;max-width:480px}
+  #grimoireChoix label{display:block;margin-bottom:5px;color:#eed5a4;font-size:12px}
+  #grimoireChoix select{width:100%;background:#fff9ec;color:#573b59;border-radius:9px;border:1px solid #e1bb81}
+  .grimoire-message{font:italic 13px/1.5 Georgia,serif;text-align:center;color:#e5d0e9;margin:10px auto 16px;max-width:640px}
+  .grimoire-nav{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 0 15px;color:#f6d59e;font:700 12px Georgia,serif;text-align:center}
+  .grimoire-nav button{border:1px solid #b8996d;color:#fff0c6;background:#603c69;border-radius:22px;padding:12px 13px;cursor:pointer;font-size:12px;font-weight:800;box-shadow:0 4px 13px #08041170}
+  .grimoire-nav button:disabled{opacity:.3;cursor:default}
+  .grimoire-spread{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);filter:drop-shadow(0 18px 22px #030109a1);perspective:1200px}
+  #grimoireBg .grimoire-page{position:relative;min-width:0;min-height:360px;padding:32px 25px;color:#553d41;background:repeating-linear-gradient(0deg,#9873450b 0 1px,transparent 1px 24px),radial-gradient(ellipse at 20% 12%,#fffaf0,#f8e6c7 85%);border:1px solid #d9ba88;box-shadow:inset 0 0 33px #bc8c5e52;animation:grimoireOuvre .55s ease both}
+  #grimoireBg .grimoire-page-gauche{border-radius:8px 2px 2px 13px;border-right:7px solid #bf926b;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(ellipse at 50% 35%,#fffaf0,#f6e2c4 95%)}
+  #grimoireBg .grimoire-page-droite{border-radius:2px 11px 13px 2px;border-left:6px solid #e4c7a0;box-shadow:inset 12px 0 15px #926a4b2b,inset 0 0 32px #bf9b6350}
+  .grimoire-page::before{content:"✦";position:absolute;top:12px;left:15px;color:#a47d51;font-size:15px}.grimoire-page::after{content:"✦";position:absolute;bottom:12px;right:15px;color:#a47d51;font-size:15px}
+  .grimoire-chapitre-rune{font-size:45px;color:#b58b55;filter:drop-shadow(0 0 6px #edca86)}
+  .grimoire-chapitre-prefix{letter-spacing:3px;text-transform:uppercase;font-size:11px;color:#96734e;font-weight:900}
+  #grimoireBg .grimoire-page h3{margin:0;font:italic 600 26px Georgia,serif;color:#674469}
+  .grimoire-chapitre-an{display:block;font:700 clamp(50px,8vw,78px)/1 Georgia,serif;color:#896088;text-shadow:2px 3px 0 #e7ceba}
+  .grimoire-chapitre-extrait{max-width:230px;font:italic 15px/1.55 Georgia,serif;color:#765d65;margin:0}
+  .grimoire-chapitre-compte{padding:9px 16px;border-top:1px solid #ba986c;border-bottom:1px solid #ba986c;font:700 12px Georgia,serif;color:#875e72}
+  .grimoire-page-titre{font:italic 22px Georgia,serif;color:#644466;margin:0 0 21px;padding-bottom:10px;border-bottom:1px solid #ba9462}
+  .grimoire-souvenir{position:relative;border-left:2px solid #ac8b55;padding:3px 0 3px 17px;margin:19px 0;color:#58454d}
+  .grimoire-souvenir::before{content:"✦";position:absolute;left:-8px;top:-4px;color:#ac8b55;background:#f8e6c7;font-size:14px}
+  .grimoire-souvenir b{display:block;margin-bottom:7px;font:700 17px Georgia,serif;color:#673d64}
+  .grimoire-souvenir p{white-space:pre-wrap;line-height:1.55;margin:5px 0;font-size:14px}
+  .grimoire-souvenir img{display:block;max-width:100%;max-height:320px;border-radius:3px;object-fit:contain;margin:11px 0;border:7px solid #fff9eb;box-shadow:0 3px 13px #785b4545}
+  #grimoireBg .grimoire-page-vide{min-height:260px;display:grid;place-items:center;text-align:center}
+  #grimoireBg .grimoire-page-vide h3{margin:0 0 12px}
+  #grimoireModeration:not(.hidden){background:#fff1d9;color:#57405b;border-radius:12px;padding:13px;margin-top:18px}
+  #grimoireModeration .sec{color:#6f4371}
+  .grimoire-ajouter{margin:20px 0;padding:2px 14px 14px;background:#fff3dcd9;color:#5b4260;border:1px solid #c4a273;border-radius:12px}
+  .grimoire-ajouter summary{cursor:pointer;padding:15px 0;font:700 15px Georgia,serif;color:#633d67;list-style:none}.grimoire-ajouter summary::-webkit-details-marker{display:none}
+  .grimoire-ajouter summary span{float:right;color:#ab7c36}.grimoire-ajouter p{font:italic 13px/1.5 Georgia,serif;color:#745b68}
+  .grimoire-ajouter label{color:#604665;display:block;margin:10px 0 4px}.grimoire-ajouter input,.grimoire-ajouter textarea{background:#fffcf5;color:#4c3353}
+  #grimoireBg .grimoire-refermer{display:block;margin:25px auto 0;background:transparent;color:#e8c995;border:0;border-bottom:1px solid #d2a777;font:italic 15px Georgia,serif;padding:10px;cursor:pointer}
+  #grimoireLivre>details{background:#fff3dc;color:#6a4c63;border-radius:10px;margin-top:17px;padding:10px}
+  @keyframes grimoireOuvre{from{opacity:0;transform:rotateY(15deg) translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes grimoireCiel{to{background-position:103px 111px,-108px 230px}}
+  @keyframes grimoirePulsation{0%,100%{filter:drop-shadow(0 0 7px #dda8ff)}50%{filter:drop-shadow(0 0 20px #fff3b8)}}
+  @keyframes grimoireLueur{0%,25%{background-position:100% 0}55%,100%{background-position:-100% 0}}
+  @keyframes grimoireCouvertureTourne{to{opacity:0;transform:rotateY(-84deg) translateX(-40px) scale(.85)}}
+  @keyframes grimoireApparait{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+  @media(max-width:650px){#grimoireBg .grimoire-sheet{height:100dvh;max-height:100dvh;border-radius:0;padding:0 10px 30px}.grimoire-couverture-cont{min-height:calc(100% - 67px);padding:22px 4px}.grimoire-cover{min-height:420px!important}.grimoire-gardienne{right:0;bottom:26px;width:87px}.grimoire-spread{grid-template-columns:1fr}#grimoireBg .grimoire-page-gauche{min-height:215px;border-radius:9px 9px 0 0;border-right:1px solid #d9ba88;border-bottom:7px solid #c99f7e;gap:8px;padding:22px 18px}#grimoireBg .grimoire-page-droite{border-radius:0 0 11px 11px;border-left:1px solid #d9ba88;border-top:3px solid #efd5b1;min-height:220px}.grimoire-chapitre-rune{display:none}.grimoire-chapitre-an{font-size:48px}.grimoire-preambule-rune{display:none}.grimoire-nav button{font-size:11px;padding:11px 9px}}
+  /* ✨ La VRAIE Lumi : plusieurs poses et déguisements personnels. */
+  .lumi-buddy{position:fixed;left:6px;bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:35;width:94px;height:104px;border:0;background:transparent;padding:0;cursor:pointer;isolation:isolate;animation:lumiFlotte 3.2s ease-in-out infinite;filter:drop-shadow(0 6px 12px #782dbf99);transition:filter .2s ease}
+  .lumi-buddy:hover,.lumi-buddy:focus-visible{filter:drop-shadow(0 0 18px #ffd966) drop-shadow(0 9px 12px #8538c5)}
+  .lumi-buddy img{width:100%;height:100%;object-fit:contain;position:relative;z-index:2;pointer-events:none;user-select:none}
+  .lumi-buddy::before{content:"";position:absolute;inset:16px 10px;border-radius:50%;z-index:0;background:radial-gradient(circle,#ffefabbb,#ac64fa66 48%,transparent 75%);filter:blur(12px);animation:grimoirePulsation 2.7s ease-in-out infinite}
+  .lumi-buddy .lumi-lueur{position:absolute;z-index:3;top:6px;right:-1px;font-size:22px;color:#ffda67;text-shadow:0 0 13px #fff4ab;animation:lumiFlotte 1.7s ease-in-out infinite reverse;pointer-events:none}
+  .lumi-buddy[data-lumi-forme="nuit"]{animation-duration:5s;filter:drop-shadow(0 4px 10px #9289ec88)}
+  .lumi-buddy[data-lumi-forme="anniversaire"]{filter:drop-shadow(0 0 13px #ffb5b9) drop-shadow(0 6px 10px #f9ae42)}
+  .lumi-buddy[data-lumi-forme="elsa"]{filter:drop-shadow(0 0 15px #8ddaff)}
+  .lumi-buddy[data-lumi-forme="mira"]{filter:drop-shadow(0 0 17px #fa5ac7)}
+  .lumi-buddy[data-lumi-forme="personnage"]{filter:drop-shadow(0 0 15px var(--lumi-effet,#f7c6ff))}
+  .lumi-bulle{position:fixed;left:12px;bottom:calc(193px + env(safe-area-inset-bottom,0px));z-index:36;width:min(340px,calc(100vw - 24px));max-height:60vh;overflow:auto;padding:16px;border-radius:21px 21px 21px 5px;border:2px solid #fff4b3;background:radial-gradient(circle at top right,#ffecb1,#fcf0ff 56%,#f5e4ff);color:#542775;box-shadow:0 11px 35px #4e1b7e80,0 0 20px #f3c4ffad;font-size:13px;line-height:1.45;animation:grimoireApparait .3s ease both}
+  .lumi-bulle::after{content:"✦";position:absolute;right:14px;top:12px;color:#cd92dd;font-size:22px}
+  .lumi-bulle .lumi-bulle-titre{font:700 21px Georgia,serif;color:#7938a1;margin:0}
+  .lumi-bulle .lumi-bulle-sous{display:block;color:#9462aa;font-size:11px;margin:0 0 9px;font-weight:750}
+  .lumi-bulle .lumi-bulle-texte{font-size:14px;font-weight:650;white-space:pre-wrap;line-height:1.55;margin:12px 0}
+  .lumi-bulle .lumi-bulle-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
+  .lumi-bulle button{border:1px solid #dab0ef;background:#fff9fe;border-radius:20px;padding:8px 10px;color:#702e94;font-size:12px;font-weight:800;cursor:pointer}
+  .lumi-bulle button:first-child{background:#8e43c4;border-color:#8e43c4;color:white}
+  .lumi-bulle .lumi-bulle-fermer{position:absolute;top:10px;right:13px;border:0;background:transparent;padding:3px 6px;color:#734496;font-size:16px}
+  .lumi-choix{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:8px 0 12px}
+  .lumi-choix button{display:flex;align-items:center;gap:8px;padding:8px;border:2px solid #e6cae9;border-radius:13px;background:#fff7fe;color:#653982;font-weight:800;cursor:pointer;text-align:left}
+  .lumi-choix button[aria-pressed="true"]{border-color:#a748dd;background:#f2e3ff;box-shadow:0 0 13px #c58be76b}
+  .lumi-choix img{width:52px;height:52px;object-fit:contain;flex-shrink:0}
   @keyframes lumiFlotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
   .sort-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:7px 12px}
   .sort-menu button{border:1px solid #e9ccf9;border-radius:12px;padding:10px 5px;background:#fcf5ff;color:#703490;font-weight:800;font-size:12px}
@@ -1729,7 +1803,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .sort-reveal p{white-space:pre-wrap;font-size:16px;line-height:1.5}
   .sort-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:24px}
   .sort-stars i{position:absolute;color:#e8b23c;animation:lumiFlotte 1.2s ease-in-out infinite alternate;font-size:25px}
-  @media(prefers-reduced-motion:reduce){.lumi-buddy,.lumi-buddy::after,.sort-reveal .em,.sort-stars i,.grimoire-page{animation:none!important}}
+  @media(prefers-reduced-motion:reduce){.lumi-buddy,.lumi-buddy::before,.lumi-buddy .lumi-lueur,.grimoire-cover,.grimoire-couverture-cont,.grimoire-page,.grimoire-preambule-rune,.sort-reveal .em,.sort-stars i{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -2378,7 +2452,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <div id="profileSelf"></div>
     <div id="profilePrefs">
     <div class="sec">✨ Lumi, la petite étoile Fantasy</div>
-    <p class="hint" style="margin-top:0">Lumi te glisse des petits mots magiques. Tu peux la masquer ou la retrouver à tout moment.</p>
+    <p class="hint" style="margin-top:0">Lumi change de pose selon l'heure et peut même se déguiser selon ton rôle du jour ! Touche-la pour ses prédictions, ses défis et tes prochaines aventures.</p>
+    <div class="lumi-choix" role="group" aria-label="Choisis ton compagnon magique">
+      <button type="button" data-lumi-choix="lumi" aria-pressed="true"><img src="lumi-jour.webp" alt="" />✨ Lumi</button>
+      <button type="button" data-lumi-choix="lumio" aria-pressed="false"><img src="lumio-jour.webp" alt="" />⭐ Lumio</button>
+    </div>
     <button type="button" class="btn ghost" id="lumiToggle" style="margin-bottom:12px">✨ Masquer Lumi</button>
     <div id="memberPreviewSettings" class="m-preview-settings hidden">
       <div class="sec">🎭 Aperçu de l’application</div>
@@ -2739,25 +2817,39 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 <!-- ============ ⭐ MES PERSONNAGES FAVORIS ============ -->
 <!-- ============ 📖✨ GRIMOIRE DES SOUVENIRS ============ -->
 <div id="grimoireBg" class="sheet-bg hidden" style="z-index:69">
-  <div class="sheet" style="max-width:760px">
-    <div class="grab"></div>
-    <div class="grimoire-cover"><span style="font-size:35px">📖✨</span><h3 id="grimoireTitre">Mon grimoire enchanté</h3><p>Une aventure, des personnages, mille souvenirs…</p></div>
-    <div id="grimoireChoix" class="hidden"><label for="grimoireMembre">Choisir le membre</label><select id="grimoireMembre"></select></div>
-    <div id="grimoireMessage" class="hint" aria-live="polite"></div>
-    <div id="grimoireLivre"></div>
-    <div id="grimoireModeration" class="hidden"></div>
-    <details id="grimoireAjouter" style="margin:17px 0">
-      <summary class="btn ghost" style="cursor:pointer;list-style:none">✨ Ajouter un souvenir ancien</summary>
-      <p class="hint">Pour les souvenirs d'avant l'agenda, une année suffit : pas besoin de retrouver la date exacte.</p>
-      <form id="grimoireForm">
-        <label for="grimoireAnnee">Année du souvenir</label><input id="grimoireAnnee" type="number" min="1990" max="2100" required />
-        <label for="grimoireTitreInput">Titre</label><input id="grimoireTitreInput" maxlength="120" required placeholder="Ex. Ma première animation" />
-        <label for="grimoireTexte">Mon souvenir</label><textarea id="grimoireTexte" maxlength="1500" rows="4" placeholder="Raconte ce moment magique…"></textarea>
-        <label for="grimoirePhoto">Photo (facultative)</label><input id="grimoirePhoto" type="file" accept="image/*" />
-        <button type="submit" class="btn primary" id="grimoireEnvoyer" style="width:100%;margin-top:12px">💜 Proposer ce souvenir</button>
-      </form>
-    </details>
-    <div class="actions"><button type="button" class="btn primary" id="grimoireFermer">Fermer le grimoire</button></div>
+  <div class="sheet grimoire-sheet">
+    <div class="grimoire-top"><span>✧ LES CHRONIQUES DE FANTASY ✧</span><button type="button" id="grimoireFermer" aria-label="Fermer le grimoire">✕</button></div>
+    <div id="grimoireCouvertureCont" class="grimoire-couverture-cont">
+      <button type="button" id="grimoireOuvrir" class="grimoire-cover" aria-label="Ouvrir les pages du grimoire">
+        <span class="grimoire-cover-ornement" aria-hidden="true">✦ &nbsp; ✧ &nbsp; ✦</span>
+        <span class="grimoire-cover-blason" aria-hidden="true"><span>✧</span>✦<span>✧</span></span>
+        <span class="grimoire-cover-surtitre">LE LIVRE DES MILLE MERVEILLES</span>
+        <strong id="grimoireTitre">Mon grimoire enchanté</strong>
+        <span class="grimoire-cover-ligne">✧ Chaque aventure laisse une étoile ✧</span>
+        <span class="grimoire-cover-sceau">🔑 TOUCHER POUR BRISER LE SCEAU</span>
+      </button>
+      <img class="grimoire-gardienne" src="lumi-soir.webp" alt="" aria-hidden="true" loading="lazy" />
+      <p class="grimoire-legende">Les histoires ne disparaissent jamais. Elles attendent qu’on rouvre le livre…</p>
+    </div>
+    <div id="grimoirePages" class="grimoire-corps hidden">
+      <div class="grimoire-preambule"><span class="grimoire-preambule-rune">✦</span><div><small>LE GRAND LIVRE DES SOUVENIRS</small><h2 id="grimoireTitrePages">Mes aventures enchantées</h2></div><span class="grimoire-preambule-rune">✦</span></div>
+      <div id="grimoireChoix" class="hidden"><label for="grimoireMembre">📜 Feuilleter le grimoire de…</label><select id="grimoireMembre"></select></div>
+      <div id="grimoireMessage" class="grimoire-message" aria-live="polite"></div>
+      <div id="grimoireLivre"></div>
+      <div id="grimoireModeration" class="hidden"></div>
+      <details id="grimoireAjouter" class="grimoire-ajouter">
+        <summary>✍️ Écrire une nouvelle page du grimoire <span>✦</span></summary>
+        <p>Un vieux souvenir ? Une année suffit, même si cette aventure remonte à plus de dix ans.</p>
+        <form id="grimoireForm">
+          <label for="grimoireAnnee">L’année de cette aventure</label><input id="grimoireAnnee" type="number" min="1990" max="2100" required />
+          <label for="grimoireTitreInput">Le nom du chapitre</label><input id="grimoireTitreInput" maxlength="120" required placeholder="Ex. Ma première animation" />
+          <label for="grimoireTexte">Ce dont tu te souviens…</label><textarea id="grimoireTexte" maxlength="1500" rows="4" placeholder="Raconte ce moment magique…"></textarea>
+          <label for="grimoirePhoto">Une image du souvenir (facultatif)</label><input id="grimoirePhoto" type="file" accept="image/*" />
+          <button type="submit" class="btn primary" id="grimoireEnvoyer" style="width:100%;margin-top:12px">✨ Confier mon souvenir au grimoire</button>
+        </form>
+      </details>
+      <button type="button" id="grimoireRefermer" class="grimoire-refermer">✧ Refermer doucement le livre ✧</button>
+    </div>
   </div>
 </div>
 
@@ -2966,7 +3058,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     <button type="button" class="btn primary" id="sortRevealClose" style="width:100%;margin-top:12px">✨ Refermer la magie</button>
   </div>
 </div>
-<button type="button" id="lumiBuddy" class="lumi-buddy hidden" aria-label="Parler à Lumi" title="Lumi ✨">✧</button>
+<button type="button" id="lumiBuddy" class="lumi-buddy hidden" data-lumi-forme="jour" aria-label="Jouer avec Lumi" title="Lumi ✨">
+  <img id="lumiImage" src="lumi-jour.webp" alt="" draggable="false" loading="lazy" />
+  <span class="lumi-lueur" aria-hidden="true">✦</span>
+</button>
 <div id="lumiBulle" class="lumi-bulle hidden" role="status" aria-live="polite"></div>
 
 <div class="toast" id="toast"></div>
@@ -7031,6 +7126,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       mesChoixNotif = choix;
       $("myBirthdayStatus").textContent = date ? "✅ Ton anniversaire est enregistré. Tu peux modifier ton accord quand tu veux." : "✅ Ta date d'anniversaire a été effacée.";
       afficherChoixAnniversaire();
+      majLumi();
       toast(date ? "🎂 Anniversaire enregistré !" : "✅ Date d'anniversaire retirée");
     } catch (err) { $("myBirthdayStatus").textContent = "❌ Impossible d'enregistrer : " + (err?.message || err); }
     finally { bouton.disabled = false; }
@@ -10485,22 +10581,25 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       });
   }
   function renderGrimoire() {
+    const nomLivre = grimoireNom(grimoireCible || grimoireMe());
+    $("grimoireTitre").textContent = grimoireGestion ? "Les grimoires de Fantasy" : `Le grimoire de ${nomLivre}`;
+    $("grimoireTitrePages").textContent = `Les aventures de ${nomLivre}`;
     if (!grimoireDisponible) {
       $("grimoireMessage").textContent = "⚠️ Le grimoire sera disponible après l'installation du SQL fantasy-grimoire-souvenirs.sql dans Supabase.";
       $("grimoireLivre").replaceChildren(); $("grimoireModeration").classList.add("hidden"); $("grimoireAjouter").classList.add("hidden"); return;
     }
     $("grimoireAjouter").classList.remove("hidden");
     $("grimoireMessage").textContent = "Les prestations de l'agenda apparaissent automatiquement. Tu peux raconter les aventures plus anciennes, même sans date précise.";
-    $("grimoireTitre").textContent = `Le grimoire de ${grimoireNom(grimoireCible)}`;
     const manuels = grimoireRows.filter(r => r.membre_email === grimoireCible);
     const visibles = [...souvenirsAutomatiques(grimoireCible), ...manuels.filter(r => r.statut === "publie")];
     const annees = [...new Set(visibles.map(x => x.annee).filter(Boolean))].sort((a, b) => a - b);
     grimoirePage = Math.max(0, Math.min(grimoirePage, annees.length - 1));
     const annee = annees[grimoirePage], lignes = visibles.filter(r => r.annee === annee).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
-    $("grimoireLivre").innerHTML = annees.length ? `<div class="grimoire-nav"><button type="button" data-grimoire-page="-1" ${grimoirePage === 0 ? "disabled" : ""}>‹ Année précédente</button><b>${annee} · ${grimoirePage + 1}/${annees.length}</b><button type="button" data-grimoire-page="1" ${grimoirePage === annees.length - 1 ? "disabled" : ""}>Année suivante ›</button></div>
-      <div class="grimoire-page"><h3>✦ ${annee} ✦</h3>${lignes.map(r => `<div class="grimoire-souvenir"><b>${r.automatique ? "🎭" : "✨"} ${esc(r.titre)}</b>
-      ${r.texte ? `<p>${esc(r.texte)}</p>` : ""}${r.photo_path && grimoireUrls.has(r.photo_path) ? `<img src="${esc(grimoireUrls.get(r.photo_path))}" alt="Souvenir : ${esc(r.titre)}" loading="lazy" />` : ""}</div>`).join("")}</div>`
-      : '<div class="grimoire-page"><h3>✨ La première page reste à écrire…</h3><p>Les souvenirs d’avant Fantasy App pourront y prendre place, année après année.</p></div>';
+    $("grimoireLivre").innerHTML = annees.length ? `<div class="grimoire-nav"><button type="button" data-grimoire-page="-1" ${grimoirePage === 0 ? "disabled" : ""}>❮ Chapitre précédent</button><b>✦ ${grimoirePage + 1} / ${annees.length} ✦</b><button type="button" data-grimoire-page="1" ${grimoirePage === annees.length - 1 ? "disabled" : ""}>Chapitre suivant ❯</button></div>
+      <div class="grimoire-spread"><section class="grimoire-page grimoire-page-gauche"><span class="grimoire-chapitre-rune" aria-hidden="true">❧</span><span class="grimoire-chapitre-prefix">Chapitre ${grimoirePage + 1}</span><h3>Il était une fois…</h3><span class="grimoire-chapitre-an">${annee}</span><p class="grimoire-chapitre-extrait">Une année d'aventures, de personnages et de souvenirs gravés dans la magie de Fantasy.</p><span class="grimoire-chapitre-compte">✧ ${lignes.length} souvenir${lignes.length > 1 ? "s" : ""} ✧</span></section>
+      <section class="grimoire-page grimoire-page-droite"><h3 class="grimoire-page-titre">✦ Les souvenirs de ${annee}</h3>${lignes.map(r => `<div class="grimoire-souvenir"><b>${r.automatique ? "🎭" : "✨"} ${esc(r.titre)}</b>
+      ${r.texte ? `<p>${esc(r.texte)}</p>` : ""}${r.photo_path && grimoireUrls.has(r.photo_path) ? `<img src="${esc(grimoireUrls.get(r.photo_path))}" alt="Souvenir : ${esc(r.titre)}" loading="lazy" />` : ""}</div>`).join("")}</section></div>`
+      : '<div class="grimoire-spread"><div class="grimoire-page grimoire-page-gauche"><span class="grimoire-chapitre-rune">✧</span><h3>La première page reste à écrire…</h3><p class="grimoire-chapitre-extrait">Même les plus grandes histoires commencent par quelques mots.</p></div><div class="grimoire-page grimoire-page-droite grimoire-page-vide"><div><div style="font-size:45px;color:#b79160">✦</div><h3>Il était une fois…</h3><p>Ajoute un souvenir, même vieux de dix ans, pour faire apparaître ton premier chapitre.</p></div></div></div>';
     const attentes = manuels.filter(r => r.statut === "attente");
     if (attentes.length) $("grimoireLivre").insertAdjacentHTML("beforeend", `<details class="m-subdetails"><summary>⏳ ${attentes.length} souvenir${attentes.length > 1 ? "s" : ""} proposé${attentes.length > 1 ? "s" : ""}, en attente de validation</summary><div style="padding:0 12px 12px">${attentes.map(r => `<p class="hint">${esc(r.annee + " · " + r.titre)}</p>`).join("")}</div></details>`);
     $("grimoireEnvoyer").textContent = isResp() ? "✨ Ajouter au grimoire" : "💜 Proposer à Jordan";
@@ -10516,6 +10615,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     grimoireGestion = !!gestion && isResp();
     grimoireCible = grimoireMe(); grimoirePage = 999;
     $("grimoireBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
+    $("grimoireCouvertureCont").classList.remove("hidden", "feuillete");
+    $("grimoirePages").classList.add("hidden");
+    $("grimoireTitre").textContent = grimoireGestion ? "Les grimoires de Fantasy" : `Le grimoire de ${grimoireNom(grimoireCible)}`;
+    $("grimoireBg").querySelector(".grimoire-sheet").scrollTop = 0;
     const choix = $("grimoireChoix"); choix.classList.toggle("hidden", !grimoireGestion);
     if (grimoireGestion) {
       const liste = members.filter(m => m.email).sort((a,b) => String(a.prenom).localeCompare(String(b.prenom), "fr"));
@@ -10525,15 +10628,38 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     }
     $("grimoireAnnee").value = new Date().getFullYear();
     $("grimoireMessage").textContent = "Ouverture du grimoire…"; $("grimoireLivre").replaceChildren();
+    if (grimoireGestion) afficherPagesGrimoire(true);
     await grimoireRecharger(); renderGrimoire();
   }
+  function afficherPagesGrimoire(sansAnimation = false) {
+    const couverture = $("grimoireCouvertureCont"), pages = $("grimoirePages");
+    if (couverture.classList.contains("hidden") || couverture.classList.contains("feuillete")) return;
+    if (!sansAnimation && !reduceMotion) { couverture.classList.add("feuillete"); son("succes"); magicBurst(innerWidth / 2, innerHeight / 2); }
+    else { couverture.classList.add("hidden"); pages.classList.remove("hidden"); return; }
+    setTimeout(() => { if ($("grimoireBg").classList.contains("hidden")) return; couverture.classList.add("hidden"); couverture.classList.remove("feuillete"); pages.classList.remove("hidden"); $("grimoireBg").querySelector(".grimoire-sheet").scrollTop = 0; }, 700);
+  }
+  $("grimoireOuvrir").onclick = () => afficherPagesGrimoire();
+  $("grimoireRefermer").onclick = () => { $("grimoirePages").classList.add("hidden"); $("grimoireCouvertureCont").classList.remove("hidden", "feuillete"); $("grimoireBg").querySelector(".grimoire-sheet").scrollTop = 0; };
   $("myGrimoireBtn").onclick = () => ouvrirGrimoire(false);
   $("gGrimoire").onclick = () => ouvrirGrimoire(true);
   $("grimoireMembre").onchange = e => { grimoireCible = e.target.value; grimoirePage = 999; renderGrimoire(); };
   const fermerGrimoire = () => { $("grimoireBg").classList.add("hidden"); document.body.style.overflow = ""; };
   $("grimoireFermer").onclick = fermerGrimoire;
   $("grimoireBg").addEventListener("click", e => { if (e.target.id === "grimoireBg") fermerGrimoire(); });
-  $("grimoireLivre").addEventListener("click", e => { const b = e.target.closest("[data-grimoire-page]"); if (b) { grimoirePage += +b.dataset.grimoirePage; renderGrimoire(); } });
+  function tournerPageGrimoire(delta) {
+    const avant = grimoirePage; grimoirePage += delta; renderGrimoire();
+    if (grimoirePage === avant) return;
+    const sheet = $("grimoireBg").querySelector(".grimoire-sheet"), livre = $("grimoireLivre");
+    sheet.scrollTo({ top: Math.max(0, livre.offsetTop - 70), behavior: reduceMotion ? "auto" : "smooth" });
+    if (!reduceMotion) magicBurst(innerWidth / 2, innerHeight / 2);
+    son("pop");
+  }
+  $("grimoireLivre").addEventListener("click", e => { const b = e.target.closest("[data-grimoire-page]"); if (b) tournerPageGrimoire(+b.dataset.grimoirePage); });
+  let grimoireGlisser = null;
+  $("grimoireLivre").addEventListener("touchstart", e => { const t = e.touches[0]; grimoireGlisser = t ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
+  $("grimoireLivre").addEventListener("touchend", e => { if (!grimoireGlisser) return; const t = e.changedTouches[0], dx = t.clientX - grimoireGlisser.x, dy = t.clientY - grimoireGlisser.y; grimoireGlisser = null;
+    if (Math.abs(dx) > 85 && Math.abs(dx) > Math.abs(dy) * 1.5) tournerPageGrimoire(dx < 0 ? 1 : -1);
+  }, { passive: true });
   $("grimoireModeration").addEventListener("click", async e => {
     const a = e.target.closest("[data-grimoire-valider], [data-grimoire-refuser]"); if (!a || !isResp()) return;
     const id = a.dataset.grimoireValider || a.dataset.grimoireRefuser, statut = a.dataset.grimoireValider ? "publie" : "refuse";
@@ -10563,50 +10689,133 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     finally { btn.disabled = false; }
   });
 
-  // ================= ✨ Lumi : petite présence magique, jamais intrusive =================
-  let lumiIndex = 0;
+  // ================= ✨ Lumi, la vraie étoile Fantasy : humeur et rôle de chaque membre =================
+  let lumiTirage = 0;
+  const LUMI_IMAGES = Object.freeze({
+    jour: "lumi-jour.webp", matin: "lumi-matin.webp", danse: "lumi-danse.webp",
+    soir: "lumi-soir.webp", nuit: "lumi-nuit.webp", anniversaire: "lumi-anniversaire.webp",
+    elsa: "lumi-elsa.webp", mira: "lumi-mira.webp"
+  });
   const lumiPreference = () => "fk_lumi_visible_" + (currentUser?.email || "demo").toLowerCase();
   const lumiEstVisible = () => { try { return localStorage.getItem(lumiPreference()) !== "non"; } catch (_) { return true; } };
+  const lumiCompagnonPreference = () => "fk_lumi_compagnon_" + (currentUser?.email || "demo").toLowerCase();
+  const lumiCompagnon = () => { try { return localStorage.getItem(lumiCompagnonPreference()) === "lumio" ? "lumio" : "lumi"; } catch (_) { return "lumi"; } };
+  const lumiMe = () => myMember() || (DEMO ? members.find(m => normName(m.prenom) === normName(demoMe)) : null);
+  const lumiBruxelles = () => {
+    const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Brussels", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
+    const val = k => parts.find(p => p.type === k)?.value || "00";
+    return { jour: `${val("year")}-${val("month")}-${val("day")}`, heure: +val("hour") };
+  };
+  function lumiCleRole(texte) {
+    return normName(String(texte || "").replace(/\([^)]*\)/g, " ").replace(/[^a-zA-ZÀ-ÿ0-9]+/g, " ")).replace(/\s+/g, " ").trim();
+  }
+  const lumiSlug = nom => String(nom).normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  function lumiPersonnagePour(role) {
+    if (!role || lumiCleRole(role).length < 3) return null;
+    const r = lumiCleRole(role);
+    // Source unique : le menu PERSONNAGES réellement sélectionnable dans une fiche animation.
+    const noms = Object.values(PERSONNAGES).flat();
+    const trouves = noms.map(nom => ({ nom, cle: lumiCleRole(nom) })).sort((a,b) => b.cle.length - a.cle.length);
+    return trouves.find(p => p.cle === r || r.startsWith(p.cle + " ") || p.cle.startsWith(r + " ") || (" " + r + " ").includes(" " + p.cle + " "))?.nom || null;
+  }
+  function lumiMissions() {
+    const m = lumiMe(); if (!m) return [];
+    const nom = normName(m.prenom);
+    return events.filter(e => e.date && e.statut !== "annule" && parseTeam(e.animateurs).some(p => normName(p.nom) === nom))
+      .map(e => ({ evenement: e, role: parseTeam(e.animateurs).find(p => normName(p.nom) === nom)?.role || "" }))
+      .sort((a,b) => (a.evenement.date || "").localeCompare(b.evenement.date || ""));
+  }
+  function lumiEtat() {
+    const { jour, heure } = lumiBruxelles(), m = lumiMe(), aujourdHui = lumiMissions().filter(x => x.evenement.date === jour);
+    const role = aujourdHui.find(x => lumiPersonnagePour(x.role))?.role || aujourdHui.find(x => x.role)?.role || "";
+    const fete = (mesChoixNotif?.anniversaire?.date || "").slice(5) === jour.slice(5);
+    if (fete) return { forme:"anniversaire", titre:"Lumi fait la fête !", role, emoji:"🎂" };
+    // Chaque fiche personnage possède son image, et le costume est choisi à partir du rôle de CE membre CE jour-là.
+    const personnage = lumiPersonnagePour(role);
+    if (personnage) {
+      const slug = lumiSlug(personnage), forme = slug === "elsa" ? "elsa" : slug === "mira" ? "mira" : "personnage";
+      const image = forme === "elsa" ? "lumi-elsa.webp" : forme === "mira" ? "lumi-mira.webp" : `lumi-costumes/${slug}.webp`;
+      const palette = ["#a7ddff", "#ffd2a7", "#d0a1ff", "#ffa7d8", "#b0efcf"];
+      const couleur = palette[[...slug].reduce((n,c) => n + c.charCodeAt(0),0) % palette.length];
+      return { forme, titre:`Lumi en ${personnage}`, costume:personnage, image, role, emoji:"🎭", couleur };
+    }
+    if (heure < 6 || heure >= 22) return { forme:"nuit", titre:"Lumi rêve déjà…", role, emoji:"🌙" };
+    if (heure < 11) return { forme:"matin", titre:"Lumi se réveille", role, emoji:"🌞" };
+    if (heure < 18) return { forme: (new Date(jour + "T12:00:00Z").getUTCDate() % 2 ? "danse" : "jour"), titre:"Lumi déborde d'énergie", role, emoji:"🎶" };
+    return { forme:"soir", titre:"Lumi et son grimoire", role, emoji:"📖" };
+  }
   function majLumi() {
+    const compagnon = lumiCompagnon(), estLumio = compagnon === "lumio", nom = estLumio ? "Lumio" : "Lumi";
     const connecte = !$('app').classList.contains('hidden');
     $("lumiBuddy").classList.toggle("hidden", !connecte || !lumiEstVisible());
     if (!connecte || !lumiEstVisible()) $("lumiBulle").classList.add("hidden");
-    $("lumiToggle").textContent = lumiEstVisible() ? "🌙 Masquer Lumi" : "✨ Faire revenir Lumi";
+    $("lumiToggle").textContent = lumiEstVisible() ? `🌙 Masquer ${nom}` : `✨ Faire revenir ${nom}`;
+    document.querySelectorAll("[data-lumi-choix]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lumiChoix === compagnon)));
+    if (!connecte) return;
+    const etat = lumiEtat(), img = $("lumiImage");
+    const titre = estLumio ? (etat.costume ? `Lumio t'encourage pour ${etat.costume}` : etat.forme === "nuit" ? "Lumio fait de beaux rêves" : etat.forme === "matin" ? "Lumio se réveille" : etat.forme === "soir" ? "Lumio et ses étoiles" : etat.forme === "anniversaire" ? "Lumio fait la fête !" : "Lumio est avec toi !") : etat.titre;
+    $("lumiBuddy").dataset.lumiForme = estLumio ? "lumio" : etat.forme;
+    $("lumiBuddy").style.setProperty("--lumi-effet", etat.couleur || "#f7c6ff");
+    $("lumiBuddy").setAttribute("aria-label", titre + " : toucher pour lui parler");
+    $("lumiBuddy").title = titre;
+    const cible = estLumio ? "lumio-jour.webp" : etat.image || LUMI_IMAGES[etat.forme] || LUMI_IMAGES.jour;
+    if (!img.getAttribute("src")?.endsWith(cible)) img.src = cible;
   }
-  function motsDeLumi() {
-    const me = myMember() || (DEMO ? members.find(m => normName(m.prenom) === normName(demoMe)) : null);
-    const prenom = me?.prenom || "toi";
-    const jour = todayISO();
-    const prochaines = events.filter(e => e.date >= jour && e.statut !== "annule" && me &&
-      parseTeam(e.animateurs).some(p => normName(p.nom) === normName(me.prenom)))
-      .sort((a,b) => a.date.localeCompare(b.date));
-    const phrases = [
-      `Coucou ${prenom} ! ✨ Je suis Lumi, une petite étincelle de Fantasy.`,
-      "Petit secret : chaque sourire que tu offres aux enfants recharge ma magie ! 💜",
-      "Même les plus grands magiciens ont commencé avec une toute petite étincelle. 🌟",
-      "Une pincée de courage, beaucoup de bonne humeur… et la magie opère ! 🪄"
-    ];
-    if (prochaines[0]) phrases.splice(1, 0, `Une belle aventure t'attend le ${fmtLong(prochaines[0].date)}. J'ai hâte ! 🎭`);
-    const anniversaire = mesChoixNotif?.anniversaire?.date || "";
-    if (anniversaire && anniversaire.slice(5) === jour.slice(5)) phrases.unshift(`Joyeux anniversaire, ${prenom} ! Une pluie d'étoiles rien que pour toi ! 🎂✨`);
-    return phrases;
+  $("lumiImage").onerror = () => { $("lumiImage").onerror = null; $("lumiImage").src = LUMI_IMAGES.jour; };
+  function texteDeLumi(action, etat) {
+    const m = lumiMe(), prenom = m?.prenom || "toi", { jour } = lumiBruxelles(), estLumio = lumiCompagnon() === "lumio";
+    const prochaines = lumiMissions().filter(x => x.evenement.date >= jour);
+    if (action === "avenir") return prochaines.length
+      ? `J'ai consulté les étoiles ! ✨ Ta prochaine aventure est le ${fmtLong(prochaines[0].evenement.date)}${prochaines[0].role ? " en " + prochaines[0].role : ""}. Je t'envoie du courage et une pluie de paillettes !`
+      : "Pas d'aventure notée prochainement dans ton agenda. En attendant, je garde les étoiles bien au chaud pour toi ! 🌟";
+    if (action === "defi") {
+      const defis = ["Fais sourire un membre de l'équipe aujourd'hui ! 😊", "Inventez un cri de victoire magique à deux ! 🪄", "Mets une chanson et fais 10 secondes de danse de la joie ! 💃", "Dis à quelqu'un ce qu'il fait vraiment bien. 💜", "Trouve trois petites choses qui ont rendu ta journée plus jolie. ✨", "Prépare ton plus beau sourire de personnage devant un miroir ! 🎭", "Invente un nom drôle pour un nouveau sortilège ! 🔮", "Fais un compliment inattendu à un collègue. 🌈"];
+      return `Ton mini-défi secret, ${prenom} : ${defis[(jour.charCodeAt(9) + lumiTirage++) % defis.length]}`;
+    }
+    if (action === "prediction") {
+      const pred = ["une jolie surprise t'attend au détour d'une journée ordinaire !", "ton prochain éclat de rire sera contagieux !", "quelqu'un remarquera bientôt tes efforts, même les plus discrets.", "ta bonne humeur fera naître un très beau souvenir.", "les plus belles histoires commencent parfois avec un tout petit imprévu.", "les étoiles m'ont dit que tu allais transmettre beaucoup de joie !", "un moment de complicité te réchauffera le cœur.", "ta créativité t'aidera à trouver une idée fabuleuse !"];
+      return `🔮 La prédiction de ${estLumio ? "Lumio" : "Lumi"} : ${pred[(jour.charCodeAt(8) + lumiTirage++) % pred.length]}`;
+    }
+    if (estLumio) {
+      if (etat.forme === "anniversaire") return `Joyeux anniversaire, ${prenom} ! 🎂 Je brille de mille feux pour toi !`;
+      if (etat.role) return `Salut ${prenom} ! 🌟 Aujourd'hui, tu joues ${etat.role} ! Je t'accompagne avec toutes mes étoiles. On va assurer ! 🎭`;
+      const phrasesLumio = { nuit:`Chut, ${prenom}… je m'endors sous les étoiles. 🌙`, matin:`Salut ${prenom} ! ☀️ Prêt pour une journée brillante ?`, danse:`Hé ${prenom} ! 🎶 On danse pour se donner de l'énergie ?`, soir:`Bonsoir ${prenom} ! 📖 On se raconte une histoire magique ?`, jour:`Salut ${prenom} ! ⭐ Partant pour une nouvelle aventure ?` };
+      return phrasesLumio[etat.forme] || phrasesLumio.jour;
+    }
+    if (etat.forme === "anniversaire") return `SURPRIIIISE ! 🎂 Joyeux anniversaire, ${prenom} ! J'ai mis ma tenue de fête rien que pour toi !`;
+    if (etat.costume) return `Regarde mon déguisement, ${prenom} ! 😍 Tu joues ${etat.role} aujourd'hui, alors j'ai voulu me préparer comme toi. On va mettre de la magie partout !`;
+    if (etat.role) return `Coucou ${prenom} ! Aujourd'hui, c'est toi qui donnes vie à ${etat.role} ! Je t'envoie toutes mes petites étoiles pour cette animation ! 🎭✨`;
+    const phrases = { nuit:`Chuuut, ${prenom}… je rêve déjà de nos prochaines aventures. 🌙 Mais j'ai gardé une petite étoile allumée pour toi.`, matin:`Bonjour ${prenom} ! ☀️ Je viens de réveiller mes cristaux… et mon chocolat chaud est prêt !`, danse:`Oh, ${prenom} ! 🎶 J'ai mis ma musique préférée. Tu viens danser un peu avec moi ?`, soir:`Bonsoir ${prenom} ! 📖 Je lis un grimoire plein de souvenirs enchantés. Tu crois qu'on devrait écrire le tien ?`, jour:`Coucou ${prenom} ! ✨ J'ai une énergie incroyable aujourd'hui. On part à l'aventure ?` };
+    return phrases[etat.forme] || phrases.jour;
   }
-  function parlerAvecLumi() {
-    const phrases = motsDeLumi();
-    $("lumiBulle").innerHTML = `<b>✨ Lumi</b><p style="margin:7px 0;line-height:1.4">${esc(phrases[lumiIndex++ % phrases.length])}</p>
-      <button type="button" data-lumi-next>Encore ✨</button> <button type="button" data-lumi-close>Fermer</button>`;
+  function parlerAvecLumi(action = "bonjour") {
+    majLumi(); const etat = lumiEtat(), texte = texteDeLumi(action, etat), estLumio = lumiCompagnon() === "lumio";
+    const titre = estLumio ? (etat.costume ? `Lumio t'encourage pour ${etat.costume}` : "Lumio ✨") : etat.titre;
+    $("lumiBulle").innerHTML = `<button type="button" class="lumi-bulle-fermer" data-lumi-close aria-label="Fermer">✕</button>
+      <b class="lumi-bulle-titre">${etat.emoji} ${esc(titre)}</b><span class="lumi-bulle-sous">Ton étoile Fantasy ✦</span>
+      <p class="lumi-bulle-texte">${esc(texte)}</p>
+      <div class="lumi-bulle-actions"><button type="button" data-lumi-action="prediction">🔮 Prédiction</button><button type="button" data-lumi-action="defi">🎲 Défi secret</button><button type="button" data-lumi-action="avenir">🎭 Ma prochaine aventure</button></div>`;
     $("lumiBulle").classList.remove("hidden");
-    const r = $("lumiBuddy").getBoundingClientRect(); magicBurst(r.left + r.width / 2, r.top);
+    if (action === "bonjour" || action === "prediction") { const r = $("lumiBuddy").getBoundingClientRect(); magicBurst(r.left + r.width / 2, r.top); }
   }
   $("lumiBuddy").onclick = () => $("lumiBulle").classList.contains("hidden") ? parlerAvecLumi() : $("lumiBulle").classList.add("hidden");
   $("lumiBulle").addEventListener("click", e => {
-    if (e.target.closest("[data-lumi-next]")) parlerAvecLumi();
+    const action = e.target.closest("[data-lumi-action]"); if (action) parlerAvecLumi(action.dataset.lumiAction);
     if (e.target.closest("[data-lumi-close]")) $("lumiBulle").classList.add("hidden");
   });
   $("lumiToggle").onclick = () => {
     try { localStorage.setItem(lumiPreference(), lumiEstVisible() ? "non" : "oui"); } catch (_) {}
-    majLumi(); toast(lumiEstVisible() ? "✨ Lumi est de retour !" : "🌙 Lumi se repose. Tu peux la rappeler ici.");
+    majLumi(); const nom = lumiCompagnon() === "lumio" ? "Lumio" : "Lumi";
+    toast(lumiEstVisible() ? `✨ ${nom} est de retour !` : `🌙 ${nom} se repose. Tu peux le rappeler ici.`);
   };
+  document.querySelector(".lumi-choix").addEventListener("click", e => {
+    const b = e.target.closest("[data-lumi-choix]"); if (!b) return;
+    try { localStorage.setItem(lumiCompagnonPreference(), b.dataset.lumiChoix); } catch (_) {}
+    $("lumiBulle").classList.add("hidden"); majLumi();
+    toast(`✨ ${b.dataset.lumiChoix === "lumio" ? "Lumio" : "Lumi"} t'accompagne maintenant !`);
+  });
+  setInterval(() => { if (!$('app').classList.contains('hidden')) majLumi(); }, 120000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !$('app').classList.contains('hidden')) majLumi(); });
 
   // ================= 📖 Guide d'interprétation des personnages =================
   // Base : le guide de Jordan (54 fiches, intégré à l'app) ; les modifications et nouvelles fiches des responsables sont dans la table « guide_fiches »
@@ -13476,6 +13685,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("demoBar").classList.toggle("hidden", !DEMO);
     const lienOuverture = !!location.search; // ne pas interrompre un lien direct vers une fiche ou un chat
     await reload();
+    majLumi();
     await suivrePresenceApp();
     // Un membre arrive d’abord sur son tableau de bord personnel ; les responsables gardent l’agenda.
     if (!isGest() && !lienOuverture && view === "cal") document.querySelector('.tab[data-view="mine"]')?.click();
