@@ -2371,6 +2371,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <label>Choix à cocher</label>
       <div id="pollDates"></div>
       <button type="button" class="btn ghost" id="pollAddDate">➕ Ajouter un choix</button>
+      <label for="pollDeadline">📅 Date et heure de clôture des réponses</label>
+      <input id="pollDeadline" type="datetime-local" required aria-describedby="pollDeadlineHelp" />
+      <p class="hint" id="pollDeadlineHelp" style="margin:4px 0 10px">Après cette date, les membres ne pourront plus répondre. Tu peux la choisir librement.</p>
       <button type="button" class="btn primary" id="pollCreateBtn" style="margin-top:10px;width:100%">🗳️ Publier à toute l’équipe</button>
     </div>
     <div id="pollErr" class="err" role="alert"></div>
@@ -6109,6 +6112,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("pollErr").classList.toggle("hidden",!message);
   }
   const pollRecipients = () => [...new Set(members.map(m=>String(m.email||"").trim().toLowerCase()).filter(Boolean))];
+  function pollLocalDateTime(date) {
+    const pad=n=>String(n).padStart(2,"0");
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+  function pollInitDeadline() {
+    const field=$("pollDeadline"),now=new Date();
+    field.min=pollLocalDateTime(now);
+    if(!field.value)field.value=pollLocalDateTime(new Date(now.getTime()+8*86400000));
+  }
   function pollAddDate(value={}) {
     if ($("pollDates").children.length>=12) {
       pollError("Maximum 12 choix par sondage.");return;
@@ -6150,6 +6162,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       return '<div class="poll-card" data-poll-card="'+esc(s.id)+'">'
         +'<h3>'+esc(s.titre)+'</h3>'
         +'<p style="margin:7px 0 14px;font-size:15px;font-weight:700">'+esc(s.notes||"Quel est votre choix ?")+'</p>'
+        +'<p class="hint">📅 Réponses jusqu’au '+esc(new Date(s.date_limite).toLocaleString("fr-BE",{timeZone:"Europe/Brussels",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}))+'</p>'
         +(closed?'<p class="hint">🔒 Sondage terminé</p>':"")
         +choices.map(opt=>'<label class="poll-opt">'
           +(target&&!closed?'<input type="checkbox" data-poll-choice="'+esc(opt.id)+'" '+(selected.includes(String(opt.id))?"checked ":"")+'/>':"")
@@ -6180,6 +6193,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   async function openSondages() {
     pollError("");
     $("pollsBg").classList.remove("hidden");document.body.style.overflow="hidden";
+    pollInitDeadline();
     if(!$("pollDates").children.length)for(let i=0;i<3;i++)pollAddDate();
     $("pollList").innerHTML='<p class="hint">⏳ Chargement des sondages…</p>';
     try { await refreshPolls(); }
@@ -6190,7 +6204,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("myPollsBtn").onclick=openSondages;
   $("gPolls").onclick=openSondages;
   $("pollClose").onclick=closeSondages;
-  $("pollNewBtn").onclick=()=>{pollCreating=!pollCreating;pollError("");renderPolls();};
+  $("pollNewBtn").onclick=()=>{pollCreating=!pollCreating;pollError("");if(pollCreating)pollInitDeadline();renderPolls();};
   $("pollsBg").addEventListener("click",e=>{if(e.target.id==="pollsBg")closeSondages();});
   $("pollAddDate").onclick=()=>pollAddDate();
   $("pollDates").addEventListener("click",e=>{
@@ -6214,19 +6228,24 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if(!emails.length){
       pollError("Aucun membre de l’équipe ne possède d’adresse e-mail.");return;
     }
+    const deadlineValue=$("pollDeadline").value;
+    const deadlineDate=deadlineValue?new Date(deadlineValue):null;
+    if(!deadlineDate||!Number.isFinite(deadlineDate.getTime())||deadlineDate.getTime()<=Date.now()){
+      pollError("Choisis une date et une heure de clôture dans le futur.");$("pollDeadline").focus();return;
+    }
     // "Pas disponible" est toujours le choix exclusif automatique.
     // Si Jordan l'a écrit dans les propositions, ne pas le dupliquer.
     const isUnavailable=label=>/^(?:pas\s+dispo(?:nible)?|aucune\s+disponibilit[eé]|indisponible|je\s+ne\s+suis\s+pas\s+disponible)$/i.test(label.trim());
     const dates=choices.filter(label=>!isUnavailable(label)).map(label=>({id:pollId(),label}));
     if(!dates.length){pollError("Ajoute au moins un choix de disponibilité.");return;}
-    // Date butoir automatique (8 jours), invisible pour conserver un formulaire simple.
-    const deadlineISO=new Date(Date.now()+8*86400000).toISOString();
+    const deadlineISO=deadlineDate.toISOString();
     const button=$("pollCreateBtn"),oldText=button.textContent;
     button.disabled=true;button.textContent="⏳ Publication en cours…";pollError("");
     let createdId=null;
     try{
       createdId=await pollStore.create({titre,dates,emails,deadline:deadlineISO,notes:question});
       pollCreating=false;$("pollTitle").value=$("pollNotes").value="";$("pollDates").innerHTML="";
+      $("pollDeadline").value="";pollInitDeadline();
       for(let i=0;i<3;i++)pollAddDate();
       try{await refreshPolls();toast("🗳️ Sondage publié !");}
       catch(err){pollError("✅ Sondage publié, mais la liste n’a pas pu s’actualiser : "+(err.message||err));}
