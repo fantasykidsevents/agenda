@@ -2371,6 +2371,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <label>Choix à cocher</label>
       <div id="pollDates"></div>
       <button type="button" class="btn ghost" id="pollAddDate">➕ Ajouter un choix</button>
+      <label for="pollDeadline">📅 Date et heure de clôture des réponses</label>
+      <input id="pollDeadline" type="datetime-local" required aria-describedby="pollDeadlineHelp" />
+      <p class="hint" id="pollDeadlineHelp" style="margin:4px 0 10px">Après cette date, les membres ne pourront plus répondre. Tu peux la choisir librement.</p>
       <button type="button" class="btn primary" id="pollCreateBtn" style="margin-top:10px;width:100%">🗳️ Publier à toute l’équipe</button>
     </div>
     <div id="pollErr" class="err" role="alert"></div>
@@ -4966,12 +4969,25 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const texteBouton = d?.reponse_client === "refuse" ? "📨 Envoyer une nouvelle proposition" : d?.reponse_client === "modification" ? "📨 Envoyer le devis modifié" : d?.envoye_le ? "🔁 Renvoyer le devis" : "📨 Enregistrer et envoyer le devis";
     box.innerHTML = `<div class="sec" style="margin-top:0">📨 Devis pour le client</div>
       <p class="hint" style="margin:0 0 8px">${explication}</p>
+      ${!d?.envoye_le ? '<p class="hint" style="margin:0 0 8px">💶 Le total du premier devis sera arrondi au 0,50 € supérieur lors de l’envoi.</p>' : ''}
       ${["confirme","termine","annule"].includes(ev.statut) ? "" : `<button type="button" class="btn ${d?.envoye_le ? "ghost" : "primary"}" id="devisBtn" style="width:100%">${texteBouton}</button>`}`;
     if ($("devisBtn")) $("devisBtn").onclick = () => {
       if (!$("email").value.trim()) { $("formErr").textContent = "📧 Ajoute d'abord l'e-mail du parent."; $("email").focus(); return; }
       if (!$("personnages_client").value.trim()) { $("formErr").textContent = "🎭 Indique le ou les personnages choisis par le client avant d'envoyer le devis."; $("personnages_client").focus(); return; }
       if (!(+$("prix").value > 0)) { $("formErr").textContent = "💶 Indique d'abord le prix total."; $("prix").focus(); return; }
       if (!(+$("acompte").value > 0) && !confirm("Aucun acompte indiqué : le devis partira sans montant d'acompte. Continuer ?")) return;
+      // Les devis déjà envoyés restent au prix convenu lors des renvois.
+      if (!d?.envoye_le) {
+        const total=Number($("prix").value);
+        const arrondi=Math.ceil(Math.round(total*100)/50)/2;
+        if (arrondi > total + 0.000001) {
+          $("prix").value=arrondi.toFixed(2);
+          $("prix").dispatchEvent(new Event("input",{bubbles:true}));
+          // Un solde corrigé manuellement doit aussi inclure l'écart d'arrondi.
+          if (soldeTouched && $("solde").value!=="")
+            $("solde").value=r2(Number($("solde").value)+arrondi-total).toFixed(2);
+        }
+      }
       devisApres = true; $("evForm").requestSubmit();
     };
   }
@@ -6092,6 +6108,19 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       const {error}=await sb.rpc("fermer_sondage_dispo",{p_sondage_id:sondage,p_ferme:ferme});
       if (error) throw error;
     },
+    async updateDeadline(sondage,deadline) {
+      if(!isGest())throw new Error("Modification réservée aux responsables.");
+      if(DEMO){
+        const state=await this.list(),item=state.polls.find(s=>s.id===sondage);
+        if(!item||item.statut!=="ouvert"||Date.parse(item.date_limite)<=Date.now())throw new Error("Ce sondage n'est plus en cours.");
+        item.date_limite=deadline;
+        localStorage.setItem(LS_SONDAGES,JSON.stringify(state));return;
+      }
+      const {error}=await sb.rpc("modifier_date_limite_sondage",{
+        p_sondage_id:sondage,p_date_limite:deadline
+      });
+      if(error)throw new Error(error.code==="42883" ? "Active d'abord sondages-modifier-cloture.sql dans Supabase." : error.message);
+    },
     async remove(sondage) {
       if (!isGest()) throw new Error("Suppression réservée au responsable.");
       if (DEMO) {
@@ -6109,6 +6138,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("pollErr").classList.toggle("hidden",!message);
   }
   const pollRecipients = () => [...new Set(members.map(m=>String(m.email||"").trim().toLowerCase()).filter(Boolean))];
+  function pollLocalDateTime(date) {
+    const pad=n=>String(n).padStart(2,"0");
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+  function pollInitDeadline() {
+    const field=$("pollDeadline"),now=new Date();
+    field.min=pollLocalDateTime(now);
+    if(!field.value)field.value=pollLocalDateTime(new Date(now.getTime()+8*86400000));
+  }
   function pollAddDate(value={}) {
     if ($("pollDates").children.length>=12) {
       pollError("Maximum 12 choix par sondage.");return;
@@ -6150,6 +6188,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       return '<div class="poll-card" data-poll-card="'+esc(s.id)+'">'
         +'<h3>'+esc(s.titre)+'</h3>'
         +'<p style="margin:7px 0 14px;font-size:15px;font-weight:700">'+esc(s.notes||"Quel est votre choix ?")+'</p>'
+        +'<p class="hint">📅 Réponses jusqu’au '+esc(new Date(s.date_limite).toLocaleString("fr-BE",{timeZone:"Europe/Brussels",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}))+'</p>'
         +(closed?'<p class="hint">🔒 Sondage terminé</p>':"")
         +choices.map(opt=>'<label class="poll-opt">'
           +(target&&!closed?'<input type="checkbox" data-poll-choice="'+esc(opt.id)+'" '+(selected.includes(String(opt.id))?"checked ":"")+'/>':"")
@@ -6169,8 +6208,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         +'</div></details>'
         +(admin?'<div class="actions" style="margin-top:12px">'
           +'<button type="button" class="btn ghost" data-poll-event="'+esc(s.id)+'">📅 Créer un événement</button>'
+          +(!closed?'<button type="button" class="btn ghost" data-poll-deadline-edit="'+esc(s.id)+'">📅 Modifier la clôture</button>':"")
           +(!closed?'<button type="button" class="btn ghost" data-poll-close="'+esc(s.id)+'" data-poll-closed="false">🔒 Clôturer</button>':"")
-          +'<button type="button" class="btn ghost" data-poll-delete="'+esc(s.id)+'" style="color:#a32252">🗑️ Supprimer</button></div>':"")
+          +'<button type="button" class="btn ghost" data-poll-delete="'+esc(s.id)+'" style="color:#a32252">🗑️ Supprimer</button></div>'
+          +(!closed?'<div class="hidden" data-poll-deadline-editor="'+esc(s.id)+'" style="margin-top:10px;padding:12px;border:1px solid #e4d5fa;border-radius:12px">'
+            +'<label>Nouvelle date et heure de clôture<input type="datetime-local" data-poll-deadline-input value="'+esc(pollLocalDateTime(new Date(s.date_limite)))+'" /></label>'
+            +'<div class="actions"><button type="button" class="btn primary" data-poll-deadline-save="'+esc(s.id)+'">💾 Enregistrer</button>'
+            +'<button type="button" class="btn ghost" data-poll-deadline-cancel>Annuler</button></div></div>':""):"")
         +'</div>';
     }).join("") : '<p class="hint">Aucun sondage pour le moment.</p>';
   }
@@ -6180,6 +6224,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   async function openSondages() {
     pollError("");
     $("pollsBg").classList.remove("hidden");document.body.style.overflow="hidden";
+    pollInitDeadline();
     if(!$("pollDates").children.length)for(let i=0;i<3;i++)pollAddDate();
     $("pollList").innerHTML='<p class="hint">⏳ Chargement des sondages…</p>';
     try { await refreshPolls(); }
@@ -6190,7 +6235,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("myPollsBtn").onclick=openSondages;
   $("gPolls").onclick=openSondages;
   $("pollClose").onclick=closeSondages;
-  $("pollNewBtn").onclick=()=>{pollCreating=!pollCreating;pollError("");renderPolls();};
+  $("pollNewBtn").onclick=()=>{pollCreating=!pollCreating;pollError("");if(pollCreating)pollInitDeadline();renderPolls();};
   $("pollsBg").addEventListener("click",e=>{if(e.target.id==="pollsBg")closeSondages();});
   $("pollAddDate").onclick=()=>pollAddDate();
   $("pollDates").addEventListener("click",e=>{
@@ -6214,19 +6259,24 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if(!emails.length){
       pollError("Aucun membre de l’équipe ne possède d’adresse e-mail.");return;
     }
+    const deadlineValue=$("pollDeadline").value;
+    const deadlineDate=deadlineValue?new Date(deadlineValue):null;
+    if(!deadlineDate||!Number.isFinite(deadlineDate.getTime())||deadlineDate.getTime()<=Date.now()){
+      pollError("Choisis une date et une heure de clôture dans le futur.");$("pollDeadline").focus();return;
+    }
     // "Pas disponible" est toujours le choix exclusif automatique.
     // Si Jordan l'a écrit dans les propositions, ne pas le dupliquer.
     const isUnavailable=label=>/^(?:pas\s+dispo(?:nible)?|aucune\s+disponibilit[eé]|indisponible|je\s+ne\s+suis\s+pas\s+disponible)$/i.test(label.trim());
     const dates=choices.filter(label=>!isUnavailable(label)).map(label=>({id:pollId(),label}));
     if(!dates.length){pollError("Ajoute au moins un choix de disponibilité.");return;}
-    // Date butoir automatique (8 jours), invisible pour conserver un formulaire simple.
-    const deadlineISO=new Date(Date.now()+8*86400000).toISOString();
+    const deadlineISO=deadlineDate.toISOString();
     const button=$("pollCreateBtn"),oldText=button.textContent;
     button.disabled=true;button.textContent="⏳ Publication en cours…";pollError("");
     let createdId=null;
     try{
       createdId=await pollStore.create({titre,dates,emails,deadline:deadlineISO,notes:question});
       pollCreating=false;$("pollTitle").value=$("pollNotes").value="";$("pollDates").innerHTML="";
+      $("pollDeadline").value="";pollInitDeadline();
       for(let i=0;i<3;i++)pollAddDate();
       try{await refreshPolls();toast("🗳️ Sondage publié !");}
       catch(err){pollError("✅ Sondage publié, mais la liste n’a pas pu s’actualiser : "+(err.message||err));}
@@ -6259,9 +6309,35 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const end=e.target.closest("[data-poll-close]");
     const del=e.target.closest("[data-poll-delete]");
     const plan=e.target.closest("[data-poll-event]");
-    if(!save&&!end&&!del&&!plan)return;
-    const button=save||end||del||plan,card=button.closest("[data-poll-card]");
+    const editDeadline=e.target.closest("[data-poll-deadline-edit]");
+    const saveDeadline=e.target.closest("[data-poll-deadline-save]");
+    const cancelDeadline=e.target.closest("[data-poll-deadline-cancel]");
+    if(!save&&!end&&!del&&!plan&&!editDeadline&&!saveDeadline&&!cancelDeadline)return;
+    const button=save||end||del||plan||editDeadline||saveDeadline||cancelDeadline,card=button.closest("[data-poll-card]");
     if(!card)return;
+    if(editDeadline||cancelDeadline){
+      const editor=card.querySelector("[data-poll-deadline-editor]");
+      if(!editor)return;
+      editor.classList.toggle("hidden",!!cancelDeadline||!editor.classList.contains("hidden"));
+      if(editDeadline&&!editor.classList.contains("hidden")){
+        const input=editor.querySelector("[data-poll-deadline-input]");
+        input.min=pollLocalDateTime(new Date());input.focus();
+      }
+      return;
+    }
+    if(saveDeadline){
+      if(!isGest())return;
+      const input=card.querySelector("[data-poll-deadline-input]");
+      const date=input?.value?new Date(input.value):null;
+      if(!date||!Number.isFinite(date.getTime())||date.getTime()<=Date.now()){
+        pollError("Choisis une date et une heure futures.");input?.focus();return;
+      }
+      saveDeadline.disabled=true;pollError("");
+      try{await pollStore.updateDeadline(saveDeadline.dataset.pollDeadlineSave,date.toISOString());
+        await refreshPolls();toast("📅 Clôture du sondage modifiée !");}
+      catch(err){pollError("Impossible de modifier la clôture : "+(err.message||err));saveDeadline.disabled=false;}
+      return;
+    }
     if(plan){
       if(!isGest())return;
       const sondage=polls.find(p=>String(p.id)===String(plan.dataset.pollEvent));
