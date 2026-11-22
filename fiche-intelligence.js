@@ -110,7 +110,7 @@
       ["Accord",accepted(devis)||["confirme","termine"].includes(ev.statut)],
       ["Acompte",!Number(ev.acompte)||!!ev.acompte_paye],
       ["Équipe",hasTeam],
-      ["Prestation",ev.statut==="termine"||isOver],
+      ["Prestation",ev.statut==="termine"],
       ["Photos",!!ev.photos_envoyees]
     ];
     const timing=quote&&quote.level!=="attente";
