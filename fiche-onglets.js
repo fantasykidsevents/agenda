@@ -35,6 +35,9 @@
     nav.id = "ficheTabs";
     nav.setAttribute("aria-label", "Rubriques de la fiche");
     summary.insertAdjacentElement("afterend", nav);
+    // Vue Jour J : raccourci toujours visible en haut quand la prestation y donne droit.
+    const jourBtn=document.getElementById("jourBtnBox");
+    if(jourBtn){nav.insertAdjacentElement("afterend",jourBtn);jourBtn.dataset.ficheSection="always";jourBtn.style.margin="3px 0 9px";}
     TAB_LIST.forEach(([key,label]) => {
       const b=document.createElement("button");
       b.type="button"; b.dataset.ficheTab=key; b.textContent=label;
