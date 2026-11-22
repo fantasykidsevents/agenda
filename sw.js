@@ -1,9 +1,9 @@
 // Service worker : permet l'installation et l'ouverture hors connexion.
 // Stratégie « réseau d'abord » : on prend toujours la version la plus
 // récente, et on retombe sur le cache si pas de réseau.
-const CACHE = "fk-agenda-v146";
+const CACHE = "fk-agenda-v147";
 const FICHIERS = [
-  "./", "./index.html", "./devis.html", "./anticipation.html", "./attente.html", "./factures.html", "./factures-pdf.js", "./factures-fond-magique.jpg", "./config.js", "./manifest.json",
+  "./", "./index.html", "./gestion-bilans.js", "./devis.html", "./anticipation.html", "./attente.html", "./factures.html", "./factures-pdf.js", "./factures-fond-magique.jpg", "./config.js", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./logo.png", "./nuit-magique.png",
   "./lumi-jour.webp", "./lumio-jour.webp", "./lumi-matin.webp", "./lumi-danse.webp", "./lumi-soir.webp", "./lumi-nuit.webp",
   "./lumi-anniversaire.webp", "./lumi-elsa.webp", "./lumi-mira.webp",

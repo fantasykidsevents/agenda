@@ -2047,7 +2047,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
     <!-- Vue Chiffres (responsables) -->
     <section id="viewStats" class="hidden">
-      <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gClients"><span>👤</span>Clients</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gGrimoire"><span>📖✨</span>Grimoires</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
+      <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gClients"><span>👤</span>Clients</button><button type="button" class="evt-tile" id="gBilans"><span>📝</span>Bilans</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gGrimoire"><span>📖✨</span>Grimoires</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
       <button type="button" id="gRegie" class="mine-head" style="width:100%;border:1px solid #d5b4f8;text-align:center;color:#653090;font:800 17px Fredoka,sans-serif;cursor:pointer">🎛️ Régie des événements</button>
       <a href="factures.html" class="mine-head" style="display:block;text-decoration:none;color:#653090;font-weight:800;text-align:center">🧾 Factures & devis · Créer, consulter et imprimer</a>
       <button type="button" id="gDevis" class="mine-head" style="width:100%;border:1px solid #d5b4f8;text-align:center;color:#653090;font:800 17px Fredoka,sans-serif;cursor:pointer">📜 Devis clients · Réponses et relances</button>
@@ -2071,6 +2071,18 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
           <button type="button" class="btn ghost" id="devisActualiser">🔄 Actualiser</button>
         </div>
         <div id="devisGestionBody" aria-live="polite">Ouvrez ce panneau pour consulter les devis.</div>
+      </section>
+      <section id="gBilansPanel" class="panel hidden" aria-label="Bilans des prestations">
+        <div class="hc-head"><h3>📝 Bilans des prestations</h3><div class="after-btns"><button type="button" class="sig" id="gBilansRefresh">🔄 Actualiser</button><button type="button" class="sig" id="gBilansClose">✕ Fermer</button></div></div>
+        <p class="hint">Bilans de fin d'animation réunis au même endroit, sans nouvelle saisie. Cet espace est réservé aux responsables 👑.</p>
+        <label for="gBilansSearch">🔎 Rechercher</label>
+        <input id="gBilansSearch" type="search" placeholder="Client, enfant, personnage, accompagnateur…" />
+        <div class="row" style="margin:9px 0;flex-wrap:wrap">
+          <div><label for="gBilansFilter">Statut</label><select id="gBilansFilter"><option value="tous">Tous les bilans</option><option value="manquants">📝 Manquants</option><option value="verifier">⚠️ À vérifier</option><option value="recus">✅ Reçus</option></select></div>
+          <div><label for="gBilansMonth">Mois (facultatif)</label><input id="gBilansMonth" type="month" /></div>
+        </div>
+        <div id="gBilansSummary" style="margin:12px 0" aria-live="polite"></div>
+        <div id="gBilansList" aria-live="polite"></div>
       </section>
       <section id="gPaiesPanel" class="panel hidden" aria-label="Paiements de l'équipe">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -3571,20 +3583,36 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!ids.length || DEMO) return true;
     // Les autres membres peuvent avoir déjà envoyé le bilan / encaissé le
     // solde depuis leur téléphone. On interroge l'état partagé, pas le cache.
-    const [rEv, rBilans] = await Promise.all([
+    const [rEv, rBilans, rPresence] = await Promise.all([
       sb.from("evenements").select("id,solde,supplement,solde_encaisse,tatouages_nb,tatouages_paiement,options")
         .in("id", ids),
       sb.from("bilans").select("id,evenement_id,auteur,humeur,incident,texte,created_at")
         .in("evenement_id", ids),
+      // Cette fonction ne révèle QUE la présence d'un bilan, jamais son texte ni
+      // son auteur. Elle fonctionne même quand le bilan d'un collègue est privé.
+      sb.rpc("bilans_partages_existants", { p_ids: ids }),
     ]);
-    if (rEv.error || rBilans.error) {
-      console.warn("Actualisation des bilans communs :", rEv.error?.message || rBilans.error?.message);
+    if (rEv.error) console.warn("Actualisation des soldes communs :", rEv.error.message);
+    if (rPresence.error && !/function|schema cache|not found|404|PGRST202/i.test(rPresence.error.message || "")) {
+      console.warn("État des bilans communs :", rPresence.error.message);
+    }
+    if (rBilans.error && rPresence.error) {
+      console.warn("Lecture des bilans communs :", rBilans.error.message);
       return false;
     }
     const parId = new Map((rEv.data || []).map(e => [String(e.id), e]));
     for (const e of events) { const recent = parId.get(String(e.id)); if (recent) Object.assign(e, recent); }
     const enCours = new Set(ids.map(String));
-    bilans = bilans.filter(b => !enCours.has(String(b.evenement_id))).concat(rBilans.data || []);
+    const visibles = rBilans.error ? [] : (rBilans.data || []);
+    const idsVisibles = new Set(visibles.map(b => String(b.evenement_id)));
+    // Si RLS masque le bilan d'un collègue, on ne conserve qu'un témoin
+    // sans contenu personnel : aucun autre membre n'a à le refaire.
+    const temoins = rPresence.error ? [] : (rPresence.data || [])
+      .filter(row => enCours.has(String(row.evenement_id)) && !idsVisibles.has(String(row.evenement_id)))
+      .map(row => ({ id: "presence-" + row.evenement_id, evenement_id: row.evenement_id,
+        auteur: "un membre de l'équipe", humeur: null, incident: false, texte: null, presence_seule: true }));
+    bilans = bilans.filter(b => !enCours.has(String(b.evenement_id)))
+      .concat(visibles, temoins);
     return true;
   }
   async function chargerNotifications() {
@@ -3698,6 +3726,15 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     await Promise.all([costReload(), costAttributionReload(), costDemandeReload()]);
     await stockReload(); await gainsReload();
     try { bilans = await bilanStore.list(); } catch (e) { bilans = []; }
+    // À la connexion, vérifier les bilans communs de ses prestations récentes.
+    // Un compte membre n'a pas nécessairement le droit de lire leur contenu.
+    if (!DEMO && !isResp()) {
+      const moi = normName(myMember()?.prenom || "");
+      const depuis = iso(new Date(Date.now() - 30 * 864e5));
+      const ids = events.filter(e => moi && e.type_evenement === "animation" && e.date >= depuis &&
+        e.date <= todayISO() && e.statut !== "annule" && anims(e).some(a => normName(a) === moi)).map(e => String(e.id));
+      if (ids.length) await rafraichirActionsPartagees(ids);
+    }
     try { depenses = await depStore.list(); } catch (e) { depenses = []; }
     try { naissances = await naissStore.list(); } catch (e) { naissances = {}; }
     applyRole();
@@ -4838,7 +4875,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("statut").addEventListener("change",()=>afficherAnticipationFiche(events.find(x=>x.id===editingId)));
   // ---------- Signalement rapide ----------
   let sigEv = null;
-  function openSignal(ev) {
+  async function openSignal(ev) {
+    // Avant de proposer un bilan, vérifier qu'un collègue ne l'a pas déjà remis.
+    if (!DEMO && !(await rafraichirActionsPartagees([String(ev.id)]))) {
+      toast("📶 Impossible de vérifier le bilan de l'équipe. Réessayez."); return;
+    }
     sigEv = ev;
     $("sigFor").textContent = `${ev.titre || ev.enfant || "Animation"} · ${fmtLong(ev.date)}`;
     $("sigList").innerHTML = ev.materiel_manquant ? `<div class="missing" style="margin:0 0 6px">Déjà signalé :\n${esc(ev.materiel_manquant)}</div>` : "";
@@ -4865,8 +4906,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   }
   $("sigCancel").onclick = async () => {
     try {
-      const deja = sigEv && bilanAnimation(sigEv.id);
       const b = await enregistrerBilan();
+      const deja = sigEv && bilanAnimation(sigEv.id);
       if (!deja && !b) { $("sigErr").textContent = "📝 Pour valider votre bilan, choisissez l'humeur du parent ou écrivez un commentaire."; return; }
       closeSignal(); toast(b ? "📝 Bilan envoyé ! Merci ✨" : "👍 Merci, bonne fin de journée ✨"); if (b) celebrerMagie("Mission accomplie !"); render();
     }
@@ -4879,6 +4920,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     e.preventDefault();
     const txt = $("sigText").value.trim();
     if (!txt) { $("sigErr").textContent = "Écrivez ce qui manque, ou touchez « 👍 Rien ne manque »."; return; }
+    if (!DEMO && !(await rafraichirActionsPartagees([String(sigEv.id)]))) {
+      $("sigErr").textContent = "Impossible de vérifier le bilan commun. Réessayez."; return;
+    }
     if (!bilanAnimation(sigEv.id) && !bilanHumeur && !$("bilanTxt")?.value.trim() && !$("bilanInc")?.checked) {
       $("sigErr").textContent = "📝 Complétez aussi votre petit bilan (humeur du parent ou commentaire)."; return;
     }
@@ -5470,8 +5514,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       return `${ic} ${Math.round(j.hourly.temperature_2m[i])} °C · ${j.hourly.precipitation_probability[i] ?? 0} % de pluie à ${h}h (${g.name})`;
     } catch (e) { return null; }
   }
-  function openJour(ev) {
+  async function openJour(ev) {
     if (ev.statut === "en_attente" && !isGest()) return openForm(ev);
+    // La fiche du jour doit afficher l'état réellement commun à toute l'équipe.
+    if (!DEMO && ev.type_evenement === "animation" && animationTerminee(ev))
+      await rafraichirActionsPartagees([String(ev.id)]);
     $("jourBg").classList.remove("mode-active");
     $("jourChat").dataset.id = ev.id; $("jourChat").classList.toggle("hidden", !jePeuxVoir(ev));
     const U = universOf(ev), r = (ev.fiche && ev.fiche.reponses) || {};
@@ -7273,7 +7320,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("rgClose").onclick = closeRg; $("rgBg").addEventListener("click", (e) => { if (e.target.id === "rgBg") closeRg(); });
   $("gReglages").onclick = openRg;
   const gestionGroupes={
-    prestas:["gEvts","gCaissePresta","gCaisseLibre","gClients"],
+    prestas:["gEvts","gBilans","gCaissePresta","gCaisseLibre","gClients"],
     equipe:["gEquipe","gGrimoire","gPaies","gHeures","gPolls","gInfos"],
     finances:["gFin","gPaies","gExport","gRecap","gCaissePresta","gCaisseLibre"],
     orga:["costBtn","gStock","guideBtn","gIdeas","gReglages","gClients"]
@@ -11401,6 +11448,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
   async function enregistrerBilan() {
     if (!sigEv || !$("bilanTxt") || bilanAnimation(sigEv.id)) return false;
+    if (!DEMO && !(await rafraichirActionsPartagees([String(sigEv.id)])))
+      throw new Error("Impossible de vérifier si le bilan commun a déjà été envoyé.");
+    if (bilanAnimation(sigEv.id)) return false;
     const texte = $("bilanTxt").value.trim(), incident = $("bilanInc").checked;
     if (!bilanHumeur && !texte && !incident) return false;
     await bilanStore.add({ evenement_id: sigEv.id, auteur: chatMe(), humeur: bilanHumeur || null, incident, texte: texte || null });
@@ -11426,6 +11476,24 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const inc = l.some(b => b.incident), pire = ["mecontent", "moyen", "content", "ravi"].find(h => l.some(b => b.humeur === h));
     return `<span class="badge ${inc || pire === "mecontent" ? "solde-ko" : "fiche-ok"}">${inc ? "⚠️ Incident" : pire ? HUMEURS[pire][0] : "📝"} Bilan${l.length > 1 ? ` (${l.length})` : ""}</span>`;
   }
+
+  // Lien strictement réservé aux responsables entre l'application et sa vue Bilans.
+  window.__fkBilansGestion = {
+    autorise: () => isResp(),
+    lire: () => !isResp() ? [] : events
+      .filter(e => e && e.type_evenement === "animation" && !estEvenementInterne(e))
+      .map(e => ({
+        id: String(e.id), titre: e.titre || "", enfant: e.enfant || "",
+        parent: e.parent || "", theme: e.theme || "", animateurs: e.animateurs || "",
+        date: e.date || "", heure_fin: e.heure_fin || "", statut: e.statut || "",
+        rapports: bilansDe(e.id).map(b => ({
+          auteur: b.auteur || "", humeur: b.humeur || "", incident: !!b.incident,
+          texte: b.texte || "", created_at: b.created_at || ""
+        }))
+      })),
+    ouvrir: (id) => { if (!isResp()) return; const e = events.find(x => String(x.id) === String(id)); if (e) openForm(e); },
+    actualiser: async () => { if (isResp()) await reload(); }
+  };
 
   // ================= 🗺️ Carte des animations =================
   // Petite carte maison (fond OpenStreetMap), sans bibliothèque externe
@@ -13982,5 +14050,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
 })();
 </script>
+<script src="gestion-bilans.js?v=1"></script>
 </body>
 </html>
