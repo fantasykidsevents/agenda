@@ -33,7 +33,8 @@
     }
   }
   function ensure() {
-    if(!$("ficheResume")||$("fantasyFicheIntelligence"))return;
+    if(!$("ficheResume"))return null;
+    if($("fantasyFicheIntelligence"))return $("fantasyFicheIntelligence");
     const root=document.createElement("div");
     root.id="fantasyFicheIntelligence";
     root.dataset.ficheSection="resume";
