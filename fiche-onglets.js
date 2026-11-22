@@ -76,7 +76,7 @@
     Array.from(form.children).forEach(el => {
       if(!el.dataset.ficheSection && el !== summary && el !== nav) el.dataset.ficheSection="resume";
     });
-    for(const id of ["formErr"]) {const el=topChild(id); if(el) el.dataset.ficheSection="always";}
+    for(const id of ["formTitle","formErr"]) {const el=topChild(id); if(el) el.dataset.ficheSection="always";}
     const buttons = form.querySelector(":scope > .actions");
     if(buttons) buttons.dataset.ficheSection="always";
     let current="resume";
