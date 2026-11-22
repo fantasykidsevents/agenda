@@ -21,6 +21,7 @@
     addAnim:"animation",evCostAssignBtn:"animation",afterBox:"suivi",fPhotos:"suivi"
   })[id]||"resume";
   function jump(tab,id) {
+    tab=tab||tabFor(id);
     const button=document.querySelector('#ficheTabs [data-fiche-tab="'+tab+'"]');
     button?.click();
     if(id) {
