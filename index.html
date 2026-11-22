@@ -601,26 +601,6 @@
     background:linear-gradient(135deg,#e6f6ff,#f1e4ff,#ffe6f3);box-shadow:inset 0 0 0 2px rgba(160,32,255,.15)}
   .vue-seg{margin:0 0 10px}
   .g-tiles{margin:4px 0 14px}
-  /* Bureau Fantasy : navigation claire et cartes denses, indépendante des autres vues. */
-  #viewStats .fk-gestion-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:4px 0 17px;padding:20px 24px;border:1px solid #e6d7f7;border-radius:20px;background:linear-gradient(120deg,#fff,#f5edff 65%,#fdf2fa);box-shadow:0 8px 24px #5c3b9810}
-  #viewStats .fk-kicker{display:block;font-size:10px;font-weight:900;letter-spacing:1.7px;color:#8a69af;margin-bottom:5px}
-  #viewStats .fk-gestion-heading h2{font-size:25px;line-height:1.1;margin:0;color:#4c267b}
-  #viewStats .fk-gestion-heading p{font-size:13px;color:#78648f;margin:7px 0 0}
-  #viewStats .fk-gestion-spark{font-size:42px;line-height:1;color:#b67aef;opacity:.7}
-  #viewStats #gCategories{display:flex;flex-wrap:wrap!important;gap:6px;background:transparent;border:0;box-shadow:none;padding:0;margin:0 0 15px!important}
-  #viewStats #gCategories label{flex:0 0 auto;min-width:0}
-  #viewStats #gCategories label span{padding:9px 15px;border-radius:12px;font-size:12px;font-weight:800}
-  #viewStats .g-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:10px;margin:0 0 17px}
-  #viewStats .g-tiles .evt-tile{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:11px;min-width:0;min-height:68px;padding:12px 14px;border-radius:15px;text-align:left;font-size:13px;font-weight:800;line-height:1.3;border:1px solid #e5d6f4;background:linear-gradient(130deg,#fff,#fbf8ff);box-shadow:0 3px 10px #5937860b;transition:background .15s,border-color .15s,transform .15s}
-  #viewStats .g-tiles .evt-tile span{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:11px;font-size:22px;background:#f4ebff;filter:none}
-  #viewStats .g-tiles .evt-tile:hover,#viewStats .g-tiles .evt-tile:focus-visible{background:#f8f0ff;border-color:#bc8fea;transform:translateY(-1px);box-shadow:0 6px 15px #59378616}
-  #viewStats .g-tiles .evt-tile.hidden{display:none!important}
-  #viewStats .fk-gestion-quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}
-  #viewStats .fk-gestion-quick > *{display:flex!important;justify-content:center;align-items:center;min-height:57px;box-sizing:border-box;margin:0!important;padding:11px 14px!important;border-radius:14px!important;border:1px solid #dfccef!important;background:#faf7ff!important;color:#66418c!important;font-size:13px!important;font-weight:800!important;line-height:1.35;text-align:center;box-shadow:none!important}
-  #viewStats .fk-gestion-quick > *:hover{background:#f1e8ff!important}
-  @media(max-width:900px){#viewStats .g-tiles{grid-template-columns:repeat(auto-fill,minmax(165px,1fr))}#viewStats .fk-gestion-quick{grid-template-columns:1fr}}
-  @media(max-width:600px){#viewStats .fk-gestion-heading{padding:16px;margin-bottom:13px}#viewStats .fk-gestion-heading h2{font-size:22px}#viewStats #gCategories label{flex:1 1 auto}#viewStats #gCategories label span{text-align:center;padding:10px 9px}#viewStats .g-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#viewStats .g-tiles .evt-tile{min-height:74px;padding:10px;gap:8px;font-size:12px}#viewStats .g-tiles .evt-tile span{width:32px;height:32px;flex-basis:32px;font-size:19px}}
-  @media(max-width:360px){#viewStats .g-tiles{grid-template-columns:1fr}}
 
   details.fold{margin:6px 0;border-radius:14px}
   details.fold>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px}
@@ -1825,6 +1805,27 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   .sort-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:24px}
   .sort-stars i{position:absolute;color:#e8b23c;animation:lumiFlotte 1.2s ease-in-out infinite alternate;font-size:25px}
   @media(prefers-reduced-motion:reduce){.lumi-buddy,.lumi-buddy::before,.lumi-buddy .lumi-lueur,.grimoire-cover,.grimoire-couverture-cont,.grimoire-page,.grimoire-preambule-rune,.sort-reveal .em,.sort-stars i{animation:none!important;transition:none!important}}
+  /* Bureau Fantasy : navigation claire et cartes denses, indépendante des autres vues. */
+  #viewStats .fk-gestion-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:4px 0 17px;padding:20px 24px;border:1px solid #e6d7f7;border-radius:20px;background:linear-gradient(120deg,#fff,#f5edff 65%,#fdf2fa);box-shadow:0 8px 24px #5c3b9810}
+  #viewStats .fk-kicker{display:block;font-size:10px;font-weight:900;letter-spacing:1.7px;color:#8a69af;margin-bottom:5px}
+  #viewStats .fk-gestion-heading h2{font-size:25px;line-height:1.1;margin:0;color:#4c267b}
+  #viewStats .fk-gestion-heading p{font-size:13px;color:#78648f;margin:7px 0 0}
+  #viewStats .fk-gestion-spark{font-size:42px;line-height:1;color:#b67aef;opacity:.7}
+  #viewStats #gCategories{display:flex;flex-wrap:wrap!important;gap:6px;background:transparent;border:0;box-shadow:none;padding:0;margin:0 0 15px!important}
+  #viewStats #gCategories label{flex:0 0 auto;min-width:0}
+  #viewStats #gCategories label span{padding:9px 15px;border-radius:12px;font-size:12px;font-weight:800}
+  #viewStats .g-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:10px;margin:0 0 17px}
+  #viewStats .g-tiles .evt-tile{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:11px;min-width:0;min-height:68px;padding:12px 14px;border-radius:15px;text-align:left;font-size:13px;font-weight:800;line-height:1.3;border:1px solid #e5d6f4;background:linear-gradient(130deg,#fff,#fbf8ff);box-shadow:0 3px 10px #5937860b;transition:background .15s,border-color .15s,transform .15s}
+  #viewStats .g-tiles .evt-tile span{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:11px;font-size:22px;background:#f4ebff;filter:none}
+  #viewStats .g-tiles .evt-tile:hover,#viewStats .g-tiles .evt-tile:focus-visible{background:#f8f0ff;border-color:#bc8fea;transform:translateY(-1px);box-shadow:0 6px 15px #59378616}
+  #viewStats .g-tiles .evt-tile.hidden{display:none!important}
+  #viewStats .fk-gestion-quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}
+  #viewStats .fk-gestion-quick > *{display:flex!important;justify-content:center;align-items:center;min-height:57px;box-sizing:border-box;margin:0!important;padding:11px 14px!important;border-radius:14px!important;border:1px solid #dfccef!important;background:#faf7ff!important;color:#66418c!important;font-size:13px!important;font-weight:800!important;line-height:1.35;text-align:center;box-shadow:none!important}
+  #viewStats .fk-gestion-quick > *:hover{background:#f1e8ff!important}
+  @media(max-width:900px){#viewStats .g-tiles{grid-template-columns:repeat(auto-fill,minmax(165px,1fr))}#viewStats .fk-gestion-quick{grid-template-columns:1fr}}
+  @media(max-width:600px){#viewStats .fk-gestion-heading{padding:16px;margin-bottom:13px}#viewStats .fk-gestion-heading h2{font-size:22px}#viewStats #gCategories label{flex:1 1 auto}#viewStats #gCategories label span{text-align:center;padding:10px 9px}#viewStats .g-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#viewStats .g-tiles .evt-tile{min-height:74px;padding:10px;gap:8px;font-size:12px}#viewStats .g-tiles .evt-tile span{width:32px;height:32px;flex-basis:32px;font-size:19px}}
+  @media(max-width:360px){#viewStats .g-tiles{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
