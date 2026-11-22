@@ -155,35 +155,72 @@ function getMailer() {
   return { transport: mailer, adresse: env("GMAIL_USER") };
 }
 
+// Suivi central des tentatives d'envoi. La création du journal ne peut jamais
+// provoquer un second envoi ni empêcher la transmission d'un e-mail.
+async function journaliserEmail(
+  to: string, sujet: string, canal: "client" | "interne",
+  statut: "accepte" | "echec", erreur: unknown = null, providerId = ""
+) {
+  const fournisseur = canal === "client" ? "gmail" : "resend";
+  // Ne stocker ni pièces jointes, ni corps du message, ni données d'authentification.
+  const raison = erreur
+    ? String((erreur as { code?: string; message?: string })?.code ||
+             (erreur as { message?: string })?.message || erreur)
+        .replace(/https?:\/\/\S+/gi, "[url]")
+        .replace(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi, "[email]")
+        .replace(/(?:bearer|token|apikey|api_key|password)[=: ]+\S+/gi, "[secret]")
+        .slice(0, 240)
+    : null;
+  try {
+    const { error } = await sb.from("fantasy_emails_journal").insert({
+      canal, fournisseur, destinataire: String(to || "").slice(0, 254),
+      sujet: String(sujet || "").slice(0, 250), statut,
+      code_erreur: raison, identifiant_fournisseur: String(providerId || "").slice(0, 120) || null
+    });
+    if (error && error.code !== "42P01" && error.code !== "PGRST205")
+      console.warn("Journal e-mails non enregistré :", error.message);
+  } catch (e) {
+    console.warn("Journal e-mails momentanément indisponible :", (e as Error)?.message || String(e));
+  }
+}
 async function envoyerEmail(to, sujet, html, texte, pj = [], options: { canal?: "client" | "interne" } = {}) {
   const canal = options.canal || "interne";
-  // Les mails AUX CLIENTS doivent apparaître dans « Envoyés » de Gmail,
-  // pour que Jordan puisse retrouver les échanges et les réponses.
-  if (canal === "client") {
-    const config = getMailer();
-    if (!config) throw new Error("Envoi au client impossible : compte Gmail professionnel non configuré.");
-    await config.transport.sendMail({
-      from: `"Fantasy Kids Events" <${config.adresse}>`,
-      to, subject: sujet, html, text: texte,
-      attachments: pj.map((a) => ({ filename: a.filename, content: a.content })),
+  try {
+    if (canal === "client") {
+      // Les messages aux clients restent envoyés par Gmail et apparaissent dans
+      // ses éléments envoyés. L'acceptation SMTP n'est pas une preuve de réception.
+      const config = getMailer();
+      if (!config) throw new Error("Envoi au client impossible : compte Gmail professionnel non configuré.");
+      const response = await config.transport.sendMail({
+        from: '"Fantasy Kids Events" <' + config.adresse + '>',
+        to, subject: sujet, html, text: texte,
+        attachments: pj.map((a) => ({ filename: a.filename, content: a.content })),
+      });
+      await journaliserEmail(to, sujet, canal, "accepte", null, String(response?.messageId || ""));
+      return;
+    }
+    // Notifications internes via Resend exclusivement (sans repli sur Gmail).
+    const cleResend = env("RESEND_API_KEY");
+    const expediteur = env("EMAIL_FROM_AUTO") || env("EMAIL_FROM");
+    if (!cleResend || !expediteur)
+      throw new Error("Notification interne non envoyée : Resend n'est pas configuré (aucun repli sur Gmail).");
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + cleResend, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: expediteur, to, subject: sujet, html, text: texte,
+        reply_to: env("EMAIL_REPLY_TO") || env("GMAIL_USER") || "fantasykidsevents@gmail.com",
+        ...(pj.length ? { attachments: pj.map((a) => ({
+          filename: a.filename,
+          content: btoa(Array.from(a.content, (c) => String.fromCharCode(c)).join(""))
+        })) } : {}) }),
     });
-    return;
+    if (!r.ok) throw new Error("Resend HTTP " + r.status + " : " + (await r.text()).slice(0, 250));
+    const data = await r.json().catch(() => ({}));
+    await journaliserEmail(to, sujet, canal, "accepte", null, String(data?.id || ""));
+  } catch (erreur) {
+    await journaliserEmail(to, sujet, canal, "echec", erreur);
+    throw erreur;
   }
-
-  // Les notifications équipe / administration partent uniquement par Resend :
-  // pas de copie dans les éléments envoyés de Gmail, même pour un contrat pro.
-  const cleResend = env("RESEND_API_KEY");
-  const expediteur = env("EMAIL_FROM_AUTO") || env("EMAIL_FROM");
-  if (!cleResend || !expediteur)
-    throw new Error("Notification interne non envoyée : Resend n'est pas configuré (aucun repli sur Gmail).");
-  const r = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${cleResend}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: expediteur, to, subject: sujet, html, text: texte,
-      reply_to: env("EMAIL_REPLY_TO") || env("GMAIL_USER") || "fantasykidsevents@gmail.com",
-      ...(pj.length ? { attachments: pj.map((a) => ({ filename: a.filename, content: btoa(Array.from(a.content, (c) => String.fromCharCode(c)).join("")) })) } : {}) }),
-  });
-  if (!r.ok) throw new Error("Resend : " + (await r.text()));
 }
 
 // Préférences individuelles : les cases non encore enregistrées restent cochées.
