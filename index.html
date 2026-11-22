@@ -2356,7 +2356,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="sec">Après l'animation</div>
       <div class="after-btns">
         <input type="url" id="fPhotosLien" class="hidden" placeholder="🔗 Colle le lien des photos (Google Photos, Drive…)" style="grid-column:1/-1;margin-bottom:6px" />
-        <button type="button" class="sig photo" id="fPhotos"></button>
+        <button type="button" class="sig photo" id="fPhotos"></button><button type="button" class="sig photo hidden" id="fPhotosReset">↩️ Corriger le statut sans envoyer</button>
         <button type="button" class="sig enc" id="fEnc">💶 Solde du jour</button>
         <button type="button" class="sig" id="fSig">🏁 Fin d'anim / bilan</button>
       </div>
@@ -3866,7 +3866,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       ${canMode || canSignal || canEnc || canTat || canPhotos || canCost ? `<div class="ev-actions">
         ${canCost ? `<button type="button" class="sig" data-cost-assign="${esc(e.id)}">👗 ${isResp() ? "Attribuer les tenues" : "Mes tenues"}</button>` : ""}
         ${canMode ? `<button type="button" class="sig mode-inline" data-mode-open="${esc(e.id)}">✨ Mode prestation</button>` : `
-          ${canPhotos ? `<button type="button" class="sig photo" data-photos="${esc(e.id)}">${e.photos_envoyees ? "↩️ Photos pas encore envoyées" : "📸 Photos envoyées au client ?"}</button>` : ""}
+          ${canPhotos ? `<button type="button" class="sig photo" data-photos="${esc(e.id)}">${e.email && e.email.includes("@") ? (e.photos_envoyees ? "📨 Renvoyer les photos" : "📨 Envoyer les photos") : e.photos_envoyees ? "↩️ Annuler la remise manuelle" : "📸 Confirmer la remise manuelle"}</button>` : ""}
           ${canTat ? `<button type="button" class="sig tat" data-tat-open="${esc(e.id)}">🦋 ${tatouagesACompleter(e) ? "Compter les tatouages" : "Voir les tatouages"}</button>` : ""}
           ${canEnc ? `<button type="button" class="sig enc" data-enc-open="${esc(e.id)}">${e.solde_encaisse === "non" ? "💶 Le solde a finalement été reçu ?" : e.solde_encaisse ? "💶 Modifier l'encaissement" : "💶 Confirmer la réception du solde"}</button>` : ""}
           ${canSignal ? `<button type="button" class="sig" data-signal="${esc(e.id)}">${e.materiel_manquant ? "🏁 Ajouter du matériel manquant" : "🏁 Fin d'anim : bilan & matériel"}</button>` : ""}
@@ -4830,11 +4830,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const passe = ev && ev.date <= todayISO() && ["confirme", "termine"].includes(ev.statut);
     $("afterBox").classList.toggle("hidden", !passe || ev.type_evenement !== "animation");
     if (passe && ev.type_evenement === "animation") {
-      ["fPhotos","fEnc","fSig"].forEach(id => $(id).disabled = false);
+      ["fPhotos","fPhotosReset","fEnc","fSig"].forEach(id => $(id).disabled = false);
       const mailCli = !!(ev.email && ev.email.includes("@"));
-      $("fPhotos").textContent = ev.photos_envoyees ? `✅ Photos envoyées${ev.photos_envoyees_par ? " par " + ev.photos_envoyees_par : ""} – toucher pour annuler` : mailCli ? "📨 Envoyer les photos au client" : "📸 Valider : photos envoyées au client";
+      $("fPhotos").textContent = mailCli ? (ev.photos_envoyees ? "📨 Renvoyer le mail des photos" : "📨 Envoyer le mail des photos") : (ev.photos_envoyees ? "↩️ Annuler la remise manuelle" : "📸 Confirmer la remise manuelle");
       $("fPhotosLien").value = ev.photos_lien || "";
-      $("fPhotosLien").classList.toggle("hidden", !peutEnvoyerPhotos() || !!ev.photos_envoyees || !mailCli);
+      $("fPhotosLien").classList.toggle("hidden", !peutEnvoyerPhotos() || !mailCli);
+      $("fPhotosReset").classList.toggle("hidden", !peutEnvoyerPhotos() || !mailCli || !ev.photos_envoyees);
       $("fPhotos").classList.toggle("done", !!ev.photos_envoyees);
       $("fPhotos").classList.toggle("hidden", !peutEnvoyerPhotos());
       $("fEnc").classList.toggle("hidden", !(ev.solde || resp) || (ev.solde_encaisse && !resp));
@@ -5708,27 +5709,83 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     closeJour();
     if (b.dataset.jour === "enc") openEnc(ev);
     if (b.dataset.jour === "sig") openSignal(ev);
-    if (b.dataset.jour === "photos" && !ev.photos_envoyees && ev.email && ev.email.includes("@")) { openForm(ev); setTimeout(() => { $("fPhotosLien").scrollIntoView({ block: "center" }); $("fPhotosLien").focus(); }, 300); return; }
+    if (b.dataset.jour === "photos" && ev.email && ev.email.includes("@")) { openForm(ev); setTimeout(() => { $("fPhotosLien").scrollIntoView({ block: "center" }); $("fPhotosLien").focus(); }, 300); return; }
     if (b.dataset.jour === "photos") document.querySelector(`[data-photos="${ev.id}"]`)?.click() || (async () => {
       const me = myMember(), par = me ? me.prenom : (demoMe || "Moi"); const sent = !ev.photos_envoyees;
       await store.patch(ev.id, { photos_envoyees: sent ? new Date().toISOString() : null, photos_envoyees_par: sent ? par : null }); toast(sent ? "📸 Noté !" : "Annulé"); reload(); })();
   });
   $("openJour").addEventListener("click", () => { const ev = events.find(x => x.id === editingId); if (ev) { closeForm(); openJour(ev); jourDepuis = ev; } });
 
+  // Ne marquer photos_envoyees qu'après une réponse positive du fournisseur Gmail.
   $("fPhotos").addEventListener("click", async () => {
     if (!peutEnvoyerPhotos()) { toast("Seul Jordan envoie les photos aux clients."); return; }
-    const ev = events.find(x => x.id === editingId); if (!ev) return;
-    const me = myMember(), par = me ? me.prenom : (currentUser ? currentUser.email.split("@")[0] : (demoMe || "Moi"));
-    const sent = !ev.photos_envoyees, mailCli = !!(ev.email && ev.email.includes("@"));
+    const ev = events.find(x => String(x.id) === String(editingId)); if (!ev) return;
+    const bouton = $("fPhotos");
+    if (bouton.disabled) return;
+    const mailCli = !!(ev.email && ev.email.includes("@"));
+    const deja = !!ev.photos_envoyees;
     const lien = $("fPhotosLien").value.trim();
-    if (sent && mailCli && !/^https?:\/\/\S+\.\S+/.test(lien)) { $("formErr").textContent = "🔗 Colle d'abord le lien des photos (il commence par https://)"; $("fPhotosLien").focus(); return; }
-    if (sent && mailCli && !confirm(`Envoyer à ${ev.email} le mail avec les photos, l'avis Google et le diplôme ?`)) return;
+    $("formErr").textContent = "";
+    if (mailCli && !/^https:\/\/\S+\.\S+/.test(lien)) {
+      $("formErr").textContent = "🔗 Colle un lien de photos valide commençant par https://.";
+      $("fPhotosLien").focus(); return;
+    }
+    if (mailCli && !confirm((deja ? "Renvoyer" : "Envoyer") + " à " + ev.email +
+      " le mail avec les photos, l'avis Google et le diplôme ?")) return;
+    if (!mailCli && !confirm(deja ? "Annuler la remise manuelle des photos ?" :
+      "Confirmer que les photos ont été remises manuellement ?")) return;
+    bouton.disabled = true;
+    const ancienLibelle = bouton.textContent;
+    bouton.textContent = mailCli ? "📨 Vérification de l'envoi Gmail…" : "📸 Enregistrement…";
     try {
-      const champs = { photos_envoyees: sent ? new Date().toISOString() : null, photos_envoyees_par: sent ? par : null };
-      if (sent && mailCli) champs.photos_lien = lien;
-      await store.patch(ev.id, champs);
-      closeForm(); toast(sent ? (mailCli ? "📨 Mail envoyé au client !" : "📸 Noté : photos envoyées !") : "Photos remises « à envoyer »"); if (sent) poof("📸 Envoyé !"); await reload();
-    } catch (err) { $("formErr").textContent = "Erreur : " + (err.message || err); }
+      if (mailCli) {
+        if (DEMO) throw new Error("Envoi réel indisponible en démonstration.");
+        const {data,error} = await sb.functions.invoke("notifier", {
+          body: {type:"PHOTOS_CLIENT_SEND", evenementId:String(ev.id), lien, renvoi:deja}
+        });
+        if (error || !data?.ok || data.mailAccepte !== true || data.statut !== "accepte_par_gmail") {
+          let retourErreur = null;
+          try {
+            if (error?.context?.clone) retourErreur = await error.context.clone().json();
+          } catch (_) { /* Réponse technique non JSON : conserver le message d'erreur. */ }
+          if (data?.mailAccepte || retourErreur?.mailAccepte) throw new Error(
+            (data?.erreur || retourErreur?.erreur || "Mail accepté, mais statut non enregistré.") +
+            " Vérifie les éléments envoyés avant tout nouvel essai.");
+          throw new Error(data?.erreur || retourErreur?.erreur ||
+            (data?.ok ? "La fonction notifier n'a pas confirmé un envoi Gmail. Redéploie le fichier notifier-index.ts." : "") ||
+            error?.message || "Aucune confirmation Gmail. Vérifie le déploiement de notifier dans Supabase.");
+        }
+        closeForm();
+        toast("📨 Gmail a accepté l'envoi des photos" + (data.expediteur ? " depuis " + data.expediteur : "") + ".");
+        poof("📸 Envoi confirmé !");
+      } else {
+        const me = myMember(), par = me ? me.prenom : "Jordan";
+        await store.patch(ev.id, {
+          photos_envoyees: deja ? null : new Date().toISOString(),
+          photos_envoyees_par: deja ? null : par
+        });
+        closeForm();
+        toast(deja ? "Remise manuelle annulée." : "📸 Remise manuelle confirmée.");
+      }
+      await reload();
+    } catch (err) {
+      $("formErr").textContent = "⚠️ " + (err.message || err);
+      bouton.disabled = false;
+      bouton.textContent = ancienLibelle;
+    }
+  });
+  $("fPhotosReset").addEventListener("click", async () => {
+    if (!peutEnvoyerPhotos()) return;
+    const ev = events.find(x => String(x.id) === String(editingId));
+    if (!ev?.photos_envoyees) return;
+    if (!confirm("Retirer uniquement le statut « photos envoyées » ? Aucun mail ne partira.")) return;
+    const btn = $("fPhotosReset"); btn.disabled = true;
+    try {
+      await store.patch(ev.id, {photos_envoyees:null,photos_envoyees_par:null});
+      closeForm(); toast("📸 Photos marquées à envoyer ; aucun mail envoyé."); await reload();
+    } catch (err) {
+      $("formErr").textContent = "Erreur : " + (err.message || err); btn.disabled = false;
+    }
   });
   $("fEnc").addEventListener("click", () => { const ev = events.find(x => x.id === editingId); if (ev) { closeForm(); openEnc(ev); } });
   $("fSig").addEventListener("click", () => { const ev = events.find(x => x.id === editingId); if (ev) { closeForm(); openSignal(ev); } });
@@ -5916,7 +5973,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (ph) {
       if (!peutEnvoyerPhotos()) { toast("Seul Jordan envoie les photos aux clients."); return; }
       const ev = events.find(x => String(x.id) === ph.dataset.photos); if (!ev) return;
-      if (!ev.photos_envoyees && ev.email && ev.email.includes("@")) { openForm(ev); setTimeout(() => { $("fPhotosLien").scrollIntoView({ block: "center" }); $("fPhotosLien").focus(); }, 300); return; }
+      if (ev.email && ev.email.includes("@")) { openForm(ev); setTimeout(() => { $("fPhotosLien").scrollIntoView({ block: "center" }); $("fPhotosLien").focus(); }, 300); return; }
       const me = myMember(), par = me ? me.prenom : (currentUser ? currentUser.email.split("@")[0] : (demoMe || "Moi"));
       const sent = !ev.photos_envoyees;
       store.patch(ev.id, { photos_envoyees: sent ? new Date().toISOString() : null, photos_envoyees_par: sent ? par : null })

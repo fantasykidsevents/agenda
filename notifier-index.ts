@@ -2024,10 +2024,56 @@ async function mailingRequete(req: Request, p: any) {
   return json({ ok: true, total: destinataires.length, envoyes, erreurs });
 }
 
+// 📸 Envoi vérifié depuis le bouton Photos de Fantasy App.
+// Le statut "envoyées" n'est enregistré qu'après acceptation Gmail.
+// Les anciens faux positifs peuvent être renvoyés explicitement.
+// Aucun double envoi automatique n'est déclenché sur la mise à jour du statut.
+async function envoyerPhotosDepuisApp(req: Request, p: any) {
+  const bearer = (req.headers.get("Authorization") || "").match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!bearer) return json({ok:false,erreur:"Connexion requise."},401);
+  const {data:identite,error:erreurAuth}=await sb.auth.getUser(bearer);
+  const emailUtilisateur = String(identite?.user?.email || "");
+  if (erreurAuth || !emailUtilisateur) return json({ok:false,erreur:"Session expirée."},401);
+  const {data:membres,error:erreurEquipe}=await sb.from("equipe")
+    .select("prenom,responsable").ilike("email",emailUtilisateur).eq("responsable",true).limit(5);
+  if (erreurEquipe || !(membres || []).some(m => norm(m.prenom) === "jordan"))
+    return json({ok:false,erreur:"L'envoi des photos est réservé au responsable autorisé."},403);
+  const id = String(p.evenementId || "");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+    return json({ok:false,erreur:"Identifiant de prestation invalide."},400);
+  const lien = String(p.lien || "").trim();
+  let parsed: URL;
+  try { parsed = new URL(lien); } catch (_) {
+    return json({ok:false,erreur:"Le lien des photos est invalide."},400);
+  }
+  if (parsed.protocol !== "https:" || !parsed.hostname || lien.length > 1900 ||
+      parsed.username || parsed.password)
+    return json({ok:false,erreur:"Le lien doit être une adresse Internet https valide."},400);
+  const {data:ev,error:erreurEv}=await sb.from("evenements").select("*").eq("id",id).maybeSingle();
+  if (erreurEv) throw erreurEv;
+  if (!ev || ev.type_evenement !== "animation" || !["confirme", "termine"].includes(ev.statut) || ev.date > aujourdhuiBelgique())
+    return json({ok:false,erreur:"Cette prestation n'est pas éligible à l'envoi."},400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(ev.email || "")))
+    return json({ok:false,erreur:"L'e-mail du client est manquant ou invalide."},400);
+  if (ev.photos_envoyees && p.renvoi !== true)
+    return json({ok:false,erreur:"Les photos sont déjà marquées envoyées. Utilisez le renvoi explicite si nécessaire."},409);
+  // Cette requête attend réellement que le fournisseur accepte l'envoi.
+  await envoyerPhotosClient({...ev,photos_lien:lien});
+  const maintenant = new Date().toISOString();
+  const {data:modif,error:erreurMaj}=await sb.from("evenements")
+    .update({photos_lien:lien,photos_envoyees:maintenant,photos_envoyees_par:"Jordan"})
+    .eq("id",id).select("id");
+  if (erreurMaj || !modif?.length)
+    return json({ok:false,mailAccepte:true,erreur:"Gmail a accepté le mail, mais le statut n'a pas pu être enregistré. Ne renvoyez pas sans vérification dans Gmail."},503);
+  return json({ok:true,mailAccepte:true,destinataire:ev.email,expediteur:getMailer()?.adresse || "",statut:"accepte_par_gmail"});
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
     const p = await req.json();
+
+    if (p.type === "PHOTOS_CLIENT_SEND") return await envoyerPhotosDepuisApp(req, p);
 
     if (["MAILING_EVENEMENT_PREVIEW", "MAILING_EVENEMENT_SEND", "MAILING_EVENEMENT_HISTORY"].includes(p.type))
       return await mailingRequete(req, p);
@@ -2735,11 +2781,10 @@ Deno.serve(async (req) => {
       if (ficheEnvoi === "pas d'e-mail" || String(ficheEnvoi).startsWith("erreur"))
         for (const m of equipe || []) if (m.responsable) cibles.push({ nom: m.prenom, role: "", type: "fiche_manuelle" });
     }
-    // 📸 Photos validées avec un lien -> mail au client (photos + avis Google + diplôme)
+    // 📸 Les mails photos partent désormais UNIQUEMENT sur action explicite
+    // PHOTOS_CLIENT_SEND, avec accusé de réception Gmail avant la validation.
+    // Ne pas les envoyer une seconde fois au webhook UPDATE.
     let photosEnvoi = null;
-    if (type === "UPDATE" && ev.photos_envoyees && !ancien.photos_envoyees && ev.photos_lien && ev.email) {
-      try { photosEnvoi = await envoyerPhotosClient(ev); } catch (e) { photosEnvoi = "erreur : " + (e?.message || e); console.error("photos", e); }
-    }
     // 📝 Fiche anniversaire reçue -> responsables 👑
     if (type === "UPDATE" && ev.fiche_recue && ev.fiche_recue !== ancien.fiche_recue) {
       const { data: f } = await sb.from("fiches").select("reponses").eq("evenement_id", ev.id).maybeSingle();
