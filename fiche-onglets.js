@@ -5,7 +5,7 @@ function init() {
   const form=document.getElementById("evForm");
   const bg=document.getElementById("sheetBg");
   const heading=document.getElementById("formTitle");
-  if(!form||!bg||!heading||document.getElementById("ficheTabs"))return;
+  if(!form||!bg||!heading)return;
   const top=id=>{
     let el=document.getElementById(id);
     if(!el||!form.contains(el))return null;
@@ -62,13 +62,14 @@ function init() {
   document.head.appendChild(style);
   const resume=document.createElement("div");resume.id="ficheResume";
   heading.insertAdjacentElement("afterend",resume);
-  const nav=document.createElement("nav");nav.id="ficheTabs";nav.setAttribute("aria-label","Rubriques de la fiche");
-  resume.insertAdjacentElement("afterend",nav);
+  const nav=document.getElementById("ficheTabs")||document.createElement("nav");nav.id="ficheTabs";nav.setAttribute("aria-label","Rubriques de la fiche");
+  if(!nav.isConnected)resume.insertAdjacentElement("afterend",nav);
   let current="resume";
   const labels=[["resume","📋 Essentiel"],["client","👤 Client"],["animation","🎭 Animation"],["finances","💶 Finances"],["suivi","📸 Suivi"]];
   for(const [id,label] of labels){
-    const button=document.createElement("button");button.type="button";button.dataset.ficheTab=id;button.textContent=label;
-    button.addEventListener("click",()=>select(id));nav.appendChild(button);
+    let button=nav.querySelector(`[data-fiche-tab="${id}"]`);
+    if(!button){button=document.createElement("button");button.type="button";button.dataset.ficheTab=id;button.textContent=label;nav.appendChild(button);}
+    button.addEventListener("click",()=>select(id));
   }
   function value(id){return document.getElementById(id)?.value?.trim()||""}
   function summary(){
