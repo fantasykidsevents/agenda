@@ -80,6 +80,34 @@ function init() {
     // Text-only : ne jamais injecter les valeurs client dans innerHTML.
     resume.textContent=[name,d,time,status].filter(Boolean).join(" · ");
   }
+  // Indication explicite pour les prestations qui n'ont pas encore d'actions de fin.
+  const suiviInfo=document.createElement("p");
+  suiviInfo.id="ficheSuiviInfo";
+  suiviInfo.className="hint";
+  suiviInfo.dataset.ficheTabSection="suivi";
+  suiviInfo.style.cssText="margin:12px 0;padding:13px;border:1px solid #e1d2ef;border-radius:12px;background:#f9f6ff;line-height:1.5";
+  const apres=document.getElementById("afterBox");
+  if(apres&&apres.parentElement===form)apres.insertAdjacentElement("beforebegin",suiviInfo);
+  function updateSuiviInfo(){
+    if(!apres)return;
+    const disponible=!apres.classList.contains("hidden");
+    suiviInfo.classList.toggle("hidden",disponible);
+    if(disponible)return;
+    const type=document.getElementById("type_evenement")?.value;
+    if(type&&type!=="animation"){
+      suiviInfo.textContent="📋 Les photos et bilans de fin sont réservés aux fiches d'animation.";
+      return;
+    }
+    const date=document.getElementById("date")?.value||"";
+    const statut=document.getElementById("statut")?.value||"";
+    if(statut==="annule"){
+      suiviInfo.textContent="❌ Cette prestation est annulée. Aucune action de fin d'animation à effectuer.";
+    }else if(statut==="en_attente"){
+      suiviInfo.textContent="⏳ La réservation attend encore sa confirmation. Les actions de fin seront disponibles après l'animation.";
+    }else{
+      suiviInfo.textContent="📸 Les photos, le bilan et le solde du jour apparaissent ici après l'animation, lorsque la date est atteinte.";
+    }
+  }
   function select(id){
     current=id;
     nav.dataset.ficheTabSection="always"; nav.dataset.ficheHidden="no";
@@ -89,6 +117,7 @@ function init() {
     }
     for(const button of nav.querySelectorAll("button"))button.setAttribute("aria-selected",String(button.dataset.ficheTab===id));
     summary();
+    if(id==="suivi")updateSuiviInfo();
   }
   // Accès direct depuis les actions "photos", "devis" et "bilan".
   function jump(id,focusId){
