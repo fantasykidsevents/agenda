@@ -125,11 +125,10 @@
     root.innerHTML=`
       <div class="fi-panel"><div class="fi-title">🪄 Fiche intelligente · prochaine priorité</div><div class="fi-text">${safe(action.title)} — ${safe(action.desc)}</div>
         <div class="fi-actions"><button type="button" class="fi-main" data-fi-jump="${safe(action.tab)}" data-fi-target="${safe(action.target||"")}">Voir l'action</button></div></div>
-      <div class="fi-panel"><div class="fi-title">✨ Parcours de la réservation</div><div class="fi-path">${path.map(([title,done])=>`<div class="fi-step ${done?"done":"pending"}"><b>${done?"✅":"○"} ${safe(title)}</b>${done?"Étape renseignée":"À vérifier"}</div>`).join("")}</div>
-      <div class="fi-muted">Étapes déduites des données existantes. « À vérifier » ne signifie pas forcément que l'action est en retard.</div></div>
+      <details class="fi-panel"><summary class="fi-title" style="cursor:pointer">✨ Voir le parcours de réservation</summary><div class="fi-path" style="margin-top:8px">${path.map(([title,done])=>`<div class="fi-step ${done?"done":"pending"}"><b>${done?"✅":"○"} ${safe(title)}</b>${done?"Étape renseignée":"À vérifier"}</div>`).join("")}</div>
+      <div class="fi-muted">Étapes déduites des données existantes. « À vérifier » ne signifie pas forcément que l'action est en retard.</div></details>
       ${quoteMarkup}
-      <div class="fi-panel fi-lumi"><img src="lumi-jour.webp" alt="Lumi" loading="lazy"><div><div class="fi-title">✨ Lumi veille sur cette fiche</div><div class="fi-text">${safe(action.title)}. ${safe(action.desc)}</div>
-      <div class="fi-actions"><button type="button" data-fi-jump="${safe(action.tab)}" data-fi-target="${safe(action.target||"")}">🪄 M'y rendre</button></div></div></div>`;
+`;
   }
   window.FantasyFicheIntelligence={render,jump};
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",ensure);else ensure();
