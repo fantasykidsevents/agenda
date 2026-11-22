@@ -1909,8 +1909,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         <option value="termine">Terminé</option>
         <option value="annule">Annulé</option>
       </select>
-      <button type="button" class="btn ghost" id="fReset" style="padding:9px 12px;font-size:12px">↩️ Effacer les filtres</button>
-      <button type="button" class="btn ghost resp-only" id="fHistorySearch" style="padding:9px 12px;font-size:12px">🔎 Retrouver une fiche</button>
     </div>
 
     <!-- Vue calendrier -->
@@ -3752,13 +3750,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       toast("📶 Pas de réseau, et aucune info enregistrée sur ce téléphone pour l'instant.");
     }
     barreHL(false);
-    await Promise.all([
-      indStore.list().then(v=>{indispos=v}).catch(e=>{console.error(e);indispos=[]}),
-      regStore.get().then(v=>{reglages=v}).catch(e=>{console.error(e);reglages={}}),
-      costReload(),costAttributionReload(),costDemandeReload(),
-      stockReload(),gainsReload(),
-      bilanStore.list().then(v=>{bilans=v}).catch(e=>{console.error(e);bilans=[]})
-    ]);
+    try { indispos = await indStore.list(); } catch (e) { console.error(e); indispos = []; }
+    try { reglages = await regStore.get(); } catch (e) { reglages = {}; }
+    await Promise.all([costReload(), costAttributionReload(), costDemandeReload()]);
+    await stockReload(); await gainsReload();
+    try { bilans = await bilanStore.list(); } catch (e) { bilans = []; }
     // À la connexion, vérifier les bilans communs de ses prestations récentes.
     // Un compte membre n'a pas nécessairement le droit de lire leur contenu.
     if (!DEMO && !isResp()) {
@@ -3768,10 +3764,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         e.date <= todayISO() && e.statut !== "annule" && anims(e).some(a => normName(a) === moi)).map(e => String(e.id));
       if (ids.length) await rafraichirActionsPartagees(ids);
     }
-    await Promise.all([
-      depStore.list().then(v=>{depenses=v}).catch(e=>{console.error(e);depenses=[]}),
-      naissStore.list().then(v=>{naissances=v}).catch(e=>{console.error(e);naissances={}})
-    ]);
+    try { depenses = await depStore.list(); } catch (e) { depenses = []; }
+    try { naissances = await naissStore.list(); } catch (e) { naissances = {}; }
     applyRole();
     try { await chargerMesChoixNotif(); } catch (e) { console.warn("Anniversaire et préférences :", e); }
     try { await chargerNotifications(); } catch (e) { console.warn("Boîte de notifications :", e); }
@@ -3949,10 +3943,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       + ((nbC = nbConflitsCostumes()) ? `<div class="alert-bar" data-cost-open>⚠️ ${nbC} conflit${nbC > 1 ? "s" : ""} de costume/perruque dans les 30 jours (demandé plus de fois qu'il n'en existe le même jour)</div>` : "")
       + (isResp() && stockAAcheter().length ? `<div class="alert-bar gold" data-stock-open>🛒 ${stockAAcheter().length} consommable${stockAAcheter().length > 1 ? "s" : ""} à racheter (${esc(stockAAcheter().slice(0, 3).map(x => x.nom).join(", "))}${stockAAcheter().length > 3 ? "…" : ""})</div>` : "")
       + (nbPhotos ? alerteCliquable(photosAEnvoyer, "photos", "blue", `📸 ${nbPhotos} animation${nbPhotos>1?"s":""} récente${nbPhotos>1?"s":""} : photos pas encore envoyées au client`) : "");
-    const alertesCompactes = bar ? `<details class="mine-head" style="margin:8px 0 13px"><summary style="cursor:pointer;font-weight:800">🧭 Alertes et rappels de prestations</summary><div style="margin-top:9px">${bar}</div></details>` : "";
     const list = $("showPast").checked || $("fStatut").value === "anticipations" ? all : all.filter(e => e.date >= t);
-    if (!list.length) { $("list").innerHTML = alertesCompactes + `<div class="empty">🌙 Aucune animation à afficher. <button type="button" class="btn ghost" id="emptyReset">Réinitialiser les filtres</button></div>`; $("emptyReset").onclick=()=> $("fReset").click(); return; }
-    let html = alertesCompactes, lastMonth = "";
+    if (!list.length) { $("list").innerHTML = bar + `<div class="empty">🌙 Aucune animation à afficher.</div>`; return; }
+    let html = bar, lastMonth = "";
     list.forEach(e => {
       const m = parseISO(e.date).toLocaleDateString("fr-BE", { month: "long", year: "numeric" });
       if (m !== lastMonth) { html += `<div class="group-title">${m}</div>`; lastMonth = m; }
@@ -4276,7 +4269,12 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const ev = events.find(x => String(x.id) === btn.dataset.photosJordan);
     if (!ev || ev.photos_envoyees || !animationTerminee(ev)) return;
     openForm(ev);
-    setTimeout(() => window.FantasyFicheIntelligence?.jump("suivi", $("fPhotosLien")?.classList.contains("hidden") ? "fPhotos" : "fPhotosLien"), 150);
+    setTimeout(() => {
+      const lien = $("fPhotosLien");
+      const cible = lien && !lien.classList.contains("hidden") ? lien : $("fPhotos");
+      cible?.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (cible === lien) cible.focus();
+    }, 200);
   });
 
   // Mon espace : les missions confirmées et les affectations provisoires sont séparées.
@@ -4667,12 +4665,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const ev=events.find(x=>String(x.id)===b.dataset.antOpen);if(ev)openForm(ev);
   });
 
-  // L’ancien guide reste branché pour compatibilité, mais la fiche intelligente
-  // affiche désormais l’unique priorité visible (sans Lumi).
-  const ficheGuideStyle = document.createElement("style");
-  ficheGuideStyle.textContent = "#ficheGuide{display:none!important}";
-  document.head.appendChild(ficheGuideStyle);
-
   // ================= Formulaire =================
   // ✨ Options (tarifs du site) — quantité par option ; les tatouages se paient le jour même (pas ajoutés au prix)
   const OPTIONS_FEE = [
@@ -4830,7 +4822,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!resp) $("delBtn").classList.add("hidden");
     if (!gest) { $("delBtn").classList.add("hidden"); $("formTitle").textContent = $("type_evenement").value === "repetition" ? "Détails de la répétition" : $("type_evenement").value === "contrat_pro" ? "Détails du contrat pro" : estEvt() ? "Détails de l'événement" : "Détails de l'animation"; $("cancelBtn").textContent = "Fermer"; }
     else $("cancelBtn").textContent = "Annuler";
-    renderFiche(ev); renderEtapeFiche(ev); window.FantasyFicheIntelligence?.render(ev, null, { responsable:isResp(), teamCount:ev ? anims(ev).length : 0 }); renderDevis(ev);
+    renderFiche(ev); renderEtapeFiche(ev); renderDevis(ev);
     afficherAnticipationFiche(ev);
     renderMonTrajet(ev);
     if (ev) $("bilanBox").innerHTML = bilanHtml(ev);
@@ -5028,7 +5020,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if(id==="evCostAssignBtn"&&!cible.classList.contains("hidden")){cible.click();return;}
     if(id==="acompte_paye"||id==="prix")$("privSec").querySelector("details").open=true;
     if(id==="devisBox" && cible.classList.contains("hidden"))return;
-    window.FantasyFicheIntelligence?.jump(null, id);
     cible.scrollIntoView({behavior:"smooth",block:"center"});
     if(["email","prix","addAnim","acompte_paye"].includes(id))cible.focus();
   });
@@ -5040,7 +5031,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     let d = null;
     if (!DEMO) { try { ({ data: d } = await sb.from("devis").select("envoye_le,accepte_le,reponse_client,reponse_motif,reponse_message,reponse_le,relance_le,relance_nombre").eq("evenement_id", ev.id).maybeSingle()); } catch (_) {} }
     renderEtapeFiche(ev,d);
-    if (String(editingId) === String(ev.id)) window.FantasyFicheIntelligence?.render(ev, d, { responsable:isResp(), teamCount:anims(ev).length });
     const f = (x) => new Date(x).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     const explication = d?.accepte_le ? `✅ Accepté par le client le ${f(d.accepte_le)}`
       : d?.reponse_client === "refuse" ? `❌ Refusé le ${f(d.reponse_le)}. ${[d.reponse_motif,d.reponse_message].filter(Boolean).map(esc).join(" · ")}`
@@ -5048,24 +5038,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       : d?.envoye_le ? `⏳ Envoyé le ${f(d.envoye_le)} · en attente de sa réponse${d.relance_nombre ? ` · ${d.relance_nombre} relance(s)` : ""}`
       : "Le client reçoit le détail du prix (formule + options), peut l'accepter, le refuser ou demander une modification.";
     const texteBouton = d?.reponse_client === "refuse" ? "📨 Envoyer une nouvelle proposition" : d?.reponse_client === "modification" ? "📨 Envoyer le devis modifié" : d?.envoye_le ? "🔁 Renvoyer le devis" : "📨 Enregistrer et envoyer le devis";
-    const refusSansAction=d?.reponse_client==="refuse";
-    const modificationSansAction=d?.reponse_client==="modification";
-    const joursSansReponse=d?.envoye_le ? Math.floor((Date.now()-new Date(d.relance_le||d.envoye_le).getTime())/86400000) : 0;
-    const relancePossible=ev.statut==="en_attente"&&d?.envoye_le&&!d?.accepte_le&&!refusSansAction&&!modificationSansAction&&joursSansReponse>=3;
     box.innerHTML = `<div class="sec" style="margin-top:0">📨 Devis pour le client</div>
       <p class="hint" style="margin:0 0 8px">${explication}</p>
-      ${["confirme","termine","annule"].includes(ev.statut) ? "" : `<button type="button" class="btn ${d?.envoye_le ? "ghost" : "primary"}" id="devisBtn" style="width:100%">${texteBouton}</button>`}
-      ${relancePossible ? `<button type="button" class="btn ghost" id="devisRelanceFiche" style="width:100%;margin-top:7px">⏳ Relancer (${joursSansReponse} jours sans réponse)</button>` : ""}`;
-    if($("devisRelanceFiche"))$("devisRelanceFiche").onclick=async()=>{
-      if(!isResp()||!ev.email||!confirm(`Envoyer une relance de devis à ${ev.parent||"ce client"} (${ev.email}) ?`))return;
-      const b=$("devisRelanceFiche");b.disabled=true;
-      try{
-        const {data,error}=await sb.functions.invoke("notifier",{body:{type:"DEVIS",evId:ev.id,relance:true}});
-        if(error||!data?.ok)throw error||new Error(data?.erreur||"Envoi non confirmé");
-        toast("📨 Relance envoyée !");
-        await renderDevis(ev);
-      }catch(err){toast("⚠️ Relance impossible : "+(err.message||err));b.disabled=false;}
-    };
+      ${["confirme","termine","annule"].includes(ev.statut) ? "" : `<button type="button" class="btn ${d?.envoye_le ? "ghost" : "primary"}" id="devisBtn" style="width:100%">${texteBouton}</button>`}`;
     if ($("devisBtn")) $("devisBtn").onclick = () => {
       if (!$("email").value.trim()) { $("formErr").textContent = "📧 Ajoute d'abord l'e-mail du parent."; $("email").focus(); return; }
       if (!$("personnages_client").value.trim()) { $("formErr").textContent = "🎭 Indique le ou les personnages choisis par le client avant d'envoyer le devis."; $("personnages_client").focus(); return; }
@@ -5998,7 +5973,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (ph) {
       if (!peutEnvoyerPhotos()) { toast("Seul Jordan envoie les photos aux clients."); return; }
       const ev = events.find(x => String(x.id) === ph.dataset.photos); if (!ev) return;
-      if (ev.email && ev.email.includes("@")) { openForm(ev); setTimeout(() => window.FantasyFicheIntelligence?.jump("suivi","fPhotosLien"), 150); return; }
+      if (ev.email && ev.email.includes("@")) { openForm(ev); setTimeout(() => { $("fPhotosLien").scrollIntoView({ block: "center" }); $("fPhotosLien").focus(); }, 300); return; }
       const me = myMember(), par = me ? me.prenom : (currentUser ? currentUser.email.split("@")[0] : (demoMe || "Moi"));
       const sent = !ev.photos_envoyees;
       store.patch(ev.id, { photos_envoyees: sent ? new Date().toISOString() : null, photos_envoyees_par: sent ? par : null })
@@ -6019,15 +5994,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   });
   $("addBtn").onclick = (e) => { magicBurst(e.clientX, e.clientY); setTimeout(() => openForm(null, view === "cal" ? selDay : todayISO()), 180); };
   ["fSearch","fAnim","fStatut","showPast"].forEach(id => $(id).addEventListener("input", render));
-  $("fReset").onclick = () => { $("fSearch").value=""; $("fAnim").value=""; $("fStatut").value=""; $("showPast").checked=false; render(); toast("🔎 Filtres effacés"); };
-  $("fHistorySearch").onclick = () => {
-    if (!isResp()) return;
-    const q=$("fSearch").value.trim();
-    document.querySelector('.tab[data-view="stats"]')?.click();
-    $("gClients").click();
-    $("hcSearch").value=q;
-    $("hcSearch").dispatchEvent(new Event("input",{bubbles:true}));
-  };
   document.addEventListener("visibilitychange", () => { if (!document.hidden && !$("app").classList.contains("hidden")) reload(); });
 
   // ================= Équipe =================
@@ -7701,22 +7667,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   $("devisActualiser").onclick = () => chargerSuiviDevis().catch(err => toast("Erreur devis : " + (err.message || err)));
   $("devisGestionBody").addEventListener("click", async e => {
     const ouvrir=e.target.closest("[data-devis-ouvrir]");
-    if (ouvrir) {
-      const identifiant=ouvrir.dataset.devisOuvrir;
-      let ev=events.find(x=>String(x.id)===identifiant);
-      if(!ev && isResp() && !DEMO){
-        try {
-          const {data,error}=await sb.from("evenements").select("*").eq("id",identifiant).maybeSingle();
-          if(error)throw error;
-          if(data){
-            const {data:privees}=await sb.from("evenements_prive").select("*").eq("id",identifiant).maybeSingle();
-            ev={...data,...(privees||{})};events.push(ev);
-          }
-        }catch(err){ toast("Fiche indisponible : "+(err.message||err));return; }
-      }
-      if(ev)openForm(ev);else toast("Cette prestation n’est plus dans l’historique.");
-      return;
-    }
+    if (ouvrir) { const ev=events.find(x=>String(x.id)===ouvrir.dataset.devisOuvrir); if(ev)openForm(ev); return; }
     const b=e.target.closest("[data-devis-relancer]");
     if (!b || !isResp()) return;
     const ev=events.find(x=>String(x.id)===b.dataset.devisRelancer);
@@ -14249,7 +14200,5 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 </script>
 <script src="gestion-bilans.js?v=1"></script>
 <script src="suivi-fantasy.js?v=1"></script>
-<script src="./fiche-onglets.js?v=1" defer></script>
-<script src="./fiche-intelligence.js?v=1" defer></script>
 </body>
 </html>
