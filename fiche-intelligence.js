@@ -82,7 +82,7 @@
     }
     root.hidden=false;
     const quote=quoteInfo(ev,devis);
-    const hasTeam=String(ev.animateurs||"").trim().length>0;
+    const hasTeam=typeof options.teamCount==="number" ? options.teamCount>0 : !!String(ev.animateurs||"").trim();
     const isOver=ev.date<=today()&&["confirme","termine"].includes(ev.statut);
     const anticipate=ev.anticipation&&["anticipee","notifiee","en_attente"].includes(ev.anticipation.statut);
     const issue=devis?.reponse_client;
