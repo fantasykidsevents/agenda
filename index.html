@@ -14246,13 +14246,14 @@ function init() {
   if(anticipation)anticipation.dataset.ficheTabSection="resume";
   for(const el of all)if(!el.dataset.ficheTabSection)el.dataset.ficheTabSection="resume";
   // Toutes les actions globales restent visibles quel que soit l'onglet.
-  for(const id of ["formTitle","formErr","jourBtnBox"]){
+  for(const id of ["formTitle","formErr","jourBtnBox","ficheTabs"]){
     const el=top(id);if(el)el.dataset.ficheTabSection="always";
   }
   const actions=form.querySelector(":scope > .actions");
   if(actions)actions.dataset.ficheTabSection="always";
   const style=document.createElement("style");
   style.textContent=`
+    #ficheTabs[data-fiche-hidden="yes"]{display:flex!important}
     #ficheTabs{display:flex;gap:7px;overflow-x:auto;padding:8px 1px 12px;margin:3px 0 10px;scrollbar-width:thin;position:sticky;top:0;z-index:8;background:var(--bg,#fff)}
     #ficheTabs button{flex:0 0 auto;border:1px solid #d8c6ea;background:#fff;color:#603881;border-radius:12px;padding:10px 13px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
     #ficheTabs button[aria-selected="true"]{background:#7544bb;color:#fff;border-color:#7544bb}
@@ -14283,6 +14284,7 @@ function init() {
   }
   function select(id){
     current=id;
+    nav.dataset.ficheTabSection="always"; nav.dataset.ficheHidden="no";
     for(const el of Array.from(form.children)){
       const section=el.dataset.ficheTabSection;
       if(section)el.dataset.ficheHidden=section!=="always"&&section!==id?"yes":"no";
