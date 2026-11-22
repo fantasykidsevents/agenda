@@ -4822,7 +4822,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (!resp) $("delBtn").classList.add("hidden");
     if (!gest) { $("delBtn").classList.add("hidden"); $("formTitle").textContent = $("type_evenement").value === "repetition" ? "Détails de la répétition" : $("type_evenement").value === "contrat_pro" ? "Détails du contrat pro" : estEvt() ? "Détails de l'événement" : "Détails de l'animation"; $("cancelBtn").textContent = "Fermer"; }
     else $("cancelBtn").textContent = "Annuler";
-    renderFiche(ev); renderEtapeFiche(ev); renderDevis(ev);
+    renderFiche(ev); renderEtapeFiche(ev); window.FantasyFicheIntelligence?.render(ev, null, { responsable:isResp(), teamCount:ev ? anims(ev).length : 0 }); renderDevis(ev);
     afficherAnticipationFiche(ev);
     renderMonTrajet(ev);
     if (ev) $("bilanBox").innerHTML = bilanHtml(ev);
@@ -5020,6 +5020,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if(id==="evCostAssignBtn"&&!cible.classList.contains("hidden")){cible.click();return;}
     if(id==="acompte_paye"||id==="prix")$("privSec").querySelector("details").open=true;
     if(id==="devisBox" && cible.classList.contains("hidden"))return;
+    window.FantasyFicheIntelligence?.jump(null, id);
     cible.scrollIntoView({behavior:"smooth",block:"center"});
     if(["email","prix","addAnim","acompte_paye"].includes(id))cible.focus();
   });
@@ -5031,6 +5032,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     let d = null;
     if (!DEMO) { try { ({ data: d } = await sb.from("devis").select("envoye_le,accepte_le,reponse_client,reponse_motif,reponse_message,reponse_le,relance_le,relance_nombre").eq("evenement_id", ev.id).maybeSingle()); } catch (_) {} }
     renderEtapeFiche(ev,d);
+    if (String(editingId) === String(ev.id)) window.FantasyFicheIntelligence?.render(ev, d, { responsable:isResp(), teamCount:anims(ev).length });
     const f = (x) => new Date(x).toLocaleString("fr-BE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     const explication = d?.accepte_le ? `✅ Accepté par le client le ${f(d.accepte_le)}`
       : d?.reponse_client === "refuse" ? `❌ Refusé le ${f(d.reponse_le)}. ${[d.reponse_motif,d.reponse_message].filter(Boolean).map(esc).join(" · ")}`
@@ -14201,5 +14203,6 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 <script src="gestion-bilans.js?v=1"></script>
 <script src="suivi-fantasy.js?v=1"></script>
 <script src="./fiche-onglets.js?v=1" defer></script>
+<script src="./fiche-intelligence.js?v=1" defer></script>
 </body>
 </html>
