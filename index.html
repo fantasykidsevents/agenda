@@ -6305,7 +6305,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         ...noVotes.map(r=>r.email)
       ]);
       const names=(records)=>records.map(r=>pollName(r.email)).join(", ")||"—";
-      const pending=allEmails.filter(mail=>!respondents.has(mail)).map(pollName).join(", ")||"—";
+      const invited=Array.isArray(s.destinataires)&&s.destinataires.length
+        ? [...new Set(s.destinataires.map(v=>String(v||"").trim().toLowerCase()).filter(Boolean))]
+        : allEmails;
+      const remaining=invited.filter(mail=>!respondents.has(mail));
+      const pending=remaining.map(pollName).join(", ")||"—";
       return '<div class="poll-card" data-poll-card="'+esc(s.id)+'">'
         +'<h3>'+esc(s.titre)+'</h3>'
         +'<p style="margin:7px 0 14px;font-size:15px;font-weight:700">'+esc(s.notes||"Quel est votre choix ?")+'</p>'
@@ -6327,6 +6331,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         +'<p style="margin:6px 0"><b>⏳ Sans réponse</b><br>'+esc(pending)+'</p>'
         +'</div></details>'
         +(admin?'<div class="actions" style="margin-top:12px">'
+          +(!closed&&remaining.length?'<button type="button" class="btn primary" data-poll-remind="'+esc(s.id)+'">🔔 Relancer les non-votants ('+remaining.length+')</button>':"")
           +'<button type="button" class="btn ghost" data-poll-event="'+esc(s.id)+'">📅 Créer un événement</button>'
           +(!closed?'<button type="button" class="btn ghost" data-poll-close="'+esc(s.id)+'" data-poll-closed="false">🔒 Clôturer</button>':"")
           +'<button type="button" class="btn ghost" data-poll-delete="'+esc(s.id)+'" style="color:#a32252">🗑️ Supprimer</button></div>':"")
@@ -6418,8 +6423,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const end=e.target.closest("[data-poll-close]");
     const del=e.target.closest("[data-poll-delete]");
     const plan=e.target.closest("[data-poll-event]");
-    if(!save&&!end&&!del&&!plan)return;
-    const button=save||end||del||plan,card=button.closest("[data-poll-card]");
+    const remind=e.target.closest("[data-poll-remind]");
+    if(!save&&!end&&!del&&!plan&&!remind)return;
+    const button=save||end||del||plan||remind,card=button.closest("[data-poll-card]");
     if(!card)return;
     if(plan){
       if(!isGest())return;
@@ -6443,6 +6449,33 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       $("date").value="";
       $("date").focus();
       toast("📅 Fiche préparée : choisis le dimanche, les horaires et l'équipe.");
+      return;
+    }
+    if(remind){
+      if(!isGest())return;
+      const sondage=polls.find(p=>String(p.id)===String(remind.dataset.pollRemind));
+      if(!sondage || sondage.statut!=="ouvert" || Date.parse(sondage.date_limite)<=Date.now())return;
+      const recipients=Array.isArray(sondage.destinataires)&&sondage.destinataires.length
+        ? sondage.destinataires : pollRecipients();
+      const voted=new Set(pollAnswers.filter(r=>r.sondage_id===sondage.id &&
+        ((r.option_id==="__aucune__"&&r.reponse==="non") ||
+        (r.reponse==="oui"&&(sondage.dates||[]).some(d=>String(d.id)===String(r.option_id)))))
+        .map(r=>String(r.email||"").trim().toLowerCase()));
+      const count=new Set(recipients.map(x=>String(x||"").trim().toLowerCase()).filter(x=>x&&!voted.has(x))).size;
+      if(!count){toast("✅ Tout le monde a répondu !");await refreshPolls();return;}
+      if(!confirm("Relancer "+count+" membre(s) sans réponse pour « "+sondage.titre+" » ?"))return;
+      remind.disabled=true;pollError("");
+      try {
+        if(DEMO)throw new Error("Relance indisponible en mode démonstration.");
+        const {data,error}=await sb.rpc("relancer_sondage_dispo_manuellement",{p_sondage_id:sondage.id});
+        if(error)throw error;
+        await refreshPolls();
+        toast("🔔 "+data+" membre(s) relancé(s) dans l'application !");
+      }catch(err){
+        pollError("Relance impossible : "+(err.message||err)+
+          (String(err.message||"").includes("Could not find the function")?" · Installe sondages-relance-manuelle.sql dans Supabase.":""));
+        remind.disabled=false;
+      }
       return;
     }
     if(del){
