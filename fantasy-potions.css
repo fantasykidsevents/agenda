@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900;1000&display=swap');
 /* Fantasy Potions — identité Fantasy Kids Events, jeu indépendant de Fantasy Match. */
 :root{
   font-family:'Trebuchet MS',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -38,7 +39,7 @@ body[data-chapter="2"]{--accent:#159bdc;--ice:#84eaff}body[data-chapter="3"]{--a
    couleurs bonbons, verre sculpté, volumes, lumière et atelier.
    Les gouttes sont de véritables liquides SVG, plus des carrés CSS.
    ============================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900;1000&display=swap');
+
 :root{font-family:'Nunito',system-ui,-apple-system,sans-serif}
 body{
   background:
