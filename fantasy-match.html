@@ -7,7 +7,7 @@
   <meta name="description" content="Fantasy Match, le jeu magique de l'équipe Fantasy Kids Events.">
   <title>Fantasy Match · Fantasy Kids Events</title>
   <link rel="stylesheet" href="fantasy-match.css">
-  <link rel="stylesheet" href="fantasy-match-premium.css?v=symboles-20261125">
+  <link rel="stylesheet" href="fantasy-match-premium.css?v=original-20261125">
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="fantasy-match.js?v=symboles-20261125"></script>
@@ -15,11 +15,6 @@
 <body>
   <div class="fm-bg-stars" aria-hidden="true"></div>
   <main class="fm-shell">
-    <div class="fm-world-scenery" aria-hidden="true">
-      <span class="fm-scene-orb"></span>
-      <span class="fm-scene-land"></span>
-      <span class="fm-scene-accents"></span>
-    </div>
     <header class="fm-header">
       <a class="fm-exit" href="index.html?vue=mine" aria-label="Quitter Fantasy Match et revenir à l'agenda" title="Retour à l'agenda">←</a>
       <a class="fm-brand" href="index.html?vue=mine" aria-label="Revenir à l'agenda Fantasy Kids Events">
@@ -32,7 +27,6 @@
     <div class="fm-title-wrap">
       <button id="levelsBtn" class="fm-level-btn" title="Choisir un niveau">Niveau <b id="levelValue">1</b></button>
       <div class="fm-world" id="worldName">Le Royaume des Étoiles</div>
-      <div class="fm-world-flavor" id="worldFlavor" aria-hidden="true"></div>
     </div>
 
     <section class="fm-status" aria-label="Progression et vies">
