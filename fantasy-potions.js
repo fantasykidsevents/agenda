@@ -193,9 +193,73 @@ async function connectCloud(){
     $('syncStatus').textContent='Progression locale · classement commun momentanément indisponible';
   }
 }
-function gemHtml(g){
-  const v=GEMS[g];
-  return '<span class="gem" style="--gem:'+v.color+';--gem-dark:'+v.dark+'"><span class="gem-mark" aria-hidden="true">'+v.mark+'</span></span>';
+function potionSvg(tube,i){
+  // La fiole est une véritable illustration SVG : verre, bouchon sculpté,
+  // lueurs et liquides magiques. Chaque goutte reste lisible par sa couleur et son signe.
+  const layers=tube.map((g,k)=>{
+    const gem=GEMS[g],id='potion-'+i+'-'+k;
+    const y=189-(k+1)*30;
+    return '<linearGradient id="'+id+'" x1="0" y1="0" x2="1" y2=".75">'+
+      '<stop offset="0" stop-color="'+gem.dark+'"/>'+
+      '<stop offset=".27" stop-color="'+gem.color+'"/>'+
+      '<stop offset=".65" stop-color="'+gem.color+'"/>'+
+      '<stop offset="1" stop-color="'+gem.dark+'"/></linearGradient>';
+  }).join('');
+  const fills=tube.map((g,k)=>{
+    const gem=GEMS[g],y=189-(k+1)*30;
+    const id='potion-'+i+'-'+k;
+    return '<g class="potion-layer" style="--potion-color:'+gem.color+'">'+
+      '<rect x="9" y="'+y+'" width="91" height="30" fill="url(#'+id+')"/>'+
+      '<path d="M9 '+(y+4)+' Q32 '+(y-2)+' 54 '+(y+4)+' T100 '+(y+4)+'" fill="none" stroke="#ffffff90" stroke-width="2.4"/>'+
+      '<circle cx="32" cy="'+(y+13)+'" r="2.3" fill="#fff" opacity=".62"/>'+
+      '<circle cx="77" cy="'+(y+24)+'" r="1.7" fill="#fff" opacity=".73"/>'+
+      '<text x="54" y="'+(y+20)+'" font-family="system-ui,sans-serif" font-size="19" font-weight="1000" text-anchor="middle" fill="#fff" stroke="#35135b" stroke-width=".65" paint-order="stroke fill">'+gem.mark+'</text>'+
+      '</g>';
+  }).join('');
+  const clip='potion-clip-'+i, glass='potion-glass-'+i, gold='potion-gold-'+i;
+  const shiny='potion-shine-'+i;
+  return '<svg class="potion-art" viewBox="0 0 108 215" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">'+
+    '<defs>'+
+      '<clipPath id="'+clip+'"><path d="M35 67C32 80 18 85 13 106L9 157Q9 191 32 195H76Q99 191 99 157L95 106C90 85 76 80 73 67Z"/></clipPath>'+
+      '<linearGradient id="'+glass+'" x1="0" y1=".1" x2=".95" y2="1">'+
+        '<stop offset="0" stop-color="#ffffff" stop-opacity=".84"/>'+
+        '<stop offset=".25" stop-color="#d0f9ff" stop-opacity=".24"/>'+
+        '<stop offset=".54" stop-color="#ffffff" stop-opacity=".08"/>'+
+        '<stop offset=".84" stop-color="#b4b2ff" stop-opacity=".38"/>'+
+        '<stop offset="1" stop-color="#f8d7ff" stop-opacity=".72"/>'+
+      '</linearGradient>'+
+      '<linearGradient id="'+gold+'" x1="0" y1="0" x2=".85" y2="1">'+
+        '<stop offset="0" stop-color="#fffdf2"/><stop offset=".25" stop-color="#ffe4a1"/>'+
+        '<stop offset=".5" stop-color="#eb9bdb"/><stop offset=".77" stop-color="#c3a0ff"/>'+
+        '<stop offset="1" stop-color="#683dc5"/></linearGradient>'+
+      '<linearGradient id="'+shiny+'" x1="0" y1="0" x2="1" y2=".9">'+
+        '<stop offset="0" stop-color="#fff" stop-opacity=".96"/>'+
+        '<stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'+
+      layers+
+    '</defs>'+
+    '<ellipse cx="54" cy="200" rx="33" ry="7" fill="#35245b" opacity=".36"/>'+
+    // Glass sculpture and colored magical liquid
+    '<path d="M35 67C32 80 18 85 13 106L9 157Q9 191 32 195H76Q99 191 99 157L95 106C90 85 76 80 73 67Z" fill="url(#'+glass+')" stroke="#fff8ed" stroke-width="4"/>'+
+    '<g clip-path="url(#'+clip+')">'+fills+
+      '<path d="M12 105C19 90 32 82 34 68H74C78 84 91 93 97 106V194H12Z" fill="url(#'+glass+')" opacity=".46"/>'+
+      '<path d="M18 119Q14 137 17 161Q18 183 29 187" fill="none" stroke="#fff" stroke-width="5" opacity=".74" stroke-linecap="round"/>'+
+      '<path d="M83 103Q92 117 94 139" stroke="#fff" stroke-width="2.2" opacity=".38" fill="none" stroke-linecap="round"/>'+
+      '<circle cx="23" cy="146" r="2.5" fill="#fff" opacity=".7"/><circle cx="84" cy="164" r="2.5" fill="#fff" opacity=".55"/>'+
+    '</g>'+
+    '<path d="M35 67C32 80 18 85 13 106L9 157Q9 191 32 195H76Q99 191 99 157L95 106C90 85 76 80 73 67Z" fill="none" stroke="#d5baff" stroke-width="1.6"/>'+
+    // Ornate curved neck and stopper, a small gold-and-amethyst jewel at the centre
+    '<path d="M40 48V63Q54 69 68 63V48" fill="#bbdbff90" stroke="#fff" stroke-width="3"/>'+
+    '<rect x="34" y="58" width="40" height="12" rx="5" fill="url(#'+gold+')" stroke="#fff3d8" stroke-width="2.6"/>'+
+    '<path d="M38 38H70L68 57Q54 61 40 57Z" fill="#ddc4ff" stroke="#fff" stroke-width="2.7"/>'+
+    '<path d="M42 38L35 24Q54 7 73 24L66 38Z" fill="url(#'+gold+')" stroke="#fff9e4" stroke-width="3"/>'+
+    '<path d="M54 15L61 24L54 34L47 24Z" fill="#c64af6" stroke="#fff" stroke-width="2.2"/>'+
+    '<path d="M45 40L49 54M63 41L59 53" stroke="#fff" stroke-width="2.4" opacity=".68"/>'+
+    '<path d="M33 67Q54 74 75 67" fill="none" stroke="#fff9e4" stroke-width="3"/>'+
+    '<path d="M33 191Q54 201 75 191" fill="none" stroke="#fff" stroke-width="2.2" opacity=".7"/>'+
+    // ornamental charm hanging on the flask body
+    '<path d="M45 87Q54 94 63 87" fill="none" stroke="#ffe7ff" stroke-width="1.5" opacity=".55"/>'+
+    '<path d="M54 80l2.6 5.4L62 88l-5.4 2.4L54 96l-2.6-5.6L46 88l5.4-2.6Z" fill="#fff" opacity=".9"/>'+
+    '</svg>';
 }
 function render(){
   if(!state)return;
@@ -216,9 +280,8 @@ function render(){
   $('bottles').innerHTML=b.map((tube,i)=>{
     const complete=tube.length===CAP&&tube.every(x=>x===tube[0]);
     const classes=['bottle',i===selected?'selected':'',hintPair&&hintPair[0]===i?'hint-src':'',hintPair&&hintPair[1]===i?'hint-dst':'',complete?'complete':''].filter(Boolean).join(' ');
-    const parts=tube.map(gemHtml).join('');
     const label='Fiole '+(i+1)+', '+(tube.length?tube.length+' gouttes, au-dessus : '+GEMS[top(tube)].name:'vide')+(complete?', complète':'');
-    return '<button type="button" class="'+classes+'" data-tube="'+i+'" aria-label="'+escapeHtml(label)+'" aria-pressed="'+(selected===i)+'" title="'+escapeHtml(label)+'">'+parts+'</button>';
+    return '<button type="button" class="'+classes+'" data-tube="'+i+'" aria-label="'+escapeHtml(label)+'" aria-pressed="'+(selected===i)+'" title="'+escapeHtml(label)+'">'+potionSvg(tube,i)+'</button>';
   }).join('');
   $('undoBtn').disabled=!c.undo?.length;
 }
