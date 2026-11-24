@@ -30,3 +30,104 @@ button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:poin
 body[data-chapter="2"]{--accent:#159bdc;--ice:#84eaff}body[data-chapter="3"]{--accent:#8f5ce7;--ice:#b2a3ff}body[data-chapter="4"]{--accent:#a04ac6;--ice:#e4a8ff}body[data-chapter="5"]{--accent:#ee9c5f;--ice:#ffe59f}
 @media(max-width:390px){.shell{padding-left:9px;padding-right:9px}.bottle{width:clamp(41px,11.3vw,49px);height:126px}.bottles{gap:8px;row-gap:14px}.game-area{min-height:285px;padding-left:6px;padding-right:6px}.gem-mark{font-size:15px}.world-copy strong{font-size:12px}.world-copy small{font-size:9px}.status-cell strong{font-size:21px}.game-heading h1{font-size:35px}}@media(min-width:590px){.shell{margin-top:14px;margin-bottom:14px;border-radius:29px;min-height:calc(100svh - 28px)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+
+/* ==============================================================
+   Fantasy Potions — direction artistique "Visuels magiques"
+   Retour aux codes haut de gamme de Fantasy Match : logo illustré,
+   couleurs bonbons, verre sculpté, volumes, lumière et atelier.
+   Les gouttes sont de véritables liquides SVG, plus des carrés CSS.
+   ============================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900;1000&display=swap');
+:root{font-family:'Nunito',system-ui,-apple-system,sans-serif}
+body{
+  background:
+    radial-gradient(ellipse at 0% 0%,#39baff9c,transparent 40%),
+    radial-gradient(ellipse at 100% 6%,#fe49d7a5,transparent 43%),
+    radial-gradient(ellipse at 50% 70%,#ac8cffb9,transparent 60%),
+    linear-gradient(120deg,#9edaff,#e0b5ff 48%,#ffabe5);
+}
+.shell{max-width:530px;
+  background:radial-gradient(ellipse at 16% 6%,#8ce0ffac,transparent 34%),
+  radial-gradient(ellipse at 93% 5%,#ff87d7ae,transparent 40%),
+  linear-gradient(160deg,#dbc3ff80,#e8b1ff4d 70%,#f99de88c);
+}
+.brand img{max-width:170px;height:78px;filter:drop-shadow(0 4px 3px #fff9)}
+.topbar{grid-template-columns:46px 1fr 46px}
+.back,.help{box-shadow:0 4px 0 #a65bdb55,0 8px 15px #5a1caf44,inset 0 3px 3px #fff}
+.game-heading{padding:0 0 11px;margin:-4px 0 2px}
+.game-heading .eyebrow{font-size:10px;color:#9340b7;letter-spacing:.15em;text-shadow:0 1px #fff}
+.game-heading .potions-logo{width:100%;height:auto;margin:0;line-height:1;filter:drop-shadow(0 5px 4px #fff9)}
+.potions-logo img{display:block;width:min(100%,435px);height:auto;max-height:130px;object-fit:contain;margin:-11px auto -20px}
+.game-heading p{font-size:12px;color:#7135a9;font-weight:1000;letter-spacing:.025em}
+.game-area{
+  position:relative;min-height:350px;overflow:hidden;
+  padding:21px 9px 12px;border:4px solid #fff;border-radius:29px;
+  background:
+    linear-gradient(180deg,#2e1b5e22,#27155030),
+    url('fantasy-potions-atelier.svg') center center / cover no-repeat,
+    linear-gradient(135deg,#704bb0,#c76ccb);
+  box-shadow:0 0 0 3px #8c42f7a0,0 0 20px #00daff,0 7px 24px #6f22a77a;
+}
+.game-area::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 8%,#fff7,transparent 40%),
+             linear-gradient(180deg,#f5ceff0d 35%,#eeb9ff4a 90%);
+}
+.game-area::after{height:20px;bottom:39px;background:radial-gradient(ellipse,#361958ab,transparent 74%)}
+.bottles{
+  display:flex;justify-content:center;align-items:flex-end;align-content:center;
+  flex-wrap:wrap;gap:3px 4px;min-height:300px;padding:7px 0 3px;
+}
+.bottle,.bottle:nth-child(n){
+  position:relative;display:block;flex:0 0 auto;width:clamp(51px,16.5vw,71px);height:auto;aspect-ratio:108/215;
+  border:0!important;border-radius:11px;background:transparent!important;
+  padding:0!important;margin:0;
+  box-shadow:none!important;overflow:visible;
+  transform-origin:50% 82%;filter:drop-shadow(0 3px 3px #29164f7c);
+  transition:transform .19s ease,filter .19s ease;
+}
+.bottle::before,.bottle::after{content:none!important;display:none!important}
+.bottle svg.potion-art{width:100%;height:100%;display:block;overflow:visible}
+.bottle:hover{filter:drop-shadow(0 5px 5px #261150c9) brightness(1.07)}
+.bottle:focus-visible{outline:3px solid #fffac2;outline-offset:1px}
+.bottle.selected{
+  transform:translateY(-12px) rotate(-6deg) scale(1.05)!important;
+  filter:drop-shadow(0 0 7px #ffffe7) drop-shadow(0 0 14px #3ce9ff)!important;
+}
+.bottle.hint-src{
+  filter:drop-shadow(0 0 9px #ffe992) drop-shadow(0 0 16px #ffc22a)!important;
+}
+.bottle.hint-dst{
+  filter:drop-shadow(0 0 9px #affffa) drop-shadow(0 0 17px #2cf5ff)!important;
+}
+.bottle.complete{
+  filter:drop-shadow(0 0 10px #fffaa1) drop-shadow(0 0 7px #fff)!important;
+  animation:fp-potion-breathe 2.5s ease-in-out infinite alternate;
+}
+.bottle.complete svg.potion-art{transform:translateY(-1px)}
+@keyframes fp-potion-breathe{from{filter:drop-shadow(0 0 4px #fff7c0)}to{filter:drop-shadow(0 0 15px #ffed75) brightness(1.12)}}
+.game-message{font-size:12px;color:#fff;text-shadow:0 1px 3px #401375,0 0 9px #651ac5}
+.world-banner{background:linear-gradient(115deg,#effbffeb,#ebcbffea,#ffddf6e9);
+  box-shadow:0 5px 0 #aa64dd45,0 8px 20px #8c32be36,inset 0 2px 5px #fff}
+.world-glyph{font-size:35px}
+.level-pill,.score-pill{
+  border:2px solid white;background:linear-gradient(180deg,#fff,#eecdff 58%,#d59eff);
+  box-shadow:0 4px 0 #a65cdb66,0 8px 15px #5a1caf44,inset 0 3px 3px #fff
+}
+.status-row{border:2px solid #fff;border-radius:21px;
+  background:linear-gradient(155deg,#ffffffed,#e7c3ffea);
+  box-shadow:0 5px 0 #ab64dd42,0 8px 17px #7428a64b,inset 0 2px 3px #fff}
+.action{border-radius:18px;background:linear-gradient(160deg,#fff,#f7d4ff 40%,#deb3ff);
+  box-shadow:0 5px 0 #a65cdb68,0 8px 14px #5a1caf3e,inset 0 3px 3px #fff}
+.action span{filter:drop-shadow(0 2px 1px #fff)}
+.action:hover,.bottom-nav button:hover{filter:brightness(1.08)}
+.bottom-nav{background:linear-gradient(110deg,#c9f7ff,#e4b9ff 55%,#ffd3ed);box-shadow:0 0 16px #28c4ff,0 5px 15px #8a38b96b}
+.bottom-nav button.nav-current{background:linear-gradient(120deg,#00caff,#8142f0,#ff38ac);box-shadow:inset 0 2px 4px #fff8}
+.dialog{border:3px solid #fff;box-shadow:0 0 16px #fff8,0 0 45px #7b44ff4e,0 18px 55px #36106855}
+@media(max-width:390px){
+  .bottle{width:clamp(48px,16vw,63px);height:auto}
+  .bottles{gap:1px 3px;min-height:276px}
+  .game-area{padding-left:7px;padding-right:7px;min-height:329px}
+  .game-heading .potions-logo img{max-height:115px;margin:-8px auto -17px}
+}
+@media(prefers-reduced-motion:reduce){.bottle.complete{animation:none}}
