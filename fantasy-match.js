@@ -187,21 +187,60 @@
     const secs = String(Math.floor(t / 1000) % 60).padStart(2,'0');
     $('lifeTimer').textContent = `${state.lives} / 5 · +1 dans ${mins}:${secs}`;
   }
+  let syncInFlight = null;
+  // La progression locale garde la priorité sur une ancienne limite cloud à 100.
+  // Une synchronisation récupère aussi le meilleur niveau du cloud pour ne jamais le rétrograder.
+  async function synchroniserProgression(rafraichirCloud=false) {
+    if (!state || !sb || !user || !cloudReady) return false;
+    if (syncInFlight) return syncInFlight;
+    let capturedAt = 0;
+    syncInFlight = (async () => {
+      try {
+        if (rafraichirCloud) {
+          const {data, error} = await sb.from('fantasy_match_profiles')
+            .select('state,level,score,updated_at').eq('user_id',user.id).maybeSingle();
+          if (error) throw error;
+          if (data) {
+            const remote = {...(data.state || {})};
+            remote.maxUnlocked = Math.max(Number(remote.maxUnlocked || 1), Number(data.level || 1));
+            remote.score = Math.max(Number(remote.score || 0), Number(data.score || 0));
+            state = mergeProgress(state, remote, Date.parse(data.updated_at || '') || 0);
+            ensureState();
+            localStorage.setItem(storageKey, JSON.stringify(state));
+          }
+        }
+        const snapshot = JSON.parse(JSON.stringify(state));
+        capturedAt = Number(snapshot.updatedAt || 0);
+        const {error} = await sb.from('fantasy_match_profiles').upsert({
+          user_id:user.id,prenom:playerName,level:snapshot.maxUnlocked,score:snapshot.score,
+          state:snapshot,updated_at:new Date().toISOString()
+        });
+        if (error) throw error;
+        $('syncStatus').textContent = '✓ Niveau ' + snapshot.maxUnlocked + ' synchronisé avec Fantasy';
+        return true;
+      } catch (err) {
+        console.warn('Fantasy Match : progression non synchronisée', err);
+        $('syncStatus').textContent = '⚠️ Progression conservée sur cet appareil · synchronisation à réessayer';
+        return false;
+      }
+    })();
+    try { return await syncInFlight; }
+    finally {
+      syncInFlight = null;
+      // Une partie peut avoir progressé pendant l'écriture : ne pas perdre ses nouveaux points.
+      if (capturedAt && Number(state?.updatedAt || 0) > capturedAt) {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => synchroniserProgression(), 650);
+      }
+    }
+  }
   function save() {
     if (!state) return;
     state.updatedAt = now();
     localStorage.setItem(storageKey, JSON.stringify(state));
     if (!sb || !user || !cloudReady) return;
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(async () => {
-      try {
-        const {error} = await sb.from('fantasy_match_profiles').upsert({
-          user_id:user.id,prenom:playerName,level:state.maxUnlocked,score:state.score,
-          state,updated_at:new Date().toISOString()
-        });
-        $('syncStatus').textContent = error ? 'Sauvegarde sur ce téléphone · synchronisation en attente' : '✓ Progression sauvegardée dans Fantasy';
-      } catch { $('syncStatus').textContent = 'Sauvegarde sur ce téléphone'; }
-    }, 600);
+    saveTimer = setTimeout(() => synchroniserProgression(), 600);
   }
   async function setupCloud() {
     const cfg = window.APP_CONFIG || {};
@@ -694,6 +733,8 @@
       $('dialogContent').innerHTML=`<p>Le classement commun sera disponible après activation de la sauvegarde Fantasy.</p><div class="fm-ranking-row"><b>1. ${escapeHtml(playerName)}</b><small>${state.score} points · niveau ${state.maxUnlocked}</small></div>`;return;
     }
     try{
+      // Reprendre d'abord la progression conservée sur cet appareil, même après l'ancien blocage au niveau 100.
+      await synchroniserProgression(true);
       const{data,error}=await sb.from('fantasy_match_profiles').select('user_id,prenom,level,score').order('score',{ascending:false}).limit(50);
       if(error)throw error;
       if($('dialogTitle').textContent!=='Classement Fantasy')return;
@@ -756,6 +797,13 @@
       if(e.key==='Escape' && !$('worldPortal').classList.contains('hidden')){
         e.preventDefault(); closeWorldPortal();
       }
+    });
+    // Quand le téléphone revient en ligne ou que le jeu est rouvert, réessayer
+    // la sauvegarde avec une fusion protectrice des niveaux cloud et locaux.
+    window.addEventListener('online', () => { if (cloudReady) synchroniserProgression(true); });
+    window.addEventListener('focus', () => { if (cloudReady) synchroniserProgression(true); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && cloudReady) synchroniserProgression(true);
     });
     $('levelsBtn').addEventListener('click',showLevels);
     $('rulesBtn').addEventListener('click',showRules);
