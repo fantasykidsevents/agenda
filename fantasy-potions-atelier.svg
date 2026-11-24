@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 700" role="img" aria-label="Atelier de potions enchantees">
+<defs>
+ <linearGradient id="sky" x2=".7" y2="1"><stop stop-color="#251550"/><stop offset=".5" stop-color="#643b9f"/><stop offset="1" stop-color="#bd7cbb"/></linearGradient>
+ <radialGradient id="moon"><stop stop-color="#fffceb"/><stop offset=".4" stop-color="#f8d7ff"/><stop offset="1" stop-color="#e4a9ff" stop-opacity=".1"/></radialGradient>
+ <radialGradient id="mist"><stop stop-color="#94f2ff" stop-opacity=".55"/><stop offset="1" stop-color="#94f2ff" stop-opacity="0"/></radialGradient>
+ <linearGradient id="arch" x2="1" y2="1"><stop stop-color="#d1a9ff"/><stop offset=".45" stop-color="#53328d"/><stop offset="1" stop-color="#281758"/></linearGradient>
+ <linearGradient id="shelf" x2="0" y2="1"><stop stop-color="#e5a2ef"/><stop offset=".28" stop-color="#7a48a8"/><stop offset="1" stop-color="#3d256a"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="7"/></filter>
+ <pattern id="stars" width="115" height="94" patternUnits="userSpaceOnUse"><circle cx="18" cy="25" r="2" fill="#fff"/><path d="M83 52v10M78 57h10" stroke="#a6f9ff" stroke-width="2"/></pattern>
+</defs>
+<rect width="980" height="700" fill="url(#sky)"/>
+<rect width="980" height="700" fill="url(#stars)" opacity=".7"/>
+<circle cx="500" cy="200" r="155" fill="url(#moon)" opacity=".85"/>
+<path d="M204 500V220Q204 47 488 46Q774 47 774 220V500" fill="none" stroke="#432a7a" stroke-width="92" opacity=".6"/>
+<path d="M220 500V236Q220 65 488 64Q755 65 755 236V500" fill="none" stroke="url(#arch)" stroke-width="35"/>
+<path d="M248 510V240Q248 90 488 90Q727 90 727 240V510" fill="none" stroke="#e4b6ff" stroke-width="7" opacity=".6"/>
+<path d="M490 95V520M253 320H724" fill="none" stroke="#6842a6" stroke-width="15" opacity=".8"/>
+<path d="M190 492h597v23H190zM78 601h827v33H78z" fill="url(#shelf)" stroke="#f8d9ff" stroke-width="4"/>
+<g opacity=".65">
+ <path d="M75 468h75v-112h-75z" rx="13" fill="#7dd9fa"/><rect x="100" y="342" width="25" height="18" rx="7" fill="#ffe9ff"/>
+ <rect x="820" y="364" width="72" height="104" rx="17" fill="#ea80ed"/><rect x="840" y="343" width="32" height="20" rx="8" fill="#ffecd8"/>
+ <rect x="300" y="563" width="67" height="39" rx="12" fill="#59e9c4"/><rect x="315" y="548" width="35" height="19" rx="4" fill="#fff4dd"/>
+ <rect x="620" y="562" width="67" height="42" rx="12" fill="#ffc3ee"/><rect x="638" y="544" width="32" height="20" rx="6" fill="#e7dbff"/>
+</g>
+<ellipse cx="490" cy="628" rx="370" ry="110" fill="url(#mist)"/>
+<circle cx="230" cy="210" r="9" fill="#adfaff" filter="url(#glow)"/><circle cx="760" cy="400" r="11" fill="#ffd9fd" filter="url(#glow)"/>
+<g fill="#fff"><circle cx="151" cy="102" r="4"/><circle cx="806" cy="154" r="3"/><circle cx="715" cy="72" r="4"/><circle cx="438" cy="455" r="3"/></g>
+</svg>
