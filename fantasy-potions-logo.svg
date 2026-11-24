@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="260" viewBox="0 0 900 260" role="img" aria-labelledby="t d">
+<title id="t">Fantasy Potions</title><desc id="d">Logo magique brillant rose, violet et cyan, assorti à Fantasy Match.</desc>
+<defs>
+  <linearGradient id="g-f" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#fff" offset="0"/><stop stop-color="#b9f9ff" offset=".16"/><stop stop-color="#1ad5ff" offset=".48"/><stop stop-color="#3364f1" offset="1"/></linearGradient>
+  <linearGradient id="g-p" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#fff" offset="0"/><stop stop-color="#ffe5ff" offset=".17"/><stop stop-color="#e474ff" offset=".36"/><stop stop-color="#e731aa" offset=".7"/><stop stop-color="#8e39d8" offset="1"/></linearGradient>
+  <linearGradient id="g-v" x1="0" x2="1"><stop stop-color="#2e73df"/><stop offset=".52" stop-color="#b22fe8"/><stop offset="1" stop-color="#ec369e"/></linearGradient>
+  <linearGradient id="bottle" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff9f0"/><stop offset=".35" stop-color="#fbc0ff"/><stop offset=".65" stop-color="#8deaff"/><stop offset="1" stop-color="#9355ea"/></linearGradient>
+  <filter id="shadow" x="-20%" y="-60%" width="140%" height="220%"><feDropShadow dx="0" dy="9" stdDeviation="4" flood-color="#5927a3" flood-opacity=".5"/><feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#fff" flood-opacity=".8"/></filter>
+</defs>
+<g filter="url(#shadow)" font-family="'Trebuchet MS','Arial Rounded MT Bold',system-ui,sans-serif" font-weight="1000" text-anchor="middle" paint-order="stroke fill">
+ <text x="458" y="108" font-size="110" letter-spacing="-6" fill="url(#g-f)" stroke="#fff" stroke-width="13">Fantasy</text>
+ <text x="463" y="111" font-size="110" letter-spacing="-6" fill="url(#g-f)" stroke="#9154eb" stroke-width="3.2">Fantasy</text>
+ <text x="462" y="218" font-size="121" letter-spacing="-5" fill="url(#g-p)" stroke="#fff" stroke-width="15">Potions</text>
+ <text x="462" y="221" font-size="121" letter-spacing="-5" fill="url(#g-p)" stroke="#9d35cd" stroke-width="3.5">Potions</text>
+</g>
+<g stroke-linejoin="round">
+ <path d="m99 55 5 15 15 5-15 5-5 16-5-16-15-5 15-5Z" fill="#fffdf3" stroke="#8aefff" stroke-width="2"/>
+ <path d="m760 36 5 15 15 5-15 5-5 15-5-15-15-5 15-5Z" fill="#fff4d3" stroke="#e692ff" stroke-width="2"/>
+ <path d="m126 185 4 11 11 4-11 4-4 12-4-12-11-4 11-4Z" fill="#fff" stroke="#ffadfc" stroke-width="2"/>
+ <path d="m793 186 4 12 12 4-12 4-4 13-4-13-12-4 12-4Z" fill="#fff" stroke="#7bdbff" stroke-width="2"/>
+ <circle cx="165" cy="45" r="4.5" fill="#fff"/><circle cx="700" cy="206" r="4" fill="#fff"/>
+</g>
+</svg>
