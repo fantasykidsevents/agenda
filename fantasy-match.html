@@ -7,14 +7,19 @@
   <meta name="description" content="Fantasy Match, le jeu magique de l'équipe Fantasy Kids Events.">
   <title>Fantasy Match · Fantasy Kids Events</title>
   <link rel="stylesheet" href="fantasy-match.css">
-  <link rel="stylesheet" href="fantasy-match-premium.css?v=chapitre2-20261117">
+  <link rel="stylesheet" href="fantasy-match-premium.css?v=mondes-20261125">
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="fantasy-match.js?v=chapitre2-20261117"></script>
+  <script defer src="fantasy-match.js?v=mondes-20261125"></script>
 </head>
 <body>
   <div class="fm-bg-stars" aria-hidden="true"></div>
   <main class="fm-shell">
+    <div class="fm-world-scenery" aria-hidden="true">
+      <span class="fm-scene-orb"></span>
+      <span class="fm-scene-land"></span>
+      <span class="fm-scene-accents"></span>
+    </div>
     <header class="fm-header">
       <a class="fm-exit" href="index.html?vue=mine" aria-label="Quitter Fantasy Match et revenir à l'agenda" title="Retour à l'agenda">←</a>
       <a class="fm-brand" href="index.html?vue=mine" aria-label="Revenir à l'agenda Fantasy Kids Events">
@@ -27,6 +32,7 @@
     <div class="fm-title-wrap">
       <button id="levelsBtn" class="fm-level-btn" title="Choisir un niveau">Niveau <b id="levelValue">1</b></button>
       <div class="fm-world" id="worldName">Le Royaume des Étoiles</div>
+      <div class="fm-world-flavor" id="worldFlavor" aria-hidden="true"></div>
     </div>
 
     <section class="fm-status" aria-label="Progression et vies">
@@ -66,6 +72,17 @@
     <a class="fm-return" href="index.html?vue=mine">← Quitter le jeu · Retour à l'agenda</a>
     <div class="fm-sync" id="syncStatus" aria-live="polite">Sauvegarde en préparation…</div>
   </main>
+
+  <div class="fm-world-portal hidden" id="worldPortal" role="dialog" aria-modal="true" aria-labelledby="worldPortalTitle" aria-describedby="worldPortalDescription">
+    <div class="fm-world-portal-card">
+      <span class="fm-world-portal-sparkles" aria-hidden="true">✦ ✧ ✦</span>
+      <span class="fm-world-portal-symbol" id="worldPortalSymbol" aria-hidden="true">☄️</span>
+      <span class="fm-world-portal-chapter" id="worldPortalChapter">MONDE 6 · NIVEAU 101</span>
+      <h2 id="worldPortalTitle">L’Archipel des Comètes</h2>
+      <p id="worldPortalDescription">Voyage entre les îles flottantes et les comètes !</p>
+      <button type="button" id="worldPortalEnter">✨ Entrer dans ce monde</button>
+    </div>
+  </div>
 
   <div class="fm-modal-backdrop hidden" id="dialogBackdrop" role="presentation">
     <section class="fm-dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
