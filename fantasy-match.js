@@ -4,6 +4,20 @@
   const $ = id => document.getElementById(id);
   const MAX_LEVEL = 200, MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, SIZE = 8, POINTS_PER_UNUSED_MOVE = 50;
   const WORLD_NAMES = ['Le Royaume des Étoiles', 'Le Jardin Enchanté', 'Le Palais des Neiges', 'La Grotte des Cristaux', 'Le Royaume de la Magie', 'L’Archipel des Comètes', 'Le Labyrinthe des Mirages', 'La Forêt des Ombres', 'La Citadelle des Tempêtes', 'Le Cœur de Lumière'];
+
+  // Chaque série de 20 niveaux possède sa propre ambiance, sans modifier les règles du jeu.
+  const WORLD_THEMES = ["etoiles","jardin","neiges","cristaux","magie","cometes","mirages","ombres","tempetes","lumiere"];
+  const WORLD_SYMBOLS = ["✦","🌸","❄️","💎","✨","☄️","🔮","🌙","⚡","💖"];
+  const WORLD_FLAVORS = ["Sous un ciel constellé de magie","Des fleurs, des lucioles et des secrets","Une magie étincelante de givre","Des gemmes aux mille reflets","Le royaume de tous les sortilèges","Des îles flottantes sous les étoiles","Des palais dorés dans les mirages","La forêt murmure à la nuit","La citadelle défie les éclairs","La magie rayonne de toutes parts"];
+  const WORLD_INTROS = [
+    "Entre dans le royaume des étoiles !", "Explore le jardin enchanté !",
+    "Laisse la neige t'entourer !", "Découvre les cristaux étincelants !",
+    "La magie t'appelle !", "Voyage entre les îles flottantes et les comètes !",
+    "Traverse les mirages et leurs palais mystérieux !",
+    "Les ombres cachent une nouvelle aventure !",
+    "Résiste aux tempêtes de la citadelle !",
+    "Tu as atteint le cœur de la magie !"
+  ];
   const KINDS = ['star', 'rose', 'crystal', 'snow', 'crown', 'wand'];
   const LABELS = {star:'Étoiles',rose:'Roses',crystal:'Cristaux',snow:'Flocons',crown:'Couronnes',wand:'Baguettes'};
   const GLYPHS = {
@@ -36,7 +50,7 @@
   const rand = n => Math.floor(Math.random() * n);
   const randomKind = () => KINDS[rand(KINDS.length)];
   const now = () => Date.now();
-  const localDefault = () => ({level:1,maxUnlocked:1,lives:5,nextLifeAt:0,score:0,levels:{},bestScores:{},boosters:{color:3,bomb:3,shuffle:3},lastGiftAt:'',updatedAt:0});
+  const localDefault = () => ({level:1,maxUnlocked:1,lives:5,nextLifeAt:0,score:0,levels:{},bestScores:{},boosters:{color:3,bomb:3,shuffle:3},lastGiftAt:'',worldsSeen:[],updatedAt:0});
   const world = n => Math.floor((n - 1) / 20);
   function levelConfig(n) {
     // Chapitre 2 : 100 niveaux inédits, plus corsés, avec des défis de combinaisons.
@@ -110,6 +124,7 @@
     state.level = Math.max(1,Math.min(state.maxUnlocked,Number(state.level || 1)));
     state.boosters = {color:3,bomb:3,shuffle:3,...state.boosters};
     state.levels ||= {}; state.bestScores ||= {};
+    state.worldsSeen = Array.isArray(state.worldsSeen) ? [...new Set(state.worldsSeen.filter(n => Number.isInteger(n) && n >= 5 && n <= 9))] : [];
   }
   // Une ancienne sauvegarde cloud (ou une vie offerte depuis un autre appareil)
   // ne doit jamais effacer des niveaux déjà débloqués localement.
@@ -130,7 +145,8 @@
       level: Math.max(1, Math.min(unlocked, Number(progressOwner.level || unlocked))),
       score: Math.max(Number(local.score || 0), Number(online.score || 0)),
       levels: combineBest(local.levels, online.levels),
-      bestScores: combineBest(local.bestScores, online.bestScores)
+      bestScores: combineBest(local.bestScores, online.bestScores),
+      worldsSeen: [...new Set([...(local.worldsSeen || []), ...(online.worldsSeen || [])])]
     };
   }
   function tickLives() {
@@ -346,6 +362,10 @@
     $('boardOverlay').classList.add('hidden');
     save(); renderAll();
     if (state.lives<1) { lockBoardForLives(); showNoLives(); }
+    else if (current.number > 100 && (current.number - 1) % 20 === 0 &&
+      !state.worldsSeen.includes(current.world) && $('dialogBackdrop').classList.contains('hidden')) {
+      showWorldPortal();
+    }
   }
   function lockBoardForLives() {
     $('boardOverlayText').textContent=`Niveau ${state.level} conservé · En attente d’une vie ♥`;
@@ -358,8 +378,12 @@
   }
   function renderAll() {
     if(!current)return;
-    document.querySelector('.fm-shell').dataset.mode=current.mode;
-    $('worldName').textContent=MODE_LABELS[current.mode]+' · '+WORLD_NAMES[current.world];
+    const shell = document.querySelector('.fm-shell');
+    shell.dataset.mode = current.mode;
+    shell.dataset.world = WORLD_THEMES[current.world] || 'etoiles';
+    document.body.dataset.world = shell.dataset.world;
+    $('worldName').textContent = MODE_LABELS[current.mode] + ' · ' + WORLD_NAMES[current.world];
+    $('worldFlavor').textContent = WORLD_FLAVORS[current.world] || '';
     $('levelValue').textContent=current.number;
     $('goalIcon').classList.toggle('duo',current.mode==='duo'||current.mode==='combo');
     $('goalIcon').innerHTML=current.mode==='duo' ? piece(current.goal)+piece(current.goal2)
@@ -611,6 +635,23 @@
     }
     $('dialogBackdrop').classList.remove('hidden');
   }
+  // Introduction de monde montrée une seule fois par joueur et par monde (101, 121, 141, 161, 181).
+  // L'état est sauvegardé normalement : ni progression, ni score, ni vies ne sont réinitialisés.
+  function showWorldPortal() {
+    if (!current || current.world < 5 || current.world >= WORLD_NAMES.length) return;
+    $('worldPortalSymbol').textContent = WORLD_SYMBOLS[current.world];
+    $('worldPortalChapter').textContent = 'MONDE ' + (current.world + 1) + ' · NIVEAU ' + current.number;
+    $('worldPortalTitle').textContent = WORLD_NAMES[current.world];
+    $('worldPortalDescription').textContent = WORLD_INTROS[current.world];
+    $('worldPortal').classList.remove('hidden');
+    $('worldPortalEnter').focus();
+    state.worldsSeen.push(current.world);
+    save();
+  }
+  function closeWorldPortal() {
+    $('worldPortal').classList.add('hidden');
+    $('levelsBtn').focus({preventScroll:true});
+  }
   function showLevels(){
     const cards=WORLD_NAMES.map((name,i)=>{
       const levels=Array.from({length:20},(_,j)=>i*20+j+1);
@@ -687,6 +728,12 @@
         useBooster(type,selected);
       });
     }
+    $('worldPortalEnter').addEventListener('click', closeWorldPortal);
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Escape' && !$('worldPortal').classList.contains('hidden')){
+        e.preventDefault(); closeWorldPortal();
+      }
+    });
     $('levelsBtn').addEventListener('click',showLevels);
     $('rulesBtn').addEventListener('click',showRules);
     $('dialogClose').addEventListener('click',hideDialog);
