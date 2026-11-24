@@ -4735,6 +4735,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   // 💶 Prix de base des formules (tarifs du site)
   const PRIX_FORMULES = [["superstar", 350], ["celebration", 330], ["fantastic", 225], ["surprise", 225], ["idol party", 180], ["magic", 175], ["rising star", 125], ["flash", 110]];
   const prixFormule = (t) => { const x = String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); const f = PRIX_FORMULES.find(([k]) => x.includes(k)); return f ? f[1] : 0; };
+  // ❄️ Mois creux : -5 € si la fête a lieu en janvier ou février, hors formules de 30 min.
+  const REMISE_CREUX = 5;
+  const remiseCreux = (theme, date) => {
+    const m = String(date || "").slice(5, 7);
+    const t = String(theme || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return (m === "01" || m === "02") && prixFormule(t) > 0 && !/flash|rising star/.test(t) ? REMISE_CREUX : 0;
+  };
   function renderOptions() {
     const cat = optCatalogue(), resp = isResp();
     Object.keys(optSel).forEach(k => { if (!cat.some(o => o[0] === k) && OPTIONS_TOUTES[k]) cat.push(OPTIONS_TOUTES[k]); });
@@ -4755,7 +4762,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const diff = optTotal(optSel) - avant;   // 👑 le prix total suit les options
     if (diff && isResp()) {
       // prix vide : on part du prix de la formule (+ toutes les options), jamais des options seules
-      const base = $("prix").value !== "" ? +$("prix").value : prixFormule(`${$("theme").value} ${$("titre") ? $("titre").value : ""}`) + avant;
+      const base = $("prix").value !== "" ? +$("prix").value : prixFormule(`${$("theme").value} ${$("titre") ? $("titre").value : ""}`) - remiseCreux($("theme").value, $("date").value) + avant;
       $("prix").value = Math.round((base + diff) * 100) / 100;
     }
     renderOptions();
@@ -4768,13 +4775,29 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   let formuleAvant = "";
   $("theme").addEventListener("focus", () => { formuleAvant = $("theme").value; });
   $("theme").addEventListener("change", () => {
-    // 👑 changer de formule change le prix d'autant (ex. Magic → Fantastic = +50 €)
-    const diff = prixFormule($("theme").value) - prixFormule(formuleAvant);
+    // 👑 Changer de formule ajuste aussi l'éventuelle remise du mois de la fête.
+    const diff = (prixFormule($("theme").value) - remiseCreux($("theme").value, $("date").value))
+      - (prixFormule(formuleAvant) - remiseCreux(formuleAvant, $("date").value));
     if (isResp() && diff && prixFormule($("theme").value)) {
-      $("prix").value = $("prix").value !== "" && prixFormule(formuleAvant) ? Math.round((+$("prix").value + diff) * 100) / 100 : prixFormule($("theme").value) + optTotal(optSel);
+      $("prix").value = $("prix").value !== "" && prixFormule(formuleAvant)
+        ? Math.round((+$("prix").value + diff) * 100) / 100
+        : prixFormule($("theme").value) - remiseCreux($("theme").value, $("date").value) + optTotal(optSel);
       $("prix").dispatchEvent(new Event("input"));
     }
     formuleAvant = $("theme").value; renderOptions();
+  });
+
+  // La remise suit la date de la fête, sans recalculer les fiches à leur ouverture.
+  let dateAvant = "";
+  $("date").addEventListener("focus", () => { dateAvant = $("date").value; });
+  $("date").addEventListener("change", () => {
+    if (!isResp() || $("prix").value === "") { dateAvant = $("date").value; return; }
+    const diff = remiseCreux($("theme").value, dateAvant) - remiseCreux($("theme").value, $("date").value);
+    if (diff) {
+      $("prix").value = Math.round((+$("prix").value - diff) * 100) / 100;
+      $("prix").dispatchEvent(new Event("input"));
+    }
+    dateAvant = $("date").value;
   });
 
   function openForm(ev, date) {
@@ -4792,11 +4815,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       // ancienne fiche avec un thème libre (ex. « Olaf ») : on le garde dans la liste pour ne rien perdre
       const th = $("theme"); [...th.querySelectorAll("option[data-ancien]")].forEach(o => o.remove());
       if (ev && ev.theme && th.value !== ev.theme) { const o = document.createElement("option"); o.value = o.textContent = ev.theme; o.dataset.ancien = "1"; th.appendChild(o); th.value = ev.theme; }
-      formuleAvant = $("theme").value; renderOptions();
+      formuleAvant = $("theme").value;
+      dateAvant = $("date").value;
+      renderOptions();
       if (ev && isResp() && !soldeTouched && $("prix").value !== "") { const v = autoSolde(); if (v != null) $("solde").value = v; }
       // demande sans prix : on propose le prix de la formule + options
       if (ev && isResp() && ev.type_evenement === "animation" && $("prix").value === "") {
-        const b = prixFormule(`${ev.theme || ""} ${ev.titre || ""}`); if (b) { $("prix").value = b + optTotal(optSel); $("prix").dispatchEvent(new Event("input")); }
+        const b = prixFormule(`${ev.theme || ""} ${ev.titre || ""}`); if (b) { $("prix").value = b - remiseCreux(ev.theme || ev.titre, ev.date) + optTotal(optSel); $("prix").dispatchEvent(new Event("input")); }
       }
     }, 0);
     CHAMPS.forEach(k => {
