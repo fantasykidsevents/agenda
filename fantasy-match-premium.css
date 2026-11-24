@@ -352,3 +352,40 @@ body{
   color:#fff;font-weight:1000;font-size:16px;
 }
 .fm-world-portal-card button:focus-visible{outline:3px solid #0ac8fd;outline-offset:4px}
+
+
+/* Lumi dans Fantasy Match : le vrai personnage Fantasy App, sans retoucher son identité.
+   Médaillon brillant assorti aux gemmes du jeu; réservé aux niveaux 101+. */
+.fm-piece-lumi{
+  position:relative;isolation:isolate;
+  border-radius:50%;
+  background-image:
+    url('lumi-jour.webp'),
+    radial-gradient(circle at 36% 24%,#ffffff 0%,#ffe1fb 31%,#f8a7fb 62%,#a97df6 87%,#5d5ad1 100%);
+  background-size:82% 82%,100% 100%;
+  background-position:center,center;
+  background-repeat:no-repeat;
+  box-shadow:
+    inset 0 0 0 2px #fffde3,
+    inset 0 0 0 4px #d798ffb8,
+    inset 0 -4px 7px #8f39a37a,
+    0 0 7px #fff9,
+    0 0 10px #f84ff38a;
+  filter:drop-shadow(0 2px 2px #6b199f77);
+}
+.fm-piece-lumi::before{
+  content:"";position:absolute;inset:4% 10% auto 14%;height:25%;
+  border-radius:100%;transform:rotate(-18deg);
+  background:linear-gradient(#ffffffa8,#ffffff05);
+  pointer-events:none;
+}
+.fm-piece-lumi.fm-piece-color{
+  animation:fm-lumi-glow 2s ease-in-out infinite alternate;
+}
+@keyframes fm-lumi-glow{
+  from{filter:drop-shadow(0 1px 2px #8f2cc788) brightness(.96)}
+  to{filter:drop-shadow(0 0 7px #fff) drop-shadow(0 0 10px #fa75ff) brightness(1.06)}
+}
+.fm-world-icons .fm-piece-lumi{width:37px;height:37px}
+.fm-world-portal-pieces .fm-piece-lumi{max-width:52px}
+@media(prefers-reduced-motion:reduce){.fm-piece-lumi.fm-piece-color{animation:none}}
