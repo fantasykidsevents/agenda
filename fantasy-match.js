@@ -406,7 +406,6 @@
     document.body.dataset.world = shell.dataset.world;
     document.body.dataset.chapter = current.number > 100 ? '2' : '1';
     $('worldName').textContent = MODE_LABELS[current.mode] + ' · ' + WORLD_NAMES[current.world];
-    $('worldFlavor').textContent = WORLD_FLAVORS[current.world] || '';
     $('levelValue').textContent=current.number;
     $('goalIcon').classList.toggle('duo',current.mode==='duo'||current.mode==='combo');
     $('goalIcon').innerHTML=current.mode==='duo' ? piece(current.goal)+piece(current.goal2)
