@@ -567,3 +567,55 @@ body[data-world="lumiere"] .fm-scene-accents{
   .fm-world-portal,.fm-world-portal:before,.fm-world-portal-card,
   .fm-world-portal-symbol{animation:none!important;transition:none!important}
 }
+
+
+/* ============================================================
+   Chapitre 2 (niveaux 101–200) : vrai nouveau jeu de symboles.
+   Sprite vectoriel original 2 colonnes × 5 rangées, 10 pièces illustrées.
+   La grille 1–100 conserve ses illustrations existantes.
+   ============================================================ */
+.fm-piece-chapter2:not(.fm-piece-bomb):not(.fm-piece-color){
+  background-image:url('fantasy-match-chapitre2-symboles.svg');
+  background-repeat:no-repeat;
+  background-size:200% 500%;
+  filter:drop-shadow(0 1px 2px #22145966);
+}
+.fm-piece-chapter2.fm-piece-comet{background-position:0% 0%}
+.fm-piece-chapter2.fm-piece-moon{background-position:100% 0%}
+.fm-piece-chapter2.fm-piece-lotus{background-position:0% 25%}
+.fm-piece-chapter2.fm-piece-frost{background-position:100% 25%}
+.fm-piece-chapter2.fm-piece-prism{background-position:0% 50%}
+.fm-piece-chapter2.fm-piece-orb{background-position:100% 50%}
+.fm-piece-chapter2.fm-piece-mirror{background-position:0% 75%}
+.fm-piece-chapter2.fm-piece-firefly{background-position:100% 75%}
+.fm-piece-chapter2.fm-piece-storm{background-position:0% 100%}
+.fm-piece-chapter2.fm-piece-heart{background-position:100% 100%}
+.fm-piece-chapter2.fm-piece-bomb{
+  background-image:url('fantasy-match-boost-bomb.webp');
+  background-size:98% 98%;background-position:center;background-repeat:no-repeat;
+}
+body[data-chapter="2"] .fm-cell{
+  background:linear-gradient(155deg,#ffffffed,#c7ddffdf 48%,#cbb6f9e8);
+  border-color:#ffffff9c;
+}
+body[data-chapter="2"] .fm-cell:nth-child(2n){
+  background:linear-gradient(145deg,#ecfaffef,#e4c6f8e9 67%,#b5d2ffdc);
+}
+body[data-chapter="2"] .fm-cell.selected{background:#fff4d3}
+.fm-world-icons,.fm-world-portal-pieces{
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  width:100%;margin:8px auto 11px;min-height:44px;
+}
+.fm-world-icons .fm-piece{
+  flex:none;width:37px;height:37px;filter:drop-shadow(0 2px 4px #32206256);
+}
+.fm-world-portal-pieces{
+  margin:0 auto 23px;padding:7px 4px;
+  border-radius:18px;
+  background:linear-gradient(100deg,#f5edffba,#ecfaffda,#ffeff9b8);
+  border:1px solid #ffffffeb;
+}
+.fm-world-portal-pieces .fm-piece{
+  flex:none;width:min(14%,54px);aspect-ratio:1;
+  filter:drop-shadow(0 2px 5px #35225c68);
+}
