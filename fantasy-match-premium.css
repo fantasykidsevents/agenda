@@ -289,296 +289,12 @@ body{
 @media(prefers-reduced-motion:reduce){.fm-cell.match,.fm-timer,.fm-spark,.fm-fx-label{animation:none}}
 
 
-/* ============================================================
-   Fantasy Match · Mondes enchantés — 20 niveaux chacun
-   Décors CSS légers, sans images supplémentaires ni impact sur les sauvegardes.
-   ============================================================ */
-body[data-world]{
-  --w-sky1:#acdfff;--w-sky2:#dfbdff;--w-sky3:#ffa6e0;
-  --w-accent:#bc57f1;--w-highlight:#48dfff;--w-ink:#742da7;
-  background:linear-gradient(155deg,var(--w-sky1),var(--w-sky2) 50%,var(--w-sky3));
-  transition:background-color .6s ease;
-}
-body[data-world="etoiles"]{--w-sky1:#89d6ff;--w-sky2:#d3aaff;--w-sky3:#fca9e9;--w-accent:#a73de9;--w-highlight:#00d8ff;--w-ink:#792fbb}
-body[data-world="jardin"]{--w-sky1:#b5ffe0;--w-sky2:#dbefaf;--w-sky3:#ffb7d9;--w-accent:#36af81;--w-highlight:#ff80c8;--w-ink:#39794e}
-body[data-world="neiges"]{--w-sky1:#a9e7ff;--w-sky2:#e5f9ff;--w-sky3:#b1bdff;--w-accent:#369ee4;--w-highlight:#d8faff;--w-ink:#2873ae}
-body[data-world="cristaux"]{--w-sky1:#9bf9f7;--w-sky2:#b3ccff;--w-sky3:#cca9ff;--w-accent:#3d85ff;--w-highlight:#e9ffff;--w-ink:#454cad}
-body[data-world="magie"]{--w-sky1:#ac7fff;--w-sky2:#e0acfa;--w-sky3:#ffa2d4;--w-accent:#9b33ea;--w-highlight:#ffdf84;--w-ink:#7127ad}
-body[data-world="cometes"]{--w-sky1:#151d60;--w-sky2:#473d9a;--w-sky3:#c482cb;--w-accent:#826dff;--w-highlight:#7bedff;--w-ink:#5443b5}
-body[data-world="mirages"]{--w-sky1:#fff1b7;--w-sky2:#f6b4c7;--w-sky3:#ab88e6;--w-accent:#e786b8;--w-highlight:#ffe989;--w-ink:#864c98}
-body[data-world="ombres"]{--w-sky1:#071e38;--w-sky2:#17515c;--w-sky3:#53609d;--w-accent:#28aeb0;--w-highlight:#b3ffda;--w-ink:#18627a}
-body[data-world="tempetes"]{--w-sky1:#162847;--w-sky2:#53618c;--w-sky3:#a2b7dc;--w-accent:#6c92e1;--w-highlight:#d7f7ff;--w-ink:#344d94}
-body[data-world="lumiere"]{--w-sky1:#fff2ae;--w-sky2:#ffd0ec;--w-sky3:#c9a5ff;--w-accent:#ff9fc6;--w-highlight:#fff8a5;--w-ink:#af4a84}
-
-body[data-world] .fm-shell{
-  isolation:isolate;
-  background:
-    radial-gradient(ellipse at 10% 0%,#ffffff48,transparent 42%),
-    linear-gradient(180deg,#ffffff38 0%,#ffffff13 50%,#ffffff20 100%);
-  box-shadow:0 4px 45px #27134445;
-}
-body[data-world="cometes"] .fm-shell,
-body[data-world="ombres"] .fm-shell,
-body[data-world="tempetes"] .fm-shell{
-  background:linear-gradient(180deg,#ffffff12,#ffffff1c 50%,#ffffff21);
-}
-body[data-world] .fm-shell:before,
-body[data-world] .fm-shell:after{opacity:.24}
-body[data-world] .fm-bg-stars{opacity:.8;filter:drop-shadow(0 0 5px #fff)}
-body[data-world] .fm-board-wrap{
-  background:linear-gradient(125deg,var(--w-highlight),var(--w-accent) 56%,var(--w-highlight));
-  box-shadow:0 0 8px 2px #ffffff99,0 0 22px var(--w-accent),0 7px 15px #24125455;
-}
-body[data-world] .fm-world{color:var(--w-ink);text-shadow:0 1px 2px #ffffffb3}
-body[data-world] .fm-world-flavor{
-  margin:3px auto 0;max-width:95%;
-  font-size:11px;font-weight:850;line-height:1.25;text-align:center;
-  color:var(--w-ink);text-shadow:0 1px 2px #ffffffbd;
-}
-body[data-world] .fm-tip{color:var(--w-ink)}
-body[data-world="cometes"] .fm-world,
-body[data-world="ombres"] .fm-world,
-body[data-world="tempetes"] .fm-world,
-body[data-world="cometes"] .fm-world-flavor,
-body[data-world="ombres"] .fm-world-flavor,
-body[data-world="tempetes"] .fm-world-flavor,
-body[data-world="cometes"] .fm-tip,
-body[data-world="ombres"] .fm-tip,
-body[data-world="tempetes"] .fm-tip{
-  color:#fff;text-shadow:0 2px 5px #121442,0 0 10px #151d59;
-}
-body[data-world="cometes"] .fm-sync,
-body[data-world="ombres"] .fm-sync,
-body[data-world="tempetes"] .fm-sync{color:#fff}
-body[data-world] .fm-title-wrap{margin-bottom:15px}
-.fm-world-scenery{
-  position:absolute!important;inset:0;z-index:0!important;
-  overflow:hidden;pointer-events:none;border-radius:inherit;
-}
-.fm-world-scenery span{position:absolute;display:block;pointer-events:none}
-.fm-scene-orb{
-  width:230px;height:230px;right:-90px;top:17%;
-  border-radius:50%;
-  background:radial-gradient(circle,#ffffffa6 0%,#ffffff36 26%,transparent 70%);
-  filter:blur(3px);
-}
-.fm-scene-land{
-  left:-22%;bottom:-48px;width:145%;height:27%;
-  background:linear-gradient(180deg,#ffffff44,#9c74de66);
-  border-radius:60% 60% 0 0 / 40% 40% 0 0;
-}
-.fm-scene-accents{
-  right:8%;top:44%;width:74px;height:74px;
-  border-radius:50%;border:2px solid #ffffff7e;
-  box-shadow:0 0 35px #ffffff8a,inset 0 0 25px #ffffff51;
-}
-/* Premiers mondes : jardin, pics de glace, cristaux et magie. */
-body[data-world="jardin"] .fm-scene-land{
-  background:radial-gradient(ellipse at 35% 0%,#ffcde3,#4bc48d 80%);
-}
-body[data-world="jardin"] .fm-scene-accents{
-  width:110px;height:110px;right:-12px;top:36%;
-  background:radial-gradient(circle at 35% 36%,#fff2b8,#ff88c7 35%,#fa55a0 60%,transparent 68%);
-  border:0;filter:blur(5px);
-}
-body[data-world="neiges"] .fm-scene-land{
-  background:linear-gradient(145deg,#ffffffed,#d2faffb3);
-  clip-path:polygon(0 100%,0 43%,12% 51%,23% 10%,39% 65%,52% 2%,66% 62%,82% 26%,100% 66%,100% 100%);
-  border-radius:0;
-}
-body[data-world="cristaux"] .fm-scene-land{
-  background:linear-gradient(130deg,#b7ffffb0,#8d7cf2bb);
-  clip-path:polygon(0 100%,0 70%,9% 18%,21% 70%,32% 2%,41% 66%,59% 20%,76% 63%,90% 5%,100% 70%,100% 100%);
-  border-radius:0;
-}
-body[data-world="magie"] .fm-scene-orb{
-  background:radial-gradient(circle,#fff6b8 0%,#f4a1ff7c 34%,transparent 74%);
-  filter:blur(10px);animation:fm-orb-breathe 7s ease-in-out infinite alternate;
-}
-/* ☄️ Monde 6 : îles flottantes et comètes. */
-body[data-world="cometes"] .fm-world-scenery{
-  background:
-    radial-gradient(circle at 78% 17%,#ffeabbef 0 4px,transparent 6px),
-    radial-gradient(circle at 18% 39%,#d8fbffec 0 2px,transparent 4px),
-    radial-gradient(circle at 84% 71%,#eacbff 0 2px,transparent 4px),
-    radial-gradient(ellipse at 55% 58%,#c484f84b,transparent 52%);
-}
-body[data-world="cometes"] .fm-scene-orb{
-  right:9%;top:23%;width:105px;height:105px;
-  background:radial-gradient(circle at 30% 30%,#fffce2,#9ce8ff 31%,#4b7def 59%,#4b7def00 69%);
-  box-shadow:0 0 44px #87d5ffb0;animation:fm-orb-breathe 5s ease-in-out infinite alternate;
-}
-body[data-world="cometes"] .fm-scene-land{
-  bottom:4%;left:-25%;width:145%;height:28%;
-  background:linear-gradient(180deg,#a6d8ff99,#4937a9a8 49%,#292170db);
-  clip-path:polygon(0 42%,8% 26%,21% 30%,28% 10%,37% 27%,49% 25%,59% 5%,72% 26%,83% 23%,94% 33%,100% 21%,100% 72%,72% 89%,48% 75%,22% 100%,0 73%);
-  border-radius:0;filter:drop-shadow(0 16px 16px #242060b9);
-}
-body[data-world="cometes"] .fm-scene-accents{
-  top:40%;left:-15%;right:auto;width:130%;height:8px;
-  transform:rotate(-25deg);
-  border:0;border-radius:100%;
-  background:linear-gradient(90deg,transparent 8%,#7ce9ff12 28%,#ffffffd8 52%,#9df9ff 58%,transparent 67%);
-  box-shadow:0 0 14px #a3f4ffb7;
-  animation:fm-comet-cross 8s ease-in-out infinite;
-}
-/* 🔮 Monde 7 : dunes et arches de mirage. */
-body[data-world="mirages"] .fm-world-scenery{
-  background:radial-gradient(circle at 25% 20%,#fffbd3e0,transparent 30%);
-}
-body[data-world="mirages"] .fm-scene-orb{
-  top:19%;right:11%;width:140px;height:140px;
-  background:radial-gradient(circle,#fff9cc 0 35%,#fdbb83aa 47%,transparent 71%);
-  box-shadow:0 0 50px #fff1cdad;
-}
-body[data-world="mirages"] .fm-scene-land{
-  bottom:-4%;left:-17%;width:145%;height:39%;
-  background:linear-gradient(170deg,#ffe0a5d9,#e6a4bbdc 74%,#9f80d0);
-  border-radius:55% 70% 0 0 / 30% 45% 0 0;
-  box-shadow:0 -35px 35px #fff1c965;
-}
-body[data-world="mirages"] .fm-scene-accents{
-  left:11%;right:auto;top:32%;height:125px;width:105px;
-  border:14px solid #fff5d888;border-bottom:0;border-radius:80px 80px 0 0;
-  background:linear-gradient(180deg,#f9cfd165,#ffffff15);
-  box-shadow:inset 0 0 20px #fff6c4,0 0 25px #fff0c180;
-  animation:fm-mirage-float 6s ease-in-out infinite alternate;
-}
-/* 🌙 Monde 8 : arbres aux silhouettes mystérieuses et lucioles. */
-body[data-world="ombres"] .fm-world-scenery{
-  background:radial-gradient(ellipse at 70% 25%,#8fcdca77,transparent 41%);
-}
-body[data-world="ombres"] .fm-scene-orb{
-  right:12%;top:16%;width:115px;height:115px;
-  background:radial-gradient(circle,#eefff6 0 36%,#cffefb44 50%,transparent 67%);
-  box-shadow:0 0 24px #8affd790;
-}
-body[data-world="ombres"] .fm-scene-land{
-  bottom:0;left:-11%;width:128%;height:38%;border-radius:0;
-  background:linear-gradient(180deg,#2b7d85b0,#083247e6);
-  clip-path:polygon(0 100%,0 55%,9% 55%,14% 9%,19% 55%,28% 55%,33% 28%,39% 64%,48% 64%,53% 6%,59% 62%,65% 62%,74% 23%,80% 62%,88% 62%,94% 10%,100% 60%,100% 100%);
-}
-body[data-world="ombres"] .fm-scene-accents{
-  width:9px;height:9px;top:42%;left:18%;right:auto;border:0;border-radius:50%;
-  background:#c1ffca;
-  box-shadow:36px 91px 8px #d4ffe7,170px 14px 8px #d8ffcf,245px 84px 5px #d4ffdf,302px 40px 8px #d8ffd2,0 0 18px 8px #bdffd0;
-  animation:fm-orb-breathe 2.5s ease-in-out infinite alternate;
-}
-/* ⚡ Monde 9 : citadelle et éclairs. */
-body[data-world="tempetes"] .fm-world-scenery{
-  background:
-    radial-gradient(ellipse at 90% 19%,#e6f6ff6d,transparent 36%),
-    linear-gradient(170deg,transparent 55%,#3f547b54 90%);
-}
-body[data-world="tempetes"] .fm-scene-orb{
-  top:20%;right:5%;width:180px;height:120px;
-  background:radial-gradient(ellipse,#e6f6ff88,transparent 70%);
-  filter:blur(15px);
-}
-body[data-world="tempetes"] .fm-scene-land{
-  bottom:3%;left:8%;width:88%;height:31%;border-radius:0;
-  background:linear-gradient(180deg,#7180b3d9,#202b53f0);
-  clip-path:polygon(0 100%,0 25%,6% 25%,6% 12%,14% 12%,14% 25%,20% 25%,20% 59%,31% 59%,31% 17%,37% 17%,37% 0,45% 0,45% 17%,52% 17%,52% 57%,67% 57%,67% 24%,73% 24%,73% 8%,81% 8%,81% 24%,88% 24%,88% 47%,100% 47%,100% 100%);
-  box-shadow:0 0 22px #c5e0ff77;
-}
-body[data-world="tempetes"] .fm-scene-accents{
-  top:29%;left:66%;right:auto;width:62px;height:140px;
-  border:0;border-radius:0;
-  background:#f8ffff;
-  clip-path:polygon(52% 0,10% 58%,45% 55%,30% 100%,92% 35%,56% 40%);
-  filter:drop-shadow(0 0 14px #d0eaff);
-  animation:fm-lightning 7s linear infinite;
-}
-/* 💖 Monde 10 : portail de lumière et rayons dorés. */
-body[data-world="lumiere"] .fm-world-scenery{
-  background:radial-gradient(ellipse at 50% 52%,#fffaf1b5,transparent 60%);
-}
-body[data-world="lumiere"] .fm-scene-orb{
-  width:180px;height:240px;top:21%;right:4%;
-  border:8px double #fffce8d6;border-radius:47% 47% 14% 14%;
-  background:radial-gradient(ellipse,#fffefbf2 3%,#ffeaa0a4 45%,#e6a7ff3d 65%,transparent);
-  box-shadow:0 0 32px #fff5bb,0 0 65px #ffd4fa,inset 0 0 30px #fff;
-  animation:fm-orb-breathe 5s ease-in-out infinite alternate;
-}
-body[data-world="lumiere"] .fm-scene-land{
-  height:29%;bottom:-2%;left:-15%;width:135%;
-  background:linear-gradient(180deg,#fff1c3ba,#e4a8eadb);
-}
-body[data-world="lumiere"] .fm-scene-accents{
-  top:20%;right:-22%;width:100%;height:75%;
-  border:0;border-radius:50%;
-  background:conic-gradient(from 0deg,#fff7c500 0 8%,#fff4c970 10%,#fff7c500 13% 32%,#ffe9ff9e 35%,#fff7c500 38% 55%,#fff2c48f 58%,#fff7c500 61% 78%,#fff 81%,#fff7c500 84%);
-  filter:blur(12px);animation:fm-orb-breathe 7s ease-in-out infinite alternate;
-}
-@keyframes fm-orb-breathe{from{opacity:.5;transform:scale(.96)}to{opacity:1;transform:scale(1.05)}}
-@keyframes fm-mirage-float{from{opacity:.6;transform:translateY(-5px)}to{opacity:1;transform:translateY(10px)}}
-@keyframes fm-comet-cross{0%,10%{opacity:0;transform:translate(16%,-20px) rotate(-25deg)}25%,70%{opacity:1}90%,100%{opacity:0;transform:translate(-18%,30px) rotate(-25deg)}}
-@keyframes fm-lightning{0%,15%,21%,45%,55%,100%{opacity:0}17%,20%,47%,49%{opacity:1}}
-
-/* Passage spectaculaire dans les mondes 6 à 10, sans bloquer définitivement la partie. */
-.fm-world-portal{
-  position:fixed;inset:0;z-index:50;
-  display:grid;place-items:center;padding:20px;
-  background:radial-gradient(ellipse at 50% 45%,#6358aabf,#0a1230ee 70%);
-  backdrop-filter:blur(12px);
-  animation:fm-portal-arrive .55s ease-out both;
-}
-.fm-world-portal:before{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background-image:radial-gradient(circle,#fff 1.4px,transparent 2.2px),radial-gradient(circle,#a7f1ff 1px,transparent 2px);
-  background-size:67px 81px,107px 139px;opacity:.62;
-  animation:fm-portal-twinkle 4s ease-in-out infinite alternate;
-}
-.fm-world-portal-card{
-  position:relative;width:min(100%,450px);padding:37px 24px 26px;text-align:center;
-  border:2px solid #fffde6;border-radius:32px;
-  background:linear-gradient(155deg,#ffffffeb,#f3e8ffdb);
-  box-shadow:0 0 26px #ffffffb6,0 0 65px var(--w-highlight,#bdcaff),0 20px 70px #0c103ec0;
-  animation:fm-portal-card .8s cubic-bezier(.17,.8,.26,1.2) both;
-}
-.fm-world-portal-sparkles{display:block;font-size:21px;letter-spacing:10px;color:var(--w-accent,#a354df)}
-.fm-world-portal-symbol{
-  display:block;margin:4px auto 8px;font-size:75px;line-height:1.2;
-  filter:drop-shadow(0 0 16px var(--w-highlight,#fff));
-  animation:fm-orb-breathe 2.3s ease-in-out infinite alternate;
-}
-.fm-world-portal-chapter{
-  display:block;margin-bottom:8px;
-  color:#6f4a9b;font-size:12px;font-weight:1000;letter-spacing:.14em;
-}
-.fm-world-portal-card h2{
-  color:#61349a;margin:0 0 12px;
-  font-size:clamp(28px,8vw,40px);line-height:1.12;font-weight:1000;
-}
-.fm-world-portal-card p{margin:0 0 20px;color:#583d78;font-size:16px;font-weight:850;line-height:1.45}
-.fm-world-portal-card button{
-  width:100%;padding:14px;border:2px solid #fff;border-radius:17px;
-  background:linear-gradient(110deg,var(--w-accent,#8236da),#d540aa);
-  color:#fff;font-size:17px;font-weight:1000;
-  box-shadow:0 5px 15px #6240a862;
-}
-.fm-world-portal-card button:focus-visible{outline:4px solid #fff4a6;outline-offset:4px}
-@keyframes fm-portal-arrive{from{opacity:0}to{opacity:1}}
-@keyframes fm-portal-card{from{opacity:0;transform:scale(.7) translateY(35px)}to{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes fm-portal-twinkle{from{opacity:.35}to{opacity:.85}}
-@media(prefers-reduced-motion:reduce){
-  body[data-world] .fm-scene-orb,
-  body[data-world] .fm-scene-accents,
-  .fm-world-portal,.fm-world-portal:before,.fm-world-portal-card,
-  .fm-world-portal-symbol{animation:none!important;transition:none!important}
-}
-
-
-/* ============================================================
-   Chapitre 2 (niveaux 101–200) : vrai nouveau jeu de symboles.
-   Sprite vectoriel original 2 colonnes × 5 rangées, 10 pièces illustrées.
-   La grille 1–100 conserve ses illustrations existantes.
-   ============================================================ */
+/* Chapitre 2 : les dix nouveaux symboles, dans l'habillage Fantasy Match original.
+   Aucun changement au logo, aux fonds, à la taille du plateau ou aux boutons. */
 .fm-piece-chapter2:not(.fm-piece-bomb):not(.fm-piece-color){
-  background-image:url('fantasy-match-chapitre2-symboles.svg');
-  background-repeat:no-repeat;
-  background-size:200% 500%;
-  filter:drop-shadow(0 1px 2px #22145966);
+  position:relative;background-image:url('fantasy-match-chapitre2-symboles.svg');
+  background-repeat:no-repeat;background-size:200% 500%;
+  filter:drop-shadow(0 2px 2px #8a17c674) drop-shadow(0 -1px 2px #fff9);
 }
 .fm-piece-chapter2.fm-piece-comet{background-position:0% 0%}
 .fm-piece-chapter2.fm-piece-moon{background-position:100% 0%}
@@ -594,28 +310,45 @@ body[data-world="lumiere"] .fm-scene-accents{
   background-image:url('fantasy-match-boost-bomb.webp');
   background-size:98% 98%;background-position:center;background-repeat:no-repeat;
 }
-body[data-chapter="2"] .fm-cell{
-  background:linear-gradient(155deg,#ffffffed,#c7ddffdf 48%,#cbb6f9e8);
-  border-color:#ffffff9c;
+/* Un éclat discret par monde ; le plateau et ses couleurs ne changent pas. */
+.fm-shell[data-world="cometes"]{--fm-world-glow:#1ddfff}
+.fm-shell[data-world="mirages"]{--fm-world-glow:#ffcf70}
+.fm-shell[data-world="ombres"]{--fm-world-glow:#8be9b8}
+.fm-shell[data-world="tempetes"]{--fm-world-glow:#8ea8ff}
+.fm-shell[data-world="lumiere"]{--fm-world-glow:#ffdf9e}
+.fm-shell[data-world] .fm-board-wrap{
+  box-shadow:0 0 3px 3px #65eaff,0 0 13px var(--fm-world-glow,#04caff),
+    0 0 22px #ef39ec,0 6px 14px #701eba65;
 }
-body[data-chapter="2"] .fm-cell:nth-child(2n){
-  background:linear-gradient(145deg,#ecfaffef,#e4c6f8e9 67%,#b5d2ffdc);
-}
-body[data-chapter="2"] .fm-cell.selected{background:#fff4d3}
 .fm-world-icons,.fm-world-portal-pieces{
-  display:flex;align-items:center;justify-content:center;gap:5px;
-  width:100%;margin:8px auto 11px;min-height:44px;
+  display:flex;justify-content:center;align-items:center;gap:5px;
+  width:100%;margin:7px auto 11px;min-height:43px;
 }
-.fm-world-icons .fm-piece{
-  flex:none;width:37px;height:37px;filter:drop-shadow(0 2px 4px #32206256);
-}
+.fm-world-icons .fm-piece{width:37px;height:37px;flex:none}
 .fm-world-portal-pieces{
-  margin:0 auto 23px;padding:7px 4px;
-  border-radius:18px;
-  background:linear-gradient(100deg,#f5edffba,#ecfaffda,#ffeff9b8);
-  border:1px solid #ffffffeb;
+  padding:8px;border:2px solid #fff;border-radius:19px;
+  background:linear-gradient(110deg,#e5f9ff,#efdbff,#ffe3f4);
 }
-.fm-world-portal-pieces .fm-piece{
-  flex:none;width:min(14%,54px);aspect-ratio:1;
-  filter:drop-shadow(0 2px 5px #35225c68);
+.fm-world-portal-pieces .fm-piece{width:min(14%,54px);aspect-ratio:1;flex:none}
+/* Portail de nouveau monde au même style rose, cyan et violet que les dialogues. */
+.fm-world-portal{
+  position:fixed;z-index:50;inset:0;padding:18px;display:grid;place-items:center;
+  background:#4d236b99;backdrop-filter:blur(8px);
 }
+.fm-world-portal-card{
+  width:min(100%,470px);padding:25px 20px 20px;text-align:center;
+  border:3px solid #fff;border-radius:28px;
+  background:linear-gradient(145deg,#fff,#f9ecff);
+  box-shadow:0 13px 45px #3c0a6b50;
+}
+.fm-world-portal-sparkles{display:block;color:#e936a4;font-size:25px;letter-spacing:7px}
+.fm-world-portal-symbol{display:block;font-size:65px;line-height:1.3;filter:drop-shadow(0 0 9px #fff)}
+.fm-world-portal-chapter{display:block;margin:9px auto;color:#8436b7;font-size:12px;font-weight:1000;letter-spacing:.12em}
+.fm-world-portal-card h2{margin:5px 0 9px;font-size:clamp(25px,7vw,32px);color:#9020d6;font-weight:1000}
+.fm-world-portal-card p{color:#6f4a89;font-weight:800;line-height:1.45}
+.fm-world-portal-card button{
+  width:100%;padding:13px 10px;border:2px solid #fff;border-radius:17px;
+  background:linear-gradient(110deg,#15bef2,#a52be8,#f447a9);
+  color:#fff;font-weight:1000;font-size:16px;
+}
+.fm-world-portal-card button:focus-visible{outline:3px solid #0ac8fd;outline-offset:4px}
