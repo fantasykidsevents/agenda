@@ -1,16 +1,19 @@
 // Service worker : permet l'installation et l'ouverture hors connexion.
 // Stratégie « réseau d'abord » : on prend toujours la version la plus
 // récente, et on retombe sur le cache si pas de réseau.
-const CACHE = "fk-agenda-v160";
+const CACHE = "fk-agenda-v161";
 const FICHIERS = [
   "./", "./index.html", "./dark-mode-fixes.css", "./fiche-onglets.js", "./gestion-bilans.js", "./suivi-fantasy.js", "./devis.html", "./anticipation.html", "./attente.html", "./factures.html", "./factures-pdf.js", "./factures-fond-magique.jpg", "./config.js", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./logo.png", "./nuit-magique.png",
   "./lumi-jour.webp", "./lumio-jour.webp", "./lumi-matin.webp", "./lumi-danse.webp", "./lumi-soir.webp", "./lumi-nuit.webp",
   "./lumi-anniversaire.webp", "./lumi-elsa.webp", "./lumi-mira.webp",
+  "./fantasy-potions.html", "./fantasy-potions.css?v=visuels-20261125-2",
+  "./fantasy-potions-enchanted.css?v=enchante-20261125-1", "./fantasy-potions-enchanted.js?v=enchante-20261125-1",
+  "./fantasy-potions-logo-glossy.webp", "./fantasy-potions-atelier.svg", "./fantasy-potions-victory.svg", "./fantasy-match-worlds-15-sprite.webp",
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FICHIERS)));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FICHIERS.map(path => new Request(path, {cache:"reload"})))));
   self.skipWaiting();
 });
 
@@ -34,11 +37,23 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(
     fetch(e.request, { cache: url.origin === self.location.origin ? "no-store" : "default" })
       .then((rep) => {
-        const copie = rep.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copie));
+        // Ne jamais enregistrer une erreur réseau comme une ressource valide.
+        if (rep.ok || rep.type === "opaque") {
+          const copie = rep.clone();
+          e.waitUntil(caches.open(CACHE).then((c) => c.put(e.request, copie)).catch(() => {}));
+        }
         return rep;
       })
-      .catch(() => caches.match(e.request).then((r) => r || caches.match("./index.html")))
+      .catch(async () => {
+        const cached = await caches.match(e.request);
+        if (cached) return cached;
+        if (url.origin === self.location.origin && /\/fantasy-potions\.html$/.test(url.pathname) && e.request.mode === "navigate") {
+          const page = await caches.match("./fantasy-potions.html");
+          if (page) return page;
+        }
+        if (e.request.mode === "navigate") return (await caches.match("./index.html")) || Response.error();
+        return Response.error();
+      })
   );
 });
 
