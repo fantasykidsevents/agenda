@@ -1203,6 +1203,7 @@
       const cell=e.target.closest('[data-index]');if(cell)tileTap(Number(cell.dataset.index));
     });
     $('gameBoard').addEventListener('pointerdown',e=>{
+      if(replayLayer){touch=null;suppressClickUntil=now()+350;clearMagicReplay();flushRoundPresentation(true);return;}
       const cell=e.target.closest('[data-index]');
       if(cell)touch={i:Number(cell.dataset.index),x:e.clientX,y:e.clientY};
     });
