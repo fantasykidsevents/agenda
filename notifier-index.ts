@@ -1918,38 +1918,52 @@ const MAILING_FILTRES = ["tous", "confirmes", "acomptes_manquants"];
 const MAILING_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAILING_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-async function mailingDestinataires(evenementId: string, filtre: string) {
+function acompteRappelMontant(r:any, prix:number) {
+  const places=Math.max(0,Number(r.places)||0), recu=Math.max(0,Number(r.acompte_recu)||0);
+  const total=Math.max(0,Math.round((prix*places-reductionResa(r,prix,places))*100)/100), P=places?total/places:0;
+  const ann=Array.isArray(r.annulations)?r.annulations.reduce((s,a)=>s+Math.max(0,Number(a?.n)||0),0):0;
+  const actives=Math.max(0,places-ann);
+  const attendu=Math.round(actives*P/2*100)/100;
+  const restant=Math.max(0,Math.round((actives*P-recu-Math.max(0,Number(r.avoir_utilise)||0)-Math.max(0,Number(r.paye_jour)||0))*100)/100);
+  return Math.max(0,Math.min(restant,Math.round((attendu-recu)*100)/100));
+}
+async function mailingDestinataires(evenementId: string, filtre: string, rappel=false, reservationId="") {
   const { data: ev, error: erreurEv } = await sb.from("evenements")
-    .select("id,titre,date,type_evenement,resa_prix").eq("id", evenementId).maybeSingle();
+    .select("id,titre,date,type_evenement,resa_prix,theme,theme_app,statut").eq("id", evenementId).maybeSingle();
   if (erreurEv) throw erreurEv;
   if (!ev || ev.type_evenement !== "evenement")
     throw new Error("Cet événement n'a pas de réservations gérées dans l'agenda.");
+  if(rappel&&(ev.statut==="annule"||ev.statut==="termine"||ev.date<aujourdhuiBelgique()||ev.theme_app==="nuit"||/nuit\s*magique/i.test(`${ev.titre||""} ${ev.theme||""}`)||!(Number(ev.resa_prix)>0)))throw new Error("Rappel indisponible pour cet événement : vérifie sa date, son statut et son prix.");
   // Une limite haute détecte un jeu de données trop grand au lieu d'omettre
   // silencieusement des familles (pagination nécessaire au-delà de 499).
   const { data: lignes, error: erreurResa } = await sb.from("reservations")
-    .select("id,nom,email,places,acompte_recu,confirmee_le,annulations,code_promo_id,promo_type,promo_montant")
+    .select("id,nom,email,places,acompte_recu,confirmee_le,annulations,code_promo_id,promo_type,promo_montant,avoir_utilise,paye_jour")
     .eq("evenement_id", evenementId).order("id").limit(500);
   if (erreurResa) throw erreurResa;
   if ((lignes || []).length >= 500) throw new Error("Plus de 499 réservations : contacte l'administrateur avant l'envoi.");
   let sansEmail = 0, doublons = 0;
-  const parEmail = new Map<string, { id: string; nom: string; email: string }>();
+  const parEmail = new Map<string, { id: string; nom: string; email: string; rappels?: Array<{id:string;nom:string;montant:number;comm:string}> }>();
   for (const r of lignes || []) {
     const places = Math.max(0, Number(r.places) || 0);
     const annulees = Array.isArray(r.annulations) ? r.annulations.reduce((n, a) => n + Math.max(0, Number(a?.n) || 0), 0) : 0;
     const actives = Math.max(0, places - annulees);
-    if (!actives || (filtre !== "tous" && !r.confirmee_le)) continue;
-    if (filtre === "acomptes_manquants") {
+    if (!actives || (filtre !== "tous" && !r.confirmee_le) || (reservationId&&r.id!==reservationId)) continue;
+    const manquant=rappel?acompteRappelMontant(r,Math.max(0,Number(ev.resa_prix)||0)):0;
+    if(rappel&&manquant<=0)continue;
+    if (filtre === "acomptes_manquants" && !rappel) {
       const prix = Math.max(0, Number(ev.resa_prix) || 0);
       if (!prix || Number(r.acompte_recu || 0) >= (actives * (prix - (places ? reductionResa(r,prix,places)/places : 0))) / 2 - 0.005) continue;
     }
     const email = String(r.email || "").trim().toLowerCase();
     if (!MAILING_EMAIL.test(email) || email.length > 254) { sansEmail++; continue; }
-    if (parEmail.has(email)) { doublons++; continue; }
-    parEmail.set(email, { id: String(r.id), nom: String(r.nom || "Famille"), email });
+    const detail={id:String(r.id),nom:String(r.nom||"Famille"),montant:manquant,comm:`${String(r.nom||"").trim()} ${ev.titre||""}`.trim().slice(0,60)};
+    const prior=parEmail.get(email);
+    if (prior) { doublons++; if(rappel)prior.rappels!.push(detail); continue; }
+    parEmail.set(email, { id: String(r.id), nom: String(r.nom || "Famille"), email,...(rappel?{rappels:[detail]}:{}) });
   }
   const destinataires = [...parEmail.values()].sort((a, b) => a.email.localeCompare(b.email));
   if (destinataires.length > 200) throw new Error("Plus de 200 destinataires : l'envoi doit être réparti en plusieurs lots.");
-  const empreinte = new TextEncoder().encode(JSON.stringify([evenementId, filtre, destinataires.map(r => [r.id, r.email])]));
+  const empreinte = new TextEncoder().encode(JSON.stringify([evenementId, filtre, rappel,reservationId,destinataires.map(r => [r.id, r.email,r.rappels||null])]));
   const h = await crypto.subtle.digest("SHA-256", empreinte);
   const cle = Array.from(new Uint8Array(h), b => b.toString(16).padStart(2, "0")).join("");
   return { ev, destinataires, sansEmail, doublons, cle };
@@ -1978,10 +1992,12 @@ async function mailingRequete(req: Request, p: any) {
   }
   const filtre = String(p.filtre || "");
   if (!MAILING_FILTRES.includes(filtre)) return json({ ok: false, erreur: "Sélection de destinataires invalide" }, 400);
-  const { ev, destinataires, sansEmail, doublons, cle } = await mailingDestinataires(evenementId, filtre);
+  const rappel=p.rappelAcompte===true, reservationId=rappel?String(p.reservationId||""):"";
+  if(rappel&&(filtre!=="acomptes_manquants"||(reservationId&&!MAILING_UUID.test(reservationId))))return json({ok:false,erreur:"Rappel invalide"},400);
+  const { ev, destinataires, sansEmail, doublons, cle } = await mailingDestinataires(evenementId, filtre,rappel,reservationId);
   if (p.type === "MAILING_EVENEMENT_PREVIEW")
     return json({ ok: true, total: destinataires.length, sansEmail, doublons, cle,
-      destinataires: destinataires.map(r => ({ nom: r.nom, email: r.email })) });
+      destinataires: destinataires.map(r => ({ nom: r.nom, email: r.email, ...(rappel?{montant:r.rappels!.reduce((sum,x)=>sum+x.montant,0),reservations:r.rappels}: {}) })) });
 
   if (p.type !== "MAILING_EVENEMENT_SEND") return json({ ok: false, erreur: "Action inconnue" }, 400);
   const campagneId = String(p.campagneId || "").trim();
@@ -1992,6 +2008,7 @@ async function mailingRequete(req: Request, p: any) {
     return json({ ok: false, erreur: "Objet ou message invalide" }, 400);
   if (!destinataires.length) return json({ ok: false, erreur: "Aucun destinataire" }, 400);
   if (!getMailer()) return json({ ok: false, erreur: "Gmail professionnel non configuré : aucun mail envoyé." }, 503);
+  if(rappel&&!env("IBAN"))return json({ok:false,erreur:"IBAN non configuré : aucun rappel envoyé."},503);
 
   // Insert atomique avant tout SMTP : deux requêtes avec le même identifiant
   // ne peuvent jamais lancer deux fois la campagne.
@@ -2013,6 +2030,16 @@ async function mailingRequete(req: Request, p: any) {
   const echecs: Array<{ email: string; raison: string }> = [];
   for (const r of destinataires) {
     try {
+      if(rappel){
+        // Re-read immediately before each email: never remind a payment just recorded.
+        const frais=await mailingDestinataires(evenementId,filtre,true,reservationId);
+        const actuel=frais.destinataires.find(x=>x.email===r.email);
+        if(!actuel||JSON.stringify(actuel.rappels)!==JSON.stringify(r.rappels))throw new Error("Réservation ou acompte modifié depuis l’aperçu : rappel non envoyé.");
+        const details=r.rappels||[];
+        const html=`<div style="font-family:Arial,sans-serif;max-width:540px;margin:auto;color:#251b3e">${BANDE}<h2>✨ Petit rappel d'acompte · ${esc(ev.titre)}</h2>${bonjour(r.nom)}<p style="font-size:15px;line-height:1.7">${esc(message).replace(/\n/g,"<br>")}</p>${details.map(x=>blocVirement(x.montant,x.comm,"Acompte restant à verser"+(details.length>1?" · "+esc(x.nom):""))).join("")}<p>Si votre virement a déjà été effectué, merci de ne pas tenir compte de ce rappel. 💜</p>${SIGNATURE}</div>`;
+        const texte=`Bonjour,\n\n${message}\n\n${details.map(x=>texteVirement(x.montant,x.comm,"Acompte restant à verser")).join("\n\n")}\n\nSi votre virement a déjà été effectué, merci de ne pas tenir compte de ce rappel.\nL'équipe Fantasy Kids Events`;
+        await envoyerEmail(r.email,sujet,html,texte,[],{canal:"client"});
+      }else{
       const html = `<div style="font-family:Arial,sans-serif;max-width:540px;margin:auto;color:#251b3e">${BANDE}
         <h2 style="margin:20px 0 8px">💜 ${esc(ev.titre || "Fantasy Kids Events")}</h2>
         <p style="font-size:15px;line-height:1.7">${esc(message).replace(/\n/g, "<br>")}</p>
@@ -2020,6 +2047,7 @@ async function mailingRequete(req: Request, p: any) {
         ${SIGNATURE}</div>`;
       const texte = `${message}\n\nCe message concerne votre réservation à l'événement ${ev.titre || "Fantasy Kids Events"}.\nL'équipe Fantasy Kids Events`;
       await envoyerEmail(r.email, sujet, html, texte, [], { canal: "client" });
+      }
       envoyes++;
     } catch (err) {
       erreurs++;
