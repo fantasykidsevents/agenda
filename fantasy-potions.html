@@ -3,20 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#a52edc">
+<meta name="theme-color" content="#210b48">
 <meta name="description" content="Fantasy Potions : le jeu de réflexion magique de l'équipe Fantasy Kids Events.">
 <title>Fantasy Potions · Fantasy Kids Events</title>
 <link rel="stylesheet" href="fantasy-potions.css?v=visuels-20261125-2">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@700;800&family=Alegreya+Sans:wght@700;800&display=swap">
+<link rel="stylesheet" href="fantasy-potions-enchanted.css?v=enchante-20261125-1">
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="fantasy-potions.js?v=visuels-20261125-2" defer></script>
+<script src="fantasy-potions-enchanted.js?v=enchante-20261125-1" defer></script>
 </head>
 <body>
 <div class="ambient" aria-hidden="true"></div>
-<main class="shell">
+<section id="homeScreen" class="potion-home" aria-label="Accueil Fantasy Potions">
+  <div class="home-top"><a href="index.html?vue=mine" class="home-round" aria-label="Retour à Fantasy App">←</a><img src="logo.png" alt="Fantasy Kids Events"><button id="homeHelp" class="home-round" type="button" aria-label="Règles du jeu">?</button></div>
+  <img class="home-logo" src="fantasy-potions-logo-glossy.webp" alt="Fantasy Potions">
+  <div class="home-lumi-scene"><img src="lumi-jour.webp" alt="Lumi, ta guide magique"></div>
+  <div class="home-actions">
+    <button class="home-action primary" type="button" id="homePlay"><span aria-hidden="true">▶</span><div>Jouer<small>Continuer au niveau <b id="homeLevel">1</b></small></div></button>
+    <button class="home-action" type="button" id="homeMap"><span aria-hidden="true">📖</span> Les mondes</button>
+    <button class="home-action" type="button" id="homeRanking"><span aria-hidden="true">🏆</span> Classement</button>
+  </div>
+  <div class="home-points">★ <b id="homeScore">0</b> points</div>
+  <div class="home-world" id="homeWorld">Le Jardin des Potions</div>
+  <div class="home-footer"><a href="index.html?vue=mine" class="exit-text">← Retour à Fantasy App</a></div>
+</section>
+<main class="shell hidden" id="gameScreen">
   <header class="topbar">
     <a class="back" href="index.html?vue=mine" aria-label="Retour à Fantasy App">←</a>
     <a href="index.html?vue=mine" class="brand" aria-label="Retour à l'agenda"><img src="logo.png" alt="Fantasy Kids Events"></a>
+    <button id="goHome" class="help" type="button" aria-label="Accueil du jeu">⌂</button>
     <button id="helpBtn" class="help" type="button" aria-label="Règles du jeu">?</button>
   </header>
   <div class="game-heading">
@@ -38,16 +54,18 @@
     <div class="status-divider"></div>
     <div class="status-cell"><small>COULEURS</small><strong id="goalValue">3</strong></div>
     <div class="status-divider"></div>
-    <div class="status-cell"><small>MONDE</small><strong id="chapterValue">1 / 5</strong></div>
+    <div class="status-cell brew-status"><div class="brew-stars" aria-hidden="true">★ ★ ★</div><div class="brew-track"><div id="brewProgress" class="brew-fill"></div></div><small class="brew-text" id="brewProgressText">0 / 3 fioles</small></div>
+    <span id="chapterValue" class="hidden">1 / 5</span>
   </div>
   <section class="game-area" aria-label="Jeu des potions">
     <div class="scene-twink" aria-hidden="true">✧ <span>✦</span> ✧</div>
     <div id="bottles" class="bottles" role="group" aria-label="Fioles à trier"></div>
     <div id="message" class="game-message" role="status" aria-live="polite">Choisis une fiole, puis une autre pour verser ✨</div>
   </section>
+  <div class="lumi-guide"><button type="button" id="lumiHint" aria-label="Demander un indice à Lumi"><img src="lumi-jour.webp" alt="Lumi"></button><p>Un mélange te résiste ? Demande-moi un indice !</p></div>
   <div class="actions">
     <button id="undoBtn" type="button" class="action"><span aria-hidden="true">↶</span> Annuler</button>
-    <button id="hintBtn" type="button" class="action"><span aria-hidden="true">✨</span> Indice</button>
+    <button id="hintBtn" type="button" class="action"><span aria-hidden="true">✦</span> Indice</button>
     <button id="resetBtn" type="button" class="action"><span aria-hidden="true">⟲</span> Recommencer</button>
   </div>
   <div class="tip">🧪 Regroupe les quatre gouttes identiques dans une fiole pour réussir.</div>
