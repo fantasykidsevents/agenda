@@ -560,7 +560,7 @@
     $('goalIcon').classList.toggle('duo',current.mode==='duo'||current.mode==='combo');
     $('goalIcon').innerHTML=current.mode==='duo' ? piece(current.goal)+piece(current.goal2)
       :current.mode==='combo' ? piece(poolForLevel(current.number)[0]+'|lineH')+piece(poolForLevel(current.number)[1]+'|bomb')
-      :current.mode==='special' ? piece('rainbow|color') : piece(current.mode==='ice'?(current.number>100?'frost':'snow'):current.mode==='seal'?(current.number>100?'prism':'crystal'):current.goal);
+      :current.mode==='special' ? piece('rainbow|color') : piece(current.mode==='ice'?'snow':current.mode==='seal'?'crystal':current.goal);
     $('goalName').textContent=current.mode==='duo'?'symboles':current.mode==='ice'?'cases glacées'
       :current.mode==='score'?'points':current.mode==='special'?'bonus spéciaux'
       :current.mode==='combo'?'fusions de bonus':current.mode==='seal'?'sceaux à briser':LABELS[current.goal].toLowerCase();
