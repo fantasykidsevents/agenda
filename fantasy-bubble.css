@@ -13,3 +13,76 @@
 .modal{position:fixed;inset:0;background:#100326dd;backdrop-filter:blur(5px);z-index:10;display:grid;place-items:center;padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom))}.dialog{position:relative;width:min(100%,455px);max-height:90svh;overflow:auto;border-radius:23px;padding:15px 12px 18px;background:radial-gradient(ellipse at 50% 0,#7834b1,#321166 55%,#1d093c) padding-box,var(--gold) border-box;overscroll-behavior:contain;text-align:center}.dialog h2{font:800 29px/1.1 var(--fairy);margin:8px 25px 15px;text-shadow:0 2px 4px #351050}.close{float:right;position:sticky;top:0;width:32px;height:32px;font-size:23px;z-index:3}.dialog-actions{display:flex;gap:7px;margin-top:14px}.dialog-actions button{flex:1;font-size:17px;min-height:42px}.dialog-actions .primary{background:linear-gradient(#88e14a,#38a32c,#1e7529) padding-box,var(--gold) border-box}.dialog p{font-weight:700;font-size:14px;line-height:1.4}.world-list{display:grid;gap:9px}.world-card{display:grid;grid-template-columns:38% 1fr;gap:0;min-height:81px;width:100%;text-align:left;border-radius:15px;padding:0;overflow:hidden}.world-art{min-height:81px;background-image:url('fantasy-match-worlds-15-sprite.webp');background-size:1500% auto;background-position:var(--art) center;border-right:1px solid #ffd887}.world-card>span:last-child{padding:8px;align-self:center}.world-card b{display:block;font:800 19px/1.05 var(--fairy)}.world-card small{display:block;color:#ffe7aa;font-weight:800;margin-top:5px}.level-map{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;padding:16px 12px;border:2px solid #eabe72;border-radius:17px;background-image:linear-gradient(#19094090,#1a0739c5),url('fantasy-match-worlds-15-sprite.webp');background-size:100% 100%,1500% auto;background-position:center,var(--art) center}.level-node{aspect-ratio:1;border-radius:50%;font:800 19px var(--fairy);padding:0}.level-node.done{background:linear-gradient(#fff3a7,#e2a32d,#b56b22) padding-box,var(--gold) border-box;color:#4c245c;text-shadow:none}.level-node.current{background:var(--pink) padding-box,var(--gold) border-box;box-shadow:0 0 10px #ff8fd9}.level-node:disabled{opacity:1;background:#302453;padding:0;color:#cfbee8;border-color:#9e865a}.rank{display:grid;grid-template-columns:32px 1fr auto;gap:8px;align-items:center;border:1px solid #dcba75;padding:9px;border-radius:12px;background:#48217d;margin:5px 0;text-align:left}.rank b{overflow-wrap:anywhere}.rank small{font-size:11px;color:#ffe6b4}.gift-lumi,.victory-lumi{display:block;width:160px;height:155px;object-fit:contain;margin:0 auto;filter:drop-shadow(0 0 8px #e8a6ff)}.stars{font-size:49px;color:#ffdc57;letter-spacing:6px;text-shadow:0 2px #a36423,0 0 8px #ffce62}.gift-buttons{display:grid;gap:8px}.gift-buttons .jewel{font-size:17px;min-height:39px}.gift-buttons button:disabled{opacity:1;background:#3b2862;border-color:#90794f;color:#dacbed}
 @media(max-width:390px){.shell{padding-left:7px;padding-right:7px}.topbar{height:49px}.home-buttons{gap:8px}.jewel{font-size:22px;min-height:44px}.jewel.primary{min-height:59px;font-size:27px}.game-logo{height:145px}.hero-art{height:160px}.lumi-line img{width:54px;height:54px}.boosts b{font-size:9px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Royal edition — separate ornament assets, dimensional jewels and visible illustrated scenery. */
+:root{--gold:linear-gradient(145deg,#fff9c6,#ffdf65 18%,#b0651d 35%,#fff4aa 54%,#eab548 73%,#93501e 90%,#ffde79);--violet:linear-gradient(#bd53e9 0%,#8d25c3 18%,#51108c 53%,#2a075e 90%,#7014a0);--pink:linear-gradient(#ffabdf,#f949a6 25%,#d5179f 62%,#8c075d);--green:linear-gradient(#b3f46d,#49cb2b 19%,#15902a 55%,#075e2b 89%,#41ab24);--scene:0%}
+body{background:#11042c}
+.shell{padding:calc(8px + env(safe-area-inset-top)) 10px calc(20px + env(safe-area-inset-bottom));background-color:#160739}
+.shell::before{background-image:linear-gradient(180deg,#17063425,#18063800 30%,#1c074945 68%,#11032cce),url('fantasy-match-worlds-15-sprite.webp');background-size:100% 100%,1500% auto;background-position:center,28.571429% center;opacity:1}
+body.playing .shell::before{background-image:linear-gradient(180deg,#16052c90,#18063c38 45%,#13052dd9),url('fantasy-match-worlds-15-sprite.webp');background-size:100% 100%,1500% auto;background-position:center,var(--scene) center}
+.topbar{height:50px;position:relative;z-index:2}
+.brand{width:117px;height:45px;filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 2px 4px #230745)}
+.round,.jewel,.mini-jewel,.boosts button,.hud,.ribbon,.world-card,.level-node,.dialog{border-width:3px;box-shadow:inset 0 2px 3px #ffffff99,inset 0 -4px 5px #31023c77,0 3px 0 #925016,0 5px 11px #160329b0,0 0 8px #eab14830}
+.round{background:radial-gradient(ellipse at 35% 12%,#d975ee,#7c22b1 48%,#35085e) padding-box,var(--gold) border-box}
+.home{gap:6px}
+.game-logo{height:clamp(145px,46vw,199px);width:min(100%,420px);filter:drop-shadow(0 3px 5px #160228) drop-shadow(0 0 12px #e845e8);object-fit:contain;margin:0 auto}
+.hero-art{height:clamp(175px,54vw,238px);isolation:isolate}
+.hero-art::after{content:"";position:absolute;inset:8% 13%;z-index:-1;background:radial-gradient(ellipse,#ffc35d6b,#e747fa42 40%,transparent 70%);pointer-events:none}
+.hero-art img{width:min(76%,260px);filter:drop-shadow(0 0 8px #ffd482) drop-shadow(0 4px 6px #210345)}
+.orbit{width:89%;height:45%;border-color:#ffed9e;box-shadow:0 0 8px #fff4b2,0 0 18px #ff9d45,0 0 25px #df2fff;transform:rotate(-15deg)}
+.floating-orb{width:35px;height:35px;box-shadow:0 0 10px #fff3de,0 0 20px #e550ff}
+.three{width:27px;height:27px}.one{top:8%;left:9%}.two{top:34%;right:8%}
+.world-caption{font:800 15px var(--fairy);text-shadow:0 2px 3px #17032f,0 0 8px #290846;background:#230749a8;border:1px solid #e7be6c;border-radius:20px;padding:4px 12px}
+.home-buttons{width:min(96%,355px);grid-template-columns:1fr 1fr;gap:11px;margin-top:7px}
+.home-buttons .jewel{position:relative;min-height:57px;border-radius:20px;font:800 18px/1.12 var(--fairy);padding:8px 7px}
+.home-buttons .jewel:first-child,.home-buttons .jewel:last-child{grid-column:1/-1}
+.home-buttons .jewel::before,.ribbon::before,.world-card::after,.dialog[data-kind="win"]::before{content:"";position:absolute;inset:-4px;pointer-events:none;background:url('fantasy-bubble-ornaments.svg') center/100% 100% no-repeat;z-index:1}
+.home-buttons .jewel.primary{min-height:70px;font:800 34px/.98 var(--fairy);background:var(--green) padding-box,var(--gold) border-box;text-shadow:0 2px 2px #16521d;box-shadow:inset 0 3px 5px #fff8,0 4px 0 #925019,0 0 13px #ffb54a99}
+.home-buttons .jewel:last-child{min-height:47px}
+.home-buttons .jewel small{font-size:12px;margin-top:4px}
+.home-stats span{background:linear-gradient(#581488,#23074e);border:2px solid #e7b95e;font:800 17px var(--fairy);padding:6px 13px;text-shadow:0 1px 2px #260341}
+.tagline,.sync{color:#f5e3ff;text-shadow:0 2px 3px #100227}
+body.playing .topbar{height:44px}
+body.playing .topbar .brand{height:40px;width:107px}
+.game-heading{margin-top:3px;gap:8px}
+.ribbon{position:relative;border-radius:24px;background:radial-gradient(ellipse at top,#a63ce2,#59118b 60%,#25094d) padding-box,var(--gold) border-box}
+.ribbon span{color:#ffe09b;font-size:9px}.ribbon h1{font-size:26px;line-height:1.04}
+.hud{background:linear-gradient(#411579,#1b083c) padding-box,var(--gold) border-box;padding:7px 3px;margin:0 0 10px;border-radius:17px}
+.hud small{font-size:9px;color:#ffdf8f}.hud b{color:#fff6d7;font-size:clamp(15px,4.1vw,21px)}
+.board-frame{position:relative;isolation:isolate;overflow:visible;border:3px solid transparent;padding:3px;background:linear-gradient(#18062c85,#17052c85) padding-box,var(--gold) border-box;box-shadow:0 0 0 1px #ffe298,0 0 12px #f99d4f77,0 4px 0 #8f501d}
+.board-frame::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:15px;background-image:linear-gradient(#18032e60,#16032f26 56%,#19052b55),url('fantasy-match-worlds-15-sprite.webp');background-size:100% 100%,1500% auto;background-position:center,var(--scene) center}
+.board-frame::after{content:"";position:absolute;inset:-6px -3px auto;height:51px;background:url('fantasy-bubble-ornaments.svg') center top/100% 145% no-repeat;pointer-events:none;z-index:3}
+.board-frame canvas{position:relative;z-index:1;border-radius:12px;max-height:none}
+.board-bottom{position:relative;z-index:2;padding:3px 4px 5px}
+.mini-jewel{font:800 15px var(--fairy);border-radius:22px;min-height:37px}
+.mini-jewel.fire{background:var(--green) padding-box,var(--gold) border-box;text-shadow:0 2px 2px #145b20}
+.lumi-line{margin-top:9px}.lumi-line img{width:73px;height:73px;filter:drop-shadow(0 0 6px #eec5ff)}
+.lumi-line div{font-size:13px;border:2px solid #e5bb69;box-shadow:0 2px 0 #955322;background:linear-gradient(#441779e8,#1a063ce8)}
+.boosts{gap:7px;align-items:start}
+.boosts button{background:transparent;border:0;box-shadow:none;min-height:77px;padding:3px 0;gap:4px;position:relative}
+.boosts .power-icon{width:clamp(42px,13vw,54px);height:clamp(42px,13vw,54px);border:3px solid transparent;background:radial-gradient(circle at 30% 15%,#fff7b3,#d65aef 24%,#6f12b4 65%,#2c074e) padding-box,var(--gold) border-box;box-shadow:inset 0 2px 3px #fff8,0 3px 0 #a45d1f,0 0 10px #ce66ef;position:relative;font-size:28px}
+.boosts .power-icon.rainbow{background:conic-gradient(#ff71be,#ffe94e,#47eb97,#18cfff,#8a48fb,#ff71be) padding-box,var(--gold) border-box}
+.boosts .power-icon.bomb{background:radial-gradient(circle at 30% 15%,#f5dbff,#9557cf 24%,#27144d 62%,#10082d) padding-box,var(--gold) border-box}
+.boosts .power-icon.lightning{background:radial-gradient(circle at 30% 15%,#f5ffff,#45b9ff 24%,#173db4 62%,#101b57) padding-box,var(--gold) border-box}
+.boosts .power-icon.extra{background:radial-gradient(circle at 30% 15%,#fffbbe,#f6c64c 24%,#db7020 62%,#824319) padding-box,var(--gold) border-box;font-size:23px}
+.boosts .power-icon::after{content:"";position:absolute;inset:5px 9px auto 9px;height:10px;border-radius:50%;background:linear-gradient(#fff8,transparent);pointer-events:none}
+.boosts b{font:800 12px var(--fairy);color:#fff2cb;text-shadow:0 2px 3px #140329}
+.boosts small{top:40px;right:4px;background:#ffe49a;color:#4c154c;font:800 12px var(--fairy);border:1px solid #bd7d2c;text-shadow:none}
+.boosts button.active{outline:none;background:#da4fda35;box-shadow:0 0 12px #f8d777}
+.dialog{border-width:3px;background:radial-gradient(ellipse at top,#7d26a6,#29095c 60%,#180532) padding-box,var(--gold) border-box}
+.dialog h2{font:800 30px/1.08 var(--fairy);color:#ffecad;text-shadow:0 2px 3px #471153}
+.world-card{position:relative;border-radius:18px;min-height:101px;grid-template-columns:45% 1fr;background:linear-gradient(145deg,#4c1482,#1b073d) padding-box,var(--gold) border-box}
+.world-card::after{inset:-1px;opacity:.75}
+.world-art{min-height:101px;background-size:1500% auto;background-position:var(--art) 43%}
+.world-card b{font-size:21px;color:#fff4c9;text-shadow:0 2px 3px #1b0839}.world-card small{font-size:12px}
+.world-card[aria-current="true"]{box-shadow:0 0 12px #fda947,0 3px 0 #a76622}
+.dialog[data-kind="win"]{background:linear-gradient(#1b073c77,#23064ac9),url('fantasy-match-worlds-15-sprite.webp') 28.571429% center/1500% auto no-repeat,#2a0a5b;overflow:hidden;max-height:90svh;overflow-y:auto}
+.dialog[data-kind="win"]::before{height:110px;inset:1px;opacity:.8}
+.dialog[data-kind="win"] h2{position:relative;background:var(--violet) padding-box,var(--gold) border-box;border:3px solid transparent;border-radius:26px;padding:10px 7px;margin:22px 5px 12px;box-shadow:0 3px 0 #99571e}
+.victory-scene{position:relative;height:220px;display:grid;place-items:center}
+.victory-scene::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse,#ffcd7088,#ef43f84d 44%,transparent 70%);pointer-events:none}
+.victory-scene .victory-lumi{position:absolute;width:175px;height:170px;left:1px;top:0;z-index:1;filter:drop-shadow(0 0 8px #ffd99a)}
+.victory-chest{position:absolute;width:69%;height:145px;object-fit:contain;right:0;bottom:0;z-index:2;filter:drop-shadow(0 0 9px #f6a4f8)}
+.stars{font:900 clamp(44px,13vw,59px)/1.2 Georgia,serif;letter-spacing:2px;color:#ffde58;text-shadow:0 2px 0 #a35b13,0 0 5px #fff6a7,0 0 13px #ffb329}
+.dialog[data-kind="win"] .dialog-actions .primary{background:var(--green) padding-box,var(--gold) border-box;font-size:22px}
+@media(max-width:390px){.shell{padding-left:7px;padding-right:7px}.game-logo{height:155px}.hero-art{height:179px}.home-buttons .jewel{min-height:51px;font-size:17px}.home-buttons .jewel.primary{min-height:63px;font-size:30px}.boosts b{font-size:11px}.boosts small{top:34px}.world-card b{font-size:19px}}
