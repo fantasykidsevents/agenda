@@ -1003,6 +1003,13 @@
     $('fmHomeScreen').classList.add('hidden');
     $('fmMapScreen').classList.remove('hidden');
     renderAdventureMap(opts.fromLevel??null);
+    // Commencer au niveau courant, sans imposer au joueur de chercher Lumi.
+    requestAnimationFrame(()=>{
+      const screen=$('fmMapScreen'),node=$('fmMapNodes').querySelector('.current')||$('fmMapNodes').querySelector('.open')||$('fmMapNodes').querySelector('button');
+      if(!node||screen.classList.contains('hidden'))return;
+      const top=node.getBoundingClientRect().top-screen.getBoundingClientRect().top+screen.scrollTop;
+      screen.scrollTop=Math.max(0,top-screen.clientHeight*.56);
+    });
   }
   async function claimLumiGift(n){
     if(claimingGift)return;
