@@ -8,10 +8,10 @@
   <title>Fantasy Match · Fantasy Kids Events</title>
   <link rel="stylesheet" href="fantasy-match.css">
   <link rel="stylesheet" href="fantasy-match-premium.css?v=fix-ios-gel-classement-20261125-3">
-  <link rel="stylesheet" href="fantasy-match-adventure.css?v=logo-boutons-20261125-5">
+  <link rel="stylesheet" href="fantasy-match-adventure.css?v=royaumes-lumi-20261125-7">
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="fantasy-match.js?v=mes-jeux-deblocage-20261125-6"></script>
+  <script defer src="fantasy-match.js?v=royaumes-lumi-20261125-7"></script>
 </head>
 <body>
   <div class="fm-bg-stars" aria-hidden="true"></div>
@@ -91,7 +91,9 @@
       </div>
       <button id="fmHomePlay" type="button" class="fm-hero-button">▶ Jouer <small>Continuer au niveau <span id="fmHomeLevel">1</span></small></button>
       <div class="fm-home-actions">
-        <button id="fmHomeMap" type="button">🗺️ <span>Carte des mondes</span></button>
+        <button id="fmHomeLevels" type="button">📖 <span>Niveaux</span></button>
+        <button id="fmHomeMap" type="button">🏰 <span>Les mondes</span></button>
+        <button id="fmHomeRewards" type="button">🎁 <span>Cadeaux de Lumi</span></button>
         <button id="fmHomeRanking" type="button">🏆 <span>Classement</span></button>
       </div>
       <div class="fm-home-counters">
@@ -114,8 +116,8 @@
         <button id="fmMapNext" type="button" aria-label="Monde suivant">›</button>
       </div>
       <div id="fmMapTrack" class="fm-map-track">
-        <svg id="fmMapRoute" class="fm-map-route" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline id="fmMapRouteLine" points=""/></svg>
-        <div id="fmMapNodes" class="fm-map-nodes" role="group" aria-label="Chemin des niveaux"></div>
+        <svg id="fmMapRoute" class="fm-map-route" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path id="fmMapRouteLine" d=""/></svg>
+        <div class="fm-map-destination" aria-hidden="true">✦</div><div id="fmMapNodes" class="fm-map-nodes" role="group" aria-label="Chemin des niveaux"></div>
         <img id="fmMapLumi" class="fm-map-lumi" src="lumi-jour.webp" alt="Lumi avance sur la carte">
       </div>
       <div class="fm-map-lumi-talk"><img src="lumi-jour.webp" alt=""><p id="fmMapLumiSpeech">Je t'accompagne sur le chemin magique !</p></div>
