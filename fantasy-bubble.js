@@ -81,10 +81,53 @@ function tickLives(){if(state.lives<5){if(!state.nextLifeAt)state.nextLifeAt=Dat
 function loseLife(){if(state.lives===5||!state.nextLifeAt)state.nextLifeAt=Date.now()+LIFE_MS;state.lives=Math.max(0,state.lives-1);save(false)}
 function update(){const r=state.round;$("homeWorld").textContent=WORLDS[world(state.level)];$("continueLevel").textContent="Niveau "+state.level;$("homeScore").textContent="★ "+fmt(total())+" pts";$("homeLives").textContent="♥ "+state.lives+"/5";$("lives").textContent=state.lives+" ♥";$("levelTitle").textContent="Niveau "+state.level;document.body.style.setProperty("--scene",world(state.level)/14*100+"%");if(r){$("goal").textContent=countGoal(r)+(r.rescue?" Lumi":" bulles");$("shots").textContent=r.shots;$("score").textContent=fmt(r.score)}for(const name of Object.keys(POWERS)){$("count-"+name).textContent=state.boosts[name]||0;const b=document.querySelector('[data-power="'+name+'"]');b.classList.toggle("active",r?.power===name);b.disabled=busy||!r||((state.boosts[name]||0)<1&&r.power!==name)}$("fire").disabled=busy||!r||r.shots<1;$("swap").disabled=busy||!r||!!r.power;}
 function say(msg,variant="merlin"){$("message").textContent=msg;$("guide").src=variant==="gift"?"lumi-soir.webp":variant==="win"?"lumi-danse.webp":variant==="think"?"lumi-anniversaire.webp":"lumi-costumes/merlin.webp"}
-function drawBubble(x,y,b,r=R){const p=b.color<0?["#d3bbff","#746f9d","#2e244a","✧"]:PALETTE[b.color]||PALETTE[0];ctx.save();ctx.shadowColor=p[1];ctx.shadowBlur=6;const g=ctx.createRadialGradient(x-r*.37,y-r*.45,r*.04,x,y,r);g.addColorStop(0,"#fff9f6");g.addColorStop(.19,p[0]);g.addColorStop(.52,p[1]);g.addColorStop(.89,p[2]);g.addColorStop(1,p[0]);ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.lineWidth=1;ctx.strokeStyle="#fff8dfaa";ctx.stroke();ctx.globalAlpha=.85;ctx.fillStyle="#fff";ctx.beginPath();ctx.ellipse(x-r*.31,y-r*.53,r*.31,r*.13,-.55,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle="#fff8df";ctx.lineWidth=.9;ctx.beginPath();ctx.arc(x,y,r-2,.3,1.15);ctx.stroke();ctx.strokeStyle=p[0];ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(x,y,r-2,Math.PI*.92,Math.PI*1.48);ctx.stroke();ctx.font="bold "+Math.round(r*.72)+"px Georgia";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff9e2";ctx.shadowColor=p[2];ctx.shadowBlur=2;ctx.fillText(b.rescue?"★":p[3],x,y+1);ctx.shadowBlur=0;
-if(b.armor){ctx.strokeStyle=b.armor===2?"#ffe49a":"#b6f8ff";ctx.lineWidth=2.4;ctx.beginPath();ctx.arc(x,y,r-1,0,Math.PI*2);ctx.stroke();if(b.armor===1){ctx.strokeStyle="#e6ffffd9";ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(x-r*.8,y-r*.2);ctx.lineTo(x-r*.2,y+r*.1);ctx.lineTo(x+r*.05,y-r*.55);ctx.lineTo(x+r*.6,y-r*.15);ctx.stroke()}else{ctx.strokeStyle="#ffdc87";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x-r*.8,y-r*.6);ctx.lineTo(x+r*.8,y+r*.6);ctx.moveTo(x+r*.8,y-r*.6);ctx.lineTo(x-r*.8,y+r*.6);ctx.stroke()}}
-if(b.rescue){ctx.strokeStyle="#fff8a8";ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,r+1,0,Math.PI*2);ctx.stroke()}
-ctx.restore();}
+// Pre-render the enchanted glass jewels at high resolution. The animation
+// then blits a cached sprite instead of rebuilding gradients every frame.
+const bubbleSprites=new Map();
+function gemPath(g,x,y,r,points=4,inner=.28,rotation=-Math.PI/2){
+ g.beginPath();for(let i=0;i<points*2;i++){const a=rotation+i*Math.PI/points,rr=i%2?r*inner:r;const xx=x+Math.cos(a)*rr,yy=y+Math.sin(a)*rr;if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy)}g.closePath();
+}
+function makeBubbleSprite(color,armor,rescue){
+ const size=120,c=document.createElement("canvas");c.width=c.height=size;const g=c.getContext("2d"),x=60,y=60,r=45;
+ const p=color<0?["#b6b5dd","#615887","#241d40","✧"]:PALETTE[color]||PALETTE[0];
+ const sphere=g.createRadialGradient(x-r*.22,y-r*.3,1,x,y,r);
+ sphere.addColorStop(0,p[0]);sphere.addColorStop(.24,p[1]);sphere.addColorStop(.64,p[2]);sphere.addColorStop(.84,p[1]);sphere.addColorStop(.96,p[0]);sphere.addColorStop(1,"#fff0ff");
+ g.save();g.shadowColor=p[1];g.shadowBlur=10;g.fillStyle=sphere;g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill();g.restore();
+ g.save();g.beginPath();g.arc(x,y,r-1.4,0,Math.PI*2);g.clip();
+ // Swirling suspended stardust, facets and iridescent reflections.
+ g.globalAlpha=.18;g.fillStyle=p[0];g.beginPath();g.moveTo(x-r,y+r*.2);g.quadraticCurveTo(x-r*.16,y-r*.5,x+r,y-r*.16);g.quadraticCurveTo(x+r*.25,y+r*.12,x-r*.35,y+r*.8);g.closePath();g.fill();
+ g.globalAlpha=.55;g.strokeStyle=p[0];g.lineWidth=1.2;g.beginPath();g.ellipse(x,y+4,r*.87,r*.29,-.55,0,Math.PI*2);g.stroke();g.globalAlpha=.3;g.strokeStyle="#fff";g.lineWidth=.8;g.beginPath();g.ellipse(x,y-2,r*.8,r*.44,.61,0,Math.PI*2);g.stroke();g.globalAlpha=1;
+ const random=rng((color+3)*137+armor*97+Number(rescue)*59);
+ for(let i=0;i<25;i++){const angle=random()*Math.PI*2,dist=r*(.28+random()*.58),xx=x+Math.cos(angle)*dist,yy=y+Math.sin(angle)*dist;g.globalAlpha=.3+random()*.6;g.fillStyle=i%3===0?"#fff8c9":"#fff";g.beginPath();g.arc(xx,yy,.6+random()*1.05,0,Math.PI*2);g.fill()}
+ g.globalAlpha=1;
+ const shine=g.createLinearGradient(x-r,y-r,x+r,y+r);shine.addColorStop(0,"#fff");shine.addColorStop(.45,"#ffffff60");shine.addColorStop(1,"#ffffff00");g.fillStyle=shine;g.beginPath();g.ellipse(x-r*.29,y-r*.54,r*.51,r*.17,-.48,0,Math.PI*2);g.fill();
+ g.strokeStyle="#ffffffcc";g.lineWidth=2.3;g.lineCap="round";g.beginPath();g.arc(x,y,r-4,3.63,4.66);g.stroke();g.strokeStyle=p[0];g.lineWidth=2.6;g.beginPath();g.arc(x,y,r-3,.44,1.5);g.stroke();
+ // A recognizable, faceted symbol inside every orb (not a text emoji).
+ g.save();g.translate(x,y+3);const q=rescue?0:color;
+ const jewel=g.createLinearGradient(-15,-19,15,19);jewel.addColorStop(0,"#fff");jewel.addColorStop(.36,rescue?"#fff0a4":p[0]);jewel.addColorStop(.67,rescue?"#f7b42c":p[1]);jewel.addColorStop(1,rescue?"#a45d17":p[2]);g.fillStyle=jewel;g.strokeStyle="#fff5e8";g.lineWidth=1.7;g.shadowColor=rescue?"#ffdd54":p[0];g.shadowBlur=8;
+ if(rescue||q===3){gemPath(g,0,0,rescue?24:18,5,.45);}
+ else if(q===0){g.beginPath();g.moveTo(0,17);g.bezierCurveTo(-34,-3,-13,-25,0,-10);g.bezierCurveTo(13,-25,34,-3,0,17);g.closePath();}
+ else if(q===2){g.beginPath();g.moveTo(0,-21);g.lineTo(16,0);g.lineTo(0,21);g.lineTo(-16,0);g.closePath();}
+ else if(q===4){g.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?10:19;const xx=Math.cos(a)*rr,yy=Math.sin(a)*rr;i?g.lineTo(xx,yy):g.moveTo(xx,yy)}g.closePath();}
+ else if(q===5){gemPath(g,0,0,19,8,.62);}
+ else if(q===6){gemPath(g,0,0,19,6,.42);}
+ else{gemPath(g,0,0,20,4,.35);}
+ g.fill();g.stroke();g.shadowBlur=0;g.globalAlpha=.7;g.strokeStyle="#fff";g.lineWidth=.9;g.beginPath();g.moveTo(-9,-5);g.lineTo(0,0);g.lineTo(8,-5);g.moveTo(0,0);g.lineTo(0,12);g.stroke();g.restore();
+ g.restore();
+ g.beginPath();g.arc(x,y,r-.9,0,Math.PI*2);g.strokeStyle="#ffffffb8";g.lineWidth=1.8;g.stroke();
+ g.fillStyle="#fffdf2";gemPath(g,x-r*.59,y-r*.55,7,4,.22);g.fill();g.fillStyle="#ffffffaa";gemPath(g,x+r*.55,y+r*.48,4.8,4,.22);g.fill();
+ if(armor){g.save();g.lineWidth=4.4;g.strokeStyle=armor===2?"#ffda7b":"#c4faff";g.beginPath();g.arc(x,y,r-2,0,Math.PI*2);g.stroke();
+ if(armor===1){g.fillStyle="#bbf8ff30";g.fill();g.strokeStyle="#d9ffff";g.lineWidth=2;g.beginPath();g.moveTo(x-33,y-17);g.lineTo(x-9,y+3);g.lineTo(x+4,y-28);g.lineTo(x+28,y-8);g.moveTo(x-9,y+3);g.lineTo(x+3,y+24);g.lineTo(x+26,y+31);g.stroke();}
+ else{for(const a of [-.65,.65]){g.save();g.translate(x,y);g.rotate(a);for(let i=-2;i<=2;i++){g.strokeStyle="#6b3515";g.lineWidth=5;g.beginPath();g.ellipse(i*13,0,9,5,0,0,Math.PI*2);g.stroke();g.strokeStyle="#ffe6a1";g.lineWidth=2.7;g.stroke()}g.restore()}}
+ g.restore();}
+ if(rescue){g.strokeStyle="#fff4a0";g.lineWidth=3;g.beginPath();g.arc(x,y,r-1,0,Math.PI*2);g.stroke();}
+ return c;
+}
+function drawBubble(x,y,b,r=R){
+ const k=[b.color,b.armor||0,Number(!!b.rescue)].join(":");
+ if(!bubbleSprites.has(k))bubbleSprites.set(k,makeBubbleSprite(b.color,b.armor||0,!!b.rescue));
+ const sz=r*120/45;ctx.drawImage(bubbleSprites.get(k),x-sz/2,y-sz/2,sz,sz);
+}
 function drawPower(x,y,power,color,r){if(power==="rainbow"){ctx.save();const grad=ctx.createLinearGradient(x-r,y-r,x+r,y+r);["#f75cbd","#f3d94d","#49f3a6","#4cd7ff","#9e50fa"].forEach((c,i)=>grad.addColorStop(i/4,c));ctx.shadowColor="#fff";ctx.shadowBlur=10;ctx.fillStyle=grad;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#fff";ctx.stroke();ctx.fillStyle="#fff";ctx.font="bold 20px Georgia";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("✦",x,y);ctx.restore()}else{drawBubble(x,y,{color:power==="bomb"?4:power==="lightning"?1:color},r);if(power){ctx.fillStyle="#fff8c6";ctx.font="bold 22px Georgia";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(power==="bomb"?"✷":"ϟ",x,y)}}}
 function draw(){ctx.clearRect(0,0,W,H);const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#08052591");bg.addColorStop(.55,"#180a4255");bg.addColorStop(1,"#18092f9c");ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);ctx.save();ctx.strokeStyle="#ffd98955";ctx.lineWidth=1;ctx.strokeRect(1,1,W-2,H-2);const random=rng(791);for(let i=0;i<52;i++){const x=random()*W,y=random()*H,r=random()*1.4+.25;ctx.fillStyle=i%4===0?"#ffe0a1a0":"#c4b4ff70";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}ctx.restore();
 const r=state.round;if(!r)return;for(const [k,b] of Object.entries(r.board)){const p=point(k);drawBubble(p.x,p.y,b)}
