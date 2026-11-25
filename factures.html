@@ -80,6 +80,7 @@
       #paper .total-badge{font-size:18px!important}
     }
   </style>
+<style>.invoice-folder{border:1px solid #ddc7f5;border-radius:12px;margin:8px 0;overflow:hidden}.invoice-folder summary{cursor:pointer;padding:13px;font-weight:800;color:#672b92;background:#f1e6fb;list-style:none}.invoice-folder summary small{float:right;font-weight:600}.invoice-folder[open] summary{border-bottom:1px solid #ddc7f5}.invoice-folder>div{padding:5px 8px}.invoice-folder .entry{width:100%;margin:5px 0}</style>
 </head>
 <body>
 <header class="top"><a href="index.html">← Agenda</a><div><h1>🧾 Factures & devis</h1><p>Fantasy Kids Events · réservé aux responsables</p></div></header>
@@ -159,7 +160,31 @@ fantasykidsevents@gmail.com</textarea>
   $('save').disabled=!yes;$('issue').disabled=!yes;$('paid').disabled=mode==='devis'||!selected||selected.statut!=='emise';$('deleteDraft').hidden=!selected||selected.statut!=='brouillon';$('cancelQuote').hidden=mode!=='devis'||!selected||selected.statut!=='emis';$('originalPdf').hidden=!selected||selected.statut==='brouillon';}
  function selectDoc(row){selected=row;const d=row?.contenu||{};setForm(d);$('event').value=row?.source_evenement_id||'';editable(!row||row.statut==='brouillon');$('save').textContent=row?'💾 Enregistrer les modifications':'💾 Enregistrer le brouillon';preview();renderList();}
  function renderList(){$('list').innerHTML=docs.length?docs.map(x=>`<button class="entry ${selected?.id===x.id?'selected':''}" data-id="${h(x.id)}"><span><b>${h(x.numero||'En préparation')}</b><br><small>${h(x.contenu?.client?.nom||'Client non renseigné')}</small></span><span class="tag">${x.statut==='annule'?'Annulé':x.statut==='payee'?'Payée':['emise','emis'].includes(x.statut)?mode==='devis'?'Finalisé':'Émise':'Brouillon'}</span></button>`).join(''):(mode==='devis'?'Aucun devis créé.':'Aucune facture créée.');
-  $('list').querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>selectDoc(docs.find(d=>d.id===x.dataset.id)));}
+  $('list').querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>selectDoc(docs.find(d=>d.id===x.dataset.id)));if(mode==='facture')groupInvoiceArchives();}
+
+ function docYear(row){return String(row.contenu?.date_emission||'').match(/^\d{4}/)?.[0]||String(row.numero||'').match(/\b\d{4}\b/)?.[0]||String(row.created_at||'').match(/^\d{4}/)?.[0]||'Sans année';}
+ let openedYears=new Set();
+ function groupInvoiceArchives(){
+  const list=$('list'),drafts=[],groups=new Map();
+  for(const b of Array.from(list.querySelectorAll('[data-id]'))){
+   const row=docs.find(x=>x.id===b.dataset.id);if(!row)continue;
+   if(row.statut==='brouillon'){drafts.push(b);continue;}
+   const year=docYear(row);if(!groups.has(year))groups.set(year,[]);groups.get(year).push(b);
+  }
+  list.replaceChildren();
+  const heading=t=>{const el=document.createElement('h3');el.textContent=t;list.append(el);};
+  heading('Brouillons');if(drafts.length)list.append(...drafts);else{const p=document.createElement('p');p.className='note';p.textContent='Aucun brouillon.';list.append(p);}
+  heading('📁 Archives des factures');
+  const years=Array.from(groups.keys()).sort().reverse();
+  if(!openedYears.size&&years.length)openedYears.add(years[0]);
+  for(const year of years){const items=groups.get(year),d=document.createElement('details'),sum=document.createElement('summary'),small=document.createElement('small'),body=document.createElement('div');
+   d.className='invoice-folder';d.open=openedYears.has(year)||!!(selected&&docYear(selected)===year);
+   sum.textContent='📁 '+year+' ';small.textContent=items.length+' facture(s)';sum.append(small);body.append(...items);d.append(sum,body);list.append(d);
+   d.addEventListener('toggle',()=>{if(d.open)openedYears.add(year);else openedYears.delete(year);});
+  }
+  if(!years.length){const p=document.createElement('p');p.className='note';p.textContent='Aucune facture émise.';list.append(p);}
+ }
+
  async function load(){const {data,error}=await sb.from(table()).select('*').order('created_at',{ascending:false});if(error)throw error;docs=(data||[]).filter(x=>mode!=='devis'||x.statut!=='annule');renderList();$('listTitle').textContent=mode==='devis'?'Mes devis':'Mes factures';}
  async function loadEvents(){const [{data,error},{data:priv, error:privateError},{data:fiches,error:ficheError}]=await Promise.all([sb.from('evenements').select('*').order('date',{ascending:false}).limit(500),sb.from('evenements_prive').select('*'),sb.from('fiches').select('evenement_id,reponses')]);if(error)throw error;if(privateError)throw privateError;if(ficheError)throw ficheError;
   const details=new Map((priv||[]).map(p=>[String(p.id),p]));const parFiche=new Map((fiches||[]).map(f=>[String(f.evenement_id),f.reponses||{}]));
@@ -179,11 +204,16 @@ fantasykidsevents@gmail.com</textarea>
   if(selected){result=await sb.from(table()).update(values).eq('id',selected.id).select().single();}else{result=await sb.from(table()).insert(values).select().single();}
   if(result.error)throw result.error;selected=result.data;await load();selectDoc(selected);return selected;}
  function pdfParams(row,docMode=mode){const data=row.contenu||{};return {kind:docMode,data:{...data,date_emission:data.date_emission||today()},number:row.numero||'',cancelled:row.statut==='annule'};}
- function originalPath(row,docMode=mode){return `${docMode==='devis'?'devis':'factures'}/${row.id}.pdf`;}
+ function legacyOriginalPath(row,docMode=mode){return `${docMode==='devis'?'devis':'factures'}/${row.id}.pdf`;}
+ function originalPath(row,docMode=mode){return docMode==='devis'?legacyOriginalPath(row,docMode):`factures/${docYear(row)}/${row.id}.pdf`;}
+ function missingPdf(error){return Number(error?.statusCode)===404||/not found|does not exist/i.test(String(error?.message||''));}
  function saveBlob(blob,filename){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),90000);}
  async function saveOriginalPdf(row,docMode=mode){
   if(!row?.id||!row.numero||row.statut==='brouillon')throw Error('Le document doit être numéroté avant sa sauvegarde PDF.');
   if(window.fkFacturesPdfVersion!=='magique-20261117-v3'||typeof window.fkGenererFacturePdfBlob!=='function')throw Error('Le nouveau générateur PDF n’est pas chargé. Recharge l’application.');
+  const existing=await readOriginalPdf(row,docMode);
+  if(!existing.error&&existing.data)return {blob:existing.data,existeDeja:true};
+  if(existing.error&&!missingPdf(existing.error))throw Error(existing.error.message||'Impossible de vérifier la copie conservée.');
   const result=await window.fkGenererFacturePdfBlob(pdfParams(row,docMode));
   if(!result.blob?.size)throw Error('Le PDF généré est vide.');
   const {error}=await sb.storage.from(PDF_BUCKET).upload(originalPath(row,docMode),result.blob,{contentType:'application/pdf',upsert:false,cacheControl:'31536000'});
@@ -193,7 +223,7 @@ fantasykidsevents@gmail.com</textarea>
   }
   return result;
  }
- async function readOriginalPdf(row,docMode=mode){return sb.storage.from(PDF_BUCKET).download(originalPath(row,docMode));}
+ async function readOriginalPdf(row,docMode=mode){const primary=await sb.storage.from(PDF_BUCKET).download(originalPath(row,docMode));if(docMode==='facture'&&primary.error&&missingPdf(primary.error))return sb.storage.from(PDF_BUCKET).download(legacyOriginalPath(row,docMode));return primary;}
  $('save').onclick=async()=>{try{await save();status('Brouillon enregistré ✅');}catch(e){status(e.message,true);}};
  $('issue').onclick=async()=>{try{const d=getForm();validate(d);const quote=mode==='devis';if(!confirm(quote?'Finaliser ce devis ? Il recevra son propre numéro et son contenu sera verrouillé.':'Émettre la facture ? Un numéro définitif sera attribué et son contenu ne pourra plus être modifié.'))return;
   const row=await save();const {data,error}=await sb.rpc(quote?'fk_devis_emettre':'fk_factures_emettre',{p_id:row.id});if(error)throw error;if(!data?.numero)throw Error('Aucun numéro attribué. Le document reste en brouillon : vérifie la fonction de numérotation dans Supabase.');selected=data;await load();selectDoc(data);
@@ -227,7 +257,7 @@ fantasykidsevents@gmail.com</textarea>
     const message=String(error.message||'');
     if(/bucket|permission|access denied|not authorized|row.level.security/i.test(message))throw Error('Stockage privé non accessible. Exécute supabase_archives_pdf_fantasy.sql dans Supabase. '+message);
     if(!/not found|404|does not exist/i.test(message))throw error;
-    if(!confirm('Ce document ne possède pas encore de PDF sauvegardé (il date peut-être d’avant cette fonctionnalité). Créer maintenant une copie à partir des données conservées et du modèle actuel ?'))return;
+    if(!confirm('Ce document ne possède pas encore de PDF sauvegardé (il date peut-être d’avant cette fonctionnalité). Créer maintenant une copie reconstituée à partir des données conservées et du modèle actuel ? Elle ne sera pas le PDF historique d’origine.'))return;
     const created=await saveOriginalPdf(row,docMode);
     if(created.existeDeja){const existing=await readOriginalPdf(row,docMode);if(existing.error)throw existing.error;data=existing.data;}
     else data=created.blob;
