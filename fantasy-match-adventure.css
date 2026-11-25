@@ -265,3 +265,177 @@ body .fm-shell[data-world]{
 .fm-modal-backdrop{z-index:110!important}
 .fm-world-portal{z-index:105!important}
 .fm-toast{z-index:125!important}
+
+
+/* Correctifs lisibilité iPhone — 25 novembre, logo d'origine et classement. */
+.fm-header{
+  grid-template-columns:minmax(0,45%) minmax(0,55%);
+  min-height:103px;
+  padding-right:11px;
+  align-items:center;
+}
+.fm-brand{
+  position:relative;
+  justify-content:center;
+  min-width:0;
+  height:auto;
+  min-height:74px;
+  margin:5px 3px 5px -1px;
+  padding:7px 5px 7px 38px;
+  border:2px solid #fff6ef;
+  border-radius:18px;
+  background:linear-gradient(145deg,#fffdfaeb,#fff4fff0 65%,#e6dbffec);
+  box-shadow:inset 0 2px 8px #ffffff,0 4px 0 #a772b0aa,0 5px 12px #160634a0;
+  isolation:isolate;
+}
+.fm-brand img{
+  display:block;
+  width:100%;
+  max-width:137px;
+  max-height:66px;
+  object-fit:contain;
+  filter:drop-shadow(0 1px 1px #ffffff) drop-shadow(0 1px 2px #ae64df66);
+}
+.fm-game-logo{
+  margin:0 14px 0 1px;
+  width:calc(100% - 15px);
+  min-width:0;
+  filter:drop-shadow(0 0 8px #ffdcff) drop-shadow(0 2px 4px #10052d);
+}
+.fm-header .fm-home-shortcut{
+  top:46px;
+  right:-1px;
+  width:35px;
+  height:35px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:linear-gradient(145deg,#64349e,#32135f);
+}
+.fm-header .fm-settings{
+  top:0;
+  right:-1px;
+  width:35px;
+  height:35px;
+  display:grid;
+  place-items:center;
+  border:2px solid #ffe3ad;
+  border-radius:50%;
+  background:linear-gradient(145deg,#69349d,#341362);
+  color:#fff1cf;
+}
+.fm-exit{z-index:10}
+
+/* Noms et niveaux du classement : contraste garanti sur fond sombre. */
+.fm-modal-backdrop{
+  padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));
+}
+.fm-dialog{
+  width:min(100%,460px);
+  max-height:calc(100dvh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow:auto;
+  overscroll-behavior:contain;
+  padding:22px 15px calc(20px + env(safe-area-inset-bottom));
+  -webkit-overflow-scrolling:touch;
+}
+.fm-dialog-x{
+  position:sticky;
+  float:right;
+  top:0;
+  z-index:2;
+  border:2px solid #ffe3ac;
+  color:#6c248e;
+  background:#f8dcff;
+}
+.fm-ranking-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-rows:auto auto;
+  align-items:center;
+  gap:3px 10px;
+  padding:12px 11px;
+  border:2px solid #a86de1;
+  border-radius:17px;
+  background:linear-gradient(125deg,#48217c,#34145f)!important;
+}
+.fm-ranking-row b{
+  grid-column:1;grid-row:1;
+  min-width:0;
+  display:block;
+  color:#fff9ff!important;
+  font-weight:1000;
+  font-size:clamp(14px,4vw,17px);
+  line-height:1.25;
+  overflow-wrap:anywhere;
+}
+.fm-ranking-row small{
+  grid-column:1;grid-row:2;
+  min-width:0;
+  display:block;
+  margin:0!important;
+  color:#ffe5aa!important;
+  font-size:clamp(12px,3.4vw,14px);
+  font-weight:900;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+.fm-ranking-row button{
+  grid-column:2;grid-row:1/span 2;
+  width:65px;
+  min-height:52px;
+  padding:7px 4px;
+  border:2px solid #ffe0a0;
+  border-radius:14px;
+  color:#fff;
+  background:linear-gradient(145deg,#f452cc,#a52ac3);
+  font-size:13px;
+  font-weight:1000;
+  box-shadow:inset 0 2px 4px #fff5,0 3px 0 #743087;
+}
+.fm-ranking-row button:disabled{opacity:.6}
+.fm-dialog-actions button{min-width:0}
+.fm-world-card h3,.fm-world-card small{color:#fff4d1!important}
+.fm-level-grid button{color:#601988}
+.fm-level-grid button.current{color:#fff}
+
+/* Onglets et bonus lisibles, sans blanc sur rose pâle. */
+.fm-nav{
+  padding:6px;
+  gap:5px;
+  margin-bottom:10px;
+}
+.fm-nav button,.fm-nav button:not(.active){
+  background:linear-gradient(145deg,#6431a0,#32135b 72%);
+  color:#fff7e9!important;
+  border:2px solid #e8c28d;
+  border-radius:18px;
+  text-shadow:0 1px 2px #190531;
+  box-shadow:inset 0 1px 4px #fff4;
+}
+.fm-nav button.active{
+  background:linear-gradient(145deg,#fd58ce,#ae27bf 55%,#7232c3);
+  border-color:#ffeba8;
+  color:#fff!important;
+  box-shadow:0 0 10px #fd5de988,inset 0 2px 5px #fff6;
+}
+.fm-nav button span,.fm-nav button svg{color:#ffe6aa!important}
+.fm-nav button.active span,.fm-nav button.active svg{color:#fff!important}
+.fm-powerups{padding-bottom:8px}
+.fm-shell{padding-bottom:calc(30px + env(safe-area-inset-bottom))}
+.fm-cell[aria-disabled="true"]:not([disabled]){
+  /* Le moteur bloque déjà l'interaction pendant une animation.
+     Garder l'aspect normal de la pièce sur iPhone. */
+  opacity:1!important;
+  -webkit-text-fill-color:inherit;
+}
+.fm-cell[disabled]{opacity:.87}
+@media(max-width:390px){
+  .fm-header{padding-right:8px}
+  .fm-brand{padding-left:34px;min-height:68px}
+  .fm-brand img{max-height:61px}
+  .fm-header .fm-settings,.fm-header .fm-home-shortcut{width:32px;height:32px}
+  .fm-header .fm-home-shortcut{top:42px}
+  .fm-nav button{padding-left:2px;padding-right:2px}
+  .fm-ranking-row{padding:10px 9px}
+  .fm-ranking-row button{width:58px}
+}
