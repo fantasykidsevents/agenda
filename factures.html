@@ -106,7 +106,7 @@ fantasykidsevents@gmail.com</textarea>
    <h3>Prestations facturées</h3><div id="lines"></div><button id="addLine">＋ Ajouter une ligne</button>
    <div class="row"><div><label for="priceType">Prix indiqués</label><select id="priceType"><option value="ttc">Montants finaux (€)</option><option value="ht">Hors TVA (€)</option></select></div><div><label for="notes" id="notesLabel">Note facultative</label><textarea id="notes" placeholder="Référence, acompte déjà versé…"></textarea></div></div>
    <div class="controls"><button id="save" class="primary">💾 Enregistrer le brouillon</button><button id="issue">🔒 Émettre et numéroter</button><button id="paid">✅ Marquer payée</button><button id="deleteDraft" type="button" hidden>🗑️ Supprimer le brouillon</button><button id="cancelQuote" type="button" hidden>🚫 Annuler ce devis</button></div>
-   <p class="note" id="lockNote">Une facture émise est définitive : ses montants et coordonnées ne peuvent plus être modifiés. Le bouton « Télécharger PDF » crée directement un fichier au format A4.</p>
+   <div id="proDecisionPanel" hidden style="margin-top:15px;border:1px solid #dbc7f2;border-radius:14px;padding:12px"><h3>Réponse du client</h3><p id="proDecisionStatus" class="note"></p><div class="controls"><button type="button" id="proWait">🟠 En attente</button><button type="button" id="proAccept">🟢 Accepté</button><button type="button" id="proRefuse">🔴 Refusé</button><button type="button" class="primary" id="proConvert" hidden>🧾 Transformer en facture</button></div><p class="note">La réponse est enregistrée manuellement. La conversion ne crée qu’un brouillon de facture.</p></div><p class="note" id="lockNote">Une facture émise est définitive : ses montants et coordonnées ne peuvent plus être modifiés. Le bouton « Télécharger PDF » crée directement un fichier au format A4.</p>
   </section>
  </div>
  <aside id="paperWrap"><div class="controls"><button class="primary" id="pdf">📄 Télécharger PDF A4</button><button id="printPdf">🖨️ Ouvrir pour imprimer</button><button id="originalPdf" type="button" hidden>📁 Copie PDF originale</button><span class="note" id="docStatus">Aperçu du brouillon</span></div>
@@ -131,7 +131,7 @@ fantasykidsevents@gmail.com</textarea>
  const config=window.APP_CONFIG||{}, sb=(window.supabase&&config.SUPABASE_URL&&config.SUPABASE_ANON_KEY)?window.supabase.createClient(config.SUPABASE_URL,config.SUPABASE_ANON_KEY):null;
  const params=new URLSearchParams(location.search);
  let mode=params.get('mode')==='devis'?'devis':'facture';
- let docs=[],events=[],selected=null,readonly=false;
+ let docs=[],events=[],selected=null,readonly=false,proSuivi=new Map(),proBusy=false;
  const PDF_BUCKET='fantasy-facturation';
  const table=()=>mode==='devis'?'devis_fantasy':'factures_fantasy';
  function updateMode(){const isQuote=mode==='devis';$('kind').value=mode;$('new').textContent=isQuote?'＋ Nouveau devis':'＋ Nouvelle facture';$('listTitle').textContent=isQuote?'Mes devis':'Mes factures';$('editorTitle').textContent=isQuote?'Préparer le devis':'Préparer la facture';$('pTitle').textContent=isQuote?'DEVIS':'FACTURE';$('issue').textContent=isQuote?'🔒 Finaliser le devis':'🔒 Émettre et numéroter';$('paid').hidden=isQuote;$('notesLabel').textContent=isQuote?'Notes visibles sur le devis':'Note facultative';$('notes').placeholder=isQuote?'Ex. Personnages présents, durée, conditions, détail de la prestation…':'Référence, acompte déjà versé…';$('dueLabel').textContent=isQuote?'Valable jusqu’au':'Date d’échéance';$('pDueLabel').textContent=isQuote?'Devis valable jusqu’au':'Échéance';$('lockNote').textContent=isQuote?'Les devis finalisés sont conservés avec leur numéro. Les brouillons peuvent être supprimés. Le PDF est généré directement en A4.':'Les factures émises sont conservées pour la comptabilité ; seuls les brouillons sont supprimables. Le PDF est généré directement en A4.';}
@@ -160,7 +160,7 @@ fantasykidsevents@gmail.com</textarea>
   $('save').disabled=!yes;$('issue').disabled=!yes;$('paid').disabled=mode==='devis'||!selected||selected.statut!=='emise';$('deleteDraft').hidden=!selected||selected.statut!=='brouillon';$('cancelQuote').hidden=mode!=='devis'||!selected||selected.statut!=='emis';$('originalPdf').hidden=!selected||selected.statut==='brouillon';}
  function selectDoc(row){selected=row;const d=row?.contenu||{};setForm(d);$('event').value=row?.source_evenement_id||'';editable(!row||row.statut==='brouillon');$('save').textContent=row?'💾 Enregistrer les modifications':'💾 Enregistrer le brouillon';preview();renderList();}
  function renderList(){$('list').innerHTML=docs.length?docs.map(x=>`<button class="entry ${selected?.id===x.id?'selected':''}" data-id="${h(x.id)}"><span><b>${h(x.numero||'En préparation')}</b><br><small>${h(x.contenu?.client?.nom||'Client non renseigné')}</small></span><span class="tag">${x.statut==='annule'?'Annulé':x.statut==='payee'?'Payée':['emise','emis'].includes(x.statut)?mode==='devis'?'Finalisé':'Émise':'Brouillon'}</span></button>`).join(''):(mode==='devis'?'Aucun devis créé.':'Aucune facture créée.');
-  $('list').querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>selectDoc(docs.find(d=>d.id===x.dataset.id)));if(mode==='facture')groupInvoiceArchives();}
+  $('list').querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>selectDoc(docs.find(d=>d.id===x.dataset.id)));if(mode==='facture')groupInvoiceArchives();else{for(const el of $('list').querySelectorAll('[data-id]')){const d=docs.find(x=>x.id===el.dataset.id);if(d?.statut==='emis'){const x=proSuivi.get(d.id);el.querySelector('.tag').textContent=x?.facture_id?'Facture liée':decisionLabel(x?.decision);}}}updateProDecision();}
 
  function docYear(row){return String(row.contenu?.date_emission||'').match(/^\d{4}/)?.[0]||String(row.numero||'').match(/\b\d{4}\b/)?.[0]||String(row.created_at||'').match(/^\d{4}/)?.[0]||'Sans année';}
  let openedYears=new Set();
@@ -185,7 +185,7 @@ fantasykidsevents@gmail.com</textarea>
   if(!years.length){const p=document.createElement('p');p.className='note';p.textContent='Aucune facture émise.';list.append(p);}
  }
 
- async function load(){const {data,error}=await sb.from(table()).select('*').order('created_at',{ascending:false});if(error)throw error;docs=(data||[]).filter(x=>mode!=='devis'||x.statut!=='annule');renderList();$('listTitle').textContent=mode==='devis'?'Mes devis':'Mes factures';}
+ async function load(){const {data,error}=await sb.from(table()).select('*').order('created_at',{ascending:false});if(error)throw error;docs=(data||[]).filter(x=>mode!=='devis'||x.statut!=='annule');if(mode==='devis'){const {data:suivi,error:e}=await sb.from('devis_fantasy_suivi').select('*');if(e)throw e;proSuivi=new Map((suivi||[]).map(x=>[x.devis_id,x]));}renderList();$('listTitle').textContent=mode==='devis'?'Mes devis':'Mes factures';}
  async function loadEvents(){const [{data,error},{data:priv, error:privateError},{data:fiches,error:ficheError}]=await Promise.all([sb.from('evenements').select('*').order('date',{ascending:false}).limit(500),sb.from('evenements_prive').select('*'),sb.from('fiches').select('evenement_id,reponses')]);if(error)throw error;if(privateError)throw privateError;if(ficheError)throw ficheError;
   const details=new Map((priv||[]).map(p=>[String(p.id),p]));const parFiche=new Map((fiches||[]).map(f=>[String(f.evenement_id),f.reponses||{}]));
   events=(data||[]).map(e=>{const p=details.get(String(e.id))||{},r=parFiche.get(String(e.id))||{};return {...e,...p,parent:p.parent||e.parent||r.client_nom||'',fiche_client_nom:r.client_nom||''};});
@@ -224,6 +224,30 @@ fantasykidsevents@gmail.com</textarea>
   return result;
  }
  async function readOriginalPdf(row,docMode=mode){const primary=await sb.storage.from(PDF_BUCKET).download(originalPath(row,docMode));if(docMode==='facture'&&primary.error&&missingPdf(primary.error))return sb.storage.from(PDF_BUCKET).download(legacyOriginalPath(row,docMode));return primary;}
+
+ function decisionLabel(d){return d==='accepte'?'🟢 Accepté':d==='refuse'?'🔴 Refusé':'🟠 En attente de réponse';}
+ function updateProDecision(){
+  const visible=mode==='devis'&&selected?.statut==='emis';
+  $('proDecisionPanel').hidden=!visible;if(!visible)return;
+  const x=proSuivi.get(selected.id),linked=!!x?.facture_id;
+  $('proDecisionStatus').textContent=decisionLabel(x?.decision)+(x?.decision_le?' · '+new Date(x.decision_le).toLocaleString('fr-BE'):'')+(linked?' · Facture liée':'');
+  $('proWait').disabled=proBusy||linked;$('proAccept').disabled=proBusy||linked;$('proRefuse').disabled=proBusy||linked;
+  $('cancelQuote').disabled=linked;
+  $('proConvert').hidden=x?.decision!=='accepte';$('proConvert').disabled=proBusy;$('proConvert').textContent=linked?'🧾 Ouvrir la facture liée':'🧾 Transformer en facture';
+ }
+ async function setProDecision(decision){
+  if(proBusy||mode!=='devis'||selected?.statut!=='emis')return;
+  const id=selected.id;if(!confirm('Enregistrer la réponse du client : '+decisionLabel(decision)+' ? Aucun e-mail ne sera envoyé.'))return;
+  proBusy=true;updateProDecision();try{const {data,error}=await sb.rpc('fk_devis_pro_decision',{p_id:id,p_decision:decision});if(error)throw error;proSuivi.set(id,data);renderList();status('Réponse du client enregistrée ✅');}catch(e){status(e.message,true);}finally{proBusy=false;updateProDecision();}
+ }
+ $('proWait').onclick=()=>setProDecision('attente');$('proAccept').onclick=()=>setProDecision('accepte');$('proRefuse').onclick=()=>setProDecision('refuse');
+ $('proConvert').onclick=async()=>{
+  if(proBusy||mode!=='devis'||selected?.statut!=='emis')return;const id=selected.id,x=proSuivi.get(id);if(x?.decision!=='accepte')return;
+  if(!x.facture_id&&!confirm('Créer une facture en brouillon à partir du devis '+selected.numero+' ? Le devis original sera conservé.'))return;
+  proBusy=true;updateProDecision();try{const {data,error}=await sb.rpc('fk_devis_pro_facture',{p_id:id});if(error)throw error;if(!data?.id)throw Error('Facture non retrouvée.');
+   mode='facture';selected=null;updateMode();await load();selectDoc(docs.find(d=>d.id===data.id)||data);status(data.statut==='brouillon'?'Brouillon repris du devis accepté. Vérifie la date d’échéance avant émission.':'Facture liée ouverte.');
+  }catch(e){status(e.message,true);}finally{proBusy=false;updateProDecision();}
+ };
  $('save').onclick=async()=>{try{await save();status('Brouillon enregistré ✅');}catch(e){status(e.message,true);}};
  $('issue').onclick=async()=>{try{const d=getForm();validate(d);const quote=mode==='devis';if(!confirm(quote?'Finaliser ce devis ? Il recevra son propre numéro et son contenu sera verrouillé.':'Émettre la facture ? Un numéro définitif sera attribué et son contenu ne pourra plus être modifié.'))return;
   const row=await save();const {data,error}=await sb.rpc(quote?'fk_devis_emettre':'fk_factures_emettre',{p_id:row.id});if(error)throw error;if(!data?.numero)throw Error('Aucun numéro attribué. Le document reste en brouillon : vérifie la fonction de numérotation dans Supabase.');selected=data;await load();selectDoc(data);
@@ -241,7 +265,7 @@ fantasykidsevents@gmail.com</textarea>
   selected=null;await load();$('new').click();status('Brouillon supprimé ✅');
  };
  $('cancelQuote').onclick=async()=>{
-  if(mode!=='devis'||!selected||selected.statut!=='emis')return;
+  if(mode!=='devis'||!selected||selected.statut!=='emis'||proSuivi.get(selected.id)?.facture_id)return;
   if(!confirm(`Annuler le devis ${selected.numero} ? Son numéro restera dans l’historique et le document ne sera plus utilisable.`))return;
   const {data,error}=await sb.rpc('fk_devis_annuler',{p_id:selected.id});
   if(error)return status(error.message,true);
