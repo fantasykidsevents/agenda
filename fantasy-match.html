@@ -7,10 +7,10 @@
   <meta name="description" content="Fantasy Match, le jeu magique de l'équipe Fantasy Kids Events.">
   <title>Fantasy Match · Fantasy Kids Events</title>
   <link rel="stylesheet" href="fantasy-match.css">
-  <link rel="stylesheet" href="fantasy-match-premium.css?v=lumi-mondes-20261125">
+  <link rel="stylesheet" href="fantasy-match-premium.css?v=aventure-lumi-20261125">
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="fantasy-match.js?v=lumi-mondes-20261125"></script>
+  <script defer src="fantasy-match.js?v=aventure-lumi-20261125"></script>
 </head>
 <body>
   <div class="fm-bg-stars" aria-hidden="true"></div>
@@ -22,6 +22,7 @@
       </a>
       <h1 class="fm-game-logo"><span>Fantasy</span><strong>Match</strong><i aria-hidden="true">✦</i></h1>
       <button class="fm-settings" id="rulesBtn" aria-label="Règles du jeu">?</button>
+      <button class="fm-home-shortcut" type="button" id="fmGoHome" aria-label="Retour à l'accueil du jeu" title="Accueil">⌂</button>
     </header>
 
     <div class="fm-title-wrap">
@@ -66,12 +67,61 @@
 
     <nav class="fm-nav" aria-label="Navigation Fantasy Match">
       <button class="active" data-screen="play"><span aria-hidden="true"><svg viewBox="0 0 40 36" fill="currentColor"><path d="M8 9h24c4 0 6 4 7 13l1 7c0 3-3 5-6 3l-9-8H15L6 32c-3 2-6 0-6-3l1-7C2 13 4 9 8 9Z" opacity=".9"/><path d="M10 15v12M4 21h12" stroke="#7548d3" stroke-width="3.5" stroke-linecap="round"/><circle cx="28" cy="18" r="2.3" fill="#fa65c8"/><circle cx="33" cy="23" r="2.3" fill="#39bcff"/></svg></span>Jouer</button>
+      <button data-screen="map"><span aria-hidden="true">🗺️</span>Mondes</button>
       <button data-screen="ranking"><span aria-hidden="true"><svg viewBox="0 0 40 40" fill="currentColor"><path d="M11 4h18v7c0 9-4 14-9 15-5-1-9-6-9-15V4ZM11 8H5v5c0 7 5 11 12 12M29 8h6v5c0 7-5 11-12 12" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M18 26h4v7h8v4H10v-4h8z"/></svg></span>Classement</button>
       <button data-screen="team"><span aria-hidden="true"><svg viewBox="0 0 44 40" fill="currentColor"><circle cx="22" cy="10" r="7"/><circle cx="7" cy="16" r="5"/><circle cx="37" cy="16" r="5"/><path d="M8 35c0-8 6-14 14-14s14 6 14 14v2H8zM0 35v-3c0-6 4-10 9-11 2 1 4 2 5 4-2 3-4 6-4 10H0Zm44 0h-10c0-4-2-7-4-10 1-2 3-3 5-4 5 1 9 5 9 11z"/></svg></span>Équipe</button>
     </nav>
     <a class="fm-return" href="index.html?vue=mine">← Quitter le jeu · Retour à l'agenda</a>
     <div class="fm-sync" id="syncStatus" aria-live="polite">Sauvegarde en préparation…</div>
   </main>
+
+
+  <!-- Écrans d'aventure : tous les comptes gardent les niveaux et le plateau existants. -->
+  <section id="fmHomeScreen" class="fm-adventure-screen fm-home-screen" aria-label="Accueil de Fantasy Match">
+    <div class="fm-home-stage">
+      <div class="fm-home-top"><span class="fm-home-eyebrow">✦ L'AVENTURE MAGIQUE ✦</span><button type="button" id="fmHomeHelp" class="fm-round-btn" aria-label="Règles du jeu">?</button></div>
+      <img class="fm-home-logo" src="fantasy-match-logo.webp" alt="Fantasy Match" draggable="false">
+      <div class="fm-home-progress" id="fmHomeWorldText">15 royaumes enchantés · 300 niveaux</div>
+      <div class="fm-home-lumi">
+        <img src="lumi-jour.webp" alt="Lumi, ton guide magique" draggable="false">
+        <p id="fmHomeLumiSpeech">Je suis Lumi ! Ensemble, partons à la découverte des mondes enchantés ✨</p>
+      </div>
+      <button id="fmHomePlay" type="button" class="fm-hero-button">▶ Jouer <small>Continuer au niveau <span id="fmHomeLevel">1</span></small></button>
+      <div class="fm-home-actions">
+        <button id="fmHomeMap" type="button">🗺️ <span>Carte des mondes</span></button>
+        <button id="fmHomeRanking" type="button">🏆 <span>Classement</span></button>
+      </div>
+      <div class="fm-home-counters">
+        <span>♥ <b id="fmHomeLives">5</b> vies</span>
+        <span>✦ <b id="fmHomeScore">0</b> points</span>
+      </div>
+      <a class="fm-home-exit" href="index.html?vue=mine">← Retour à Fantasy App</a>
+    </div>
+  </section>
+  <section id="fmMapScreen" class="fm-adventure-screen fm-map-screen hidden" aria-label="La carte magique de Fantasy Match">
+    <header class="fm-map-header">
+      <button id="fmMapBack" class="fm-round-btn" type="button" aria-label="Retour">←</button>
+      <div><div class="fm-map-eyebrow">✦ 15 MONDES ENCHANTÉS ✦</div><h2>La carte magique</h2></div>
+      <button id="fmMapHelp" class="fm-round-btn" type="button" aria-label="Les règles du jeu">?</button>
+    </header>
+    <div class="fm-map-main">
+      <div class="fm-map-world-head">
+        <button id="fmMapPrev" type="button" aria-label="Monde précédent">‹</button>
+        <div><strong id="fmMapWorldName">Le Royaume des Étoiles</strong><span id="fmMapWorldProgress">0 / 20 niveaux</span></div>
+        <button id="fmMapNext" type="button" aria-label="Monde suivant">›</button>
+      </div>
+      <div id="fmMapTrack" class="fm-map-track">
+        <svg id="fmMapRoute" class="fm-map-route" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline id="fmMapRouteLine" points=""/></svg>
+        <div id="fmMapNodes" class="fm-map-nodes" role="group" aria-label="Chemin des niveaux"></div>
+        <img id="fmMapLumi" class="fm-map-lumi" src="lumi-jour.webp" alt="Lumi avance sur la carte">
+      </div>
+      <div class="fm-map-lumi-talk"><img src="lumi-jour.webp" alt=""><p id="fmMapLumiSpeech">Je t'accompagne sur le chemin magique !</p></div>
+      <div id="fmMapGift" class="fm-map-gift" aria-live="polite"></div>
+      <button id="fmMapPlay" class="fm-hero-button fm-map-play" type="button">▶ Continuer l'aventure</button>
+      <div class="fm-map-all-label">CHANGER DE MONDE</div>
+      <div id="fmMapWorldList" class="fm-map-world-list" role="group" aria-label="Choisir un monde"></div>
+    </div>
+  </section>
 
   <div class="fm-world-portal hidden" id="worldPortal" role="dialog" aria-modal="true" aria-labelledby="worldPortalTitle" aria-describedby="worldPortalDescription">
     <div class="fm-world-portal-card">
