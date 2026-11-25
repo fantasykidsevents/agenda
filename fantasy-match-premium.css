@@ -400,3 +400,47 @@ body{
 
 /* Illustrations brillantes du chapitre 2 et du chapitre 3, 3 colonnes × 4 lignes.
    Niveaux 1–100 : sprites d'origine inchangés. */
+
+
+/* 15 ambiances illustrées : un fond différent tous les 20 niveaux.
+   Illustration panoramique optimisée (15 scènes, sans texte, 425 Ko).
+   Le jeu et ses éléments d'interface restent inchangés. */
+body[data-world]{
+  background:
+    radial-gradient(ellipse at 3% 8%,var(--fm-sky-a,#9edaff),transparent 52%),
+    radial-gradient(ellipse at 97% 11%,var(--fm-sky-b,#ffabe5),transparent 55%),
+    linear-gradient(145deg,var(--fm-sky-a,#c4bfff),var(--fm-sky-b,#f7c4ec));
+}
+body[data-world="etoiles"]{--fm-scene-x:0%;--fm-sky-a:#a9cdff;--fm-sky-b:#d69cff}
+body[data-world="jardin"]{--fm-scene-x:7.14286%;--fm-sky-a:#ffd0ec;--fm-sky-b:#a8d4ff}
+body[data-world="neiges"]{--fm-scene-x:14.28571%;--fm-sky-a:#b5edff;--fm-sky-b:#cbddff}
+body[data-world="cristaux"]{--fm-scene-x:21.42857%;--fm-sky-a:#d9c2ff;--fm-sky-b:#8fe1fa}
+body[data-world="magie"]{--fm-scene-x:28.57143%;--fm-sky-a:#b9c9ff;--fm-sky-b:#ffc5ea}
+body[data-world="cometes"]{--fm-scene-x:35.71429%;--fm-sky-a:#91d5ff;--fm-sky-b:#d0c1ff}
+body[data-world="mirages"]{--fm-scene-x:42.85714%;--fm-sky-a:#f7d7aa;--fm-sky-b:#edb9ec}
+body[data-world="ombres"]{--fm-scene-x:50%;--fm-sky-a:#98baad;--fm-sky-b:#c0a9dc}
+body[data-world="tempetes"]{--fm-scene-x:57.14286%;--fm-sky-a:#96b4ff;--fm-sky-b:#b5e8f9}
+body[data-world="lumiere"]{--fm-scene-x:64.28571%;--fm-sky-a:#f7d8ec;--fm-sky-b:#ffe8b4}
+body[data-world="aurore"]{--fm-scene-x:71.42857%;--fm-sky-a:#ffd7bd;--fm-sky-b:#c4d4ff}
+body[data-world="grimoires"]{--fm-scene-x:78.57143%;--fm-sky-a:#c5b4f2;--fm-sky-b:#e5c9ff}
+body[data-world="bal-lucioles"]{--fm-scene-x:85.71429%;--fm-sky-a:#b5f1d0;--fm-sky-b:#e6beee}
+body[data-world="eclipses"]{--fm-scene-x:92.85714%;--fm-sky-a:#a5b4e9;--fm-sky-b:#c9b4e9}
+body[data-world="trone"]{--fm-scene-x:100%;--fm-sky-a:#ffe2a6;--fm-sky-b:#d5c1f4}
+.fm-shell[data-world]{
+  background-image:
+    linear-gradient(180deg,#f3f4ff8f 0%,#f7e6ff99 50%,#f8e9ffb7 100%),
+    url('fantasy-match-worlds-15-sprite.webp');
+  background-size:100% 100%,1500% 100%;
+  background-position:center center,var(--fm-scene-x,0%) center;
+  background-repeat:no-repeat;
+  transition:background-position .55s ease;
+}
+.fm-world-portal-card{
+  background-image:
+    linear-gradient(180deg,#ffffffeb 0%,#faf0fff1 100%),
+    url('fantasy-match-worlds-15-sprite.webp');
+  background-size:100% 100%,1500% 100%;
+  background-position:center center,var(--fm-scene-x,0%) center;
+  background-repeat:no-repeat;
+}
+@media(prefers-reduced-motion:reduce){.fm-shell[data-world]{transition:none}}
