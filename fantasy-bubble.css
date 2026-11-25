@@ -114,3 +114,51 @@ body:not(.playing) .shell::before{background-image:linear-gradient(180deg,#0b032
 .home-stats span{display:flex;align-items:center;justify-content:center;gap:5px;font-size:16px}
 .home-stats{flex-wrap:wrap}
 @media(max-width:390px){.home .hero-art{height:clamp(180px,54vw,215px)}.home .game-logo{height:139px}.home-buttons .jewel{font-size:16px;gap:5px}.home-buttons .jewel.primary{font-size:29px;min-height:63px}.home-icon{width:20px;height:20px}.home-buttons .primary .home-icon{width:31px;height:31px}}
+
+
+/* iPhone: fit the entire play area into the live viewport, with no clipped boosters.
+   Canvas is contained at its original 360:535 ratio; pointer() maps the letterbox. */
+@media (orientation:portrait) {
+ body.playing{overflow-y:auto}
+ body.playing .shell{display:flex;flex-direction:column;height:100vh;height:100dvh;min-height:470px;padding:calc(4px + env(safe-area-inset-top)) 7px calc(6px + env(safe-area-inset-bottom));gap:3px}
+ body.playing .topbar{flex:0 0 32px;height:32px;grid-template-columns:32px 1fr 32px}
+ body.playing .topbar .round{width:30px;height:30px;font-size:20px}
+ body.playing .topbar .brand{height:30px;width:95px}
+ body.playing #game:not(.hidden){display:flex;flex:1 1 0;min-height:0;flex-direction:column;gap:4px}
+ body.playing .game-heading{flex:0 0 auto;grid-template-columns:32px 1fr 32px;margin:0;gap:5px}
+ body.playing .game-heading .round{width:31px;height:31px}
+ body.playing .ribbon{padding:3px 5px}
+ body.playing .ribbon span{display:none}
+ body.playing .ribbon h1{font-size:21px;margin:0;line-height:1.1}
+ body.playing .hud{flex:0 0 auto;margin:0;padding:4px 2px;border-width:2px}
+ body.playing .hud b{font-size:clamp(13px,4vw,19px)}
+ body.playing .hud small{font-size:9px}
+ body.playing .board-frame{display:flex;flex:1 1 0;min-height:0;flex-direction:column;align-items:stretch;padding:2px;overflow:hidden}
+ body.playing .board-frame canvas{display:block;flex:1 1 0;min-height:0;width:100%;height:0;max-height:none;aspect-ratio:auto;object-fit:contain;object-position:center}
+ body.playing .board-bottom{flex:0 0 auto;padding:2px 3px;gap:5px}
+ body.playing .mini-jewel{min-height:32px;padding:3px 6px;font-size:13px}
+ body.playing .lumi-line{flex:0 0 auto;margin:0;min-height:32px;gap:4px}
+ body.playing .lumi-line img{width:34px;height:34px}
+ body.playing .lumi-line div{min-height:0;font-size:11px;line-height:1.2;padding:4px 7px}
+ body.playing .boosts{flex:0 0 auto;gap:5px;margin:0;padding:3px 0 0}
+ body.playing .boosts button{min-height:58px;min-width:0;padding:2px 0;gap:2px}
+ body.playing .boosts .power-icon{width:40px;height:40px;font-size:23px}
+ body.playing .boosts b{font-size:11px;white-space:nowrap}
+ body.playing .boosts small{top:29px;right:5px;width:18px;height:18px}
+ body.playing .game-links{flex:0 0 auto;margin:0;gap:5px}
+ body.playing .game-links .mini-jewel{min-height:29px;font-size:12px}
+}
+@media (orientation:portrait) and (max-height:680px) {
+ body.playing .topbar{flex-basis:27px;height:27px}
+ body.playing .topbar .round{width:27px;height:27px}
+ body.playing .topbar .brand{height:26px}
+ body.playing .lumi-line img{width:26px;height:26px}
+ body.playing .lumi-line{min-height:26px}
+ body.playing .boosts button{min-height:51px}
+ body.playing .boosts .power-icon{width:34px;height:34px;font-size:21px}
+ body.playing .boosts small{top:24px}
+ body.playing .game-links .mini-jewel{min-height:25px;padding:2px 6px}
+}
+@media (orientation:landscape) {
+ body.playing .boosts{position:sticky;bottom:0;z-index:5;padding:4px 5px;background:#241044f5;border-top:1px solid #e2ba69}
+}
