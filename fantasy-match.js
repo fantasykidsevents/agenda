@@ -875,7 +875,7 @@
     $('worldPortalSymbol').textContent = WORLD_SYMBOLS[current.world];
     $('worldPortalChapter').textContent = 'MONDE ' + (current.world + 1) + ' · NIVEAU ' + current.number;
     $('worldPortalTitle').textContent = WORLD_NAMES[current.world];
-    $('worldPortalDescription').textContent = WORLD_INTROS[current.world] + (current.number === 101 ? ' Six nouveaux symboles magiques t’attendent !' : current.number>200 ? ' De nouveaux défis t’attendent avec tes symboles magiques préférés !' : ' Un nouveau symbole a rejoint l’aventure !');
+    $('worldPortalDescription').textContent = WORLD_INTROS[current.world] + ' De nouveaux défis t’attendent avec tes symboles magiques préférés !';
     $('worldPortalPieces').innerHTML = [...poolForLevel(current.number), LUMI_BONUS].map(piece).join('');
     $('worldPortal').classList.remove('hidden');
     $('worldPortalEnter').focus();
