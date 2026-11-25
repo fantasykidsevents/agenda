@@ -71,6 +71,50 @@
   let remainingByKind = {}, frozenCells = new Set(), bonusCreated = 0;
   let sealedCells = new Map(), timedBombs = new Map(), comboCount = 0;
   let touch = null, suppressClickUntil = 0;
+  // Sécurité anti-blocage : annuler proprement une animation suspendue sur iOS,
+  // sans perdre le coup, les bonus ou la progression du membre.
+  let turnEpoch=0, turnWatchdog=null, turnSnapshot=null;
+  function snapshotTurn(){
+    return {
+      board:board.slice(), moves,remaining,roundScore,bonusCreated,comboCount,
+      remainingByKind:{...remainingByKind},
+      frozenCells:new Set(frozenCells),sealedCells:new Map(sealedCells),
+      timedBombs:new Map(timedBombs),boosters:{...(state?.boosters||{})}
+    };
+  }
+  function beginTurn(){
+    const id=++turnEpoch;
+    clearTimeout(turnWatchdog);
+    turnSnapshot=snapshotTurn();
+    busy=true;
+    turnWatchdog=setTimeout(()=>{
+      if(id!==turnEpoch||!busy)return;
+      console.warn('Fantasy Match : animation trop longue, restauration du coup');
+      rollbackTurn(id);
+      toast('✨ Lumi a relancé le plateau. Le coup n’a pas été perdu !');
+    },isMobileSafari?4200:12000);
+    return id;
+  }
+  function rollbackTurn(id){
+    if(id!==turnEpoch)return false;
+    const b=turnSnapshot;
+    ++turnEpoch;clearTimeout(turnWatchdog);turnWatchdog=null;turnSnapshot=null;
+    if(b){
+      board=b.board;moves=b.moves;remaining=b.remaining;roundScore=b.roundScore;
+      bonusCreated=b.bonusCreated;comboCount=b.comboCount;
+      remainingByKind=b.remainingByKind;frozenCells=b.frozenCells;
+      sealedCells=b.sealedCells;timedBombs=b.timedBombs;
+      state.boosters=b.boosters;
+    }
+    busy=false;selected=-1;
+    try{save();renderAll();}catch(err){console.error('Fantasy Match : restauration du plateau',err);}
+    return true;
+  }
+  function finishTurn(id){
+    if(id!==turnEpoch)return false;
+    clearTimeout(turnWatchdog);turnWatchdog=null;turnSnapshot=null;
+    busy=false;renderAll();return true;
+  }
   const rand = n => Math.floor(Math.random() * n);
   const randomKind = () => { const pool=poolForLevel(current?.number || state?.level || 1); return pool[rand(pool.length)]; };
   const now = () => Date.now();
@@ -440,6 +484,7 @@
     setTimeout(()=>layer.remove(),1150);
   }
   function startRound(n=state.level) {
+    ++turnEpoch;clearTimeout(turnWatchdog);turnWatchdog=null;turnSnapshot=null;busy=false;
     tickLives();
     state.level = Math.min(Math.max(1,n),state.maxUnlocked);
     current = levelConfig(state.level); target=current.target; remaining=target; moves=current.moves;roundScore=0;
@@ -485,7 +530,7 @@
     renderBoard();
   }
   function renderBoard(mark=new Set()) {
-    $('gameBoard').innerHTML=board.map((kind,i)=>`<button type="button" class="fm-cell ${i===selected?'selected':''} ${mark.has(i)?'match':''} ${frozenCells.has(i)?'frozen':''} ${sealedCells.has(i)?'sealed':''}" role="gridcell" aria-label="${LABELS[kindOf(kind)]||'Magie arc-en-ciel'}, case ${i+1}${frozenCells.has(i)?', glacée':''}${sealedCells.has(i)?', sceau de '+sealedCells.get(i)+' couche(s)':''}${timedBombs.has(i)?', bombe '+timedBombs.get(i)+' coups':''}${specialOf(kind)?', bonus spécial':''}" data-index="${i}" ${busy||state.lives<1||moves<=0||sealedCells.has(i)?'disabled':''}>${kind?piece(kind):''}${sealedCells.has(i)?'<span class="fm-seal" aria-hidden="true">'+sealedCells.get(i)+'</span>':''}${timedBombs.has(i)?'<span class="fm-timer" aria-hidden="true">⏱'+timedBombs.get(i)+'</span>':''}</button>`).join('');
+    $('gameBoard').innerHTML=board.map((kind,i)=>`<button type="button" class="fm-cell ${i===selected?'selected':''} ${mark.has(i)?'match':''} ${frozenCells.has(i)?'frozen':''} ${sealedCells.has(i)?'sealed':''}" role="gridcell" aria-label="${LABELS[kindOf(kind)]||'Magie arc-en-ciel'}, case ${i+1}${frozenCells.has(i)?', glacée':''}${sealedCells.has(i)?', sceau de '+sealedCells.get(i)+' couche(s)':''}${timedBombs.has(i)?', bombe '+timedBombs.get(i)+' coups':''}${specialOf(kind)?', bonus spécial':''}" data-index="${i}" aria-disabled="${busy||state.lives<1||moves<=0||sealedCells.has(i)}" ${state.lives<1||moves<=0||sealedCells.has(i)?'disabled':''}>${kind?piece(kind):''}${sealedCells.has(i)?'<span class="fm-seal" aria-hidden="true">'+sealedCells.get(i)+'</span>':''}${timedBombs.has(i)?'<span class="fm-timer" aria-hidden="true">⏱'+timedBombs.get(i)+'</span>':''}</button>`).join('');
   }
   function renderAll() {
     if(!current)return;
@@ -545,7 +590,7 @@
   // Safari iOS conserve parfois longtemps des animations retardées : limiter
   // leur durée sans changer le calcul des points ni la logique des niveaux.
   const isMobileSafari=/iP(hone|ad|od)/.test(navigator.userAgent||'');
-  const pause=ms=>new Promise(resolve=>setTimeout(resolve,isMobileSafari?Math.min(ms,140):ms));
+  const pause=ms=>new Promise(resolve=>setTimeout(resolve,isMobileSafari?Math.min(ms,75):ms));
   function collapse(removed) {
     for(let x=0;x<8;x++){
       const keep=[];
@@ -553,64 +598,58 @@
       for(let y=7;y>=0;y--)board[y*8+x]=keep.shift()||randomKind();
     }
   }
-  async function resolve(initial=null,preferred=-1,createBonus=true) {
+  async function resolve(initial=null,preferred=-1,createBonus=true,id=turnEpoch){
     let completed=false;
-    try {
-    let matches=initial || findMatches(board), chain=0;
-    while(matches.size && chain<16){
-      chain++;
-      const {bonus,removed}=matchEffect(board,matches,preferred,createBonus);
-      // Les sceaux perdent une couche lorsqu'une pièce disparaît dessus ou à côté.
-      // Une pièce sous un sceau encore actif reste sur place.
-      const impacted=new Set(removed);
-      for(const [i,layers] of [...sealedCells]){
-        const around=[i-8,i+8,...(i%8>0?[i-1]:[]),...(i%8<7?[i+1]:[])];
-        if(!impacted.has(i) && !around.some(j=>impacted.has(j)))continue;
-        if(layers<=1)sealedCells.delete(i);
-        else sealedCells.set(i,layers-1);
-        if(removed.has(i) && layers>1)removed.delete(i);
+    try{
+      let matches=initial||findMatches(board),chain=0;
+      while(matches.size&&chain<16&&id===turnEpoch){
+        chain++;
+        const {bonus,removed}=matchEffect(board,matches,preferred,createBonus);
+        const impacted=new Set(removed);
+        for(const [i,layers] of [...sealedCells]){
+          const around=[i-8,i+8,...(i%8>0?[i-1]:[]),...(i%8<7?[i+1]:[])];
+          if(!impacted.has(i)&&!around.some(j=>impacted.has(j)))continue;
+          if(layers<=1)sealedCells.delete(i);else sealedCells.set(i,layers-1);
+          if(removed.has(i)&&layers>1)removed.delete(i);
+        }
+        for(const i of removed)timedBombs.delete(i);
+        if(current.mode==='seal')remaining=[...sealedCells.values()].reduce((sum,n)=>sum+n,0);
+        if(current.mode==='collect'){
+          for(const i of removed)if(kindOf(board[i])===current.goal)remaining=Math.max(0,remaining-1);
+        }else if(current.mode==='duo'){
+          for(const i of removed){const k=kindOf(board[i]);if(remainingByKind[k]>0)remainingByKind[k]--;}
+          remaining=Object.values(remainingByKind).reduce((sum,n)=>sum+n,0);
+        }else if(current.mode==='ice'){
+          for(const i of removed)frozenCells.delete(i);
+          remaining=frozenCells.size;
+        }
+        roundScore+=removed.size*10*chain;
+        if(current.mode==='score')remaining=Math.max(0,target-roundScore);
+        if(bonus){
+          board[bonus.index]=bonus.value;bonusCreated++;
+          if(current.mode==='special')remaining=Math.max(0,target-bonusCreated);
+          toast(bonus.value==='rainbow|color'?'🌈 Arc-en-ciel créé ! Touche-le deux fois ou échange-le.'
+            :specialOf(bonus.value)==='bomb'?'💥 Bombe créée !':'✨ Fusée créée !');
+        }
+        renderAll();renderBoard(removed);
+        magicEffect(removed,chain>=3?'✨ Cascade ×'+chain+' !':'');
+        await pause(chain===1?370:260);
+        if(id!==turnEpoch)return;
+        collapse(removed);renderBoard();
+        await pause(140);
+        if(id!==turnEpoch)return;
+        matches=findMatches(board);
+        preferred=-1;createBonus=true;
       }
-      for(const i of removed)timedBombs.delete(i);
-      if(current.mode==='seal')remaining=[...sealedCells.values()].reduce((sum,n)=>sum+n,0);
-      if(current.mode==='collect'){
-        for(const i of removed)if(kindOf(board[i])===current.goal)remaining=Math.max(0,remaining-1);
-      }else if(current.mode==='duo'){
-        for(const i of removed){const k=kindOf(board[i]);if(remainingByKind[k]>0)remainingByKind[k]--;}
-        remaining=Object.values(remainingByKind).reduce((sum,n)=>sum+n,0);
-      }else if(current.mode==='ice'){
-        for(const i of removed)frozenCells.delete(i);
-        remaining=frozenCells.size;
-      }
-      roundScore+=removed.size*10*chain;
-      if(current.mode==='score')remaining=Math.max(0,target-roundScore);
-      if(bonus){
-        board[bonus.index]=bonus.value;
-        bonusCreated++;
-        if(current.mode==='special')remaining=Math.max(0,target-bonusCreated);
-        toast(bonus.value==='rainbow|color'?'🌈 Arc-en-ciel créé ! Touche-le deux fois ou échange-le.'
-          :specialOf(bonus.value)==='bomb'?'💥 Bombe créée !':'✨ Fusée créée !');
-      }
-      renderAll();renderBoard(removed);
-      magicEffect(removed,chain>=3?'✨ Cascade ×'+chain+' !':'');
-      await pause(chain===1?370:260);
-      collapse(removed);renderBoard();
-      await pause(140);
-      matches=findMatches(board);
-      preferred=-1;createBonus=true;
+      if(id!==turnEpoch)return;
+      if(!hasPossibleMove(board)){board=freshBoard();toast('Le plateau se mélange ✨');}
+      completed=true;
+    }catch(err){
+      console.error('Fantasy Match : bonus / cascade interrompu',err);
+      if(rollbackTurn(id))toast('✨ Lumi a restauré ton coup sans perte de bonus.');
+      return;
     }
-    if(!hasPossibleMove(board)){board=freshBoard();toast('Le plateau se mélange ✨');}
-    completed=true;
-    } catch(err) {
-      // Une erreur d'animation/DOM ne doit jamais laisser toutes les cases
-      // désactivées jusqu'à ce que le joueur ferme l'application.
-      console.error('Fantasy Match : récupération après bonus',err);
-      try { board=freshBoard(); } catch (ignored) { console.warn(ignored); }
-      toast('✨ Le plateau est prêt, tu peux continuer !');
-    } finally {
-      busy=false;
-      try {renderAll();}catch(err){console.error('Fantasy Match : affichage du plateau',err);}
-    }
-    if(completed)checkEnd();
+    if(completed&&finishTurn(id))checkEnd();
   }
   function checkEnd(){
     if(remaining<=0){winLevel();return;}
@@ -663,28 +702,28 @@
   }
   async function swap(a,b){
     if(busy||state.lives<1||moves<=0||!isNeighbor(a,b)||sealedCells.has(a)||sealedCells.has(b))return;
-    busy=true;selected=-1;
-    try {
-    [board[a],board[b]]=[board[b],board[a]];
-    renderBoard();await pause(180);
-    const specialTargets=specialSwapTargets(board,a,b);
-    if(specialTargets){
-      moves--;tickTimers();
-      if(specialTargets.combo){comboCount++;if(current.mode==='combo')remaining=Math.max(0,target-comboCount);}
-      magicEffect(specialTargets,specialTargets.label);
-      await resolve(specialTargets,-1,false);return;
-    }
-    const match=findMatches(board);
-    if(!match.size){
+    const id=beginTurn();selected=-1;
+    try{
       [board[a],board[b]]=[board[b],board[a]];
-      busy=false;renderAll();toast('Essaie une autre combinaison');return;
-    }
-    moves--;tickTimers();await resolve(match,b,true);
+      renderBoard();await pause(180);
+      if(id!==turnEpoch)return;
+      const specialTargets=specialSwapTargets(board,a,b);
+      if(specialTargets){
+        moves--;tickTimers();
+        if(specialTargets.combo){comboCount++;if(current.mode==='combo')remaining=Math.max(0,target-comboCount);}
+        magicEffect(specialTargets,specialTargets.label);
+        await resolve(specialTargets,-1,false,id);return;
+      }
+      const match=findMatches(board);
+      if(!match.size){
+        [board[a],board[b]]=[board[b],board[a]];
+        finishTurn(id);toast('Essaie une autre combinaison');return;
+      }
+      moves--;tickTimers();
+      await resolve(match,b,true,id);
     }catch(err){
       console.error('Fantasy Match : échange interrompu',err);
-      busy=false;
-      try {board=freshBoard();renderAll();} catch(ignored){console.warn(ignored);}
-      toast('✨ Plateau rétabli, retente ton coup !');
+      if(rollbackTurn(id))toast('✨ Échange restauré, retente ton coup !');
     }
   }
   function bestBombCenter(b,goal){
@@ -704,44 +743,43 @@
   async function useBooster(kind,i=-1){
     if(!kind||busy||state.lives<1||moves<=0)return;
     if(state.boosters[kind]<=0){toast('Plus de bonus disponible');return;}
-    busy=true;selected=-1;state.boosters[kind]--;
-    try {
-    if(kind==='shuffle'){
-      board=freshBoard();busy=false;save();renderAll();toast('Plateau mélangé !');return;
-    }
-    let chosen=new Set();
-    if(kind==='color'){
-      const targetKind=i>=0?kindOf(board[i]):current.goal;
-      for(let j=0;j<64;j++)if(kindOf(board[j])===targetKind)chosen.add(j);
-      toast('Magie arc-en-ciel !');
-    }else{
-      const center=i>=0?i:bestBombCenter(board,current.goal);
-      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
-        const y=Math.floor(center/8)+dy,x=center%8+dx;if(y>=0&&y<8&&x>=0&&x<8)chosen.add(y*8+x);
+    const id=beginTurn();selected=-1;
+    try{
+      state.boosters[kind]--;
+      if(kind==='shuffle'){
+        board=freshBoard();save();finishTurn(id);toast('Plateau mélangé !');return;
       }
-      toast('Bombe magique !');
-    }
-    save();await resolve(chosen,-1,false);
+      const chosen=new Set();
+      if(kind==='color'){
+        const targetKind=i>=0?kindOf(board[i]):current.goal;
+        for(let j=0;j<64;j++)if(kindOf(board[j])===targetKind)chosen.add(j);
+        toast('Magie arc-en-ciel !');
+      }else{
+        const center=i>=0?i:bestBombCenter(board,current.goal);
+        for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+          const y=Math.floor(center/8)+dy,x=center%8+dx;
+          if(y>=0&&y<8&&x>=0&&x<8)chosen.add(y*8+x);
+        }
+        toast('Bombe magique !');
+      }
+      await resolve(chosen,-1,false,id);
+      if(id===turnEpoch)save();
     }catch(err){
       console.error('Fantasy Match : booster interrompu',err);
-      state.boosters[kind]++;busy=false;
-      try {board=freshBoard();save();renderAll();} catch(ignored){console.warn(ignored);}
-      toast('✨ Bonus rendu, tu peux continuer !');
+      if(rollbackTurn(id))toast('✨ Le bonus est rendu, le plateau est disponible.');
     }
   }
   async function activateSpecial(i){
     if(busy||state.lives<1||moves<=0||!specialOf(board[i]))return;
-    busy=true;selected=-1;
-    try {
+    const id=beginTurn();selected=-1;
+    try{
       moves--;tickTimers();
       magicEffect(new Set([i]),'✨ Bonus spécial !');
       toast('Bonus spécial déclenché !');
-      await resolve(new Set([i]),-1,false);
+      await resolve(new Set([i]),-1,false,id);
     }catch(err){
       console.error('Fantasy Match : bonus spécial interrompu',err);
-      busy=false;
-      try {board=freshBoard();renderAll();} catch(ignored){console.warn(ignored);}
-      toast('✨ Bonus terminé, le plateau est disponible.');
+      if(rollbackTurn(id))toast('✨ Le bonus est restauré, retente ton coup !');
     }
   }
   function tileTap(i){
