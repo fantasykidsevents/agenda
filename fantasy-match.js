@@ -3,12 +3,12 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const MAX_LEVEL = 300, MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, SIZE = 8, POINTS_PER_UNUSED_MOVE = 50;
-  const WORLD_NAMES = ['Le Royaume des Étoiles', 'Le Jardin Enchanté', 'Le Palais des Neiges', 'La Grotte des Cristaux', 'Le Royaume de la Magie', 'L’Archipel des Comètes', 'Le Labyrinthe des Mirages', 'La Forêt des Ombres', 'La Citadelle des Tempêtes', 'Le Cœur de Lumière',"Les Jardins de l’Aurore","La Bibliothèque des Sortilèges","Le Bal des Lucioles","Le Palais des Éclipses","Le Trône des Étoiles"];
+  const WORLD_NAMES = ['Le Royaume des Étoiles', 'Le Jardin Enchanté', 'Le Palais des Neiges', 'La Grotte des Cristaux', 'Le Royaume de la Magie', 'L’Archipel des Comètes', 'Le Labyrinthe des Mirages', 'La Forêt des Ombres', 'La Citadelle des Tempêtes', 'Le Cœur de Lumière',"Le Royaume des Glaces","Le Village Pain d’Épice","La Tour Enchantée","Les Trésors de l’Océan","Le Jardin des Rêves"];
 
   // Chaque série de 20 niveaux possède sa propre ambiance, sans modifier les règles du jeu.
   const WORLD_THEMES = ["etoiles","jardin","neiges","cristaux","magie","cometes","mirages","ombres","tempetes","lumiere","aurore","grimoires","bal-lucioles","eclipses","trone"];
-  const WORLD_SYMBOLS = ["✦","🌸","❄️","💎","✨","☄️","🔮","🌙","⚡","💖","🌅","📖","🧚","🌘","👑"];
-  const WORLD_FLAVORS = ["Sous un ciel constellé de magie","Des fleurs, des lucioles et des secrets","Une magie étincelante de givre","Des gemmes aux mille reflets","Le royaume de tous les sortilèges","Des îles flottantes sous les étoiles","Des palais dorés dans les mirages","La forêt murmure à la nuit","La citadelle défie les éclairs","La magie rayonne de toutes parts","Les premiers rayons illuminent le royaume","Des grimoires brillent entre les étagères","Les lucioles dansent sous les étoiles","Les ombres et la lumière se rencontrent","Toutes les magies se rassemblent"];
+  const WORLD_SYMBOLS = ["✦","🌸","❄️","💎","✨","☄️","🔮","🌙","⚡","💖","❄️","🍪","🏰","🐚","🌹"];
+  const WORLD_FLAVORS = ["Sous un ciel constellé de magie","Des fleurs, des lucioles et des secrets","Une magie étincelante de givre","Des gemmes aux mille reflets","Le royaume de tous les sortilèges","Des îles flottantes sous les étoiles","Des palais dorés dans les mirages","La forêt murmure à la nuit","La citadelle défie les éclairs","La magie rayonne de toutes parts","Un palais de glace s’illumine sous les flocons","Les gourmandises brillent dans un village enneigé","Des lanternes tourbillonnent autour de la tour","Des perles magiques scintillent sous l’océan","Les roses et les étoiles se retrouvent au jardin"];
   const WORLD_INTROS = [
     "Entre dans le royaume des étoiles !", "Explore le jardin enchanté !",
     "Laisse la neige t'entourer !", "Découvre les cristaux étincelants !",
@@ -16,7 +16,7 @@
     "Traverse les mirages et leurs palais mystérieux !",
     "Les ombres cachent une nouvelle aventure !",
     "Résiste aux tempêtes de la citadelle !",
-    "Tu as atteint le cœur de la magie !","L’aurore déploie ses premiers rayons sur le jardin enchanté !","Entre dans la bibliothèque et découvre les secrets des grimoires !","Les lucioles t’invitent à un bal étincelant !","Traverse le palais où la lune et les étoiles se rencontrent !","Atteins le trône des étoiles, le défi ultime de Fantasy Match !"];
+    "Tu as atteint le cœur de la magie !","Découvre le Royaume des Glaces et ses cristaux enchantés !","Traverse le Village Pain d’Épice et ses lumières gourmandes !","Monte à la Tour Enchantée au milieu des lanternes scintillantes !","Plonge dans les Trésors de l’Océan et découvre leurs perles magiques !","Entre dans le Jardin des Rêves pour le grand final de Fantasy Match !"];
   const KINDS = ['star', 'rose', 'crystal', 'snow', 'crown', 'wand']; // Chapitre 1 : niveaux 1 à 100.
   // Chapitre 2 : six nouvelles pièces au niveau 101, puis un symbole inédit par nouveau monde.
   // Conserver exactement six types par monde pour ne pas casser l'équilibrage du match-3.
