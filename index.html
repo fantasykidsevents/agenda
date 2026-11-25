@@ -2836,7 +2836,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 <div id="resaMailBg" class="sheet-bg hidden" style="z-index:75">
   <div class="sheet" style="max-width:660px">
     <div class="grab"></div>
-    <h2>💌 Écrire aux participants</h2>
+    <h2 id="resaMailTitre">💌 Écrire aux participants</h2><p class="hint hidden" id="resaRappelInfo">Les montants, l’IBAN et les communications de virement sont ajoutés automatiquement à chaque mail.</p>
     <p class="hint" id="resaMailEv"></p>
     <label for="resaMailAudience">Destinataires</label>
     <select id="resaMailAudience">
@@ -9434,7 +9434,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("resaBody").innerHTML = `${!prixPlace(ev) ? `<div class="alert-bar gold">💡 Indiquez le prix par place ci-dessous.</div>` : ""}
       <div class="row" style="align-items:end"><div><label for="resaPrix">Prix par place (€)</label><input id="resaPrix" type="text" inputmode="decimal" value="${prixPlace(ev) ? String(prixPlace(ev)).replace(".", ",") : ""}" placeholder="0,00" /></div>
         <div><small class="hint">Acompte 50 % = ${euro(prixPlace(ev) / 2)} / place</small></div></div>
-      <div class="after-btns" style="margin:8px 0"><button type="button" class="sig enc" id="resaNew">➕ Nouvelle réservation</button><button type="button" class="sig photo" id="resaColler">📋 Coller un message</button><button type="button" class="sig enc" id="resaMailOpen">💌 Mail aux participants</button></div>
+      <div class="after-btns" style="margin:8px 0"><button type="button" class="sig enc" id="resaNew">➕ Nouvelle réservation</button><button type="button" class="sig photo" id="resaColler">📋 Coller un message</button><button type="button" class="sig enc" id="resaMailOpen">💌 Mail aux participants</button><button type="button" class="sig enc" id="resaRappelOpen">🔔 Relancer les acomptes</button></div>
       <input id="resaSearch" type="search" placeholder="🔎 Nom ou téléphone…" value="${esc(resaFiltre)}" />
       ${L.map(({ r, c }) => `<div class="resa-row ${c.actives ? "" : "annul"} ${r.arrives != null ? "arrive" : ""}" data-resa-edit="${esc(r.id)}">
         <div class="tx"><b>${esc(r.nom || "?")}</b>${r.source && r.source !== "manuel" ? `<span class="tag">${esc({ site: "🌐 site", sms: "💬 SMS", facebook: "📘 Facebook" }[r.source] || r.source)}</span>` : ""}${r.code_promo ? `<span class="tag ${r.code_promo_id?"ok":"or"}">🎟️ ${esc(r.code_promo)}${r.code_promo_id?" · −"+euro(c.reduction):" · à vérifier"}</span>`:""}
@@ -9445,7 +9445,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("resaPrix").onchange = async () => { const v = num($("resaPrix").value); try { await store.patch(ev.id, { resa_prix: v || null }); ev.resa_prix = v || null; renderResa(); toast("💶 Prix enregistré"); } catch (err) { toast(erreurReseau(err) ? "📶 Pas de réseau : changez le prix quand le réseau revient" : "Erreur : " + (err.message || err)); } };
     $("resaNew").onclick = () => openResaForm(null);
     $("resaColler").onclick = () => openResaForm(null, true);
-    $("resaMailOpen").onclick = openResaMail;
+    $("resaMailOpen").onclick = () => openResaMail();
+    $("resaRappelOpen").onclick = () => openResaMail(true);
     renderListeAttenteResa();
   }
 
@@ -9517,7 +9518,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
 
   // 💌 Mailing par événement : l'aperçu est calculé côté serveur, sans confiance
   // dans une liste de destinataires reçue du navigateur.
-  let resaMailApercu = null, resaMailEnCours = false, resaMailEventId = null;
+  let resaMailApercu = null, resaMailEnCours = false, resaMailEventId = null, resaRappel = false, resaRappelId = "";
   function resaMailInvalider() {
     resaMailApercu = null;
     $("resaMailPreview").classList.add("hidden");
@@ -9527,7 +9528,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   async function resaMailAppel(type, details = {}) {
     if (DEMO) throw new Error("Envoi de mails indisponible dans la démonstration.");
     if (!navigator.onLine) throw new Error("Une connexion Internet est nécessaire pour envoyer des mails.");
-    const { data, error } = await sb.functions.invoke("notifier", { body: { type, evenementId: resaMailEventId, ...details } });
+    const { data, error } = await sb.functions.invoke("notifier", { body: { type, evenementId: resaMailEventId, rappelAcompte: resaRappel, reservationId: resaRappelId, ...details } });
     if (error) throw new Error(data?.erreur || error.message || "Le serveur ne répond pas.");
     if (!data?.ok) throw new Error(data?.erreur || "Le serveur n'a pas validé l'opération.");
     return data;
@@ -9544,13 +9545,17 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       </div>`).join("") || "Aucun mail envoyé pour cet événement.";
     } catch (err) { if (resaMailEventId === evId) zone.textContent = "Historique indisponible : " + (err.message || err); }
   }
-  function openResaMail() {
+  function openResaMail(rappel = false, reservationId = "") {
     if (!resaEv || !isResp() || resaMailEnCours) return;
     resaMailEventId = resaEv.id;
     $("resaMailEv").textContent = `${resaEv.titre || "Événement"} · ${parseISO(resaEv.date).toLocaleDateString("fr-BE")}`;
-    $("resaMailAudience").value = "tous";
-    $("resaMailSujet").value = `Informations · ${resaEv.titre || "notre événement"}`;
-    $("resaMailMessage").value = "";
+    resaRappel = rappel === true; resaRappelId = resaRappel ? reservationId : "";
+    $("resaMailTitre").textContent = resaRappel ? "🔔 Rappel d’acompte" : "💌 Écrire aux participants";
+    $("resaRappelInfo").classList.toggle("hidden", !resaRappel);
+    $("resaMailAudience").value = resaRappel ? "acomptes_manquants" : "tous";
+    $("resaMailAudience").disabled = resaRappel;
+    $("resaMailSujet").value = resaRappel ? `Petit rappel d’acompte · ${resaEv.titre || "notre événement"}` : `Informations · ${resaEv.titre || "notre événement"}`;
+    $("resaMailMessage").value = resaRappel ? "Nous avons hâte de vous retrouver pour notre événement magique ! ✨ Sauf erreur de notre part, il reste un acompte à verser pour votre réservation. Vous trouverez ci-dessous le montant restant et les informations de paiement. Merci et à très bientôt !" : "";
     resaMailInvalider();
     $("resaMailBg").classList.remove("hidden");
     resaMailHistorique();
@@ -9573,8 +9578,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       $("resaMailPreview").innerHTML = `<div class="alert-bar blue" style="margin:10px 0"><b>👀 Aperçu avant envoi</b><br>
         <b>${+rep.total || 0}</b> adresse(s) distincte(s) · ${+rep.sansEmail || 0} réservation(s) sans e-mail valide
         ${rep.doublons ? ` · ${+rep.doublons} doublon(s) regroupé(s)` : ""}</div>
-        <div class="park-row" style="display:block"><b>Objet :</b> ${esc(sujet)}<br><br>${esc(message).replace(/\n/g, "<br>")}<br><br><small>Fantasy Kids Events 💜</small></div>
-        <details style="margin:10px 0"><summary>Voir les destinataires (${+rep.total || 0})</summary><p class="hint" style="white-space:pre-wrap">${(rep.destinataires || []).map(x => esc(`${x.nom} · ${x.email}`)).join("<br>")}</p></details>`;
+        <div class="park-row" style="display:block"><b>Objet :</b> ${esc(sujet)}<br><br>${esc(message).replace(/\n/g, "<br>")}<br><br>${resaRappel?`<small>Chaque mail contiendra le montant personnel, l’IBAN, la communication et une mention en cas de virement déjà effectué.</small><br>`:""}<small>Fantasy Kids Events 💜</small></div>
+        <details style="margin:10px 0"><summary>Voir les destinataires (${+rep.total || 0})</summary><p class="hint" style="white-space:pre-wrap">${(rep.destinataires || []).map(x => esc(`${x.nom} · ${x.email}${resaRappel ? " · "+euro(x.montant) : ""}`)).join("<br>")}</p></details>`;
       $("resaMailPreview").classList.remove("hidden");
       if (rep.total) $("resaMailSend").classList.remove("hidden");
       else $("resaMailErr").textContent = "Aucun destinataire pour ce filtre. Rien ne sera envoyé.";
@@ -9783,7 +9788,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <input id="rfPlaces" type="hidden" value="${+r.places || 1}" /><p class="hint" id="rfPlTxt" style="margin-top:2px"></p>${r.code_promo?`<div class="alert-bar ${r.code_promo_id?"":"gold"}"><b>🎟️ Code promo : ${esc(r.code_promo)}</b><div id="rfPromoDetail">${r.code_promo_id?"Réduction appliquée":"⚠️ Code non validé à l’import : vérifier avant confirmation."}</div></div>`:""}
       <div class="row"><div><label for="rfSource">Reçue par</label><select id="rfSource">${[["sms", "💬 SMS"], ["facebook", "📘 Facebook"], ["site", "🌐 Site"], ["manuel", "✍️ Autre"]].map(([k, t]) => `<option value="${k}" ${r.source === k ? "selected" : ""}>${t}</option>`).join("")}</select></div>
         <div><label for="rfAcompte">Acompte reçu (€)</label><input id="rfAcompte" type="text" inputmode="decimal" value="${+r.acompte_recu ? String(r.acompte_recu).replace(".", ",") : ""}" placeholder="0,00" /></div></div>
-      <button type="button" class="btn ghost" id="rfAc50" style="width:100%">💶 Acompte 50 % reçu (${euro(r2(totalResaPromo(r,resaEv)/2))})</button>
+      <button type="button" class="btn ghost" id="rfAc50" style="width:100%">💶 Acompte 50 % reçu (${euro(r2(totalResaPromo(r,resaEv)/2))})</button>${r.id&&r.confirmee_le&&r.email&&c.actives&&c.reste>0&&(+r.acompte_recu||0)<r2(c.actives*c.P/2)?`<button type="button" class="btn ghost" id="rfRappelAc" style="width:100%;margin-top:6px">🔔 Envoyer un rappel d’acompte</button>`:""}
       ${avoir ? `<div class="alert-bar gold" style="margin-top:8px">🎟️ Avoir disponible pour ce client : <b>${euro(avoir)}</b> <button type="button" class="tag ok" id="rfAvoir" style="border:0;cursor:pointer">Utiliser</button></div>` : ""}
       ${+r.avoir_utilise ? `<p class="hint">🎟️ Avoir déduit : ${euro(+r.avoir_utilise)} <button type="button" class="tag ko" id="rfAvoirX" style="border:0;cursor:pointer">retirer</button></p>` : ""}
       <div class="resa-conf ${r.confirmee_le ? "ok" : ""}">${r.confirmee_le
@@ -9816,6 +9821,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       $("rfAc50").textContent = `💶 Acompte 50 % reçu (${euro(r2(totalResaPromo(r,resaEv,n)/2))})`; }
     ["rfAd", "rfEnf", "rfBebes"].forEach(id => $(id).addEventListener("input", majPl)); majPl();
     $("rfAc50").onclick = () => { $("rfAcompte").value = String(r2(totalResaPromo(r,resaEv,+$("rfPlaces").value||1)/2)).replace(".", ","); };
+    if ($("rfRappelAc")) $("rfRappelAc").onclick = () => { if(!confirm("Le rappel utilise les données enregistrées. Fermer cette fiche sans enregistrer les modifications éventuelles ?"))return; $("resaFormBg").classList.add("hidden"); openResaMail(true,r.id); };
     if ($("rfAvoir")) $("rfAvoir").onclick = () => { const o = lire(); o.avoir_utilise = r2((+r.avoir_utilise || 0) + Math.min(avoir, calcResa(o, resaEv).reste || avoir)); openResaForm(o); };
     if ($("rfAvoirX")) $("rfAvoirX").onclick = () => { const o = lire(); o.avoir_utilise = 0; openResaForm(o); };
     $("rfCancel").onclick = () => $("resaFormBg").classList.add("hidden");
