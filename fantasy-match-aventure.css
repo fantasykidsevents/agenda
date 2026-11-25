@@ -125,3 +125,114 @@ body[data-world]{background:#17072e}
 .fm-world-portal-card{border-color:#ffe19d}
 .fm-world-portal-card h2{color:#8127b7}
 @media(max-width:390px){.fm-header .fm-adventure-open{right:32px}.fm-nav button{font-size:11px}}
+
+
+/* === Accueil et carte réels : mêmes IDs que le moteur sauvegardé Fantasy Match. === */
+.fm-adventure-screen{position:fixed;z-index:90;inset:0;overflow-y:auto;overscroll-behavior:contain;
+ -webkit-overflow-scrolling:touch;background:radial-gradient(ellipse at top left,#692aaa 0%,transparent 60%),#1a083d;color:#fff}
+.fm-adventure-screen.hidden{display:none!important}
+.fm-home-stage,.fm-map-main{position:relative;max-width:540px;margin:0 auto;isolation:isolate}
+.fm-home-stage{min-height:100svh;box-sizing:border-box;padding:calc(12px + env(safe-area-inset-top)) 18px calc(20px + env(safe-area-inset-bottom));
+ background:
+ linear-gradient(180deg,#1b064077 0%,#210d4a75 40%,#15032ecb 100%),
+ url('fantasy-match-worlds-15-sprite.webp') left center/1500% 100% no-repeat;
+ box-shadow:0 0 50px #170525ba}
+.fm-home-stage:before,.fm-map-main:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+ background-image:radial-gradient(circle,#fff 1.4px,transparent 2px),radial-gradient(circle,#ffedb4 1px,transparent 2px);
+ background-size:89px 111px,137px 159px;filter:drop-shadow(0 0 4px #fff);opacity:.65}
+.fm-home-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.fm-home-eyebrow,.fm-map-eyebrow{font-size:11px;font-weight:1000;letter-spacing:.14em;color:#ffdb94;text-shadow:0 2px 5px #1e0738}
+.fm-round-btn{height:43px;min-width:43px;padding:0 8px;display:grid;place-items:center;border-radius:15px;border:2px solid #ffdb96;
+ background:linear-gradient(#7540bb,#33106c);box-shadow:inset 0 2px 3px #e9bcff88,0 4px 10px #12032ab0;color:#fff7dd;font-size:24px;font-weight:1000}
+.fm-home-logo{width:min(96%,350px);height:164px;object-fit:contain;display:block;margin:5px auto 0;filter:drop-shadow(0 0 11px #e75fff) drop-shadow(0 8px 6px #17062b)}
+.fm-home-progress{text-align:center;font-weight:1000;color:#ffe7ac;font-size:12px;letter-spacing:.05em;text-shadow:0 2px 3px #27054e}
+.fm-home-lumi{min-height:216px;display:flex;align-items:center;justify-content:center;gap:1px;max-width:450px;margin:0 auto}
+.fm-home-lumi img{width:37%;max-width:160px;height:192px;object-fit:contain;filter:drop-shadow(0 0 8px #fff9) drop-shadow(0 0 12px #f26cff);
+ animation:fm-adv-float 3.6s ease-in-out infinite}
+.fm-home-lumi p{flex:1;max-width:265px;min-height:90px;margin:0;padding:18px 13px;border:3px solid #ffe3a0;border-radius:22px 22px 22px 5px;
+ background:linear-gradient(150deg,#5625a8ef,#260c60f5);box-shadow:inset 0 2px 7px #ddadff5c,0 6px 16px #1102269e;
+ font-size:14px;line-height:1.35;font-weight:850;color:#fff;text-shadow:0 2px 3px #240845}
+.fm-hero-button{display:block;width:100%;max-width:415px;min-height:63px;margin:5px auto 13px;border:3px solid #ffe4a4;border-radius:23px;
+ background:linear-gradient(180deg,#ff8ae9,#f92dbe 42%,#ac189c);
+ box-shadow:inset 0 3px 5px #fff8,0 6px 0 #842987,0 9px 16px #16032cc1;
+ color:#fff;text-shadow:0 2px 3px #611368;font-size:25px;font-weight:1000}
+.fm-hero-button small{display:block;font-size:12px;margin-top:2px;color:#fff6e5}
+.fm-home-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:415px;margin:0 auto 14px}
+.fm-home-actions button{min-height:70px;padding:10px 8px;border:2px solid #ffdd9c;border-radius:17px;
+ background:linear-gradient(#7c42c0,#3a137c 58%,#240b59);color:#fff;font-size:25px;font-weight:1000;
+ box-shadow:inset 0 2px 5px #e5baff7d,0 4px 0 #8b42a6,0 7px 15px #17032ab0}
+.fm-home-actions button span{font-size:13px;display:block;margin-top:4px}
+.fm-home-counters{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:6px auto;color:#fff;font-weight:1000}
+.fm-home-counters span{border-radius:99px;border:2px solid #ffe5a3;background:#3a147be0;padding:8px 14px;box-shadow:0 3px 8px #14052b}
+.fm-home-exit{display:block;width:max-content;margin:17px auto;color:#f7dfb3;font-size:12px;font-weight:900;text-decoration:none}
+.fm-map-screen{background:linear-gradient(120deg,#150434,#2b105f 56%,#160433)}
+.fm-map-header{max-width:540px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 12px 8px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.fm-map-header>div{flex:1;text-align:center;min-width:0}
+.fm-map-header h2{margin:0;font-size:24px;line-height:1.22;color:#fff3e7;text-shadow:0 2px #521284,0 0 13px #f3a2ff}
+.fm-map-main{padding:2px 12px calc(24px + env(safe-area-inset-bottom))}
+.fm-map-world-head{display:flex;gap:8px;align-items:center;justify-content:center;margin:2px auto 9px;padding:7px 9px;border:2px solid #ffe5a1;border-radius:19px;
+ background:linear-gradient(125deg,#6331ab,#24095fe8 63%,#5d2296);box-shadow:inset 0 2px 5px #d5a9fc77,0 4px 12px #12062d96}
+.fm-map-world-head div{flex:1;text-align:center;min-width:0}
+.fm-map-world-head strong{display:block;font-size:15px;font-weight:1000;color:#fff6df;line-height:1.2}
+.fm-map-world-head span{display:block;color:#d8eaff;font-size:11px;font-weight:850;margin-top:2px}
+.fm-map-world-head button{height:38px;width:40px;border:2px solid #ffdf9b;border-radius:12px;background:#552098;color:#fff8dc;font-size:26px}
+.fm-map-world-head button:disabled{opacity:.4}
+.fm-map-track{position:relative;max-width:470px;height:clamp(370px,98vw,520px);margin:0 auto;overflow:hidden;isolation:isolate;
+ border:4px solid #ffdc8e;border-radius:24px;background:
+ linear-gradient(180deg,#1b084563,#19064698 65%,#16033172),
+ url('fantasy-match-worlds-15-sprite.webp') var(--fm-map-x,0%) center/1500% 100% no-repeat;
+ box-shadow:inset 0 0 19px #13033b9e,0 0 15px #b22dea8a,0 8px 17px #0c0322a6}
+.fm-map-track::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.7;
+ background:radial-gradient(circle at 40% 25%,#fff9,transparent 28%),radial-gradient(circle at 50% 75%,#b9efff54,transparent 45%)}
+.fm-map-route{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;overflow:visible}
+.fm-map-route polyline{stroke:#ffe6a2;stroke-width:1.3;stroke-dasharray:2 3;fill:none;
+ stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 2px #bf5cff)}
+.fm-map-nodes{position:absolute;inset:0;z-index:2;pointer-events:none}
+.fm-map-node{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;
+ width:clamp(33px,10vw,46px);height:clamp(33px,10vw,46px);padding:0;border:3px solid #ffe4a2;border-radius:50%;
+ background:radial-gradient(circle at 26% 16%,#efadff,#a644d9 51%,#3e137c);
+ color:#fff;font-size:13px;font-weight:1000;text-shadow:0 2px 3px #250840;
+ box-shadow:inset 0 2px 4px #fff6,0 3px 5px #16072c9d}
+.fm-map-node small{position:absolute;bottom:-7px;right:-4px;font-size:12px;line-height:1}
+.fm-map-node.finished{background:radial-gradient(circle at 24% 14%,#fffbe0,#ffdb54 50%,#ca7930);color:#fff}
+.fm-map-node.current{background:radial-gradient(circle at 26% 17%,#a6ffff,#4fa9fa 49%,#7740d5);border-color:#fff;
+ box-shadow:0 0 0 3px #34dfff,0 0 18px #fff,0 0 15px #28c6ff}
+.fm-map-node.locked{border-color:#b9a6d1;background:#3a285f;color:#c3add8;filter:saturate(.4);opacity:.79}
+.fm-map-node.reward-node{border-color:#fff8c1}
+.fm-map-node:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.fm-map-lumi{position:absolute;z-index:5;width:clamp(55px,16vw,75px);height:clamp(64px,20vw,95px);object-fit:contain;
+ transform:translate(-50%,-110%);pointer-events:none;filter:drop-shadow(0 0 7px #fff) drop-shadow(0 0 11px #ee5cfc)}
+.fm-map-lumi-talk{display:flex;gap:11px;align-items:center;justify-content:center;margin:9px 0 7px;padding:8px;border:2px solid #ffdd9c;border-radius:16px;background:#351374e9}
+.fm-map-lumi-talk img{width:43px;height:52px;object-fit:contain}
+.fm-map-lumi-talk p{margin:0;flex:1;color:#fff5e7;font-size:12px;font-weight:900;line-height:1.35}
+.fm-map-gift{margin:8px auto 9px;max-width:470px;text-align:center}
+.fm-gift-waiting{padding:10px;border:2px solid #ffd681;border-radius:17px;background:linear-gradient(#6840ab,#36166e);box-shadow:0 0 13px #ffd5ae83}
+.fm-gift-waiting b{display:block;font-size:14px;color:#fff4d6}
+.fm-gift-waiting button{display:block;max-width:320px;width:100%;margin:8px auto 0;padding:11px 8px;border:2px solid #ffeca8;border-radius:12px;background:linear-gradient(#ff90db,#c82bba);color:#fff;font-weight:1000}
+.fm-gift-progress,.fm-gift-claimed{display:block;padding:11px;border:1px solid #ebc3f5;border-radius:14px;background:#34186edc;font-size:12px;font-weight:850;color:#fff0e5}
+.fm-map-play{margin:10px auto 12px;max-width:470px;font-size:18px;min-height:49px}
+.fm-map-all-label{text-align:center;margin:14px auto 6px;font-size:10px;letter-spacing:.13em;color:#f3d2ff;font-weight:1000}
+.fm-map-world-list{display:flex;gap:7px;max-width:100%;overflow-x:auto;padding:4px 1px 13px;scrollbar-width:thin}
+.fm-map-world-list button{position:relative;flex:0 0 54px;min-height:57px;display:flex;flex-direction:column;align-items:center;gap:3px;justify-content:center;
+ border:2px solid #dcb5f5;border-radius:14px;background:linear-gradient(#713daf,#36136d);color:#fff}
+.fm-map-world-list button.active{border-color:#fcecb3;box-shadow:0 0 12px #ffe1a9}
+.fm-map-world-list button b{font-size:12px}.fm-map-world-list button small{position:absolute;right:1px;top:1px;font-size:9px}
+.fm-map-world-list button span{font-size:20px;line-height:1}
+.fm-home-shortcut{right:76px!important;top:-10px;position:absolute;z-index:5;min-width:31px;height:31px;border:2px solid #ffdf98;border-radius:12px;
+ background:linear-gradient(#7234b5,#3a1276);color:#fff;font-size:19px;box-shadow:0 3px 7px #14032c9a}
+.fm-modal-backdrop{z-index:120!important}
+.fm-world-portal{z-index:110!important}
+.fm-toast{z-index:135!important}
+@media(max-width:390px){
+ .fm-home-stage{padding-left:10px;padding-right:10px}
+ .fm-home-logo{height:142px}
+ .fm-home-lumi{min-height:177px}
+ .fm-home-lumi img{height:164px}
+ .fm-home-lumi p{font-size:12px;padding:11px}
+ .fm-map-header h2{font-size:21px}
+ .fm-map-main{padding-left:8px;padding-right:8px}
+ .fm-map-track{height:clamp(365px,106vw,455px)}
+ .fm-map-node{width:34px;height:34px;font-size:12px}
+ .fm-map-lumi{width:55px;height:72px}
+}
+@media(prefers-reduced-motion:reduce){.fm-home-lumi img{animation:none}.fm-map-lumi{transition:none!important}}
