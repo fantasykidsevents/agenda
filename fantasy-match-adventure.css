@@ -275,26 +275,29 @@ body .fm-shell[data-world]{
   align-items:center;
 }
 .fm-brand{
-  position:relative;
-  justify-content:center;
-  min-width:0;
-  height:auto;
-  min-height:74px;
-  margin:5px 3px 5px -1px;
-  padding:7px 5px 7px 38px;
-  border:2px solid #fff6ef;
-  border-radius:18px;
-  background:linear-gradient(145deg,#fffdfaeb,#fff4fff0 65%,#e6dbffec);
-  box-shadow:inset 0 2px 8px #ffffff,0 4px 0 #a772b0aa,0 5px 12px #160634a0;
-  isolation:isolate;
+  /* Signature de Fantasy Kids Events : logo original, sans carte ni boîte. */
+  position:relative;isolation:isolate;
+  justify-content:center;align-items:center;
+  min-width:0;height:98px;min-height:0;
+  margin:0;padding:7px 2px 7px 43px;
+  border:0;border-radius:0;background:none;
+  box-shadow:none;
+  overflow:visible;
+}
+.fm-brand::before{
+  /* Halo diffus : éclaire le lettrage sombre sans encadré visible. */
+  content:"";position:absolute;z-index:-1;pointer-events:none;
+  top:18%;bottom:17%;left:30%;right:-1%;
+  border:0;border-radius:50%;
+  background:radial-gradient(ellipse at 51% 53%,#fffbffbd 0%,#fbdeff78 35%,#ffd7ff20 58%,transparent 74%);
+  filter:blur(12px);
 }
 .fm-brand img{
+  position:relative;z-index:1;
   display:block;
-  width:100%;
-  max-width:137px;
-  max-height:66px;
-  object-fit:contain;
-  filter:drop-shadow(0 1px 1px #ffffff) drop-shadow(0 1px 2px #ae64df66);
+  width:100%;max-width:130px;max-height:80px;
+  height:auto;object-fit:contain;
+  filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 3px #ffffffdd) drop-shadow(0 2px 2px #23044066);
 }
 .fm-game-logo{
   margin:0 14px 0 1px;
@@ -431,8 +434,8 @@ body .fm-shell[data-world]{
 .fm-cell[disabled]{opacity:.87}
 @media(max-width:390px){
   .fm-header{padding-right:8px}
-  .fm-brand{padding-left:34px;min-height:68px}
-  .fm-brand img{max-height:61px}
+  .fm-brand{padding-left:39px;height:80px;min-height:0;margin:0;background:none;border:0;box-shadow:none}
+  .fm-brand img{max-height:66px;max-width:116px}
   .fm-header .fm-settings,.fm-header .fm-home-shortcut{width:32px;height:32px}
   .fm-header .fm-home-shortcut{top:42px}
   .fm-nav button{padding-left:2px;padding-right:2px}
