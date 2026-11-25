@@ -197,18 +197,16 @@
   // coups et les objectifs n'exigent plus des cascades exceptionnelles.
   function levelConfig(n) {
     const cfg=originalLevelConfig(n),mode=cfg.mode;
-    const extra=n<=5?0:n<=15?1:n<=100?2:n<=200?5:4;
+    const extra=n<=5?0:n<=15?0:n<=100?0:n<=200?3:2;
     const modeExtra=n<=15?0:mode==='duo'||mode==='ice'||mode==='seal'?1:mode==='combo'?2:0;
-    const scale=n<=15?1:n<=100?.98:n<=200?.89:.94;
+    const scale=n<=5?1:n<=15?1.05:n<=100?1.12:n<=200?.98:1.06;
     if(mode==='duo'){
       cfg.targets=Object.fromEntries(Object.entries(cfg.targets).map(([k,v])=>[k,Math.max(3,Math.ceil(v*scale))]));
       cfg.target=Object.values(cfg.targets).reduce((a,b)=>a+b,0);
     }else if(mode==='score')cfg.target=Math.max(300,Math.round(cfg.target*scale/10)*10);
-    else if(mode==='special')cfg.target=Math.max(1,Math.min(n<=100?cfg.target:n<=180?4:5,Math.ceil(cfg.target*.90)));
-    else if(mode==='combo')cfg.target=Math.min(cfg.target,n<=160?1:n<=260?2:3);
+    else if(mode==='special')cfg.target=Math.max(1,Math.min(n<=15?cfg.target:n<=100?5:6,Math.ceil(cfg.target)));
+    else if(mode==='combo')cfg.target=Math.min(cfg.target,n<=140?1:n<=240?2:3);
     else if(mode!=='seal')cfg.target=Math.max(1,Math.ceil(cfg.target*scale));
-    // Stable on replay, but not identical across every level in a difficulty band.
-    // Variations are small to preserve the intermediate balancing.
     const variation=n<=5?0:((n*37+Math.floor(n/7)*11)%5)-2;
     cfg.moves=Math.max(14,Math.min(35,cfg.moves+extra+modeExtra+variation-(n>30&&n%10===0?1:0)));
     return cfg;
