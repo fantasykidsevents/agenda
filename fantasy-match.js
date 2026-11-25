@@ -73,7 +73,7 @@
   let touch = null, suppressClickUntil = 0;
   // Sécurité anti-blocage : annuler proprement une animation suspendue sur iOS,
   // sans perdre le coup, les bonus ou la progression du membre.
-  let turnEpoch=0, turnWatchdog=null, turnSnapshot=null;
+  let turnEpoch=0, turnWatchdog=null, turnSnapshot=null, turnStartedAt=0;
   function snapshotTurn(){
     return {
       board:board.slice(), moves,remaining,roundScore,bonusCreated,comboCount,
@@ -86,7 +86,7 @@
     const id=++turnEpoch;
     clearTimeout(turnWatchdog);
     turnSnapshot=snapshotTurn();
-    busy=true;
+    busy=true;turnStartedAt=now();
     turnWatchdog=setTimeout(()=>{
       if(id!==turnEpoch||!busy)return;
       console.warn('Fantasy Match : animation trop longue, restauration du coup');
@@ -98,7 +98,7 @@
   function rollbackTurn(id){
     if(id!==turnEpoch)return false;
     const b=turnSnapshot;
-    ++turnEpoch;clearTimeout(turnWatchdog);turnWatchdog=null;turnSnapshot=null;
+    ++turnEpoch;clearTimeout(turnWatchdog);turnWatchdog=null;turnSnapshot=null;turnStartedAt=0;
     if(b){
       board=b.board;moves=b.moves;remaining=b.remaining;roundScore=b.roundScore;
       bonusCreated=b.bonusCreated;comboCount=b.comboCount;
@@ -112,7 +112,7 @@
   }
   function finishTurn(id){
     if(id!==turnEpoch)return false;
-    clearTimeout(turnWatchdog);turnWatchdog=null;turnSnapshot=null;
+    clearTimeout(turnWatchdog);turnWatchdog=null;turnSnapshot=null;turnStartedAt=0;
     busy=false;renderAll();return true;
   }
   const rand = n => Math.floor(Math.random() * n);
@@ -484,7 +484,7 @@
     setTimeout(()=>layer.remove(),1150);
   }
   function startRound(n=state.level) {
-    ++turnEpoch;clearTimeout(turnWatchdog);turnWatchdog=null;turnSnapshot=null;busy=false;
+    ++turnEpoch;clearTimeout(turnWatchdog);turnWatchdog=null;turnSnapshot=null;turnStartedAt=0;busy=false;
     tickLives();
     state.level = Math.min(Math.max(1,n),state.maxUnlocked);
     current = levelConfig(state.level); target=current.target; remaining=target; moves=current.moves;roundScore=0;
@@ -782,8 +782,21 @@
       if(rollbackTurn(id))toast('✨ Le bonus est restauré, retente ton coup !');
     }
   }
+  function recoverUnresponsiveBoard(){
+    // Sur iOS, une animation peut rester suspendue alors que Safari accepte
+    // encore les clics. Un nouveau toucher après 2,3 s libère le plateau.
+    if(!busy)return false;
+    if(!turnStartedAt||now()-turnStartedAt<2300)return false;
+    const recovered=rollbackTurn(turnEpoch);
+    if(recovered)toast('✨ Lumi a débloqué le plateau. Retente ton coup !');
+    return recovered;
+  }
   function tileTap(i){
-    if(busy||state.lives<1||moves<=0)return;
+    if(busy){
+      recoverUnresponsiveBoard();
+      return;
+    }
+    if(state.lives<1||moves<=0)return;
     if(selected<0){selected=i;renderBoard();if(specialOf(board[i]))toast('Échange-le avec un autre bonus spécial pour les fusionner !');return;}
     if(selected===i){if(specialOf(board[i]))activateSpecial(i);else{selected=-1;renderBoard();}return;}
     if(isNeighbor(selected,i)){swap(selected,i);return;}
@@ -1033,7 +1046,11 @@
     });
     for(const type of ['color','bomb','shuffle']){
       $('boost'+type[0].toUpperCase()+type.slice(1)).addEventListener('click',()=>{
-        if(busy||state.lives<1||moves<=0)return;
+        if(busy){
+          recoverUnresponsiveBoard();
+          return;
+        }
+        if(state.lives<1||moves<=0)return;
         if(!state.boosters[type]){toast('Plus de bonus disponible');return;}
         useBooster(type,selected);
       });
@@ -1049,6 +1066,9 @@
     window.addEventListener('online', () => { if (cloudReady) synchroniserProgression(true); });
     window.addEventListener('focus', () => { if (cloudReady) synchroniserProgression(true); });
     document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && busy && turnStartedAt && now()-turnStartedAt>2300){
+        recoverUnresponsiveBoard();
+      }
       if (document.visibilityState === 'visible' && cloudReady) synchroniserProgression(true);
     });
     $('lumiGameBtn').addEventListener('click',lumiHint);
