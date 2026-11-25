@@ -7,10 +7,10 @@
   <meta name="description" content="Fantasy Match, le jeu magique de l'équipe Fantasy Kids Events.">
   <title>Fantasy Match · Fantasy Kids Events</title>
   <link rel="stylesheet" href="fantasy-match.css">
-  <link rel="stylesheet" href="fantasy-match-premium.css?v=300-glossy-15mondes-20261125">
+  <link rel="stylesheet" href="fantasy-match-premium.css?v=lumi-mondes-20261125">
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="fantasy-match.js?v=300-20261125"></script>
+  <script defer src="fantasy-match.js?v=lumi-mondes-20261125"></script>
 </head>
 <body>
   <div class="fm-bg-stars" aria-hidden="true"></div>
@@ -51,7 +51,13 @@
       <div class="fm-board-overlay hidden" id="boardOverlay"><span id="boardOverlayText">Préparation…</span></div>
     </div>
 
-    <p class="fm-tip" id="gameTip">Aligne trois symboles identiques pour récolter ta magie</p>
+    <div class="fm-lumi-zone">
+      <button type="button" id="lumiGameBtn" class="fm-lumi-companion" aria-label="Demander une astuce à Lumi" title="Lumi : une astuce magique">
+        <img src="lumi-jour.webp" alt="" loading="lazy" draggable="false">
+        <span class="fm-lumi-spark" aria-hidden="true">✦</span>
+      </button>
+      <p class="fm-tip" id="gameTip">Aligne trois symboles identiques pour récolter ta magie</p>
+    </div>
     <div class="fm-powerups" aria-label="Bonus spéciaux">
       <button id="boostColor" class="fm-power" title="Effacer toutes les pièces identiques" aria-label="Bonus magie"><span class="fm-bubble" aria-hidden="true"></span><b id="colorCount">3</b></button>
       <button id="boostBomb" class="fm-power" title="Effacer neuf cases" aria-label="Bonus bombe"><span class="fm-bubble" aria-hidden="true"></span><b id="bombCount">3</b></button>
