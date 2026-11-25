@@ -14221,6 +14221,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   body.dark .logo{height:60px}
   body.dark .np-row{background:#211a3a !important;border-color:#3a3159 !important}`;
   const st = document.createElement("style"); st.id = "darkCss"; st.textContent = css; document.head.appendChild(st);
+  // Correctifs de contraste placés après les styles sombres calculés.
+  // Les thèmes clairs, les choix utilisateur et les données restent inchangés.
+  const darkFix = document.createElement("link");
+  darkFix.id = "fkDarkContrast";
+  darkFix.rel = "stylesheet";
+  darkFix.href = "dark-mode-fixes.css?v=20261125-1";
+  document.head.appendChild(darkFix);
   const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
   const pref = () => { try { return localStorage.getItem("fk_mode") || "clair"; } catch (e) { return "clair"; } };
   const appliquer = () => { const p = pref(), d = p === "sombre" || (p === "auto" && mq && mq.matches);
