@@ -442,3 +442,76 @@ body .fm-shell[data-world]{
   .fm-ranking-row{padding:10px 9px}
   .fm-ranking-row button{width:58px}
 }
+
+
+/* Header mobile : vrai contour blanc du logo Fantasy Kids Events,
+   pas de cadre ni de halo. Aide / Accueil ont leur propre colonne. */
+.fm-header{
+  display:grid;
+  grid-template-columns:minmax(0,43%) minmax(0,1fr) 42px;
+  gap:2px;
+  align-items:center;
+  min-height:108px;
+  padding-right:0;
+}
+.fm-brand{
+  position:relative;
+  grid-column:1;
+  height:auto;min-height:90px;
+  margin:0;padding:6px 2px 6px 43px;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  overflow:visible;
+}
+.fm-brand::before{content:none!important;display:none!important}
+.fm-brand img{
+  max-width:146px;max-height:98px;
+  width:100%;height:auto;
+  object-fit:contain;
+  /* Contour qui épouse les lettres et les étoiles du PNG transparent. */
+  filter:drop-shadow(1px 0 0 #fff)
+         drop-shadow(-1px 0 0 #fff)
+         drop-shadow(0 1px 0 #fff)
+         drop-shadow(0 -1px 0 #fff)
+         drop-shadow(0 0 2px #fff)
+         drop-shadow(0 3px 3px #170630aa)!important;
+}
+.fm-game-logo{
+  grid-column:2;
+  width:100%;max-width:100%;
+  margin:0;padding:0;min-width:0;
+  align-self:center;
+}
+.fm-header-controls{
+  grid-column:3;grid-row:1;
+  width:42px;
+  min-height:98px;
+  display:flex;flex-direction:column;
+  justify-content:space-evenly;align-items:center;
+  gap:12px;position:relative;z-index:8;
+}
+.fm-header .fm-settings,.fm-header .fm-home-shortcut{
+  position:relative!important;
+  inset:auto!important;
+  top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;
+  width:34px;height:34px;min-width:34px;min-height:34px;
+  border-radius:50%;
+  margin:0;padding:0;
+  display:grid;place-items:center;
+  border:2px solid #ffe4a8;
+  background:linear-gradient(155deg,#7133b4,#32126e);
+  box-shadow:0 2px 0 #b57a34,0 2px 8px #13062cbb;
+  color:#fff2c7;
+  font-size:21px;line-height:1;
+}
+.fm-header .fm-home-shortcut{font-size:24px}
+.fm-exit{left:-2px;top:calc(50% - 24px);z-index:9}
+@media(max-width:390px){
+  .fm-header{grid-template-columns:minmax(0,43%) minmax(0,1fr) 37px;gap:1px;min-height:96px;padding-right:0}
+  .fm-brand{min-height:81px;height:auto;margin:0;padding:5px 1px 5px 39px!important}
+  .fm-brand img{max-width:128px;max-height:82px}
+  .fm-header-controls{width:37px;min-height:88px;gap:10px}
+  .fm-header .fm-settings,.fm-header .fm-home-shortcut{width:30px;height:30px;min-width:30px;min-height:30px;font-size:19px}
+  .fm-header .fm-home-shortcut{font-size:22px}
+  .fm-exit{top:calc(50% - 21px)}
+}
