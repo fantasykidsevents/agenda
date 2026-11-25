@@ -316,6 +316,14 @@ body{
 .fm-shell[data-world="ombres"]{--fm-world-glow:#8be9b8}
 .fm-shell[data-world="tempetes"]{--fm-world-glow:#8ea8ff}
 .fm-shell[data-world="lumiere"]{--fm-world-glow:#ffdf9e}
+.fm-shell[data-world="aurore"]{--fm-world-glow:#ffe3a5}
+.fm-shell[data-world="grimoires"]{--fm-world-glow:#d9b0ff}
+.fm-shell[data-world="bal-lucioles"]{--fm-world-glow:#baffdb}
+.fm-shell[data-world="eclipses"]{--fm-world-glow:#b6c9ff}
+.fm-shell[data-world="trone"]{--fm-world-glow:#ffe5a8}
+/* Chapitre 3 : le plateau, les boutons, le logo et les pièces gardent
+   exactement l'identité visuelle de Fantasy Match. */
+
 .fm-shell[data-world] .fm-board-wrap{
   box-shadow:0 0 3px 3px #65eaff,0 0 13px var(--fm-world-glow,#04caff),
     0 0 22px #ef39ec,0 6px 14px #701eba65;
