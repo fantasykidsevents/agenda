@@ -1,15 +1,15 @@
 // Service worker : permet l'installation et l'ouverture hors connexion.
 // Stratégie « réseau d'abord » : on prend toujours la version la plus
 // récente, et on retombe sur le cache si pas de réseau.
-const CACHE = "fk-agenda-v161";
+const CACHE = "fk-agenda-v162";
 const FICHIERS = [
   "./", "./index.html", "./dark-mode-fixes.css", "./fiche-onglets.js", "./gestion-bilans.js", "./suivi-fantasy.js", "./devis.html", "./anticipation.html", "./attente.html", "./factures.html", "./factures-pdf.js", "./factures-fond-magique.jpg", "./config.js", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./logo.png", "./nuit-magique.png",
   "./lumi-jour.webp", "./lumio-jour.webp", "./lumi-matin.webp", "./lumi-danse.webp", "./lumi-soir.webp", "./lumi-nuit.webp",
   "./lumi-anniversaire.webp", "./lumi-elsa.webp", "./lumi-mira.webp",
-  "./fantasy-potions.html", "./fantasy-potions.css?v=visuels-20261125-2",
-  "./fantasy-potions-enchanted.css?v=enchante-20261125-1", "./fantasy-potions-enchanted.js?v=enchante-20261125-1",
-  "./fantasy-potions-logo-glossy.webp", "./fantasy-potions-atelier.svg", "./fantasy-potions-victory.svg", "./fantasy-match-worlds-15-sprite.webp",
+  "./mes-jeux.html", "./fantasy-potions.html", "./fantasy-potions.css?v=visuels-20261125-2",
+  "./fantasy-potions-enchanted.css?v=enchante-20261125-3", "./fantasy-potions-enchanted.js?v=enchante-20261125-1",
+  "./fantasy-potions-logo-glossy.webp", "./fantasy-potions-logo-glossy.webp?v=20261125", "./fantasy-match-logo.webp", "./fantasy-potions-atelier.svg", "./fantasy-potions-victory.svg", "./fantasy-match-worlds-15-sprite.webp",
 ];
 
 self.addEventListener("install", (e) => {
