@@ -37,7 +37,7 @@
   // Lumi utilise l'illustration originale de Fantasy App : une pièce bonus rare,
   // pour garder six couleurs combinables et préserver la difficulté du match-3.
   const LUMI_BONUS = 'lumi|color';
-  const poolForLevel = n => n > 100 ? CHAPTER2_WORLD_KINDS[Math.min(CHAPTER2_WORLD_KINDS.length-1,Math.max(0,Math.floor((n-101)/20)))] : KINDS;
+  const poolForLevel = () => KINDS; // Retour aux six pièces classiques dans tous les mondes.
   const LABELS = {
     star:'Étoiles',rose:'Roses',crystal:'Cristaux',snow:'Flocons',crown:'Couronnes',wand:'Baguettes',
     comet:'Comètes',moon:'Lunes',lotus:'Fleurs célestes',frost:'Flocons enchantés',prism:'Prismes',
@@ -191,18 +191,17 @@
   // coups et les objectifs n'exigent plus des cascades exceptionnelles.
   function levelConfig(n) {
     const cfg=originalLevelConfig(n),mode=cfg.mode;
-    const late=n>100,advanced=n>200;
-    const extra=n<=5?0:n<=15?2:n<=30?4:n<=100?5:advanced?8:9;
-    const modeExtra=mode==='duo'?2:mode==='ice'||mode==='seal'?3:mode==='combo'?4:mode==='special'?2:0;
-    const scale=n<=15?1:n<=100?.92:advanced?.84:.76;
+    const extra=n<=5?0:n<=15?1:n<=100?2:n<=200?5:4;
+    const modeExtra=n<=15?0:mode==='duo'||mode==='ice'||mode==='seal'?1:mode==='combo'?2:0;
+    const scale=n<=15?1:n<=100?.98:n<=200?.89:.94;
     if(mode==='duo'){
       cfg.targets=Object.fromEntries(Object.entries(cfg.targets).map(([k,v])=>[k,Math.max(3,Math.ceil(v*scale))]));
       cfg.target=Object.values(cfg.targets).reduce((a,b)=>a+b,0);
     }else if(mode==='score')cfg.target=Math.max(300,Math.round(cfg.target*scale/10)*10);
-    else if(mode==='special')cfg.target=Math.max(1,Math.min(late?(n>=241?4:3):3,Math.ceil(cfg.target*(late?.7:.85))));
-    else if(mode==='combo')cfg.target=n>=261?2:1;
+    else if(mode==='special')cfg.target=Math.max(1,Math.min(n<=100?cfg.target:n<=180?4:5,Math.ceil(cfg.target*.90)));
+    else if(mode==='combo')cfg.target=Math.min(cfg.target,n<=160?1:n<=260?2:3);
     else if(mode!=='seal')cfg.target=Math.max(1,Math.ceil(cfg.target*scale));
-    cfg.moves=Math.min(35,cfg.moves+extra+(n>15?modeExtra:0));
+    cfg.moves=Math.min(35,cfg.moves+extra+modeExtra-(n>30&&n%10===0?1:0));
     return cfg;
   }
   const MODE_LABELS = {collect:'Récolte magique',duo:'Double récolte',ice:'Brise la glace',score:'Course aux points',special:'Défi des bonus',combo:'Fusion des pouvoirs',seal:'Les sceaux mystérieux'};
@@ -463,21 +462,21 @@
   function sealsForLevel(n,mode){
     if(n<=100 || mode==='ice')return new Map();
     const tier=Math.min(4,Math.floor((n-101)/20));
-    const count=mode==='seal' ? Math.min(13,6+Math.floor((n-101)/30)+(n%3)) : Math.min(6,2+Math.floor((n-101)/45)+(n%2));
+    const count=mode==='seal' ? Math.min(16,8+Math.floor((n-101)/25)+(n%3)) : Math.min(8,3+Math.floor((n-101)/40)+(n%2));
     const result=new Map();
     for(let k=0;result.size<count && k<64;k++){
       const i=(k*23+n*11)%64;
       if(mode==='combo' && (i===27||i===28))continue;
-      const layers=1+(n>=161&&mode==='seal'&&k%4===0?1:0);
+      const layers=1+(n>=141&&mode==='seal'&&k%4===0?1:0)+(n>=221&&mode==='seal'&&k%7===0&&k%4!==0?1:0);
       result.set(i,layers);
     }
     return result;
   }
   function timersForLevel(n,mode){
-    if(n<181 || n%14!==0 || mode==='seal' || mode==='combo' || mode==='ice')return new Map();
+    if(n<151 || n%7!==0 || mode==='seal' || mode==='combo' || mode==='ice')return new Map();
     let i=(n*17+5)%64;
     while(sealedCells.has(i))i=(i+1)%64;
-    return new Map([[i,n>240?18:21]]);
+    return new Map([[i,n>240?16:19]]);
   }
   function tickTimers(){
     for(const [i,turns] of timedBombs)timedBombs.set(i,turns-1);
