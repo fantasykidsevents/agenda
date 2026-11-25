@@ -449,10 +449,9 @@
       board[27]=pool[0]+'|lineH';
       board[28]=pool[1]+'|bomb';
     }
-    // Bonus Lumi : apparaît à certains niveaux du chapitre 2 (101, 111, 121...).
-    // C'est un bonus « couleur » déjà géré par le moteur de jeu, pas un 7e type
-    // de symbole ordinaire qui rendrait les combinaisons impossibles.
-    if(current.number>100 && current.number%10===1){
+    // Lumi est un bonus de couleur rare, dès le niveau 1 puis tous les dix niveaux.
+    // Ne crée jamais un septième type combinable : classement et objectifs inchangés.
+    if(current.number%10===1){
       const start=(current.number*17)%SIZE**2;
       for(let offset=0;offset<SIZE**2;offset++){
         const i=(start+offset)%(SIZE**2);
@@ -464,6 +463,7 @@
     }
     selected=-1;busy=false;
     $('gameTip').textContent=levelHint();
+    $('lumiGameBtn').classList.remove('fm-lumi-cheer');
     $('boardOverlay').classList.add('hidden');
     save(); renderAll();
     if (state.lives<1) { lockBoardForLives(); showNoLives(); }
@@ -512,6 +512,20 @@
     $('bombCount').textContent=state.boosters.bomb;
     $('shuffleCount').textContent=state.boosters.shuffle;
     renderHearts();renderBoard();
+  }
+  function lumiHint(){
+    if(!current || !state)return;
+    const tips={
+      collect:'Cherche les groupes de quatre : ils créent une fusée !',
+      duo:'Surveille les deux objectifs, pas seulement une couleur.',
+      ice:'Joue près des cases gelées pour fissurer la glace.',
+      score:'Les cascades rapportent plus de points : prépare tes échanges !',
+      special:'Aligne quatre pièces pour une fusée, cinq pour un arc-en-ciel.',
+      combo:'Échange les deux bonus voisins pour déclencher leur fusion !',
+      seal:'Fais des combinaisons à côté des sceaux pour les affaiblir.'
+    };
+    $('gameTip').textContent='✨ Lumi : '+(tips[current.mode]||'Prépare une belle combinaison !');
+    toast('✨ Astuce de Lumi !');
   }
   function levelHint(){
     return {collect:'Récolte le symbole demandé !',duo:'Récolte les deux sortes de symboles !',
@@ -707,8 +721,9 @@
     state.level=Math.min(MAX_LEVEL,n+1);
     save();
     const last=n===MAX_LEVEL;
+    $('lumiGameBtn').classList.add('fm-lumi-cheer');
     showDialog(last?'300 niveaux terminés !':'Niveau réussi !',
-      `<div style="font-size:32px;color:#ffc02b">${'★'.repeat(earned)}${'☆'.repeat(3-earned)}</div><p>Bravo ${escapeHtml(playerName)} ! ${n%10===0?'Tu gagnes un bonus de chaque sorte !':''}</p><p>💎 Combinaisons : <b>${roundScore.toLocaleString('fr-BE')} pts</b><br>✨ ${unusedMoves} coup${unusedMoves>1?'s':''} restant${unusedMoves>1?'s':''} × ${POINTS_PER_UNUSED_MOVE} = <b>+${bonus.toLocaleString('fr-BE')} pts</b></p><p><b>Total : ${finalScore.toLocaleString('fr-BE')} points</b></p>`,
+      `<img class="fm-lumi-victory" src="lumi-danse.webp" alt="Lumi célèbre ta victoire" loading="lazy"><div style="font-size:32px;color:#ffc02b">${'★'.repeat(earned)}${'☆'.repeat(3-earned)}</div><p>Bravo ${escapeHtml(playerName)} ! ${n%10===0?'Tu gagnes un bonus de chaque sorte !':''}</p><p>💎 Combinaisons : <b>${roundScore.toLocaleString('fr-BE')} pts</b><br>✨ ${unusedMoves} coup${unusedMoves>1?'s':''} restant${unusedMoves>1?'s':''} × ${POINTS_PER_UNUSED_MOVE} = <b>+${bonus.toLocaleString('fr-BE')} pts</b></p><p><b>Total : ${finalScore.toLocaleString('fr-BE')} points</b></p>`,
       [{label:last?'Rejouer le niveau 300':'Niveau suivant →',action:()=>{hideDialog();startRound(last?MAX_LEVEL:n+1)}}], '✦');
   }
   function loseLevel(reason=''){
@@ -810,7 +825,7 @@
     button.disabled=false;
   }
   function showRules(){
-    showDialog('Comment jouer ?',`<p>Échange deux pièces voisines pour aligner <b>3 symboles identiques ou plus</b>.</p><p>✨ <b>4 à la suite</b> : une fusée qui efface une ligne ou une colonne.<br>🌈 <b>5 à la suite</b> : un arc-en-ciel qui reste sur le plateau et efface une couleur entière.<br>💥 <b>En L ou en T</b> : une bombe qui explose sur les cases voisines.</p><p>🌟 <b>Deux bonus spéciaux côte à côte ? Échange-les !</b> Fusée + bombe, deux bombes, double arc-en-ciel : chaque duo déclenche une fusion spectaculaire.</p><p>⛓️ <b>Les nouveaux sceaux</b> bloquent les pièces jusqu’à destruction de toutes leurs couches. Fais des combinaisons sur une case ou juste à côté. ⏱️ Une bombe à retardement doit être désamorcée avant la fin de son compteur.</p><p>Au <b>niveau 101</b>, découvre six nouveaux symboles magiques (dont les nouveaux flocons) et <b>Lumi</b>, un bonus rare ! Elle apparaît à certains niveaux et efface une couleur comme l'arc-en-ciel. Après le niveau 200, cinq nouveaux mondes combinent ces pièces dans de nouveaux défis.</p><p>Les 300 niveaux proposent des <b>défis variés</b> : récoltes, glace, score, bonus, sceaux et fusions. Termine l’objectif avant de manquer de coups.</p><p>Tu disposes de <b>5 vies</b> et une vie revient toutes les <b>30 minutes</b>. Tous les dix niveaux, tu gagnes trois bonus. Tu peux aussi offrir <b>une vie par jour</b> à un collègue depuis le classement. La flèche en haut ou le bouton « Quitter le jeu » en bas te ramènent à l’agenda.</p>`,[{label:'Jouer !',action:hideDialog}],'✦');
+    showDialog('Comment jouer ?',`<p>Échange deux pièces voisines pour aligner <b>3 symboles identiques ou plus</b>.</p><p>✨ <b>4 à la suite</b> : une fusée qui efface une ligne ou une colonne.<br>🌈 <b>5 à la suite</b> : un arc-en-ciel qui reste sur le plateau et efface une couleur entière.<br>💥 <b>En L ou en T</b> : une bombe qui explose sur les cases voisines.</p><p>🌟 <b>Deux bonus spéciaux côte à côte ? Échange-les !</b> Fusée + bombe, deux bombes, double arc-en-ciel : chaque duo déclenche une fusion spectaculaire.</p><p>⛓️ <b>Les nouveaux sceaux</b> bloquent les pièces jusqu’à destruction de toutes leurs couches. Fais des combinaisons sur une case ou juste à côté. ⏱️ Une bombe à retardement doit être désamorcée avant la fin de son compteur.</p><p>Dès le premier monde, <b>Lumi</b> apparaît tous les dix niveaux comme bonus spécial : touche-la deux fois ou échange-la pour effacer une couleur entière ! Touche aussi son personnage sous le plateau pour une astuce. Au <b>niveau 101</b>, découvre six nouveaux symboles magiques (dont les nouveaux flocons). Après le niveau 200, cinq nouveaux mondes combinent ces pièces dans de nouveaux défis.</p><p>Les 300 niveaux proposent des <b>défis variés</b> : récoltes, glace, score, bonus, sceaux et fusions. Termine l’objectif avant de manquer de coups.</p><p>Tu disposes de <b>5 vies</b> et une vie revient toutes les <b>30 minutes</b>. Tous les dix niveaux, tu gagnes trois bonus. Tu peux aussi offrir <b>une vie par jour</b> à un collègue depuis le classement. La flèche en haut ou le bouton « Quitter le jeu » en bas te ramènent à l’agenda.</p>`,[{label:'Jouer !',action:hideDialog}],'✦');
   }
   function events(){
     $('gameBoard').addEventListener('click',e=>{
@@ -849,6 +864,7 @@
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && cloudReady) synchroniserProgression(true);
     });
+    $('lumiGameBtn').addEventListener('click',lumiHint);
     $('levelsBtn').addEventListener('click',showLevels);
     $('rulesBtn').addEventListener('click',showRules);
     $('dialogClose').addEventListener('click',hideDialog);
