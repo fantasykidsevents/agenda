@@ -555,6 +555,12 @@ function lireMessageResa(t) {
   const bb = txt.match(/(\d+)\s*(bébés?|bebes?|bambins?|enfants? de moins de 3)/i) || txt.match(/(\d+)\s*(?:de\s*)?(?:moins de|-)\s*3\s*ans/i); if (bb) o.bebes = +bb[1];
   return o;
 }
+function reductionResa(r: any, prix: number, places: number) {
+  const brut = Math.max(0, prix * places), m = Math.max(0, Number(r.promo_montant) || 0);
+  if (!r.code_promo_id || !places || !m) return 0;
+  const n = r.promo_type === "par_place" ? m * places : r.promo_type === "total" ? m : r.promo_type === "pourcent" ? brut * m / 100 : 0;
+  return Math.round(Math.min(brut, n) * 100) / 100;
+}
 async function importerResaSite() {
   if (!env("WIX_API_KEY") || !env("WIX_SITE_ID")) return [];
   const { data: p } = await sb.from("parametres").select("valeur").eq("cle", "import_resa_depuis").maybeSingle();
@@ -576,7 +582,7 @@ async function importerResaSite() {
     // l'événement dont le titre contient le sujet (ex. « Bal de Noël »), hors montage
     const n = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const ev = (evs || []).find((e) => n(e.titre).includes(n(sujet)) && !/montage|repetition|generale/.test(n(e.titre)));
-    if (!ev) continue;
+    if (!ev || /nuit\s*magique/.test(n(ev.titre))) continue;
     const msg = String(v.message_contact || ""), lu = lireMessageResa(msg);
     // Champs « nombre » ajoutés au formulaire Wix (clé contenant adulte / enfant / bebe ou 3_ans)
     let ad = 0, enf = 0, bb = 0, champs = false;
@@ -592,6 +598,14 @@ async function importerResaSite() {
     if (tel && !lu.telephone) lu.telephone = String(tel);
     const o = { evenement_id: ev.id, nom: v.nom_contact || "?", email: v.email_contact || null, telephone: lu.telephone || null, source: "site",
       places: lu.places || 1, bebes: lu.bebes || 0, adultes: champs ? ad : null, enfants: champs ? enf : null, notes: `🌐 Via le site${lu.places ? "" : " (nombre de places à vérifier)"} : ${detail}${msg}`.slice(0, 1500), wix_submission_id: s.id };
+    const code = String(v.code_promo_contact || "").trim().toUpperCase();
+    if (code) {
+      const jour = new Intl.DateTimeFormat("sv-SE", {timeZone:"Europe/Brussels",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(s.createdDate));
+      const { data: promo, error: errPromo } = await sb.from("codes_promo").select("id,code_normalise,type_reduction,montant,evenement_id,actif,debut,fin").eq("code_normalise",code).maybeSingle();
+      if (errPromo) throw errPromo;
+      const valide = !!promo && code.length >= 3 && code.length <= 30 && promo.actif && (!promo.evenement_id || promo.evenement_id===ev.id) && (!promo.debut || promo.debut<=jour) && (!promo.fin || promo.fin>=jour);
+      Object.assign(o,{code_promo:code.slice(0,30),promo_demande_le:s.createdDate,...(valide?{code_promo_id:promo.id,promo_type:promo.type_reduction,promo_montant:promo.montant}:{})});
+    }
     const { error } = await sb.from("reservations").insert(o);
     if (error) { if (error.code === "23505") continue; throw error; }
     crees.push({ ...o, titre: ev.titre });
@@ -804,10 +818,10 @@ async function mailsReservation(type, r, avant) {
   if (!r || !r.email) return "pas d'e-mail";
   const { data: ev } = await sb.from("evenements").select("id,titre,date,heure_debut,adresse,resa_prix").eq("id", r.evenement_id).maybeSingle();
   if (!ev) return "événement introuvable";
-  const P = +(ev.resa_prix || 0), places = +r.places || 0, total = Math.round(P * places * 100) / 100, moitie = Math.round(total / 2 * 100) / 100;
+  const P = +(ev.resa_prix || 0), places = +r.places || 0, brut = Math.round(P * places * 100) / 100, remise = reductionResa(r,P,places), total = Math.max(0,Math.round((brut-remise)*100)/100), moitie = Math.round(total / 2 * 100) / 100;
   const recu = +r.acompte_recu || 0, recuAvant = +(avant?.acompte_recu || 0);
   const vientConfirmee = !!r.confirmee_le && (type === "INSERT" || !avant?.confirmee_le);
-  const acompteOk = total > 0 && recu >= moitie - 0.005, acompteVientOk = acompteOk && (type === "INSERT" || recuAvant < moitie - 0.005);
+  const acompteOk = brut > 0 && recu >= moitie - 0.005, acompteVientOk = acompteOk && (type === "INSERT" || recuAvant < moitie - 0.005);
   if (!r.confirmee_le || !(vientConfirmee || acompteVientOk)) return "rien à envoyer";
   const comm = `${String(r.nom || "").trim()} ${ev.titre || ""}`.trim().slice(0, 60);
   const bebes = +r.bebes ? ` + ${r.bebes} enfant${r.bebes > 1 ? "s" : ""} de moins de 3 ans (gratuit)` : "";
@@ -817,7 +831,8 @@ async function mailsReservation(type, r, avant) {
       <tr><td style="padding:3px 12px 3px 0;color:#6b6385">📅 Quand</td><td>${esc(quandEv)}</td></tr>
       ${ev.adresse ? `<tr><td style="padding:3px 12px 3px 0;color:#6b6385">📍 Où</td><td>${esc(ev.adresse)}</td></tr>` : ""}
       <tr><td style="padding:3px 12px 3px 0;color:#6b6385">🎟️ Places</td><td>${places} place${places > 1 ? "s" : ""}${esc(bebes)}</td></tr>
-      ${total ? `<tr><td style="padding:3px 12px 3px 0;color:#6b6385">💶 Total</td><td>${euros0(total)} (${euros0(P)} / place)</td></tr>` : ""}
+      ${remise ? `<tr><td>🎟️ Code promo ${esc(r.code_promo)}</td><td>−${euros0(remise)}</td></tr>` : ""}
+      ${brut ? `<tr><td style="padding:3px 12px 3px 0;color:#6b6385">💶 Total</td><td>${euros0(total)}${remise?" après réduction":" ("+euros0(P)+" / place)"}</td></tr>` : ""}
     </table>`;
   const solde = Math.max(0, total - recu);
   if (acompteOk) {   // ✅ acompte reçu (avec ou sans confirmation juste avant) → solde en liquide sur place
@@ -1912,7 +1927,7 @@ async function mailingDestinataires(evenementId: string, filtre: string) {
   // Une limite haute détecte un jeu de données trop grand au lieu d'omettre
   // silencieusement des familles (pagination nécessaire au-delà de 499).
   const { data: lignes, error: erreurResa } = await sb.from("reservations")
-    .select("id,nom,email,places,acompte_recu,confirmee_le,annulations")
+    .select("id,nom,email,places,acompte_recu,confirmee_le,annulations,code_promo_id,promo_type,promo_montant")
     .eq("evenement_id", evenementId).order("id").limit(500);
   if (erreurResa) throw erreurResa;
   if ((lignes || []).length >= 500) throw new Error("Plus de 499 réservations : contacte l'administrateur avant l'envoi.");
@@ -1925,7 +1940,7 @@ async function mailingDestinataires(evenementId: string, filtre: string) {
     if (!actives || (filtre !== "tous" && !r.confirmee_le)) continue;
     if (filtre === "acomptes_manquants") {
       const prix = Math.max(0, Number(ev.resa_prix) || 0);
-      if (!prix || Number(r.acompte_recu || 0) >= actives * prix / 2 - 0.005) continue;
+      if (!prix || Number(r.acompte_recu || 0) >= (actives * (prix - (places ? reductionResa(r,prix,places)/places : 0))) / 2 - 0.005) continue;
     }
     const email = String(r.email || "").trim().toLowerCase();
     if (!MAILING_EMAIL.test(email) || email.length > 254) { sansEmail++; continue; }
