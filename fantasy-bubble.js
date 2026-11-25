@@ -93,14 +93,19 @@ function say(msg,variant="merlin"){$("message").textContent=msg;$("guide").src=v
 // Pre-render the enchanted glass jewels at high resolution. The animation
 // then blits a cached sprite instead of rebuilding gradients every frame.
 const bubbleSprites=new Map();
+// Actual illustrated jewels from the Fantasy art set, not tiny font glyphs.
+const jewelArt=new Image();
+const jewelCells=[[0,3],[1,1],[1,2],[0,0],[0,2],[1,0],[0,1]];
+jewelArt.onload=()=>{bubbleSprites.clear();if(state.round)draw();};
+jewelArt.src="fantasy-match-chapitre2-glossy.png";
 function gemPath(g,x,y,r,points=4,inner=.28,rotation=-Math.PI/2){
  g.beginPath();for(let i=0;i<points*2;i++){const a=rotation+i*Math.PI/points,rr=i%2?r*inner:r;const xx=x+Math.cos(a)*rr,yy=y+Math.sin(a)*rr;if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy)}g.closePath();
 }
 function makeBubbleSprite(color,armor,rescue){
  const size=120,c=document.createElement("canvas");c.width=c.height=size;const g=c.getContext("2d"),x=60,y=60,r=45;
  const p=color<0?["#b6b5dd","#615887","#241d40","✧"]:PALETTE[color]||PALETTE[0];
- const sphere=g.createRadialGradient(x-r*.22,y-r*.3,1,x,y,r);
- sphere.addColorStop(0,p[0]);sphere.addColorStop(.24,p[1]);sphere.addColorStop(.64,p[2]);sphere.addColorStop(.84,p[1]);sphere.addColorStop(.96,p[0]);sphere.addColorStop(1,"#fff0ff");
+ const sphere=g.createRadialGradient(x-r*.31,y-r*.4,1,x,y,r);
+ sphere.addColorStop(0,p[0]);sphere.addColorStop(.31,p[1]);sphere.addColorStop(.69,p[2]);sphere.addColorStop(.87,p[1]);sphere.addColorStop(.97,p[0]);sphere.addColorStop(1,p[0]);
  g.save();g.shadowColor=p[1];g.shadowBlur=10;g.fillStyle=sphere;g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill();g.restore();
  g.save();g.beginPath();g.arc(x,y,r-1.4,0,Math.PI*2);g.clip();
  // Swirling suspended stardust, facets and iridescent reflections.
@@ -113,6 +118,7 @@ function makeBubbleSprite(color,armor,rescue){
  g.strokeStyle="#ffffffcc";g.lineWidth=2.3;g.lineCap="round";g.beginPath();g.arc(x,y,r-4,3.63,4.66);g.stroke();g.strokeStyle=p[0];g.lineWidth=2.6;g.beginPath();g.arc(x,y,r-3,.44,1.5);g.stroke();
  // A recognizable, faceted symbol inside every orb (not a text emoji).
  g.save();g.translate(x,y+3);const q=color;
+ if(color>=0&&jewelArt.complete&&jewelArt.naturalWidth>0){const [col,row]=jewelCells[color];const sw=jewelArt.naturalWidth/3,sh=jewelArt.naturalHeight/4;g.shadowColor=p[0];g.shadowBlur=7;g.drawImage(jewelArt,col*sw,row*sh,sw,sh,-31,-33,62,62);g.shadowBlur=0;g.restore();}else{
  const jewel=g.createLinearGradient(-15,-19,15,19);jewel.addColorStop(0,"#fff");jewel.addColorStop(.36,p[0]);jewel.addColorStop(.67,p[1]);jewel.addColorStop(1,p[2]);g.fillStyle=jewel;g.strokeStyle="#fff5e8";g.lineWidth=1.7;g.shadowColor=rescue?"#ffdd54":p[0];g.shadowBlur=8;
  if(q===3){gemPath(g,0,0,27,5,.47);}
  else if(q===0){g.beginPath();g.moveTo(0,17);g.bezierCurveTo(-34,-3,-13,-25,0,-10);g.bezierCurveTo(13,-25,34,-3,0,17);g.closePath();}
@@ -121,10 +127,10 @@ function makeBubbleSprite(color,armor,rescue){
  else if(q===5){gemPath(g,0,0,19,8,.62);}
  else if(q===6){gemPath(g,0,0,19,6,.42);}
  else{gemPath(g,0,0,20,4,.35);}
- g.fill();g.stroke();g.shadowBlur=0;g.globalAlpha=.7;g.strokeStyle="#fff";g.lineWidth=.9;g.beginPath();g.moveTo(-9,-5);g.lineTo(0,0);g.lineTo(8,-5);g.moveTo(0,0);g.lineTo(0,12);g.stroke();g.restore();
+ g.fill();g.stroke();g.shadowBlur=0;g.globalAlpha=.7;g.strokeStyle="#fff";g.lineWidth=.9;g.beginPath();g.moveTo(-9,-5);g.lineTo(0,0);g.lineTo(8,-5);g.moveTo(0,0);g.lineTo(0,12);g.stroke();g.restore();}
  g.restore();
- g.beginPath();g.arc(x,y,r-.9,0,Math.PI*2);g.strokeStyle="#ffffffb8";g.lineWidth=1.8;g.stroke();
- g.fillStyle="#fffdf2";gemPath(g,x-r*.59,y-r*.55,7,4,.22);g.fill();g.fillStyle="#ffffffaa";gemPath(g,x+r*.55,y+r*.48,4.8,4,.22);g.fill();
+ g.beginPath();g.arc(x,y,r-.9,0,Math.PI*2);g.strokeStyle=p[0];g.lineWidth=2.5;g.stroke();
+ g.fillStyle="#fffdf2";gemPath(g,x-r*.59,y-r*.55,6,4,.22);g.fill();g.fillStyle="#ffffffaa";gemPath(g,x+r*.55,y+r*.48,4.8,4,.22);g.fill();
  if(armor){g.save();g.lineWidth=4.4;g.strokeStyle=armor===2?"#ffda7b":"#c4faff";g.beginPath();g.arc(x,y,r-2,0,Math.PI*2);g.stroke();
  if(armor===1){g.fillStyle="#bbf8ff30";g.fill();g.strokeStyle="#d9ffff";g.lineWidth=2;g.beginPath();g.moveTo(x-33,y-17);g.lineTo(x-9,y+3);g.lineTo(x+4,y-28);g.lineTo(x+28,y-8);g.moveTo(x-9,y+3);g.lineTo(x+3,y+24);g.lineTo(x+26,y+31);g.stroke();}
  else{for(const a of [-.65,.65]){g.save();g.translate(x,y);g.rotate(a);for(let i=-2;i<=2;i++){g.strokeStyle="#6b3515";g.lineWidth=5;g.beginPath();g.ellipse(i*13,0,9,5,0,0,Math.PI*2);g.stroke();g.strokeStyle="#ffe6a1";g.lineWidth=2.7;g.stroke()}g.restore()}}
