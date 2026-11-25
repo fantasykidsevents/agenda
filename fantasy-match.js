@@ -841,7 +841,7 @@
       ?'Ce royaume est encore verrouillé. Continuons notre aventure ! ✨'
       :won===20?'Bravo ! Ce royaume est terminé, regarde si tu as un cadeau à récupérer ! 🎁'
       :'Nous avons atteint le niveau '+(first+currentIndex)+' ! Je te suis sur le chemin magique !';
-    const completed=Number(state.levels[last]||0)>0,claimed=!!state.lumiRewards[last];
+    const completed=Number(state.levels[last]||0)>0 || state.maxUnlocked>last,claimed=!!state.lumiRewards[last];
     $('fmMapGift').innerHTML=completed
       ?claimed?'<span class="fm-gift-claimed">✓ Cadeau de Lumi déjà récupéré</span>'
       :'<div class="fm-gift-waiting"><b>🎁 Lumi a un cadeau pour toi !</b><button type="button" data-gift-level="'+last+'">Recevoir +1 '+lumiGiftNames[lumiGiftType(last)]+'</button></div>'
@@ -863,12 +863,12 @@
     renderAdventureMap(opts.fromLevel??null);
   }
   async function claimLumiGift(n){
-    if(!state||n<20||n>MAX_LEVEL||n%20!==0||!Number(state.levels[n]||0)){
+    if(!state||n<20||n>MAX_LEVEL||n%20!==0||!(Number(state.levels[n]||0)>0 || state.maxUnlocked>n)){
       toast('Le trésor se débloque en terminant le royaume !');return;
     }
     if(cloudReady)await synchroniserProgression(true);
     if(state.lumiRewards?.[n]){toast('Tu as déjà reçu ce cadeau de Lumi !');renderAdventureMap();return;}
-    if(!Number(state.levels[n]||0))return;
+    if(!(Number(state.levels[n]||0)>0 || state.maxUnlocked>n))return;
     const kind=lumiGiftType(n);
     state.lumiRewards[n]=true;
     state.boosters[kind]=Math.max(0,Number(state.boosters[kind]||0))+1;
