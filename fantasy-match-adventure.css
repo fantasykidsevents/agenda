@@ -704,3 +704,18 @@ body .fm-shell[data-world]{
   .fm-home-actions button span{font-size:19px}
 }
 @media(prefers-reduced-motion:reduce){.fm-map-node.current{animation:none}}
+
+
+/* Fond commun aux pièces historiques (sprite opaque) et aux bijoux transparents.
+   Les obstacles restent des surcouches, indépendamment de la famille de pièce. */
+.fm-shell .fm-board .fm-cell,
+.fm-shell .fm-board .fm-cell:nth-child(2n),
+.fm-shell .fm-board .fm-cell.frozen {
+  background:linear-gradient(145deg,#e4cffc 0%,#dbbdf7 52%,#cdbaf8 100%) !important;
+  border-color:#7753ad;
+  box-shadow:inset 0 0 4px #fff6,inset 0 1px 1px #fff8;
+}
+.fm-shell .fm-board .fm-cell .fm-piece-chapter2:not(.fm-piece-bomb):not(.fm-piece-color){
+  background-color:transparent;
+}
+.fm-shell .fm-board .fm-cell.match{box-shadow:0 0 14px #fff,inset 0 0 19px #ffe082}
