@@ -37,7 +37,13 @@
   // Lumi utilise l'illustration originale de Fantasy App : une pièce bonus rare,
   // pour garder six couleurs combinables et préserver la difficulté du match-3.
   const LUMI_BONUS = 'lumi|color';
-  const poolForLevel = () => KINDS; // Retour aux six pièces classiques dans tous les mondes.
+  // Six pièces par plateau : introduction par grands chapitres, jamais une refonte complète.
+  const NEW_PIECES = [
+    {from:101, pool:['star','rose','crystal','snow','moon','wand']},
+    {from:161, pool:['star','heart','crystal','snow','moon','wand']},
+    {from:241, pool:['comet','heart','crystal','snow','crown','wand']}
+  ];
+  const poolForLevel = n => [...NEW_PIECES].reverse().find(p=>n>=p.from)?.pool || KINDS;
   const LABELS = {
     star:'Étoiles',rose:'Roses',crystal:'Cristaux',snow:'Flocons',crown:'Couronnes',wand:'Baguettes',
     comet:'Comètes',moon:'Lunes',lotus:'Fleurs célestes',frost:'Flocons enchantés',prism:'Prismes',
@@ -201,7 +207,10 @@
     else if(mode==='special')cfg.target=Math.max(1,Math.min(n<=100?cfg.target:n<=180?4:5,Math.ceil(cfg.target*.90)));
     else if(mode==='combo')cfg.target=Math.min(cfg.target,n<=160?1:n<=260?2:3);
     else if(mode!=='seal')cfg.target=Math.max(1,Math.ceil(cfg.target*scale));
-    cfg.moves=Math.min(35,cfg.moves+extra+modeExtra-(n>30&&n%10===0?1:0));
+    // Stable on replay, but not identical across every level in a difficulty band.
+    // Variations are small to preserve the intermediate balancing.
+    const variation=n<=5?0:((n*37+Math.floor(n/7)*11)%5)-2;
+    cfg.moves=Math.max(14,Math.min(35,cfg.moves+extra+modeExtra+variation-(n>30&&n%10===0?1:0)));
     return cfg;
   }
   const MODE_LABELS = {collect:'Récolte magique',duo:'Double récolte',ice:'Brise la glace',score:'Course aux points',special:'Défi des bonus',combo:'Fusion des pouvoirs',seal:'Les sceaux mystérieux'};
@@ -397,19 +406,25 @@
     return {matched,groups};
   }
   const findMatches = b => matchDetails(b).matched;
-  function matchBonus(b,matched,preferred=-1){
+  function matchBonus(b,matched,preferred=-1,swapAxis=null){
     const groups=matchDetails(b).groups.filter(g=>g.positions.every(p=>matched.has(p)));
     const five=groups.find(g=>g.positions.length>=5);
     if(five)return {index:five.positions.includes(preferred)?preferred:five.positions[2],value:'rainbow|color'};
     const hz=new Set(groups.filter(g=>g.orientation==='H').flatMap(g=>g.positions));
     const cross=groups.filter(g=>g.orientation==='V').flatMap(g=>g.positions).find(p=>hz.has(p));
     if(cross!==undefined)return {index:cross,value:kindOf(b[cross])+'|bomb'};
-    const four=groups.find(g=>g.positions.length===4);
-    if(four)return {index:four.positions.includes(preferred)?preferred:four.positions[1],value:four.kind+'|line'+four.orientation};
+    const fours=groups.filter(g=>g.positions.length===4);
+    const four=fours.find(g=>g.positions.includes(preferred))||fours[0];
+    if(four){
+      // The player's swipe determines the rocket when it created this match.
+      // For independent cascade matches, use the actual match orientation.
+      const axis=four.positions.includes(preferred)&&swapAxis?swapAxis:four.orientation;
+      return {index:four.positions.includes(preferred)?preferred:four.positions[1],value:four.kind+'|line'+axis};
+    }
     return null;
   }
-  function matchEffect(b,matched,preferred=-1,createBonus=true){
-    const bonus = createBonus ? matchBonus(b,matched,preferred) : null;
+  function matchEffect(b,matched,preferred=-1,createBonus=true,swapAxis=null){
+    const bonus = createBonus ? matchBonus(b,matched,preferred,swapAxis) : null;
     const removed = expandSpecials(b,new Set(matched));
     if(bonus)removed.delete(bonus.index);
     return {bonus,removed};
@@ -614,13 +629,13 @@
       for(let y=7;y>=0;y--)board[y*8+x]=keep.shift()||randomKind();
     }
   }
-  async function resolve(initial=null,preferred=-1,createBonus=true,id=turnEpoch){
+  async function resolve(initial=null,preferred=-1,createBonus=true,id=turnEpoch,swapAxis=null){
     let completed=false;
     try{
       let matches=initial||findMatches(board),chain=0;
       while(matches.size&&chain<16&&id===turnEpoch){
         chain++;
-        const {bonus,removed}=matchEffect(board,matches,preferred,createBonus);
+        const {bonus,removed}=matchEffect(board,matches,preferred,createBonus,swapAxis);
         const impacted=new Set(removed);
         for(const [i,layers] of [...sealedCells]){
           const around=[i-8,i+8,...(i%8>0?[i-1]:[]),...(i%8<7?[i+1]:[])];
@@ -655,7 +670,7 @@
         await pause(140);
         if(id!==turnEpoch)return;
         matches=findMatches(board);
-        preferred=-1;createBonus=true;
+        preferred=-1;createBonus=true;swapAxis=null;
       }
       if(id!==turnEpoch)return;
       if(!hasPossibleMove(board)){board=freshBoard();toast('Le plateau se mélange ✨');}
@@ -736,7 +751,9 @@
         finishTurn(id);toast('Essaie une autre combinaison');return;
       }
       moves--;tickTimers();
-      await resolve(match,b,true,id);
+      const axis=Math.floor(a/SIZE)===Math.floor(b/SIZE)?'H':'V';
+      const destination=match.has(b)?b:match.has(a)?a:-1;
+      await resolve(match,destination,true,id,axis);
     }catch(err){
       console.error('Fantasy Match : échange interrompu',err);
       if(rollbackTurn(id))toast('✨ Échange restauré, retente ton coup !');
@@ -875,7 +892,7 @@
     $('worldPortalSymbol').textContent = WORLD_SYMBOLS[current.world];
     $('worldPortalChapter').textContent = 'MONDE ' + (current.world + 1) + ' · NIVEAU ' + current.number;
     $('worldPortalTitle').textContent = WORLD_NAMES[current.world];
-    $('worldPortalDescription').textContent = WORLD_INTROS[current.world] + ' De nouveaux défis t’attendent avec tes symboles magiques préférés !';
+    $('worldPortalDescription').textContent = WORLD_INTROS[current.world] + ({101:' La lune dorée rejoint les symboles classiques !',161:' Le cœur de lumière rejoint l’aventure !',241:' La comète rejoint ton plateau, et la couronne revient !'}[current.number] || ' De nouveaux défis t’attendent avec tes symboles magiques préférés !');
     $('worldPortalPieces').innerHTML = [...poolForLevel(current.number), LUMI_BONUS].map(piece).join('');
     $('worldPortal').classList.remove('hidden');
     $('worldPortalEnter').focus();
@@ -1098,7 +1115,7 @@
     button.disabled=false;
   }
   function showRules(){
-    showDialog('Comment jouer ?',`<p>Échange deux pièces voisines pour aligner <b>3 symboles identiques ou plus</b>.</p><p>✨ <b>4 à la suite</b> : une fusée qui efface une ligne ou une colonne.<br>🌈 <b>5 à la suite</b> : un arc-en-ciel qui reste sur le plateau et efface une couleur entière.<br>💥 <b>En L ou en T</b> : une bombe qui explose sur les cases voisines.</p><p>🌟 <b>Deux bonus spéciaux côte à côte ? Échange-les !</b> Fusée + bombe, deux bombes, double arc-en-ciel : chaque duo déclenche une fusion spectaculaire.</p><p>⛓️ <b>Les nouveaux sceaux</b> bloquent les pièces jusqu’à destruction de toutes leurs couches. Fais des combinaisons sur une case ou juste à côté. ⏱️ Une bombe à retardement doit être désamorcée avant la fin de son compteur.</p><p>Dès le premier monde, <b>Lumi</b> apparaît tous les dix niveaux comme bonus spécial : touche-la deux fois ou échange-la pour effacer une couleur entière ! Touche aussi son personnage sous le plateau pour une astuce. Les six symboles classiques restent identiques dans les quinze mondes. Après le niveau 100, les sceaux et les fusions enrichissent les défis.</p><p>Les 300 niveaux proposent des <b>défis variés</b> : récoltes, glace, score, bonus, sceaux et fusions. Termine l’objectif avant de manquer de coups.</p><p>Tu disposes de <b>5 vies</b> et une vie revient toutes les <b>30 minutes</b>. Tous les dix niveaux, tu gagnes trois bonus. Tu peux aussi offrir <b>une vie par jour</b> à un collègue depuis le classement. La flèche en haut ou le bouton « Quitter le jeu » en bas te ramènent à l’agenda.</p>`,[{label:'Jouer !',action:hideDialog}],'✦');
+    showDialog('Comment jouer ?',`<p>Échange deux pièces voisines pour aligner <b>3 symboles identiques ou plus</b>.</p><p>✨ <b>4 à la suite</b> : une fusée orientée dans le sens de ton déplacement (horizontal = ligne, vertical = colonne). Les fusées créées en cascade suivent le sens de leur alignement.<br>🌈 <b>5 à la suite</b> : un arc-en-ciel qui reste sur le plateau et efface une couleur entière.<br>💥 <b>En L ou en T</b> : une bombe qui explose sur les cases voisines.</p><p>🌟 <b>Deux bonus spéciaux côte à côte ? Échange-les !</b> Fusée + bombe, deux bombes, double arc-en-ciel : chaque duo déclenche une fusion spectaculaire.</p><p>⛓️ <b>Les nouveaux sceaux</b> bloquent les pièces jusqu’à destruction de toutes leurs couches. Fais des combinaisons sur une case ou juste à côté. ⏱️ Une bombe à retardement doit être désamorcée avant la fin de son compteur.</p><p>Dès le premier monde, <b>Lumi</b> apparaît tous les dix niveaux comme bonus spécial : touche-la deux fois ou échange-la pour effacer une couleur entière ! Touche aussi son personnage sous le plateau pour une astuce. Les symboles classiques restent majoritaires. De nouveaux bijoux rejoignent progressivement les plateaux aux niveaux 101, 161 et 241, sans changer toutes les pièces. Après le niveau 100, les sceaux et les fusions enrichissent les défis.</p><p>Les 300 niveaux proposent des <b>défis variés</b> : récoltes, glace, score, bonus, sceaux et fusions. Termine l’objectif avant de manquer de coups.</p><p>Tu disposes de <b>5 vies</b> et une vie revient toutes les <b>30 minutes</b>. Tous les dix niveaux, tu gagnes trois bonus. Tu peux aussi offrir <b>une vie par jour</b> à un collègue depuis le classement. La flèche en haut ou le bouton « Quitter le jeu » en bas te ramènent à l’agenda.</p>`,[{label:'Jouer !',action:hideDialog}],'✦');
   }
   function events(){
     $('gameBoard').addEventListener('click',e=>{
