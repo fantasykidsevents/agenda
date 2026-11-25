@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#963de0">
+<meta name="theme-color" content="#25104b">
 <meta name="description" content="Mes jeux — Fantasy Kids Events">
 <title>Mes jeux · Fantasy Kids Events</title>
 <style>
@@ -22,19 +22,24 @@ h1{text-align:center;font-size:clamp(32px,9vw,46px);margin:0 0 6px;line-height:1
 .games{display:grid;gap:17px}
 .game{position:relative;overflow:hidden;text-decoration:none;color:#fff;display:flex;min-height:218px;align-items:stretch;border:3px solid #ffe7ab;border-radius:25px;background:linear-gradient(160deg,#33116a,#6830b0 75%,#43177f);box-shadow:0 6px 0 #af66aa,0 10px 26px #11042e99;transition:transform .18s,box-shadow .18s;isolation:isolate}
 .game:hover,.game:focus-visible{transform:translateY(-3px);box-shadow:0 10px 0 #a65ca9,0 15px 26px #11042e99;outline:none}
-.game::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.92;background-image:linear-gradient(90deg,#19063fea,#22084ea8 60%,#180434ad),url("fantasy-match-worlds-15-sprite.webp");background-size:100% 100%,1500% 100%;background-position:center,var(--scene,0%) center}
+.game::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.92;background-image:linear-gradient(180deg,#19063f55,#22084e88 42%,#180434e8),url("fantasy-match-worlds-15-sprite.webp");background-size:100% 100%,1500% auto;background-position:center,var(--scene,0%) center}
 .game-content{width:100%;padding:16px 17px 15px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:8px}
 .game-headline{width:100%;max-width:320px;margin:0 auto;display:block;object-fit:contain;max-height:100px;filter:drop-shadow(0 0 7px #fbaaff) drop-shadow(0 3px 4px #1d0636)}
 .game strong{color:#fff2c7;font-size:15px;font-weight:1000;display:block;line-height:1.4;text-shadow:0 1px 3px #16052e}
 .game small{display:block;color:#f5e4ff;font-weight:740;font-size:12px;line-height:1.5}
 .game-cta{border:2px solid #fff0bd;padding:9px 17px;border-radius:100px;align-self:flex-end;font-size:14px;font-weight:1000;background:linear-gradient(#fc66d3,#b328ba);box-shadow:inset 0 2px 3px #fff6,0 3px 0 #873b7d}
-.potions{--scene:28.571%}
-.potions::before{background-image:linear-gradient(100deg,#27104ad5,#521b8fc2 60%,#2d0b4fcc),url("fantasy-match-worlds-15-sprite.webp")}
+.potions{--scene:7.142857%}
+.potions::before{background-image:linear-gradient(180deg,#1607354f,#39145e7a 40%,#180631e6),url("fantasy-match-worlds-15-sprite.webp")}
 .potions .game-headline{width:88%;max-height:100px}
 footer{margin:22px auto 0;max-width:380px;text-align:center;color:#ecd2ff;font-size:12px;line-height:1.6}
 footer a{color:#ffebad;font-weight:900}
 @media(max-width:360px){main{padding-left:10px;padding-right:10px}.game{min-height:208px}.game-content{padding:12px 13px}.brand{width:105px}}
 @media(prefers-reduced-motion:reduce){.game{transition:none}}
+
+.game-headline,.potions .game-headline{width:100%;max-width:290px;height:105px;max-height:none;object-fit:contain;filter:drop-shadow(0 1px 1px #fff7) drop-shadow(0 3px 5px #160629)}
+.game-content{gap:12px}
+.game::before{background-repeat:no-repeat;background-position:center,var(--scene,0%) 44%}
+.game-cta{background:linear-gradient(#ff8ed7,#f02da5 42%,#b3158e);color:#fff8e9;text-shadow:0 1px 2px #80165b}
 </style>
 </head>
 <body>
@@ -54,10 +59,10 @@ footer a{color:#ffebad;font-weight:900}
     <span class="game-cta">Jouer ✨</span>
   </div>
 </a>
-<a class="game potions" href="fantasy-potions.html?v=mes-jeux-20261125-1">
+<a class="game potions" href="fantasy-potions.html?v=enchante-20261125-3">
   <div class="game-content">
-    <img class="game-headline" src="fantasy-potions-logo.svg" alt="Fantasy Potions">
-    <div><strong>150 niveaux · 5 royaumes</strong><small>Tries les potions dans ce jeu de réflexion.</small></div>
+    <img class="game-headline" src="fantasy-potions-logo-glossy.webp?v=20261125" alt="Fantasy Potions">
+    <div><strong>150 niveaux · 5 royaumes</strong><small>Trie les potions dans ce jeu de réflexion.</small></div>
     <span class="game-cta">Jouer 🧪</span>
   </div>
 </a>
