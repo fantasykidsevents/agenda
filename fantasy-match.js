@@ -74,7 +74,7 @@
   const rand = n => Math.floor(Math.random() * n);
   const randomKind = () => { const pool=poolForLevel(current?.number || state?.level || 1); return pool[rand(pool.length)]; };
   const now = () => Date.now();
-  const localDefault = () => ({level:1,maxUnlocked:1,lives:5,nextLifeAt:0,score:0,levels:{},bestScores:{},boosters:{color:3,bomb:3,shuffle:3},lastGiftAt:'',worldsSeen:[],updatedAt:0});
+  const localDefault = () => ({level:1,maxUnlocked:1,lives:5,nextLifeAt:0,score:0,levels:{},bestScores:{},boosters:{color:3,bomb:3,shuffle:3},lastGiftAt:'',worldsSeen:[],lumiRewards:{},updatedAt:0});
   const world = n => Math.floor((n - 1) / 20);
   function levelConfig(n) {
     // Chapitre 3 (201–300) : nouveaux défis calibrés avec six symboles par niveau.
@@ -171,7 +171,8 @@
     state.level = Math.max(1,Math.min(state.maxUnlocked,Number(state.level || 1)));
     state.boosters = {color:3,bomb:3,shuffle:3,...state.boosters};
     state.levels ||= {}; state.bestScores ||= {};
-    state.worldsSeen = Array.isArray(state.worldsSeen) ? [...new Set(state.worldsSeen.filter(n => Number.isInteger(n) && n >= 5 && n <= 14))] : [];
+    state.lumiRewards = state.lumiRewards && typeof state.lumiRewards==='object' && !Array.isArray(state.lumiRewards) ? state.lumiRewards : {};
+    state.worldsSeen = Array.isArray(state.worldsSeen) ? [...new Set(state.worldsSeen.filter(n => Number.isInteger(n) && n >= 0 && n <= 14))] : [];
   }
   // Une ancienne sauvegarde cloud (ou une vie offerte depuis un autre appareil)
   // ne doit jamais effacer des niveaux déjà débloqués localement.
@@ -193,7 +194,8 @@
       score: Math.max(Number(local.score || 0), Number(online.score || 0)),
       levels: combineBest(local.levels, online.levels),
       bestScores: combineBest(local.bestScores, online.bestScores),
-      worldsSeen: [...new Set([...(local.worldsSeen || []), ...(online.worldsSeen || [])])]
+      worldsSeen: [...new Set([...(local.worldsSeen || []), ...(online.worldsSeen || [])])],
+      lumiRewards: {...(online.lumiRewards||{}), ...(local.lumiRewards||{})}
     };
   }
   function tickLives() {
@@ -466,8 +468,8 @@
     $('lumiGameBtn').classList.remove('fm-lumi-cheer');
     $('boardOverlay').classList.add('hidden');
     save(); renderAll();
-    if (state.lives<1) { lockBoardForLives(); showNoLives(); }
-    else if (current.number > 100 && (current.number - 1) % 20 === 0 &&
+    if (state.lives<1) { lockBoardForLives(); if(adventureStarted)showNoLives(); }
+    else if (adventureStarted && current.number > 1 && (current.number - 1) % 20 === 0 &&
       !state.worldsSeen.includes(current.world) && $('dialogBackdrop').classList.contains('hidden')) {
       showWorldPortal();
     }
@@ -512,6 +514,7 @@
     $('bombCount').textContent=state.boosters.bomb;
     $('shuffleCount').textContent=state.boosters.shuffle;
     renderHearts();renderBoard();
+    updateAdventureHome();
   }
   function lumiHint(){
     if(!current || !state)return;
@@ -720,11 +723,12 @@
     if(n%10===0){state.boosters.color++;state.boosters.bomb++;state.boosters.shuffle++;}
     state.level=Math.min(MAX_LEVEL,n+1);
     save();
+    updateAdventureHome();
     const last=n===MAX_LEVEL;
     $('lumiGameBtn').classList.add('fm-lumi-cheer');
     showDialog(last?'300 niveaux terminés !':'Niveau réussi !',
       `<img class="fm-lumi-victory" src="lumi-danse.webp" alt="Lumi célèbre ta victoire" loading="lazy"><div style="font-size:32px;color:#ffc02b">${'★'.repeat(earned)}${'☆'.repeat(3-earned)}</div><p>Bravo ${escapeHtml(playerName)} ! ${n%10===0?'Tu gagnes un bonus de chaque sorte !':''}</p><p>💎 Combinaisons : <b>${roundScore.toLocaleString('fr-BE')} pts</b><br>✨ ${unusedMoves} coup${unusedMoves>1?'s':''} restant${unusedMoves>1?'s':''} × ${POINTS_PER_UNUSED_MOVE} = <b>+${bonus.toLocaleString('fr-BE')} pts</b></p><p><b>Total : ${finalScore.toLocaleString('fr-BE')} points</b></p>`,
-      [{label:last?'Rejouer le niveau 300':'Niveau suivant →',action:()=>{hideDialog();startRound(last?MAX_LEVEL:n+1)}}], '✦');
+      [{label:last?'Rejouer le niveau 300':'Niveau suivant →',action:()=>{hideDialog();startRound(last?MAX_LEVEL:n+1)}},{label:'🗺️ Suivre Lumi sur la carte',action:()=>{hideDialog();showAdventureMap({fromLevel:n})}}], '✦');
   }
   function loseLevel(reason=''){
     state.lives=Math.max(0,state.lives-1);
@@ -758,7 +762,7 @@
   // Introduction de monde montrée une seule fois par joueur et par monde (101, 121, 141, 161, 181).
   // L'état est sauvegardé normalement : ni progression, ni score, ni vies ne sont réinitialisés.
   function showWorldPortal() {
-    if (!current || current.world < 5 || current.world >= WORLD_NAMES.length) return;
+    if (!current || current.world >= WORLD_NAMES.length) return;
     $('worldPortalSymbol').textContent = WORLD_SYMBOLS[current.world];
     $('worldPortalChapter').textContent = 'MONDE ' + (current.world + 1) + ' · NIVEAU ' + current.number;
     $('worldPortalTitle').textContent = WORLD_NAMES[current.world];
@@ -773,6 +777,105 @@
     $('worldPortal').classList.add('hidden');
     $('levelsBtn').focus({preventScroll:true});
   }
+
+  let adventureStarted=false, selectedMapWorld=0, mapReturnHome=true;
+  const mapSteps=Array.from({length:20},(_,i)=>{
+    const r=Math.floor(i/4),c=r%2===0?i%4:3-i%4;
+    return {x:14+c*24,y:12+r*19};
+  });
+  const lumiGiftType=n=>['shuffle','bomb','color'][Math.floor((n-1)/20)%3];
+  const lumiGiftNames={shuffle:'Mélange magique',bomb:'Bombe magique',color:'Arc-en-ciel magique'};
+  function updateAdventureHome(){
+    if(!state)return;
+    $('fmHomeLevel').textContent=state.level;
+    $('fmHomeScore').textContent=Number(state.score||0).toLocaleString('fr-BE');
+    $('fmHomeLives').textContent=state.lives;
+    $('fmHomeWorldText').textContent='Monde '+(world(state.level)+1)+' · '+WORLD_NAMES[world(state.level)]+' · 300 niveaux';
+    $('fmHomeLumiSpeech').textContent=state.level===1
+      ?'Coucou ! Moi, c’est Lumi : je serai ton guide dans les 15 mondes ! ✨'
+      :state.level%20===1
+      ?'Bienvenue dans '+WORLD_NAMES[world(state.level)]+' ! Partons explorer la carte ! ✨'
+      :'Déjà au niveau '+state.level+' ! Je t’attends sur la carte pour notre prochaine aventure ! 💜';
+  }
+  function showAdventureHome(){
+    updateAdventureHome();
+    $('worldPortal').classList.add('hidden');
+    $('fmMapScreen').classList.add('hidden');
+    $('fmHomeScreen').classList.remove('hidden');
+  }
+  function enterAdventureGame(){
+    adventureStarted=true;
+    $('fmHomeScreen').classList.add('hidden');
+    $('fmMapScreen').classList.add('hidden');
+    if(!current || current.number!==state.level)startRound(state.level);
+    else if(state.lives<1)lockBoardForLives();
+  }
+  function renderAdventureMap(fromLevel=null){
+    if(!state)return;
+    const w=selectedMapWorld,first=w*20+1,last=first+19;
+    const available=Math.max(0,Math.min(20,state.maxUnlocked-first+1));
+    const currentIndex=Math.min(19,Math.max(0,available-1)),point=mapSteps[currentIndex];
+    const panel=$('fmMapScreen');
+    panel.dataset.world=WORLD_THEMES[w];
+    panel.style.setProperty('--fm-map-x',(w/(WORLD_NAMES.length-1)*100)+'%');
+    $('fmMapWorldName').textContent='Monde '+(w+1)+' · '+WORLD_NAMES[w];
+    const won=Object.entries(state.levels).filter(([n,v])=>Number(n)>=first && Number(n)<=last && Number(v)>0).length;
+    $('fmMapWorldProgress').textContent=won+' / 20 niveaux réussis';
+    $('fmMapPrev').disabled=w===0;
+    $('fmMapNext').disabled=w===WORLD_NAMES.length-1;
+    $('fmMapRouteLine').setAttribute('points',mapSteps.map(p=>p.x+','+p.y).join(' '));
+    $('fmMapNodes').innerHTML=mapSteps.map((p,i)=>{
+      const n=first+i,passed=Number(state.levels[n]||0)>0,locked=n>state.maxUnlocked;
+      const type=passed?'finished':locked?'locked':n===state.maxUnlocked?'current':'open';
+      return '<button type="button" class="fm-map-node '+type+(n%20===0?' reward-node':'')+'" data-level="'+n+'" style="left:'+p.x+'%;top:'+p.y+'%"'+(locked?' disabled':'')+' aria-label="Niveau '+n+(passed?' réussi':locked?' verrouillé':' accessible')+'">'+(passed?'★':n)+'<small>'+(n%20===0?'🎁':passed?'✓':'')+'</small></button>';
+    }).join('');
+    const lumi=$('fmMapLumi'),oldPos=Number(fromLevel)>=first&&Number(fromLevel)<=last?Math.min(19,Math.max(0,Number(fromLevel)-first)):currentIndex;
+    const start=mapSteps[oldPos];
+    lumi.classList.toggle('hidden',w>world(state.maxUnlocked));
+    lumi.style.transition='none';lumi.style.left=start.x+'%';lumi.style.top=start.y+'%';
+    if(oldPos!==currentIndex)requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      lumi.style.transition='left 850ms ease-in-out,top 850ms ease-in-out';
+      lumi.style.left=point.x+'%';lumi.style.top=point.y+'%';
+    }));else {lumi.style.left=point.x+'%';lumi.style.top=point.y+'%'}
+    $('fmMapLumiSpeech').textContent=!available
+      ?'Ce royaume est encore verrouillé. Continuons notre aventure ! ✨'
+      :won===20?'Bravo ! Ce royaume est terminé, regarde si tu as un cadeau à récupérer ! 🎁'
+      :'Nous avons atteint le niveau '+(first+currentIndex)+' ! Je te suis sur le chemin magique !';
+    const completed=Number(state.levels[last]||0)>0,claimed=!!state.lumiRewards[last];
+    $('fmMapGift').innerHTML=completed
+      ?claimed?'<span class="fm-gift-claimed">✓ Cadeau de Lumi déjà récupéré</span>'
+      :'<div class="fm-gift-waiting"><b>🎁 Lumi a un cadeau pour toi !</b><button type="button" data-gift-level="'+last+'">Recevoir +1 '+lumiGiftNames[lumiGiftType(last)]+'</button></div>'
+      :'<span class="fm-gift-progress">🎁 Récompense au niveau '+last+' · aussi pour les anciens joueurs !</span>';
+    $('fmMapPlay').disabled=!available;
+    $('fmMapPlay').textContent=!available?'🔒 Monde à débloquer':'▶ Jouer · Niveau '+Math.min(last,Math.max(first,state.level));
+    $('fmMapWorldList').innerHTML=WORLD_NAMES.map((_,i)=>{
+      const unlocked=i*20+1<=state.maxUnlocked;
+      return '<button type="button" data-world-index="'+i+'" aria-pressed="'+(i===w)+'" class="'+(i===w?'active':'')+'" title="'+escapeHtml(WORLD_NAMES[i])+'"><span>'+WORLD_SYMBOLS[i]+'</span><b>'+(i+1)+'</b>'+(unlocked?'':'<small>🔒</small>')+'</button>';
+    }).join('');
+    updateAdventureHome();
+  }
+  function showAdventureMap(opts={}){
+    if(!state)return;
+    mapReturnHome=!$('fmHomeScreen').classList.contains('hidden');
+    selectedMapWorld=Number.isInteger(opts.worldIndex)?Math.min(14,Math.max(0,opts.worldIndex)):world(state.level);
+    $('fmHomeScreen').classList.add('hidden');
+    $('fmMapScreen').classList.remove('hidden');
+    renderAdventureMap(opts.fromLevel??null);
+  }
+  async function claimLumiGift(n){
+    if(!state||n<20||n>MAX_LEVEL||n%20!==0||!Number(state.levels[n]||0)){
+      toast('Le trésor se débloque en terminant le royaume !');return;
+    }
+    if(cloudReady)await synchroniserProgression(true);
+    if(state.lumiRewards?.[n]){toast('Tu as déjà reçu ce cadeau de Lumi !');renderAdventureMap();return;}
+    if(!Number(state.levels[n]||0))return;
+    const kind=lumiGiftType(n);
+    state.lumiRewards[n]=true;
+    state.boosters[kind]=Math.max(0,Number(state.boosters[kind]||0))+1;
+    save();renderAll();renderAdventureMap();
+    toast('🎁 Lumi t’offre +1 '+lumiGiftNames[kind]+' !');
+  }
+
   function showLevels(){
     const cards=WORLD_NAMES.map((name,i)=>{
       const levels=Array.from({length:20},(_,j)=>i*20+j+1);
@@ -865,13 +968,38 @@
       if (document.visibilityState === 'visible' && cloudReady) synchroniserProgression(true);
     });
     $('lumiGameBtn').addEventListener('click',lumiHint);
+    $('fmGoHome').addEventListener('click',showAdventureHome);
+    $('fmHomeHelp').addEventListener('click',showRules);
+    $('fmMapHelp').addEventListener('click',showRules);
+    $('fmHomePlay').addEventListener('click',enterAdventureGame);
+    $('fmHomeMap').addEventListener('click',()=>showAdventureMap());
+    $('fmHomeRanking').addEventListener('click',showRanking);
+    $('fmMapBack').addEventListener('click',()=>{if(mapReturnHome)showAdventureHome();else enterAdventureGame()});
+    $('fmMapPrev').addEventListener('click',()=>{selectedMapWorld=Math.max(0,selectedMapWorld-1);renderAdventureMap()});
+    $('fmMapNext').addEventListener('click',()=>{selectedMapWorld=Math.min(14,selectedMapWorld+1);renderAdventureMap()});
+    $('fmMapWorldList').addEventListener('click',e=>{
+      const b=e.target.closest('[data-world-index]');if(b){selectedMapWorld=Number(b.dataset.worldIndex);renderAdventureMap()}
+    });
+    $('fmMapNodes').addEventListener('click',e=>{
+      const b=e.target.closest('[data-level]');if(!b||b.disabled)return;
+      const n=Number(b.dataset.level);state.level=n;startRound(n);enterAdventureGame();
+    });
+    $('fmMapPlay').addEventListener('click',()=>{
+      const n=Math.min(selectedMapWorld*20+20,Math.max(selectedMapWorld*20+1,state.level));
+      if(n>state.maxUnlocked)return;
+      if(!current||current.number!==n){state.level=n;startRound(n)}
+      enterAdventureGame();
+    });
+    $('fmMapGift').addEventListener('click',e=>{
+      const b=e.target.closest('[data-gift-level]');if(b)claimLumiGift(Number(b.dataset.giftLevel));
+    });
     $('levelsBtn').addEventListener('click',showLevels);
     $('rulesBtn').addEventListener('click',showRules);
     $('dialogClose').addEventListener('click',hideDialog);
     $('dialogBackdrop').addEventListener('click',e=>{if(e.target===$('dialogBackdrop'))hideDialog()});
     document.querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>{
       document.querySelectorAll('[data-screen]').forEach(x=>x.classList.toggle('active',x===b));
-      if(b.dataset.screen==='levels')showLevels();else if(b.dataset.screen==='ranking')showRanking();else if(b.dataset.screen==='team')showTeam();else hideDialog();
+      if(b.dataset.screen==='map')showAdventureMap();else if(b.dataset.screen==='levels')showLevels();else if(b.dataset.screen==='ranking')showRanking();else if(b.dataset.screen==='team')showTeam();else hideDialog();
     }));
     setInterval(()=>{
       const wasEmpty=state?.lives===0;
@@ -887,6 +1015,7 @@
     events();tickLives();
     await setupCloud();ensureState();tickLives();
     startRound(state.level);
+    showAdventureHome();
   }
-  init().catch(err=>{console.error('Fantasy Match',err);$('syncStatus').textContent='Le jeu reste disponible en mode local';state||=readLocal();ensureState();startRound(state.level)});
+  init().catch(err=>{console.error('Fantasy Match',err);$('syncStatus').textContent='Le jeu reste disponible en mode local';state||=readLocal();ensureState();startRound(state.level);showAdventureHome()});
 })();
