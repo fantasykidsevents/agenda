@@ -3,12 +3,12 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const MAX_LEVEL = 300, MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, SIZE = 8, POINTS_PER_UNUSED_MOVE = 50;
-  const WORLD_NAMES = ['Le Royaume des Étoiles', 'Le Jardin Enchanté', 'Le Palais des Neiges', 'La Grotte des Cristaux', 'Le Royaume de la Magie', 'L’Archipel des Comètes', 'Le Labyrinthe des Mirages', 'La Forêt des Ombres', 'La Citadelle des Tempêtes', 'Le Cœur de Lumière',"Le Royaume des Glaces","Le Village Pain d’Épice","La Tour Enchantée","Les Trésors de l’Océan","Le Jardin des Rêves"];
+  const WORLD_NAMES = ['Le Royaume des Étoiles', 'Le Jardin Enchanté', 'Le Palais des Neiges', 'La Grotte des Cristaux', 'Le Royaume de la Magie', 'L’Archipel des Comètes', 'Le Labyrinthe des Mirages', 'La Forêt des Ombres', 'La Citadelle des Tempêtes', 'Le Cœur de Lumière',"Le Royaume des Glaces","Le Village Pain d’Épice","La Tour Enchantée","Les Trésors de l’Océan","Le Château de Fantasy"];
 
   // Chaque série de 20 niveaux possède sa propre ambiance, sans modifier les règles du jeu.
   const WORLD_THEMES = ["etoiles","jardin","neiges","cristaux","magie","cometes","mirages","ombres","tempetes","lumiere","aurore","grimoires","bal-lucioles","eclipses","trone"];
-  const WORLD_SYMBOLS = ["✦","🌸","❄️","💎","✨","☄️","🔮","🌙","⚡","💖","❄️","🍪","🏰","🐚","🌹"];
-  const WORLD_FLAVORS = ["Sous un ciel constellé de magie","Des fleurs, des lucioles et des secrets","Une magie étincelante de givre","Des gemmes aux mille reflets","Le royaume de tous les sortilèges","Des îles flottantes sous les étoiles","Des palais dorés dans les mirages","La forêt murmure à la nuit","La citadelle défie les éclairs","La magie rayonne de toutes parts","Un palais de glace s’illumine sous les flocons","Les gourmandises brillent dans un village enneigé","Des lanternes tourbillonnent autour de la tour","Des perles magiques scintillent sous l’océan","Les roses et les étoiles se retrouvent au jardin"];
+  const WORLD_SYMBOLS = ["✦","🌸","❄️","💎","✨","☄️","🔮","🌙","⚡","💖","❄️","🍪","🏰","🐚","🏰"];
+  const WORLD_FLAVORS = ["Sous un ciel constellé de magie","Des fleurs, des lucioles et des secrets","Une magie étincelante de givre","Des gemmes aux mille reflets","Le royaume de tous les sortilèges","Des îles flottantes sous les étoiles","Des palais dorés dans les mirages","La forêt murmure à la nuit","La citadelle défie les éclairs","La magie rayonne de toutes parts","Un palais de glace s’illumine sous les flocons","Les gourmandises brillent dans un village enneigé","Des lanternes tourbillonnent autour de la tour","Des perles magiques scintillent sous l’océan","Le château de Fantasy brille au sommet du chemin des étoiles"];
   const WORLD_INTROS = [
     "Entre dans le royaume des étoiles !", "Explore le jardin enchanté !",
     "Laisse la neige t'entourer !", "Découvre les cristaux étincelants !",
@@ -16,7 +16,7 @@
     "Traverse les mirages et leurs palais mystérieux !",
     "Les ombres cachent une nouvelle aventure !",
     "Résiste aux tempêtes de la citadelle !",
-    "Tu as atteint le cœur de la magie !","Découvre le Royaume des Glaces et ses cristaux enchantés !","Traverse le Village Pain d’Épice et ses lumières gourmandes !","Monte à la Tour Enchantée au milieu des lanternes scintillantes !","Plonge dans les Trésors de l’Océan et découvre leurs perles magiques !","Entre dans le Jardin des Rêves pour le grand final de Fantasy Match !"];
+    "Tu as atteint le cœur de la magie !","Découvre le Royaume des Glaces et ses cristaux enchantés !","Traverse le Village Pain d’Épice et ses lumières gourmandes !","Monte à la Tour Enchantée au milieu des lanternes scintillantes !","Plonge dans les Trésors de l’Océan et découvre leurs perles magiques !","Rejoins Lumi au Château de Fantasy pour le grand final !"];
   const KINDS = ['star', 'rose', 'crystal', 'snow', 'crown', 'wand']; // Chapitre 1 : niveaux 1 à 100.
   // Chapitre 2 : six nouvelles pièces au niveau 101, puis un symbole inédit par nouveau monde.
   // Conserver exactement six types par monde pour ne pas casser l'équilibrage du match-3.
@@ -804,7 +804,7 @@
   }
   function starsForSuccess(){return moves>=Math.ceil(current.moves*.35)?3:moves>=Math.ceil(current.moves*.15)?2:1}
   function winLevel(){
-    const n=current.number,earned=starsForSuccess(),previous=Number(state.bestScores[n]||0);
+    const n=current.number,earned=starsForSuccess(),previous=Number(state.bestScores[n]||0),firstWin=!Number(state.levels[n]||0);
     const unusedMoves=Math.max(0,Math.floor(moves));
     const bonus=unusedMoves*POINTS_PER_UNUSED_MOVE;
     const finalScore=roundScore+bonus;
@@ -813,14 +813,14 @@
     state.score+=Math.max(0,finalScore-previous);
     state.levels[n]=Math.max(earned,Number(state.levels[n]||0));
     state.maxUnlocked=Math.max(state.maxUnlocked,Math.min(MAX_LEVEL,n+1));
-    if(n%10===0){state.boosters.color++;state.boosters.bomb++;state.boosters.shuffle++;}
+    if(firstWin&&n%10===0){state.boosters.color++;state.boosters.bomb++;state.boosters.shuffle++;}
     state.level=Math.min(MAX_LEVEL,n+1);
     save();
     updateAdventureHome();
     const last=n===MAX_LEVEL;
     $('lumiGameBtn').classList.add('fm-lumi-cheer');
-    showDialog(last?'300 niveaux terminés !':'Niveau réussi !',
-      `<img class="fm-lumi-victory" src="lumi-danse.webp" alt="Lumi célèbre ta victoire" loading="lazy"><div style="font-size:32px;color:#ffc02b">${'★'.repeat(earned)}${'☆'.repeat(3-earned)}</div><p>Bravo ${escapeHtml(playerName)} ! ${n%10===0?'Tu gagnes un bonus de chaque sorte !':''}</p><p>💎 Combinaisons : <b>${roundScore.toLocaleString('fr-BE')} pts</b><br>✨ ${unusedMoves} coup${unusedMoves>1?'s':''} restant${unusedMoves>1?'s':''} × ${POINTS_PER_UNUSED_MOVE} = <b>+${bonus.toLocaleString('fr-BE')} pts</b></p><p><b>Total : ${finalScore.toLocaleString('fr-BE')} points</b></p>`,
+    showDialog(last?'Bienvenue au Château de Fantasy !':'Niveau réussi !',
+      `<img class="fm-lumi-victory" src="lumi-danse.webp" alt="Lumi célèbre ta victoire" loading="lazy"><div style="font-size:32px;color:#ffc02b">${'★'.repeat(earned)}${'☆'.repeat(3-earned)}</div><p>Bravo ${escapeHtml(playerName)} ! ${firstWin&&n%10===0?'Lumi t’offre un bonus de chaque sorte !':''}</p><p>💎 Combinaisons : <b>${roundScore.toLocaleString('fr-BE')} pts</b><br>✨ ${unusedMoves} coup${unusedMoves>1?'s':''} restant${unusedMoves>1?'s':''} × ${POINTS_PER_UNUSED_MOVE} = <b>+${bonus.toLocaleString('fr-BE')} pts</b></p><p><b>Total : ${finalScore.toLocaleString('fr-BE')} points</b></p>`,
       [{label:last?'Rejouer le niveau 300':'Niveau suivant →',action:()=>{hideDialog();startRound(last?MAX_LEVEL:n+1)}},{label:'🗺️ Suivre Lumi sur la carte',action:()=>{hideDialog();showAdventureMap({fromLevel:n})}}], '✦');
   }
   function loseLevel(reason=''){
@@ -872,10 +872,52 @@
   }
 
   let adventureStarted=false, selectedMapWorld=0, mapReturnHome=true;
-  const mapSteps=Array.from({length:20},(_,i)=>{
-    const r=Math.floor(i/4),c=r%2===0?i%4:3-i%4;
-    return {x:14+c*24,y:12+r*19};
-  });
+  // Un chemin continu qui monte vers le château, avec des paliers sinueux.
+  const mapSteps=Array.from({length:20},(_,i)=>({
+    x:Math.round((50+32*Math.sin(i*Math.PI/5.5-0.7))*10)/10,
+    y:Math.round((94-i*4.22)*10)/10
+  }));
+  function mapCurve(points){
+    let d='M '+points[0].x+' '+points[0].y;
+    for(let i=0;i<points.length-1;i++){
+      const a=points[Math.max(0,i-1)],b=points[i],c=points[i+1],e=points[Math.min(points.length-1,i+2)];
+      d+=' C '+(b.x+(c.x-a.x)/6)+' '+(b.y+(c.y-a.y)/6)+' '+(c.x-(e.x-b.x)/6)+' '+(c.y-(e.y-b.y)/6)+' '+c.x+' '+c.y;
+    }
+    return d;
+  }
+  const scenePosition=i=>((i===14?4:i)/14*100)+'%';
+  let claimingGift=false;
+  const dailyKey=()=> 'daily:'+new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Brussels',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  function dailyKind(){const day=Number(dailyKey().slice(-2));return ['color','bomb','shuffle'][day%3]}
+  function showLumiRewards(){
+    const day=dailyKey(),claimed=!!state.lumiRewards[day];
+    const gifts=Array.from({length:15},(_,i)=>(i+1)*20);
+    showDialog('Les cadeaux de Lumi',
+      '<div class="fm-reward-intro"><img src="lumi-jour.webp" alt="Lumi"><p>Un cadeau chaque jour, et un trésor à la fin de chaque monde !</p></div>'+
+      '<button class="fm-reward-claim" data-daily="1" '+(claimed?'disabled':'')+'>'+ (claimed?'✓ Cadeau du jour récupéré':'🎁 Ouvrir mon cadeau du jour')+'</button>'+
+      '<div class="fm-reward-list">'+gifts.map(n=>{
+        const done=Number(state.levels[n]||0)>0||state.maxUnlocked>n,got=!!state.lumiRewards[n];
+        return '<button class="fm-reward-claim" data-reward="'+n+'" '+(!done||got?'disabled':'')+'>'+ (got?'✓':done?'🎁':'🔒')+' Monde '+(n/20)+' · '+(got?'Récupéré':done?'+1 '+lumiGiftNames[lumiGiftType(n)]:'Niveau '+n)+'</button>';
+      }).join('')+'</div>',[{label:'Retour',action:hideDialog}],'🎁');
+    const content=$('dialogContent');
+    content.querySelector('[data-daily]').addEventListener('click',claimDailyGift);
+    content.querySelectorAll('[data-reward]').forEach(b=>b.addEventListener('click',async()=>{await claimLumiGift(Number(b.dataset.reward));showLumiRewards()}));
+  }
+  async function claimDailyGift(){
+    if(!state||claimingGift)return;
+    claimingGift=true;
+    try{
+      if(cloudReady && !await synchroniserProgression(true)){toast('Connexion nécessaire pour récupérer ton cadeau');return;}
+      const key=dailyKey();
+      if(state.lumiRewards[key]){showLumiRewards();return;}
+      const kind=dailyKind();
+      state.lumiRewards[key]=true;
+      state.boosters[kind]=Math.max(0,Number(state.boosters[kind]||0))+1;
+      save();renderAll();updateAdventureHome();
+      if(cloudReady)await synchroniserProgression();
+      showLumiRewards();toast('🎁 Lumi t’offre +1 '+lumiGiftNames[kind]+' !');
+    }finally{claimingGift=false;}
+  }
   const lumiGiftType=n=>['shuffle','bomb','color'][Math.floor((n-1)/20)%3];
   const lumiGiftNames={shuffle:'Mélange magique',bomb:'Bombe magique',color:'Arc-en-ciel magique'};
   function updateAdventureHome(){
@@ -883,6 +925,7 @@
     $('fmHomeLevel').textContent=state.level;
     $('fmHomeScore').textContent=Number(state.score||0).toLocaleString('fr-BE');
     $('fmHomeLives').textContent=state.lives;
+    const reward=$('fmHomeRewards');if(reward)reward.classList.toggle('has-gift',!state.lumiRewards[dailyKey()]||Array.from({length:15},(_,i)=>(i+1)*20).some(n=>(Number(state.levels[n]||0)>0||state.maxUnlocked>n)&&!state.lumiRewards[n]));
     $('fmHomeWorldText').textContent='Monde '+(world(state.level)+1)+' · '+WORLD_NAMES[world(state.level)]+' · 300 niveaux';
     $('fmHomeLumiSpeech').textContent=state.level===1
       ?'Coucou ! Moi, c’est Lumi : je serai ton guide dans les 15 mondes ! ✨'
@@ -915,16 +958,18 @@
     const panel=$('fmMapScreen');
     panel.dataset.world=WORLD_THEMES[w];
     panel.style.setProperty('--fm-map-x',(w/(WORLD_NAMES.length-1)*100)+'%');
+    panel.style.setProperty('--fm-map-x',scenePosition(w));
+    $('fmMapTrack').classList.toggle('fm-final-world',w===14);
     $('fmMapWorldName').textContent='Monde '+(w+1)+' · '+WORLD_NAMES[w];
     const won=Object.entries(state.levels).filter(([n,v])=>Number(n)>=first && Number(n)<=last && Number(v)>0).length;
     $('fmMapWorldProgress').textContent=won+' / 20 niveaux réussis';
     $('fmMapPrev').disabled=w===0;
     $('fmMapNext').disabled=w===WORLD_NAMES.length-1;
-    $('fmMapRouteLine').setAttribute('points',mapSteps.map(p=>p.x+','+p.y).join(' '));
+    $('fmMapRouteLine').setAttribute('d',mapCurve(mapSteps));
     $('fmMapNodes').innerHTML=mapSteps.map((p,i)=>{
       const n=first+i,passed=Number(state.levels[n]||0)>0,locked=n>state.maxUnlocked;
       const type=passed?'finished':locked?'locked':n===state.maxUnlocked?'current':'open';
-      return '<button type="button" class="fm-map-node '+type+(n%20===0?' reward-node':'')+'" data-level="'+n+'" style="left:'+p.x+'%;top:'+p.y+'%"'+(locked?' disabled':'')+' aria-label="Niveau '+n+(passed?' réussi':locked?' verrouillé':' accessible')+'">'+(passed?'★':n)+'<small>'+(n%20===0?'🎁':passed?'✓':'')+'</small></button>';
+      return '<button type="button" class="fm-map-node '+type+(n%20===0?' reward-node':'')+'" data-level="'+n+'" style="left:'+p.x+'%;top:'+p.y+'%"'+(locked?' disabled':'')+' aria-label="Niveau '+n+(passed?' réussi':locked?' verrouillé':' accessible')+'">'+n+'<small>'+(n===MAX_LEVEL?'🏰':n%20===0?'🎁':passed?'★':'')+'</small></button>';
     }).join('');
     const lumi=$('fmMapLumi'),oldPos=Number(fromLevel)>=first&&Number(fromLevel)<=last?Math.min(19,Math.max(0,Number(fromLevel)-first)):currentIndex;
     const start=mapSteps[oldPos];
@@ -947,7 +992,7 @@
     $('fmMapPlay').textContent=!available?'🔒 Monde à débloquer':'▶ Jouer · Niveau '+Math.min(last,Math.max(first,state.level));
     $('fmMapWorldList').innerHTML=WORLD_NAMES.map((_,i)=>{
       const unlocked=i*20+1<=state.maxUnlocked;
-      return '<button type="button" data-world-index="'+i+'" aria-pressed="'+(i===w)+'" class="'+(i===w?'active':'')+'" title="'+escapeHtml(WORLD_NAMES[i])+'"><span>'+WORLD_SYMBOLS[i]+'</span><b>'+(i+1)+'</b>'+(unlocked?'':'<small>🔒</small>')+'</button>';
+      return '<button type="button" data-world-index="'+i+'" aria-pressed="'+(i===w)+'" class="'+(i===w?'active':'')+'" style="--fm-thumb-x:'+scenePosition(i)+'" title="'+escapeHtml(WORLD_NAMES[i])+'"><span class="fm-world-thumb" aria-hidden="true"></span><b>Monde '+(i+1)+'</b><em>'+escapeHtml(WORLD_NAMES[i])+'</em>'+(unlocked?'':'<small>🔒</small>')+'</button>';
     }).join('');
     updateAdventureHome();
   }
@@ -960,17 +1005,22 @@
     renderAdventureMap(opts.fromLevel??null);
   }
   async function claimLumiGift(n){
+    if(claimingGift)return;
     if(!state||n<20||n>MAX_LEVEL||n%20!==0||!(Number(state.levels[n]||0)>0 || state.maxUnlocked>n)){
       toast('Le trésor se débloque en terminant le royaume !');return;
     }
-    if(cloudReady)await synchroniserProgression(true);
+    claimingGift=true;
+    try{
+    if(cloudReady && !await synchroniserProgression(true)){toast('Connexion nécessaire pour récupérer ton cadeau');return;}
     if(state.lumiRewards?.[n]){toast('Tu as déjà reçu ce cadeau de Lumi !');renderAdventureMap();return;}
     if(!(Number(state.levels[n]||0)>0 || state.maxUnlocked>n))return;
     const kind=lumiGiftType(n);
     state.lumiRewards[n]=true;
     state.boosters[kind]=Math.max(0,Number(state.boosters[kind]||0))+1;
     save();renderAll();renderAdventureMap();
+    if(cloudReady)await synchroniserProgression();
     toast('🎁 Lumi t’offre +1 '+lumiGiftNames[kind]+' !');
+    }finally{claimingGift=false;}
   }
 
   function showLevels(){
@@ -983,7 +1033,7 @@
     }).join('');
     showDialog('Les 300 niveaux',cards,[{label:'Retour au jeu',action:hideDialog}],'✦');
     $('dialogContent').querySelectorAll('[data-level]').forEach(b=>b.addEventListener('click',()=>{
-      hideDialog();startRound(Number(b.dataset.level));
+      hideDialog();startRound(Number(b.dataset.level));enterAdventureGame();
     }));
   }
   async function showRanking(){
@@ -1078,6 +1128,8 @@
     $('fmHomePlay').addEventListener('click',enterAdventureGame);
     $('fmHomeMap').addEventListener('click',()=>showAdventureMap());
     $('fmHomeRanking').addEventListener('click',showRanking);
+    $('fmHomeRewards').addEventListener('click',showLumiRewards);
+    $('fmHomeLevels').addEventListener('click',showLevels);
     $('fmMapBack').addEventListener('click',()=>{if(mapReturnHome)showAdventureHome();else enterAdventureGame()});
     $('fmMapPrev').addEventListener('click',()=>{selectedMapWorld=Math.max(0,selectedMapWorld-1);renderAdventureMap()});
     $('fmMapNext').addEventListener('click',()=>{selectedMapWorld=Math.min(14,selectedMapWorld+1);renderAdventureMap()});
