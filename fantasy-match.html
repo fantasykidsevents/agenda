@@ -8,11 +8,10 @@
   <title>Fantasy Match · Fantasy Kids Events</title>
   <link rel="stylesheet" href="fantasy-match.css">
   <link rel="stylesheet" href="fantasy-match-premium.css?v=aventure-lumi-20261125">
-  <link rel="stylesheet" href="fantasy-match-adventure.css?v=refonte-20261125">
-  <link rel="stylesheet" href="fantasy-match-aventure.css?v=aventure-20261125-2">
+  <link rel="stylesheet" href="fantasy-match-aventure.css?v=carte-lumi-20261125-3">
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="fantasy-match.js?v=aventure-carte-20261125-2"></script>
+  <script defer src="fantasy-match.js?v=carte-lumi-20261125-3"></script>
 </head>
 <body>
   <div class="fm-bg-stars" aria-hidden="true"></div>
@@ -78,88 +77,52 @@
   </main>
 
 
-  <!-- L'aventure est purement une interface : même moteur et mêmes sauvegardes. -->
-  <div id="fmAdventure" class="fm-adventure" aria-label="Fantasy Match : aventure magique">
-    <section id="fmAdventureHome" class="fm-adv-view" aria-label="Accueil Fantasy Match">
-      <div class="fm-adv-topbar">
-        <span class="fm-adv-brand">✦ FANTASY KIDS EVENTS ✦</span>
-        <div class="fm-adv-topstats">
-          <span id="fmAdvHomeLives" class="fm-adv-pill">♥ 5/5</span>
-          <button class="fm-adv-iconbutton" id="fmAdvRules" type="button" aria-label="Règles du jeu">?</button>
-        </div>
+  <!-- Écrans d'aventure : tous les comptes gardent les niveaux et le plateau existants. -->
+  <section id="fmHomeScreen" class="fm-adventure-screen fm-home-screen" aria-label="Accueil de Fantasy Match">
+    <div class="fm-home-stage">
+      <div class="fm-home-top"><span class="fm-home-eyebrow">✦ L'AVENTURE MAGIQUE ✦</span><button type="button" id="fmHomeHelp" class="fm-round-btn" aria-label="Règles du jeu">?</button></div>
+      <img class="fm-home-logo" src="fantasy-match-logo.webp" alt="Fantasy Match" draggable="false">
+      <div class="fm-home-progress" id="fmHomeWorldText">15 royaumes enchantés · 300 niveaux</div>
+      <div class="fm-home-lumi">
+        <img src="lumi-jour.webp" alt="Lumi, ton guide magique" draggable="false">
+        <p id="fmHomeLumiSpeech">Je suis Lumi ! Ensemble, partons à la découverte des mondes enchantés ✨</p>
       </div>
-      <img class="fm-adv-home-logo" src="fantasy-match-logo.webp" alt="Fantasy Match" draggable="false">
-      <strong class="fm-adv-home-kicker">LES 15 ROYAUMES DE LA MAGIE</strong>
-      <div class="fm-adv-home-hero">
-        <button type="button" id="fmAdvTalk" class="fm-adv-portrait-btn" aria-label="Parler à Lumi">
-          <img class="fm-adv-lumi-portrait" src="lumi-jour.webp" alt="Lumi, ton guide magique" draggable="false">
-        </button>
-        <div class="fm-adv-lumi-bubble">
-          <strong>✨ Lumi</strong>
-          <p id="fmAdvGreeting">Bienvenue dans notre aventure magique !</p>
-          <button type="button" id="fmAdvMoreTalk">Dis-moi autre chose ✧</button>
-        </div>
+      <button id="fmHomePlay" type="button" class="fm-hero-button">▶ Jouer <small>Continuer au niveau <span id="fmHomeLevel">1</span></small></button>
+      <div class="fm-home-actions">
+        <button id="fmHomeMap" type="button">🗺️ <span>Carte des mondes</span></button>
+        <button id="fmHomeRanking" type="button">🏆 <span>Classement</span></button>
       </div>
-      <div class="fm-adv-main-actions">
-        <button type="button" class="fm-adv-bigbutton" id="fmAdvPlay"><span class="fm-adv-action-icon">▶</span> Jouer · <span id="fmAdvPlayLevel">Niveau 1</span></button>
-        <button type="button" class="fm-adv-bigbutton secondary" id="fmAdvWorlds"><span class="fm-adv-action-icon">🗺️</span> La carte des mondes</button>
-        <button type="button" class="fm-adv-bigbutton secondary" id="fmAdvGiftOpen"><span class="fm-adv-action-icon">🎁</span> Les cadeaux de Lumi <span id="fmAdvGiftAlert" aria-live="polite"></span></button>
-        <div class="fm-adv-secondary-grid">
-          <button type="button" class="fm-adv-bigbutton secondary" id="fmAdvRanking"><span aria-hidden="true">🏆</span> Classement</button>
-          <button type="button" class="fm-adv-bigbutton secondary" id="fmAdvTeam"><span aria-hidden="true">💖</span> L’équipe</button>
-        </div>
+      <div class="fm-home-counters">
+        <span>♥ <b id="fmHomeLives">5</b> vies</span>
+        <span>✦ <b id="fmHomeScore">0</b> points</span>
       </div>
-      <p class="fm-adv-message"><span id="fmAdvHomeScore">0</span> points · 300 niveaux · Progression conservée
-        <a href="index.html?vue=mine">← Retour à Fantasy App</a>
-      </p>
-    </section>
-    <section id="fmAdventureMap" class="fm-adv-view hidden" aria-label="La carte des 15 mondes">
-      <div class="fm-adv-sectionhead">
-        <button type="button" class="fm-adv-iconbutton" id="fmAdvMapBack" aria-label="Retour à l’accueil">←</button>
-        <h2>✦ Les 15 mondes ✦</h2>
-        <button type="button" class="fm-adv-iconbutton" id="fmAdvMapGift" aria-label="Cadeaux de Lumi">🎁</button>
+      <a class="fm-home-exit" href="index.html?vue=mine">← Retour à Fantasy App</a>
+    </div>
+  </section>
+  <section id="fmMapScreen" class="fm-adventure-screen fm-map-screen hidden" aria-label="La carte magique de Fantasy Match">
+    <header class="fm-map-header">
+      <button id="fmMapBack" class="fm-round-btn" type="button" aria-label="Retour">←</button>
+      <div><div class="fm-map-eyebrow">✦ 15 MONDES ENCHANTÉS ✦</div><h2>La carte magique</h2></div>
+      <button id="fmMapHelp" class="fm-round-btn" type="button" aria-label="Les règles du jeu">?</button>
+    </header>
+    <div class="fm-map-main">
+      <div class="fm-map-world-head">
+        <button id="fmMapPrev" type="button" aria-label="Monde précédent">‹</button>
+        <div><strong id="fmMapWorldName">Le Royaume des Étoiles</strong><span id="fmMapWorldProgress">0 / 20 niveaux</span></div>
+        <button id="fmMapNext" type="button" aria-label="Monde suivant">›</button>
       </div>
-      <div id="fmAdvWorldStrip" class="fm-adv-world-strip" aria-label="Choisir un monde"></div>
-      <div class="fm-adv-worldbar">
-        <button type="button" class="fm-adv-iconbutton" id="fmAdvPrevWorld" aria-label="Monde précédent">‹</button>
-        <h3 class="fm-adv-world-title" id="fmAdvWorldTitle">Le Royaume des Étoiles<small>Monde 1 · Niveaux 1–20</small></h3>
-        <button type="button" class="fm-adv-iconbutton" id="fmAdvNextWorld" aria-label="Monde suivant">›</button>
+      <div id="fmMapTrack" class="fm-map-track">
+        <svg id="fmMapRoute" class="fm-map-route" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline id="fmMapRouteLine" points=""/></svg>
+        <div id="fmMapNodes" class="fm-map-nodes" role="group" aria-label="Chemin des niveaux"></div>
+        <img id="fmMapLumi" class="fm-map-lumi" src="lumi-jour.webp" alt="Lumi avance sur la carte">
       </div>
-      <div class="fm-adv-stage" id="fmAdvStage">
-        <svg class="fm-adv-route" viewBox="0 0 360 620" preserveAspectRatio="none" aria-hidden="true">
-          <path class="road-halo" id="fmAdvRoadHalo"></path>
-          <path class="road" id="fmAdvRoad"></path>
-        </svg>
-        <div id="fmAdvNodes" class="fm-adv-nodes" role="group" aria-label="Les niveaux du monde"></div>
-        <img class="fm-adv-lumi-map" id="fmAdvWalker" src="lumi-jour.webp" alt="Lumi avance sur ton chemin" draggable="false">
-      </div>
-      <div class="fm-adv-map-lumi-message">
-        <img src="lumi-jour.webp" alt="" loading="lazy">
-        <span id="fmAdvMapSpeech">Je t'accompagne dans ton aventure !</span>
-      </div>
-      <div class="fm-adv-footer">
-        <button type="button" class="fm-adv-bigbutton" id="fmAdvMapPlay">▶ Continuer · <span id="fmAdvMapLevel">Niveau 1</span></button>
-        <button type="button" class="fm-adv-iconbutton" id="fmAdvMapHome" aria-label="Accueil">⌂</button>
-      </div>
-    </section>
-    <section id="fmAdventureGifts" class="fm-adv-view hidden" aria-label="Les cadeaux de Lumi">
-      <div class="fm-adv-sectionhead">
-        <button type="button" class="fm-adv-iconbutton" id="fmAdvGiftsBack" aria-label="Retour à l’accueil">←</button>
-        <h2>🎁 Les cadeaux de Lumi</h2>
-        <span aria-hidden="true" style="width:40px"></span>
-      </div>
-      <div class="fm-adv-gift-hero">
-        <img src="lumi-anniversaire.webp" alt="Lumi avec ses cadeaux" draggable="false">
-        <p><b>Un cadeau par monde !</b> Termine les 20 niveaux d’un monde puis choisis un bonus parmi les trois proposés. Les cadeaux sont indépendants du classement et ne retirent jamais de points.</p>
-      </div>
-      <div class="fm-adv-gift-summary">
-        <div class="fm-adv-gift-count"><b id="fmAdvColorAmount">0</b>Magie</div>
-        <div class="fm-adv-gift-count"><b id="fmAdvBombAmount">0</b>Bombes</div>
-        <div class="fm-adv-gift-count"><b id="fmAdvShuffleAmount">0</b>Mélanges</div>
-      </div>
-      <div id="fmAdvGiftList" class="fm-adv-gift-list" aria-live="polite"></div>
-    </section>
-  </div>
+      <div class="fm-map-lumi-talk"><img src="lumi-jour.webp" alt=""><p id="fmMapLumiSpeech">Je t'accompagne sur le chemin magique !</p></div>
+      <div id="fmMapGift" class="fm-map-gift" aria-live="polite"></div>
+      <button id="fmMapPlay" class="fm-hero-button fm-map-play" type="button">▶ Continuer l'aventure</button>
+      <div class="fm-map-all-label">CHANGER DE MONDE</div>
+      <div id="fmMapWorldList" class="fm-map-world-list" role="group" aria-label="Choisir un monde"></div>
+    </div>
+  </section>
 
   <div class="fm-world-portal hidden" id="worldPortal" role="dialog" aria-modal="true" aria-labelledby="worldPortalTitle" aria-describedby="worldPortalDescription">
     <div class="fm-world-portal-card">
