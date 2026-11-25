@@ -753,3 +753,7 @@ body .fm-shell[data-world]{
 @keyframes fm-replay-new{0%{transform:translate(-50%,-50%) scale(.05);opacity:0;}55%{transform:translate(-50%,-50%) scale(1.25);opacity:1;}100%{transform:translate(-50%,-50%) scale(1);opacity:1;}}
 @keyframes fm-replay-caption{0%{opacity:0;transform:scale(.85);}25%,75%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(1.04);}}
 @media(prefers-reduced-motion:reduce){.fm-magic-replay{display:none!important;}}
+
+/* Même fond clair pendant la relecture et dans la grille interactive. */
+.fm-shell .fm-replay-grid .fm-replay-tile,.fm-shell .fm-replay-grid .fm-replay-tile:nth-child(2n),.fm-shell .fm-replay-grid .fm-replay-tile.frozen{background:linear-gradient(145deg,#e4cffc 0%,#dbbdf7 52%,#cdbaf8 100%)!important;border-color:#7753ad;}
+.fm-replay-ring.rainbow{-webkit-mask:radial-gradient(circle,transparent 50%,#000 68%);}
