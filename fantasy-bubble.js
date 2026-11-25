@@ -1,10 +1,19 @@
 (()=>{"use strict";
 const $=id=>document.getElementById(id),W=360,H=535,R=16.5,DX=34,DY=29.45,TOP=22,ORIGIN={x:180,y:505},MAX=15,LIMIT=445,MAX_LEVEL=300,LIFE_MS=30*60*1000;
-const PALETTE=[["#ff9bdc","#f02b9d","#a50b64","♥"],["#9bf6ff","#24a7fb","#1741a8","✦"],["#d5ffaa","#45ce6e","#126d4d","◆"],["#fff5ac","#f3b632","#a65616","★"],["#e0b2ff","#a552f3","#4e1599","✿"],["#ffbc92","#f76a36","#9e291e","☀"],["#b9ffff","#39d9cc","#117482","❄"]];
+const PALETTE=[["#ffb7e4","#f51a8c","#88013f","♥"],["#9dcaff","#2363f5","#15247c","✦"],["#b9ff93","#46c92b","#17642d","◆"],["#fff3a4","#ffc427","#a35b0a","★"],["#efc2ff","#9f34e8","#4c107e","✿"],["#ffc18a","#f35e17","#a32b09","☀"],["#a9fff3","#10cfc4","#09605f","❄"]];
 const WORLDS=["Le Lac des étoiles","Le Jardin des bulles","Le Palais de cristal","La Grotte des améthystes","Les Îles suspendues","Le Royaume des glaces","Le Jardin des roses","Le Ciel des lanternes","La Vallée des sortilèges","Le Château des rêves","La Forêt des enchantements","Le Royaume des aurores","La Tour de Lumi","Le Portail céleste","Le Château de Fantasy"];
 const POWERS={rainbow:"Bulle arc-en-ciel",bomb:"Explosion magique",lightning:"Éclair destructeur",extra:"5 tirs supplémentaires"};
 const key=(r,c)=>r+":"+c,parse=k=>k.split(":").map(Number),cols=r=>r%2===0?10:9,valid=(r,c)=>r>=0&&r<MAX&&c>=0&&c<cols(r),pos=(r,c)=>({x:27+c*DX+(r%2)*DX/2,y:TOP+r*DY}),point=k=>pos(...parse(k));
-function neighbors(k){const [r,c]=parse(k),d=r%2?1:-1;return [[r,c-1],[r,c+1],[r-1,c],[r-1,c+d],[r+1,c],[r+1,c+d]].filter(p=>valid(...p)).map(p=>key(...p));}
+const neighborCache=new Map();
+function neighbors(k){
+ if(neighborCache.has(k))return neighborCache.get(k);
+ const [r,c]=parse(k),p=point(k),out=[];
+ for(let y=Math.max(0,r-1);y<=Math.min(MAX-1,r+1);y++)for(let x=Math.max(0,c-1);x<=Math.min(cols(y)-1,c+1);x++){
+  if(y===r&&x===c)continue;const q=pos(y,x);
+  if(Math.hypot(p.x-q.x,p.y-q.y)<=DX+0.2)out.push(key(y,x));
+ }
+ neighborCache.set(k,out);return out;
+}
 const rng=seed=>()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
 const fmt=n=>Number(n||0).toLocaleString("fr-BE"),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const world=n=>Math.floor((n-1)/20),types=n=>n<=2?3:n<=7?4:n<=24?5:n<=64?6:7;
@@ -61,12 +70,12 @@ function trace(board,angle){
  if(landing){const p=point(landing);path.push(p)}
  return {path,landing};
 }
-function settle(board,landing,color,power){if(!landing||board[landing])return {removed:0,fallen:0,cracked:0};let removed=0,fallen=0,cracked=0;const strike=k=>{const b=board[k];if(!b||b.color<0)return;if(b.armor>0){b.armor--;cracked++}else{delete board[k];removed++}};
+function settle(board,landing,color,power){if(!landing||board[landing])return {removed:0,fallen:0,cracked:0,matched:0};let removed=0,fallen=0,cracked=0,matched=0;const strike=k=>{const b=board[k];if(!b||b.color<0)return;if(b.armor>0){b.armor--;cracked++}else{delete board[k];removed++}};
 if(power==="rainbow"){let bestColor=color,best=-1;for(const c of colorsPresent(board)){board[landing]={color:c,armor:0,rescue:false};const size=group(board,landing,c).length;delete board[landing];if(size>best){best=size;bestColor=c}}color=bestColor;}
 board[landing]={color,armor:0,rescue:false};
-if(power==="bomb"){const p=point(landing);for(const k of Object.keys(board)){const q=point(k);if((q.x-p.x)**2+(q.y-p.y)**2<=(DX*2.05)**2)strike(k)}}else if(power==="lightning"){const row=parse(landing)[0];for(const k of Object.keys(board))if(parse(k)[0]===row)strike(k)}else{const same=group(board,landing,color);if(same.length>=3)same.forEach(strike)}
+if(power==="bomb"){const p=point(landing);for(const k of Object.keys(board)){const q=point(k);if((q.x-p.x)**2+(q.y-p.y)**2<=(DX*2.05)**2)strike(k)}}else if(power==="lightning"){const row=parse(landing)[0];for(const k of Object.keys(board))if(parse(k)[0]===row)strike(k)}else{const same=group(board,landing,color);matched=same.length;if(matched>=3)same.forEach(strike)}
 const support=connected(board);for(const k of Object.keys(board))if(!support.has(k)){delete board[k];fallen++}
-return {removed,fallen,cracked};}
+return {removed,fallen,cracked,matched};}
 function freshRound(level){const setup=generate(level),random=rng(level*239+Date.now()%100000);return {level,designVersion:2,board:setup.board,rescue:setup.rescue,shots:setup.shots,initial:setup.shots,score:0,current:chooseColor(setup.board,random),next:chooseColor(setup.board,random),started:false,used:0,power:null};}
 const defaultState=()=>({level:1,unlocked:1,wins:{},stars:{},lives:5,nextLifeAt:0,boosts:{rainbow:3,bomb:3,lightning:3,extra:3},claims:{},round:null});
 let storage="fantasy_bubble_guest_v1",state=defaultState(),sb=null,user=null,player="Membre",cloud=false,syncing=false,syncAgain=false,syncTimer=0,busy=false,angle=0,flight=null,modalType="",modalSeq=0;
@@ -103,9 +112,9 @@ function makeBubbleSprite(color,armor,rescue){
  const shine=g.createLinearGradient(x-r,y-r,x+r,y+r);shine.addColorStop(0,"#fff");shine.addColorStop(.45,"#ffffff60");shine.addColorStop(1,"#ffffff00");g.fillStyle=shine;g.beginPath();g.ellipse(x-r*.29,y-r*.54,r*.51,r*.17,-.48,0,Math.PI*2);g.fill();
  g.strokeStyle="#ffffffcc";g.lineWidth=2.3;g.lineCap="round";g.beginPath();g.arc(x,y,r-4,3.63,4.66);g.stroke();g.strokeStyle=p[0];g.lineWidth=2.6;g.beginPath();g.arc(x,y,r-3,.44,1.5);g.stroke();
  // A recognizable, faceted symbol inside every orb (not a text emoji).
- g.save();g.translate(x,y+3);const q=rescue?0:color;
- const jewel=g.createLinearGradient(-15,-19,15,19);jewel.addColorStop(0,"#fff");jewel.addColorStop(.36,rescue?"#fff0a4":p[0]);jewel.addColorStop(.67,rescue?"#f7b42c":p[1]);jewel.addColorStop(1,rescue?"#a45d17":p[2]);g.fillStyle=jewel;g.strokeStyle="#fff5e8";g.lineWidth=1.7;g.shadowColor=rescue?"#ffdd54":p[0];g.shadowBlur=8;
- if(rescue||q===3){gemPath(g,0,0,rescue?24:18,5,.45);}
+ g.save();g.translate(x,y+3);const q=color;
+ const jewel=g.createLinearGradient(-15,-19,15,19);jewel.addColorStop(0,"#fff");jewel.addColorStop(.36,p[0]);jewel.addColorStop(.67,p[1]);jewel.addColorStop(1,p[2]);g.fillStyle=jewel;g.strokeStyle="#fff5e8";g.lineWidth=1.7;g.shadowColor=rescue?"#ffdd54":p[0];g.shadowBlur=8;
+ if(q===3){gemPath(g,0,0,27,5,.47);}
  else if(q===0){g.beginPath();g.moveTo(0,17);g.bezierCurveTo(-34,-3,-13,-25,0,-10);g.bezierCurveTo(13,-25,34,-3,0,17);g.closePath();}
  else if(q===2){g.beginPath();g.moveTo(0,-21);g.lineTo(16,0);g.lineTo(0,21);g.lineTo(-16,0);g.closePath();}
  else if(q===4){g.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?10:19;const xx=Math.cos(a)*rr,yy=Math.sin(a)*rr;i?g.lineTo(xx,yy):g.moveTo(xx,yy)}g.closePath();}
@@ -120,7 +129,7 @@ function makeBubbleSprite(color,armor,rescue){
  if(armor===1){g.fillStyle="#bbf8ff30";g.fill();g.strokeStyle="#d9ffff";g.lineWidth=2;g.beginPath();g.moveTo(x-33,y-17);g.lineTo(x-9,y+3);g.lineTo(x+4,y-28);g.lineTo(x+28,y-8);g.moveTo(x-9,y+3);g.lineTo(x+3,y+24);g.lineTo(x+26,y+31);g.stroke();}
  else{for(const a of [-.65,.65]){g.save();g.translate(x,y);g.rotate(a);for(let i=-2;i<=2;i++){g.strokeStyle="#6b3515";g.lineWidth=5;g.beginPath();g.ellipse(i*13,0,9,5,0,0,Math.PI*2);g.stroke();g.strokeStyle="#ffe6a1";g.lineWidth=2.7;g.stroke()}g.restore()}}
  g.restore();}
- if(rescue){g.strokeStyle="#fff4a0";g.lineWidth=3;g.beginPath();g.arc(x,y,r-1,0,Math.PI*2);g.stroke();}
+ if(rescue){g.strokeStyle="#fff4a0";g.lineWidth=3;g.beginPath();g.arc(x,y,r-1,0,Math.PI*2);g.stroke();g.fillStyle="#fff0a0";g.strokeStyle="#9e5810";g.lineWidth=1.6;gemPath(g,x+29,y-29,13,5,.46);g.fill();g.stroke();}
  return c;
 }
 function drawBubble(x,y,b,r=R){
@@ -132,7 +141,7 @@ function drawPower(x,y,power,color,r){if(power==="rainbow"){ctx.save();const gra
 function draw(){ctx.clearRect(0,0,W,H);const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#08052591");bg.addColorStop(.55,"#180a4255");bg.addColorStop(1,"#18092f9c");ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);ctx.save();ctx.strokeStyle="#ffd98955";ctx.lineWidth=1;ctx.strokeRect(1,1,W-2,H-2);const random=rng(791);for(let i=0;i<52;i++){const x=random()*W,y=random()*H,r=random()*1.4+.25;ctx.fillStyle=i%4===0?"#ffe0a1a0":"#c4b4ff70";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}ctx.restore();
 const r=state.round;if(!r)return;for(const [k,b] of Object.entries(r.board)){const p=point(k);drawBubble(p.x,p.y,b)}
 ctx.save();ctx.strokeStyle="#ff82af99";ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(9,LIMIT);ctx.lineTo(W-9,LIMIT);ctx.stroke();ctx.restore();
-if(!busy&&r.shots>0){const prediction=trace(r.board,angle),end=prediction.path.length;ctx.save();ctx.fillStyle="#b9faff";ctx.shadowColor="#2be8ff";ctx.shadowBlur=8;for(let i=5;i<end;i+=6){const p=prediction.path[i];ctx.globalAlpha=Math.max(.25,1-i/end*.7);ctx.beginPath();ctx.arc(p.x,p.y,2.9,0,Math.PI*2);ctx.fill()}ctx.restore()}
+if(!busy&&r.shots>0){const prediction=trace(r.board,angle),end=prediction.path.length;ctx.save();ctx.fillStyle="#b9faff";ctx.shadowColor="#2be8ff";ctx.shadowBlur=8;for(let i=5;i<end;i+=6){const p=prediction.path[i];ctx.globalAlpha=Math.max(.25,1-i/end*.7);ctx.beginPath();ctx.arc(p.x,p.y,2.9,0,Math.PI*2);ctx.fill()}ctx.restore();if(prediction.landing){const p=point(prediction.landing);ctx.save();ctx.strokeStyle="#fff4bb";ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.beginPath();ctx.arc(p.x,p.y,R-1,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);if(!r.power){const test={...r.board,[prediction.landing]:{color:r.current}},same=group(test,prediction.landing,r.current);if(same.length>=3){ctx.strokeStyle="#fff8ba";ctx.shadowColor="#ffda55";ctx.shadowBlur=5;for(const k of same){const q=point(k);ctx.beginPath();ctx.arc(q.x,q.y,R+1,0,Math.PI*2);ctx.stroke()}}}ctx.restore()}}
 // Jewel-mounted launcher with carved golden wings and a faceted tip.
 ctx.save();ctx.translate(ORIGIN.x,ORIGIN.y);ctx.rotate(angle);
 const shaft=ctx.createLinearGradient(-34,-25,34,20);shaft.addColorStop(0,"#9d5413");shaft.addColorStop(.19,"#fff6b0");shaft.addColorStop(.40,"#edb641");shaft.addColorStop(.56,"#fff1a2");shaft.addColorStop(.76,"#b36b15");shaft.addColorStop(1,"#fff1ac");
@@ -165,7 +174,7 @@ function shoot(){
   busy=false;save(false);update();
   if(countGoal(r)===0){draw();win();return}
   if(r.shots===0||Object.keys(r.board).some(k=>point(k).y+R>=LIMIT)){draw();lose(r.shots===0?"Tu as utilisé tous tes tirs.":"Les bulles ont atteint la limite.");return;}
-  say(score.fallen>0?"Magnifique ! "+score.fallen+" bulles se sont détachées.":score.removed>0?"Bien joué ! Continue ton sortilège.":score.cracked>0?"La glace ou la chaîne cède…":"Regarde les groupes et utilise les rebonds.",score.removed+score.fallen>0?"merlin":"think");
+  say(score.cracked>0?"Combinaison réussie ! "+score.cracked+" protection(s) brisée(s) ou fragilisée(s).":score.fallen>0?"Magnifique ! "+score.fallen+" bulles se sont détachées.":score.removed>0?"Bien joué ! Continue ton sortilège.":score.cracked>0?"Protection fissurée : il faut encore toucher les bulles protégées.":score.matched===2?"Deux bulles reliées : il en faut une troisième.":"Il faut trois bulles identiques qui se touchent.",score.removed+score.fallen>0?"merlin":"think");
   draw();
  }
  function frame(t){if(completed)return;try{const progress=Math.max(0,Math.min(1,(t-t0)/duration)),i=Math.min(points.length-1,Math.floor(progress*(points.length-1)));flight={...points[i],power,color};draw();if(progress<1)raf=requestAnimationFrame(frame);else finish();}catch(err){console.warn(err);finish();}}
@@ -180,7 +189,7 @@ function showLevels(w){const first=w*20+1;openModal(WORLDS[w],'<img class="gift-
 const day=()=>new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Brussels",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 function showRewards(){if(busy)return;const today="daily:"+day();openModal("Les cadeaux de Lumi",'<img class="gift-lumi" src="lumi-soir.webp" alt="Lumi apporte un cadeau"><p>Un bonus quotidien et un trésor à la fin de chaque monde !</p><div class="gift-buttons"><button class="jewel" data-gift="daily" '+(state.claims[today]?"disabled":"")+'>'+(state.claims[today]?"✓ Cadeau du jour reçu":"🎁 Ouvrir mon cadeau du jour")+'</button>'+WORLDS.map((w,i)=>{const n=(i+1)*20,k="world:"+n,done=!!state.wins[n]||state.unlocked>n;return '<button class="jewel" data-gift="'+n+'" '+(!done||state.claims[k]?"disabled":"")+'>'+(state.claims[k]?"✓":done?"🎁":"🔒")+' Monde '+(i+1)+' · '+(state.claims[k]?"Récupéré":done?"Ouvrir le trésor":"Niveau "+n)+'</button>'}).join("")+'</div>',[{label:"Retour",action:closeModal}],"gifts");$("modalBody").querySelectorAll("[data-gift]").forEach(b=>b.onclick=()=>{const n=b.dataset.gift,k=n==="daily"?today:"world:"+n;if(state.claims[k]||(n!=="daily"&&!state.wins[n]&&state.unlocked<=Number(n)))return;const power=Object.keys(POWERS)[(n==="daily"?Number(day().slice(-2)):Number(n)/20)%4];state.claims[k]=true;state.boosts[power]=(state.boosts[power]||0)+(n==="daily"?1:2);save(false);update();say("Lumi t'offre "+POWERS[power]+" !","gift");showRewards();$("modalBody").insertAdjacentHTML("afterbegin","<p>✦ "+esc(POWERS[power])+" reçu !</p>")})}
 async function showRanking(){if(busy)return;openModal("Classement Fantasy Bubble","<p>Chargement du classement…</p>",[{label:"Retour",action:closeModal}],"ranking");const seq=modalSeq;let rows=[{prenom:player,level:state.unlocked,score:total(),user_id:user?.id}];if(cloud){try{const {data,error}=await sb.from("fantasy_bubble_profiles").select("user_id,prenom,level,score").order("score",{ascending:false}).limit(50);if(error)throw error;if(data?.length)rows=data;}catch{}}if(modalSeq!==seq)return;$("modalBody").innerHTML=(cloud?"":"<p>Classement local · connexion Fantasy nécessaire.</p>")+rows.map((p,i)=>'<div class="rank"><strong>'+(i+1)+'.</strong><b>'+esc(p.prenom||"Membre")+'</b><small>'+fmt(p.score)+' pts<br>Niveau '+p.level+'</small></div>').join("")}
-function rules(){if(busy)return;openModal("Le grimoire des bulles",'<img class="gift-lumi" src="lumi-costumes/merlin.webp" alt="Lumi magicienne"><p>Vise puis relâche le doigt pour lancer. Trois bulles de même couleur éclatent ; les groupes détachés tombent. Les parois permettent des rebonds.</p><p>La glace apparaît dès le niveau 6 et demande deux attaques ; les chaînes dès le niveau 25 en demandent trois. Les cristaux indestructibles ne tombent que si leur support disparaît. Tous les dix niveaux, libère les étoiles de Lumi.</p><p>Quatre pouvoirs : arc-en-ciel, explosion, éclair et cinq tirs. Les vies reviennent toutes les 30 minutes. Les cadeaux quotidiens et trésors sont accessibles depuis l’accueil.</p>',[{label:"Compris",action:closeModal}],"rules")}
+function rules(){if(busy)return;openModal("Le grimoire des bulles",'<img class="gift-lumi" src="lumi-costumes/merlin.webp" alt="Lumi magicienne"><p>Vise puis relâche le doigt pour lancer. Trois bulles de même couleur qui se touchent, dont celle que tu tires, éclatent. Le cercle pointillé indique la case visée et le contour doré confirme la combinaison. Les groupes déjà présents ne disparaissent pas avant d’être touchés ; les bulles protégées perdent une couche. Les parois permettent des rebonds.</p><p>La glace apparaît dès le niveau 6 et demande deux attaques ; les chaînes dès le niveau 25 en demandent trois. Les cristaux indestructibles ne tombent que si leur support disparaît. Tous les dix niveaux, libère les étoiles de Lumi.</p><p>Quatre pouvoirs : arc-en-ciel, explosion, éclair et cinq tirs. Les vies reviennent toutes les 30 minutes. Les cadeaux quotidiens et trésors sont accessibles depuis l’accueil.</p>',[{label:"Compris",action:closeModal}],"rules")}
 function pointer(e){const rect=canvas.getBoundingClientRect();const ratio=Math.min(rect.width/W,rect.height/H),left=rect.left+(rect.width-W*ratio)/2,top=rect.top+(rect.height-H*ratio)/2;angle=angleFrom((e.clientX-left)/ratio,(e.clientY-top)/ratio);draw();}
 let pointerId=null;
 canvas.addEventListener("pointerdown",e=>{if(busy||!state.round||pointerId!==null||!$("modal").classList.contains("hidden")||e.button>0)return;e.preventDefault();pointerId=e.pointerId;try{canvas.setPointerCapture(e.pointerId)}catch{}pointer(e)});
