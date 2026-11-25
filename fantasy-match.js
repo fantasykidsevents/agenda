@@ -89,6 +89,7 @@
     };
   }
   function beginTurn(){
+    clearMagicReplay();
     const id=++turnEpoch;
     clearTimeout(turnWatchdog);
     turnSnapshot=snapshotTurn();
@@ -495,6 +496,78 @@
     for(const [i,turns] of timedBombs)timedBombs.set(i,turns-1);
   }
   // Petites particules dessinées au-dessus de la grille (sans image externe).
+  // Presentation only: no animation event, timer or frame is awaited by the game engine.
+  // Each frame is an immutable copy of a resolved cascade. The real board is already settled.
+  let replayLayer=null,replayTimer=null,replayUntil=0,roundPresentation=null,roundPresentationTimer=null;
+  const reducedMagic=()=>!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  function clearMagicReplay(){
+    clearTimeout(replayTimer);replayTimer=null;
+    if(replayLayer)replayLayer.remove();replayLayer=null;replayUntil=0;
+  }
+  function cancelRoundPresentation(){
+    clearTimeout(roundPresentationTimer);roundPresentationTimer=null;roundPresentation=null;
+  }
+  function flushRoundPresentation(force=false){
+    const p=roundPresentation;if(!p)return;
+    if(p.epoch!==turnEpoch){cancelRoundPresentation();return;}
+    if(!force&&now()<p.at)return;
+    cancelRoundPresentation();clearMagicReplay();p.show();
+  }
+  function presentRoundDialog(...args){
+    if(replayUntil<=now()||reducedMagic()){showDialog(...args);return;}
+    cancelRoundPresentation();
+    roundPresentation={epoch:turnEpoch,at:replayUntil,show:()=>showDialog(...args)};
+    roundPresentationTimer=setTimeout(()=>flushRoundPresentation(true),Math.max(0,replayUntil-now())+20);
+  }
+  const fxPosition=i=>'left:'+((i%8+.5)*12.5)+'%;top:'+((Math.floor(i/8)+.5)*12.5)+'%;';
+  function visualFrame(b,removed,bonus,chain,action=null){
+    const targets=[...removed],hits=targets.map(i=>({i,power:specialOf(b[i])})).filter(t=>t.power);
+    const type=action?.type|| (bonus?(specialOf(bonus.value)==='color'?'five':specialOf(bonus.value)==='bomb'?'cross':'four'):'three');
+    const center=action?.center??bonus?.index??targets[Math.floor(targets.length/2)]??27;
+    return {board:b.slice(),targets,bonus:bonus?{...bonus}:null,chain,type,center,hits,
+      ice:[...frozenCells],seals:[...sealedCells],timers:[...timedBombs]};
+  }
+  function magicReplay(frames,finalBoard,finalColumns){
+    clearMagicReplay();if(!frames.length||reducedMagic())return;
+    const boardEl=$('gameBoard'),host=boardEl.parentElement;if(!host)return;
+    const bounds=boardEl.getBoundingClientRect(),outer=host.getBoundingClientRect();
+    if(!bounds.width||!bounds.height)return;
+    const layer=document.createElement('div');layer.className='fm-magic-replay';layer.setAttribute('aria-hidden','true');
+    Object.assign(layer.style,{left:(bounds.left-outer.left-host.clientLeft+host.scrollLeft)+'px',top:(bounds.top-outer.top-host.clientTop+host.scrollTop)+'px',width:bounds.width+'px',height:bounds.height+'px'});
+    const chosen=frames.length>3?[frames[0],frames[1],frames[frames.length-1]]:frames;
+    const duration=360,dropDuration=210,life=chosen.length*duration+dropDuration;
+    const palette=['#fff3a5','#ff79d8','#86efff','#fff9ed'];
+    const labels={three:'',four:'FUSÉE MAGIQUE',five:'ARC-EN-CIEL',cross:'BOMBE MAGIQUE',bomb:'EXPLOSION MAGIQUE',color:'TEMPÊTE DE COULEURS',lineH:'FUSÉE HORIZONTALE',lineV:'FUSÉE VERTICALE',fusion:'FUSION MAGIQUE',shuffle:'MÉLANGE MAGIQUE'};
+    function beam(i,axis){return '<i class="fm-replay-beam '+(axis==='lineH'?'horizontal':'vertical')+'" style="'+fxPosition(i)+'"></i>'}
+    function ring(i,cls){return '<i class="fm-replay-ring '+cls+'" style="'+fxPosition(i)+'"></i>'}
+    function frameHTML(f,index){
+      const hits=new Set(f.targets),ice=new Set(f.ice),seals=new Map(f.seals),timers=new Map(f.timers);
+      const cells=f.board.map((v,i)=>{
+        const cls='fm-cell fm-replay-tile'+(hits.has(i)?' burst':'')+(ice.has(i)?' frozen':'')+(seals.has(i)?' sealed':'')+(f.bonus?.index===i?' enchant':'');
+        return '<div class="'+cls+'">'+(v?piece(v):'')+(seals.has(i)?'<span class="fm-seal">'+seals.get(i)+'</span>':'')+(timers.has(i)?'<span class="fm-timer">⏱'+timers.get(i)+'</span>':'')+'</div>';
+      }).join('');
+      const seeds=f.targets.length>14?f.targets.filter((_,i)=>i%Math.ceil(f.targets.length/14)===0):f.targets;
+      const sparks=seeds.map((i,j)=>[0,1].map(k=>{const a=(j*2.4+k*2.8),d=17+(j%4)*8;return '<i class="fm-replay-spark" style="'+fxPosition(i)+'--dx:'+Math.round(Math.cos(a)*d)+'px;--dy:'+Math.round(Math.sin(a)*d)+'px;--spark:'+palette[(j+k)%4]+'"></i>'}).join('')).join('');
+      let powers='';
+      for(const h of f.hits.slice(0,5)){if(h.power==='lineH'||h.power==='lineV')powers+=beam(h.i,h.power);else if(h.power==='bomb')powers+=ring(h.i,'blast');else if(h.power==='color')powers+=ring(h.i,'rainbow');}
+      if(f.type==='lineH'||f.type==='lineV')powers+=beam(f.center,f.type);
+      else if(f.type==='bomb'||f.type==='cross')powers+=ring(f.center,'blast');
+      else if(f.type==='color'||f.type==='five')powers+=ring(f.center,'rainbow');
+      else if(f.type==='fusion')powers+=ring(f.center,'rainbow')+beam(f.center,'lineH')+beam(f.center,'lineV');
+      else if(f.type==='four')powers+=ring(f.center,'gold');
+      else if(f.type==='shuffle')powers+=ring(f.center,'rainbow');
+      if(f.bonus)powers+='<div class="fm-replay-new" style="'+fxPosition(f.bonus.index)+'">'+piece(f.bonus.value)+'</div>';
+      const label=f.chain>1?'CASCADE ×'+f.chain:labels[f.type];
+      return '<div class="fm-replay-frame" style="--delay:'+index*duration+'ms;--duration:'+duration+'ms"><div class="fm-replay-grid">'+cells+'</div>'+sparks+powers+(label?'<div class="fm-replay-caption">'+label+'</div>':'')+'</div>';
+    }
+    const lastCells=finalBoard.map((v,i)=>'<div class="fm-cell fm-replay-tile'+(finalColumns.has(i%8)?' landing':'')+(frozenCells.has(i)?' frozen':'')+(sealedCells.has(i)?' sealed':'')+'">'+piece(v)+(sealedCells.has(i)?'<span class="fm-seal">'+sealedCells.get(i)+'</span>':'')+(timedBombs.has(i)?'<span class="fm-timer">⏱'+timedBombs.get(i)+'</span>':'')+'</div>').join('');
+    layer.innerHTML=chosen.map(frameHTML).join('')+'<div class="fm-replay-frame fm-replay-final" style="--delay:'+chosen.length*duration+'ms;--duration:'+dropDuration+'ms"><div class="fm-replay-grid">'+lastCells+'</div></div>';
+    host.appendChild(layer);replayLayer=layer;replayUntil=now()+life;
+    replayTimer=setTimeout(()=>{if(replayLayer===layer){clearMagicReplay();flushRoundPresentation(true);}},life+40);
+  }
+  function safelyReplay(frames,finalBoard,columns){
+    try{magicReplay(frames,finalBoard,columns);}catch(err){clearMagicReplay();console.warn('Fantasy Match : animation ignorée',err);}
+  }
   function magicEffect(indices,label=''){
     const host=document.querySelector('.fm-board-wrap');
     if(!host || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
@@ -513,6 +586,7 @@
     setTimeout(()=>layer.remove(),1150);
   }
   function startRound(n=state.level) {
+    clearMagicReplay();cancelRoundPresentation();
     ++turnEpoch;clearTimeout(turnWatchdog);turnWatchdog=null;turnSnapshot=null;turnStartedAt=0;busy=false;roundResult=null;
     tickLives();
     state.level = Math.min(Math.max(1,n),state.maxUnlocked);
@@ -627,13 +701,15 @@
       for(let y=7;y>=0;y--)board[y*8+x]=keep.shift()||randomKind();
     }
   }
-  async function resolve(initial=null,preferred=-1,createBonus=true,id=turnEpoch,swapAxis=null){
-    let completed=false,allImpacts=new Set(),effectLabel='';
+  async function resolve(initial=null,preferred=-1,createBonus=true,id=turnEpoch,swapAxis=null,visualAction=null){
+    let completed=false,allImpacts=new Set(),effectLabel='',frames=[];
     try{
       let matches=initial||findMatches(board),chain=0;
       while(matches.size&&chain<16&&id===turnEpoch){
         chain++;
         const {bonus,removed}=matchEffect(board,matches,preferred,createBonus,swapAxis);
+        const frame=visualFrame(board,removed,bonus,chain,chain===1?visualAction:null);
+        if(frames.length<3)frames.push(frame);else frames[2]=frame;
         const impacted=new Set(removed);for(const i of impacted)allImpacts.add(i);
         for(const [i,layers] of [...sealedCells]){
           const around=[i-8,i+8,...(i%8>0?[i-1]:[]),...(i%8<7?[i+1]:[])];
@@ -675,9 +751,9 @@
       return;
     }
     if(completed&&finishTurn(id)){
-      // Settle the result before any decorative effect can fail.
-      checkEnd();
-      if(!roundResult){try{if(effectLabel)toast(effectLabel);if(allImpacts.size&&!isMobileSafari)magicEffect(allImpacts);}catch(err){console.warn('Fantasy Match : effet visuel ignoré',err);}}
+      // State is already committed. Replay is optional and never gates checkEnd.
+      try{safelyReplay(frames,board.slice(),new Set([...allImpacts].map(i=>i%8)));}finally{checkEnd();}
+      if(!roundResult&&effectLabel)toast(effectLabel);
     }
   }
   function checkEnd(){
@@ -741,7 +817,8 @@
       if(specialTargets){
         moves--;tickTimers();
         if(specialTargets.combo){comboCount++;if(current.mode==='combo')remaining=Math.max(0,target-comboCount);}
-        await resolve(specialTargets,-1,false,id);return;
+        const sa=specialOf(board[a]),sc=specialOf(board[b]);
+        await resolve(specialTargets,-1,false,id,null,{type:specialTargets.combo?'fusion':sa||sc||'color',center:sa?a:b});return;
       }
       const match=findMatches(board);
       if(!match.size){
@@ -778,22 +855,23 @@
     try{
       state.boosters[kind]--;
       if(kind==='shuffle'){
-        board=freshBoard();save();finishTurn(id);toast('Plateau mélangé !');return;
+        const frame=visualFrame(board,new Set(Array.from({length:64},(_,j)=>j)),null,1,{type:'shuffle',center:27});
+        board=freshBoard();save();if(finishTurn(id))safelyReplay([frame],board.slice(),new Set([0,1,2,3,4,5,6,7]));toast('Plateau mélangé !');return;
       }
-      const chosen=new Set();
+      const chosen=new Set();let visualCenter=i>=0?i:27;
       if(kind==='color'){
         const targetKind=i>=0?kindOf(board[i]):current.goal;
         for(let j=0;j<64;j++)if(kindOf(board[j])===targetKind)chosen.add(j);
         toast('Magie arc-en-ciel !');
       }else{
-        const center=i>=0?i:bestBombCenter(board,current.goal);
+        const center=i>=0?i:bestBombCenter(board,current.goal);visualCenter=center;
         for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
           const y=Math.floor(center/8)+dy,x=center%8+dx;
           if(y>=0&&y<8&&x>=0&&x<8)chosen.add(y*8+x);
         }
         toast('Bombe magique !');
       }
-      await resolve(chosen,-1,false,id);
+      await resolve(chosen,-1,false,id,null,{type:kind,center:visualCenter});
       if(id===turnEpoch)save();
     }catch(err){
       console.error('Fantasy Match : booster interrompu',err);
@@ -806,7 +884,7 @@
     try{
       moves--;tickTimers();
       // Effects are emitted only after resolution.
-      await resolve(new Set([i]),-1,false,id);
+      await resolve(new Set([i]),-1,false,id,null,{type:specialOf(board[i]),center:i});
     }catch(err){
       console.error('Fantasy Match : bonus spécial interrompu',err);
       if(rollbackTurn(id))toast('✨ Le bonus est restauré, retente ton coup !');
@@ -822,6 +900,7 @@
     return recovered;
   }
   function tileTap(i){
+    if(roundPresentation){flushRoundPresentation(true);return;}
     if(busy){
       recoverUnresponsiveBoard();
       return;
@@ -850,7 +929,7 @@
     updateAdventureHome();
     const last=n===MAX_LEVEL;
     $('lumiGameBtn').classList.add('fm-lumi-cheer');
-    showDialog(last?'Bienvenue au Château de Fantasy !':'Niveau réussi !',
+    presentRoundDialog(last?'Bienvenue au Château de Fantasy !':'Niveau réussi !',
       `<img class="fm-lumi-victory" src="lumi-danse.webp" alt="Lumi célèbre ta victoire" loading="lazy"><div style="font-size:32px;color:#ffc02b">${'★'.repeat(earned)}${'☆'.repeat(3-earned)}</div><p>Bravo ${escapeHtml(playerName)} ! ${firstWin&&n%10===0?'Lumi t’offre un bonus de chaque sorte !':''}</p><p>💎 Combinaisons : <b>${roundScore.toLocaleString('fr-BE')} pts</b><br>✨ ${unusedMoves} coup${unusedMoves>1?'s':''} restant${unusedMoves>1?'s':''} × ${POINTS_PER_UNUSED_MOVE} = <b>+${bonus.toLocaleString('fr-BE')} pts</b></p><p><b>Total : ${finalScore.toLocaleString('fr-BE')} points</b></p>`,
       [{label:last?'Rejouer le niveau 300':'Niveau suivant →',action:()=>{hideDialog();startRound(last?MAX_LEVEL:n+1)}},{label:'🗺️ Suivre Lumi sur la carte',action:()=>{hideDialog();showAdventureMap({fromLevel:n})}}], '✦');
   }
@@ -866,7 +945,7 @@
       :current.mode==='combo'?'fusions de bonus à réaliser'
       :current.mode==='seal'?'couches de sceaux à briser'
       :current.mode==='duo'?'symboles à récolter':LABELS[current.goal].toLowerCase()+' à récolter';
-    showDialog(reason?'💥 Bombe explosive !':'Presque !',`<p>${reason?escapeHtml(reason):'Il reste <b>'+remaining+' '+goalText+'</b>.'}</p><p>${state.lives ? 'Retente ta chance !' : 'Tes vies sont épuisées. Une nouvelle vie reviendra selon le compteur affiché.'}</p>`,
+    presentRoundDialog(reason?'💥 Bombe explosive !':'Presque !',`<p>${reason?escapeHtml(reason):'Il reste <b>'+remaining+' '+goalText+'</b>.'}</p><p>${state.lives ? 'Retente ta chance !' : 'Tes vies sont épuisées. Une nouvelle vie reviendra selon le compteur affiché.'}</p>`,
       state.lives?[{label:'Réessayer',action:()=>{hideDialog();startRound(current.number)}}]:[{label:'D’accord',action:hideDialog}], '♡');
   }
   function showNoLives(){
@@ -967,6 +1046,7 @@
       :'Déjà au niveau '+state.level+' ! Je t’attends sur la carte pour notre prochaine aventure ! 💜';
   }
   function showAdventureHome(){
+    clearMagicReplay();cancelRoundPresentation();
     updateAdventureHome();
     $('worldPortal').classList.add('hidden');
     $('fmMapScreen').classList.add('hidden');
@@ -1159,6 +1239,7 @@
       if (document.visibilityState === 'visible' && busy && turnStartedAt && now()-turnStartedAt>2300){
         recoverUnresponsiveBoard();
       }
+      if(document.visibilityState==='visible'){flushRoundPresentation(true);if(replayUntil&&now()>=replayUntil)clearMagicReplay();}
       if (document.visibilityState === 'visible' && !busy && !roundResult && current && (moves<=0||remaining<=0))checkEnd();
       if (document.visibilityState === 'visible' && cloudReady) synchroniserProgression(true);
     });
