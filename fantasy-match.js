@@ -120,7 +120,7 @@
   const now = () => Date.now();
   const localDefault = () => ({level:1,maxUnlocked:1,lives:5,nextLifeAt:0,score:0,levels:{},bestScores:{},boosters:{color:3,bomb:3,shuffle:3},lastGiftAt:'',worldsSeen:[],lumiRewards:{},updatedAt:0});
   const world = n => Math.floor((n - 1) / 20);
-  function levelConfig(n) {
+  function originalLevelConfig(n) {
     // Chapitre 3 (201–300) : nouveaux défis calibrés avec six symboles par niveau.
     // Les niveaux 1–200 gardent exactement leurs objectifs et leurs nombres de coups.
     if(n>200){
@@ -186,6 +186,24 @@
     const extraMoves = mode === 'special' ? 2 : mode === 'ice' ? (tier >= 3 ? 1 : 2) : mode === 'duo' ? 1 : 0;
     const maxMoves = Math.max(16,[26,22,20,18,17][tier] + extraMoves - (boss ? 1 : 0));
     return {number:n,world:w,mode,goal,goal2,targets,target,moves:maxMoves,boss,difficulty:tier};
+  }
+  // Équilibrage intermédiaire : les défis restent variés, mais la marge de
+  // coups et les objectifs n'exigent plus des cascades exceptionnelles.
+  function levelConfig(n) {
+    const cfg=originalLevelConfig(n),mode=cfg.mode;
+    const late=n>100,advanced=n>200;
+    const extra=n<=5?0:n<=15?2:n<=30?4:n<=100?5:advanced?8:9;
+    const modeExtra=mode==='duo'?2:mode==='ice'||mode==='seal'?3:mode==='combo'?4:mode==='special'?2:0;
+    const scale=n<=15?1:n<=100?.92:advanced?.84:.76;
+    if(mode==='duo'){
+      cfg.targets=Object.fromEntries(Object.entries(cfg.targets).map(([k,v])=>[k,Math.max(3,Math.ceil(v*scale))]));
+      cfg.target=Object.values(cfg.targets).reduce((a,b)=>a+b,0);
+    }else if(mode==='score')cfg.target=Math.max(300,Math.round(cfg.target*scale/10)*10);
+    else if(mode==='special')cfg.target=Math.max(1,Math.min(late?(n>=241?4:3):3,Math.ceil(cfg.target*(late?.7:.85))));
+    else if(mode==='combo')cfg.target=n>=261?2:1;
+    else if(mode!=='seal')cfg.target=Math.max(1,Math.ceil(cfg.target*scale));
+    cfg.moves=Math.min(35,cfg.moves+extra+(n>15?modeExtra:0));
+    return cfg;
   }
   const MODE_LABELS = {collect:'Récolte magique',duo:'Double récolte',ice:'Brise la glace',score:'Course aux points',special:'Défi des bonus',combo:'Fusion des pouvoirs',seal:'Les sceaux mystérieux'};
   function iceCellsForLevel(n,count){
@@ -445,22 +463,21 @@
   function sealsForLevel(n,mode){
     if(n<=100 || mode==='ice')return new Map();
     const tier=Math.min(4,Math.floor((n-101)/20));
-    const count=n>200 ? (mode==='seal'?10+Math.floor((n-201)/40)+(n%3):5+Math.floor((n-201)/40)+(n%2))
-      : (mode==='seal'?8+tier*3+(n%4):3+tier*2+(n%3));
+    const count=mode==='seal' ? Math.min(13,6+Math.floor((n-101)/30)+(n%3)) : Math.min(6,2+Math.floor((n-101)/45)+(n%2));
     const result=new Map();
     for(let k=0;result.size<count && k<64;k++){
       const i=(k*23+n*11)%64;
       if(mode==='combo' && (i===27||i===28))continue;
-      const layers=1+(tier>=2&&k%4===0?1:0)+(tier>=4&&k%9===0?1:0);
+      const layers=1+(n>=161&&mode==='seal'&&k%4===0?1:0);
       result.set(i,layers);
     }
     return result;
   }
   function timersForLevel(n,mode){
-    if(n<151 || n%7!==0 || mode==='seal' || mode==='combo' || mode==='ice')return new Map();
+    if(n<181 || n%14!==0 || mode==='seal' || mode==='combo' || mode==='ice')return new Map();
     let i=(n*17+5)%64;
     while(sealedCells.has(i))i=(i+1)%64;
-    return new Map([[i,n>200?13:10]]);
+    return new Map([[i,n>240?18:21]]);
   }
   function tickTimers(){
     for(const [i,turns] of timedBombs)timedBombs.set(i,turns-1);
