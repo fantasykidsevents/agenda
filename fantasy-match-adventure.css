@@ -258,3 +258,10 @@ body .fm-shell[data-world]{
   .fm-map-node.current{animation:none}
   .fm-map-lumi,.fm-home-actions button{transition:none!important}
 }
+
+
+/* Les fenêtres de classement, règles et récompenses restent au-dessus
+   de l'accueil / de la carte plein écran. */
+.fm-modal-backdrop{z-index:110!important}
+.fm-world-portal{z-index:105!important}
+.fm-toast{z-index:125!important}
