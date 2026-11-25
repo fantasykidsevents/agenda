@@ -1,0 +1,116 @@
+/* Fantasy Potions — édition enchantée. Les décors restent indépendants du plateau. */
+:root{--fairy:"Alegreya",Palatino,Georgia,serif;--numbers:"Alegreya Sans",system-ui,sans-serif;--gold:linear-gradient(145deg,#fffcd1,#ffda62 22%,#a96019 43%,#fff0a1 64%,#cf8b28 88%);--violet:linear-gradient(180deg,#a34cdb,#6224a9 45%,#310e67 95%);--pink:linear-gradient(180deg,#ff90db,#f02da1 45%,#aa0c7c);--scene:0%;font-family:var(--numbers);color:#fff4df;background:#16072e;color-scheme:dark}
+html,body{background:#16072e;color:#fff4df;min-height:100%;overscroll-behavior-y:contain}
+body{background:radial-gradient(ellipse at 50% 0,#492078,transparent 75%),#16072e}
+body[data-chapter="1"]{--scene:7.142857%}body[data-chapter="2"]{--scene:14.285714%}body[data-chapter="3"]{--scene:0%}body[data-chapter="4"]{--scene:85.714286%}body[data-chapter="5"]{--scene:28.571429%}
+button,a{-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:2px solid #fff8aa;outline-offset:3px}
+.ambient{opacity:.28}
+.shell,.potion-home{position:relative;z-index:1;width:min(100%,500px);min-height:100svh;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom));border-radius:0;background-color:#1c0a48;box-shadow:0 0 48px #9b43f633;overflow:hidden}
+.shell{background-image:linear-gradient(180deg,#13062e9e,#200b4db5 60%,#17062df0),url('fantasy-match-worlds-15-sprite.webp');background-size:100% 100%,1500% auto;background-position:center,var(--scene) center;background-repeat:no-repeat}
+.potion-home{display:flex;flex-direction:column;align-items:center;gap:12px;background-image:linear-gradient(180deg,#15062e22,#1d0a4c2e 34%,#170635b8 77%,#13052de0),url('fantasy-match-worlds-15-sprite.webp');background-size:100% 100%,1500% auto;background-position:center,0% center;background-repeat:no-repeat}
+.home-top{display:flex;align-items:center;justify-content:space-between;width:100%}
+.home-top img{width:112px;height:46px;object-fit:contain;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff)}
+.back,.help,.home-round,.dialog-close{width:43px;height:43px;min-width:43px;padding:0;display:grid;place-items:center;border:2px solid transparent;border-radius:50%;background:radial-gradient(ellipse at 35% 15%,#ba68f0,#7133bc 45%,#310b66) padding-box,var(--gold) border-box;color:#fff2cb;box-shadow:inset 0 2px 3px #fff6,0 3px 0 #a96a25,0 4px 8px #140629a0;font-family:var(--numbers);font-weight:800;font-size:24px;text-decoration:none;line-height:1}
+.home-logo{display:block;width:min(100%,400px);height:clamp(145px,44vw,195px);object-fit:contain;filter:drop-shadow(0 0 7px #f69eea) drop-shadow(0 4px 7px #13032c)}
+.home-lumi-scene{position:relative;width:100%;height:clamp(160px,47vw,215px);display:flex;align-items:center;justify-content:center}
+.home-lumi-scene:before{content:"";position:absolute;width:78%;height:42%;border:3px solid #ffe09a;border-radius:50%;transform:rotate(-13deg);box-shadow:0 0 9px #ffcf55,inset 0 0 9px #ffdd87,0 0 16px #f32bf9;opacity:.83;pointer-events:none}
+.home-lumi-scene img{width:clamp(158px,52vw,220px);height:100%;object-fit:contain;position:relative;z-index:1;filter:drop-shadow(0 0 10px #bf82fb) drop-shadow(0 5px 7px #15032a)}
+.home-lumi-scene:after{content:"✧ ✦";position:absolute;top:17%;right:12%;font-size:22px;color:#fff0a2;text-shadow:0 0 9px #ffe493;letter-spacing:.5em}
+.home-actions{display:grid;gap:11px;width:min(100%,340px);margin:2px auto}
+.home-action,.level-pill,.score-pill,.action,.dialog-actions button,.bottom-nav button,.home-points,.world-total{
+  -webkit-appearance:none;appearance:none;border:3px solid transparent;border-radius:24px;
+  background:var(--violet) padding-box,var(--gold) border-box;color:#fff6dd;font-family:var(--fairy);font-weight:800;
+  text-shadow:0 2px 2px #3a0b5b;box-shadow:inset 0 2px 4px #fff6,inset 0 -3px 4px #28054988,0 4px 0 #995b20,0 5px 10px #13032c99;
+}
+.home-action{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:55px;font-size:25px;border-radius:32px;padding:7px 15px}
+.home-action span{font-size:25px;color:#ffe09c}
+.home-action.primary{min-height:73px;font-size:34px;background:var(--pink) padding-box,var(--gold) border-box;box-shadow:inset 0 3px 4px #fff8,0 4px 0 #a66a22,0 0 16px #f84ccb88}
+.home-action.primary div{line-height:1.05}.home-action small{display:block;font:700 12px/1.2 var(--numbers);margin-top:2px;color:#fff4d8}
+.home-points{border-width:2px;font-size:14px;box-shadow:0 2px 0 #a36425;padding:6px 15px;margin-top:3px}
+.home-world{font:700 14px var(--fairy);color:#ffedb9;text-align:center;text-shadow:0 2px 4px #15062c}
+.home-footer{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:12px;padding-top:6px;width:100%}
+.home-footer .exit-text{margin:0}
+.topbar{grid-template-columns:44px minmax(0,1fr) 44px 44px;gap:7px}
+.brand img{max-width:116px;height:48px;filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 -1px 0 #fff) drop-shadow(0 1px 0 #fff)}
+.game-heading{margin:2px 0 6px;padding:0}
+.game-heading .potions-logo img{max-height:75px;margin:0 auto;width:min(68%,240px)}
+.game-heading .potions-logo{filter:drop-shadow(0 0 5px #eb8cff)}
+.game-heading .eyebrow,.game-heading p{display:none}
+.game-meta{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;margin:5px 0 10px}
+.level-pill{font-size:21px;padding:6px 9px;border-radius:20px;line-height:1.15}
+.level-pill strong{font-size:24px}.score-pill{font-size:14px;padding:10px 11px;display:flex;align-items:center;gap:4px}
+.world-banner,.status-row,.chapter,.world-card,.rank-row{border:2px solid transparent;border-radius:17px;background:linear-gradient(130deg,#56269b,#2c105f) padding-box,var(--gold) border-box;box-shadow:inset 0 1px 3px #ffc9fc44,0 3px 0 #a26a2a,0 5px 12px #10032b66;color:#fff3dc}
+.world-banner{padding:6px 9px;margin-bottom:9px;gap:8px}
+.world-glyph{font-size:24px}
+.world-copy strong{font-family:var(--fairy);font-size:17px;color:#fff0c6;line-height:1.1}
+.world-copy small{color:#dec8ff;font-size:11px}.world-progress{color:#ffe29b;font-size:12px}
+.status-row{padding:8px 7px;margin:0 0 11px;gap:5px}
+.status-cell small{color:#ffe7b0;font-size:10px;letter-spacing:.07em}
+.status-cell strong{font-family:var(--fairy);color:#fff7df;font-size:24px;line-height:1}
+.status-divider{background:#caa15e77;height:29px}
+.brew-status{flex:1.7;min-width:0}
+.brew-track{height:11px;position:relative;border:1px solid #ffde88;border-radius:12px;background:#190837;overflow:hidden;margin:4px auto}
+.brew-fill{height:100%;width:0;background:linear-gradient(90deg,#ee2aa9,#c15aff,#ffd96d);border-radius:12px;transition:width .25s}
+.brew-stars{display:flex;justify-content:space-around;color:#ffd154;text-shadow:0 1px #a86b20,0 0 5px #ffdf5a;font-size:17px;line-height:1}
+.brew-status .brew-text{letter-spacing:0;font-size:10px}
+.game-area{border:2px solid transparent;border-radius:21px;min-height:0;padding:23px 7px 10px;background:linear-gradient(#11062725,#210c4f55 72%,#190635e8) padding-box,var(--gold) border-box;box-shadow:0 3px 0 #a56e25,0 0 14px #b74aff55}
+.game-area:before{inset:0;z-index:0;background:linear-gradient(180deg,#1a0b3a33,#1a0b3a99),url('fantasy-potions-atelier.svg') center center/cover no-repeat;opacity:.48;border-radius:19px}
+.game-area:after{content:none}
+.scene-twink{z-index:1;letter-spacing:28px;color:#ffeba9;font-size:16px;inset:2px 0 auto}
+.bottles{display:flex;flex-direction:column;gap:15px;min-height:0;padding:12px 0 0;align-items:stretch}
+.potion-shelf{position:relative;display:flex;justify-content:center;align-items:flex-end;gap:1px;padding:0 2px 12px;isolation:isolate;width:100%}
+.potion-shelf:after{content:"";position:absolute;z-index:-1;left:0;right:0;bottom:0;height:16px;border:1px solid #ffd57a;border-radius:4px 4px 8px 8px;background:linear-gradient(#fff0a8 0%,#b87326 20%,#774019 38%,#381759 50%,#bd762c 90%);box-shadow:0 3px 0 #a06428,0 5px 11px #16042f}
+.potion-shelf:before{content:"✦";position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);z-index:2;color:#fff1a0;text-shadow:0 0 6px #ffba43;font-size:16px;pointer-events:none}
+.bottle,.bottle:nth-child(n){width:calc((100% - 12px)/var(--cols));max-width:59px;aspect-ratio:64/207;height:auto;min-width:0;flex:0 1 auto;filter:drop-shadow(0 2px 3px #140329)}
+.bottle.selected{transform:translateY(-10px) rotate(-3deg)!important;filter:drop-shadow(0 0 7px #ffeca3) drop-shadow(0 0 8px #fc7cfa)!important}
+.bottle.complete{filter:drop-shadow(0 0 7px #ffda68)!important}
+.game-message{margin:10px 0 0;min-height:30px;font-size:12px;color:#fff3d5;text-shadow:0 2px 3px #18052d}
+.lumi-guide{position:relative;display:flex;align-items:center;gap:6px;min-height:69px;margin:8px auto 4px;padding:0 7px;color:#fff1d2}
+.lumi-guide button{border:0;background:none;padding:0;width:76px;height:76px;flex:none;filter:drop-shadow(0 0 6px #e6a1f8)}
+.lumi-guide button img{height:100%;width:100%;object-fit:contain}
+.lumi-guide p{font:700 13px/1.3 var(--fairy);flex:1;padding:9px;border:1px solid #efc774;border-radius:12px 12px 12px 3px;background:#2b105fd9;margin:0}
+.actions{gap:8px;margin:6px 0 10px}
+.action{font-size:16px;min-height:60px;border-radius:16px;padding:7px 3px;line-height:1.1}
+.action span{font-size:25px;color:#ffe18c;filter:none;text-shadow:0 2px #b4742d}
+.action:disabled{opacity:1;color:#c8b7dc;background:linear-gradient(#4a356d,#2f1f50) padding-box,linear-gradient(#b99b6d,#80602e) border-box;box-shadow:0 2px 0 #705023}
+.tip{color:#e6c8ff;font-size:11px;font-weight:700}
+.bottom-nav{margin-top:10px;border:2px solid #e8be72;border-radius:18px;background:#290e57;box-shadow:0 3px 0 #925823;gap:6px}
+.bottom-nav button{border-width:1px;font-size:13px;min-height:43px;border-radius:14px;padding:4px 2px;box-shadow:none;line-height:1.1}
+.bottom-nav button span{font-size:17px}
+.bottom-nav button.nav-current{background:var(--pink) padding-box,var(--gold) border-box;color:#fff}
+.sync,.exit-text{color:#d7bee8;font-size:11px;font-weight:700}
+.exit-text{background:#260c54cc;border:1px solid #e6bb6d;border-radius:18px;padding:7px 12px}
+.modal{padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));background:#100326d9;backdrop-filter:blur(5px)}
+.dialog{width:min(100%,455px);max-height:calc(100svh - 25px - env(safe-area-inset-top) - env(safe-area-inset-bottom));padding:20px 13px 15px;border:3px solid transparent;border-radius:22px;background:radial-gradient(ellipse at 50% 0,#7834ad,#2e105f 55%,#1c093d) padding-box,var(--gold) border-box;box-shadow:0 0 22px #be5eff77,0 12px 28px #0d0227;overscroll-behavior:contain}
+.dialog-close{position:sticky;top:0;float:right;width:34px;height:34px;min-width:34px;font-size:22px;z-index:3}
+.dialog-icon{font-size:24px;color:#ffdc81;text-shadow:0 0 6px #ffd77b;line-height:1.1}
+.dialog h2{font:800 clamp(25px,8vw,35px)/1.05 var(--fairy);color:#fff2cc;text-shadow:0 2px 2px #570f70;margin:5px auto 15px;max-width:90%}
+.dialog-body{color:#ffeedc;font:700 14px/1.4 var(--numbers)}
+.dialog-body p{margin:6px 0}
+.dialog-actions button{min-height:46px;font-size:18px;padding:8px 10px}
+.dialog-actions button.secondary{color:#ffedcb;background:var(--violet) padding-box,var(--gold) border-box}
+.world-cards{display:grid;gap:10px}
+.world-card{position:relative;display:grid;grid-template-columns:43% 1fr;align-items:stretch;min-height:91px;overflow:hidden;gap:0;padding:0;text-align:left;width:100%;font-family:var(--fairy)}
+.world-illustration{height:100%;min-height:91px;display:block;background-image:url('fantasy-match-worlds-15-sprite.webp');background-size:1500% auto;background-position:var(--scene) 38%;background-repeat:no-repeat;border-right:1px solid #efc470}
+.world-card-copy{display:flex;flex-direction:column;justify-content:center;gap:4px;padding:8px;color:#fff5d5}
+.world-card-copy b{font-size:19px;line-height:1.05}
+.world-card-copy small{font:700 13px var(--numbers);color:#ffe29b}
+.world-total{margin:15px auto 0!important;padding:8px 12px;border-width:2px;font-size:18px;box-shadow:0 2px 0 #a96a25}
+.chapter{padding:9px}.chapter h3{color:#fff0c2;font:800 17px var(--fairy)}.chapter h3 small{color:#e7c9ff}
+.level-grid button{border:2px solid #e5bf77;background:linear-gradient(#7437ba,#39136e);color:#fff0d1;font-size:13px;font-weight:800;min-height:38px}
+.level-grid button.now{background:linear-gradient(#ff7bd1,#b31799);color:#fff}
+.level-grid button.passed{background:linear-gradient(#ffe58a,#d58c26);color:#4a225d}
+.level-grid button.locked{background:#37295b;color:#d2c2e3;border-color:#9b8257;opacity:1}
+.rank-row{gap:7px;padding:10px;color:#fff}.rank-row strong,.rank-row b{color:#fff2ce}.rank-row small{color:#f2dcff}.rank-row.me{outline:2px solid #f6c65f}
+.modal[data-type="win"] .dialog-icon{display:none}
+.modal[data-type="win"] .dialog{background:linear-gradient(#210a4266,#270b58d8 70%),url('fantasy-match-worlds-15-sprite.webp') 28.571429% center/1500% auto no-repeat,#290b57}
+.modal[data-type="win"] .dialog h2{background:var(--violet) padding-box,var(--gold) border-box;border:3px solid transparent;border-radius:25px;padding:9px 6px;margin-top:18px}
+.victory-stars{font-size:45px;letter-spacing:6px;color:#ffda52;text-shadow:0 2px 0 #c8751d,0 0 9px #ffcf66;line-height:1.2}
+.victory-art{position:relative;min-height:230px;max-width:340px;margin:0 auto;display:flex;align-items:center;justify-content:center}
+.victory-potion{height:230px;width:70%;object-fit:contain;filter:drop-shadow(0 0 12px #f073fc)}
+.victory-lumi{position:absolute;left:-6px;bottom:0;width:126px;height:132px;object-fit:contain;filter:drop-shadow(0 0 8px #e2a7ff)}
+.modal[data-type="win"] .dialog-actions button{background:linear-gradient(#8bea4b,#34a02e 50%,#1b7627) padding-box,var(--gold) border-box;font-size:24px}
+@media(max-width:390px){.shell,.potion-home{padding-left:9px;padding-right:9px}.home-logo{height:145px}.home-lumi-scene{height:161px}.home-action{min-height:49px;font-size:22px}.home-action.primary{min-height:65px;font-size:30px}.world-copy strong{font-size:15px}.status-cell strong{font-size:22px}.world-card-copy b{font-size:17px}.action{font-size:15px}.victory-stars{font-size:40px}}
+@media(min-width:590px){.shell,.potion-home{margin:0 auto;min-height:100svh}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
