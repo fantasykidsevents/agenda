@@ -292,20 +292,20 @@ body{
 /* Chapitre 2 : les dix nouveaux symboles, dans l'habillage Fantasy Match original.
    Aucun changement au logo, aux fonds, à la taille du plateau ou aux boutons. */
 .fm-piece-chapter2:not(.fm-piece-bomb):not(.fm-piece-color){
-  position:relative;background-image:url('fantasy-match-chapitre2-symboles.svg');
-  background-repeat:no-repeat;background-size:200% 500%;
-  filter:drop-shadow(0 2px 2px #8a17c674) drop-shadow(0 -1px 2px #fff9);
+  position:relative;background-image:url('fantasy-match-chapitre2-glossy.png');
+  background-repeat:no-repeat;background-size:300% 400%;
+  filter:drop-shadow(0 2px 3px #631b9e8b) drop-shadow(0 -1px 3px #fff9);
 }
 .fm-piece-chapter2.fm-piece-comet{background-position:0% 0%}
-.fm-piece-chapter2.fm-piece-moon{background-position:100% 0%}
-.fm-piece-chapter2.fm-piece-lotus{background-position:0% 25%}
-.fm-piece-chapter2.fm-piece-frost{background-position:100% 25%}
-.fm-piece-chapter2.fm-piece-prism{background-position:0% 50%}
-.fm-piece-chapter2.fm-piece-orb{background-position:100% 50%}
-.fm-piece-chapter2.fm-piece-mirror{background-position:0% 75%}
-.fm-piece-chapter2.fm-piece-firefly{background-position:100% 75%}
-.fm-piece-chapter2.fm-piece-storm{background-position:0% 100%}
-.fm-piece-chapter2.fm-piece-heart{background-position:100% 100%}
+.fm-piece-chapter2.fm-piece-moon{background-position:50% 0%}
+.fm-piece-chapter2.fm-piece-lotus{background-position:100% 0%}
+.fm-piece-chapter2.fm-piece-frost{background-position:0% 33.3333%}
+.fm-piece-chapter2.fm-piece-prism{background-position:50% 33.3333%}
+.fm-piece-chapter2.fm-piece-orb{background-position:100% 33.3333%}
+.fm-piece-chapter2.fm-piece-mirror{background-position:0% 66.6667%}
+.fm-piece-chapter2.fm-piece-firefly{background-position:50% 66.6667%}
+.fm-piece-chapter2.fm-piece-storm{background-position:100% 66.6667%}
+.fm-piece-chapter2.fm-piece-heart{background-position:0% 100%}
 .fm-piece-chapter2.fm-piece-bomb{
   background-image:url('fantasy-match-boost-bomb.webp');
   background-size:98% 98%;background-position:center;background-repeat:no-repeat;
@@ -397,3 +397,6 @@ body{
 .fm-world-icons .fm-piece-lumi{width:37px;height:37px}
 .fm-world-portal-pieces .fm-piece-lumi{max-width:52px}
 @media(prefers-reduced-motion:reduce){.fm-piece-lumi.fm-piece-color{animation:none}}
+
+/* Illustrations brillantes du chapitre 2 et du chapitre 3, 3 colonnes × 4 lignes.
+   Niveaux 1–100 : sprites d'origine inchangés. */
