@@ -86,3 +86,31 @@ body.playing .topbar .brand{height:40px;width:107px}
 .stars{font:900 clamp(44px,13vw,59px)/1.2 Georgia,serif;letter-spacing:2px;color:#ffde58;text-shadow:0 2px 0 #a35b13,0 0 5px #fff6a7,0 0 13px #ffb329}
 .dialog[data-kind="win"] .dialog-actions .primary{background:var(--green) padding-box,var(--gold) border-box;font-size:22px}
 @media(max-width:390px){.shell{padding-left:7px;padding-right:7px}.game-logo{height:155px}.hero-art{height:179px}.home-buttons .jewel{min-height:51px;font-size:17px}.home-buttons .jewel.primary{min-height:63px;font-size:30px}.boosts b{font-size:11px}.boosts small{top:34px}.world-card b{font-size:19px}}
+
+
+/* Correct mobile layout: the mascot must remain inside its own artwork area. */
+body:not(.playing) .shell::before{background-image:linear-gradient(180deg,#0b032e6b,#17044324 32%,#17063d67 67%,#10032ce8),url('fantasy-match-worlds-15-sprite.webp');background-position:center,28.571429% center}
+.home{display:flex;gap:9px;min-width:0}
+.home .game-logo{height:clamp(130px,40vw,185px);flex:none;max-width:100%;margin:0 auto}
+.home .hero-art{display:block;position:relative;flex:none;height:clamp(190px,54vw,270px);width:100%;overflow:hidden;isolation:isolate}
+.home .hero-art img{position:absolute;inset:4px 0 8px;margin:auto;display:block;width:100%;max-width:76%;height:calc(100% - 12px);max-height:calc(100% - 12px);object-fit:contain;object-position:center;z-index:2}
+.home .hero-art .orbit{left:5.5%;top:29%;z-index:0}
+.home .world-caption{position:relative;z-index:3;flex:none;max-width:96%;margin:0 auto 3px;padding:6px 13px;text-align:center;line-height:1.2;background:linear-gradient(#4a147c,#230749);border:1px solid #f9da8a}
+.home-buttons{margin:0 auto;gap:9px}
+.home-buttons .jewel{min-height:51px;display:flex;align-items:center;justify-content:center;gap:7px}
+.home-buttons .jewel::before{inset:-1px;opacity:.65;z-index:0}
+.home-buttons .jewel>*{position:relative;z-index:1}
+.home-buttons .jewel.primary{min-height:68px;gap:11px;background:linear-gradient(#8add50,#35a92c 22%,#116723 64%,#0a5421 91%,#2c9f31) padding-box,var(--gold) border-box}
+.home-buttons .jewel small{line-height:1.2;margin-top:4px}
+.home-icon{display:inline-grid;place-items:center;width:24px;height:24px;flex:none}
+.home-icon svg{display:block;width:100%;height:100%;filter:drop-shadow(0 2px 1px #5d3014)}
+.home-buttons .primary .home-icon{width:35px;height:35px}
+.home-buttons .primary .play-copy{display:block}
+.home .floating-orb{z-index:1;border:1px solid #fff9;box-shadow:0 0 6px #fff9,0 0 14px currentColor,inset 0 -3px 5px #21054b88}
+.home .floating-orb.one{color:#e485ff;background:radial-gradient(ellipse at 30% 18%,#fff,#ffb1ff 13%,#b334f0 35%,#4d087b 70%,#f4b9ff 95%);left:9%;top:16%}
+.home .floating-orb.two{color:#50eaff;background:radial-gradient(ellipse at 30% 18%,#fff,#afffff 13%,#29d6ff 35%,#0b379c 70%,#b3faff 95%);right:8%;top:36%}
+.home .floating-orb.three{color:#ffcf68;background:radial-gradient(ellipse at 30% 18%,#fff,#fff4aa 13%,#ffb62a 35%,#a34c14 70%,#fff0a0 95%);left:14%;bottom:12%}
+.floating-orb::after{content:"✦";position:absolute;inset:0;display:grid;place-items:center;font-size:18px;color:#fff9ed;text-shadow:0 0 6px white;line-height:1}
+.home-stats span{display:flex;align-items:center;justify-content:center;gap:5px;font-size:16px}
+.home-stats{flex-wrap:wrap}
+@media(max-width:390px){.home .hero-art{height:clamp(180px,54vw,215px)}.home .game-logo{height:139px}.home-buttons .jewel{font-size:16px;gap:5px}.home-buttons .jewel.primary{font-size:29px;min-height:63px}.home-icon{width:20px;height:20px}.home-buttons .primary .home-icon{width:31px;height:31px}}
