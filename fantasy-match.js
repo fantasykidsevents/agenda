@@ -537,7 +537,7 @@
         const elapsed=t-start;ctx.clearRect(0,0,w,h);
         if(elapsed>=life){clearMagicReplay();return;}
         for(const f of events){const p=(elapsed-f.delay)/450;if(p<0||p>=1)continue;
-          for(const i of f.targets){const [x,y]=center(i);ctx.globalAlpha=(1-p)*.28;ctx.fillStyle='#fff3bc';ctx.fillRect(x-w/16,y-h/16,w/8,h/8);}
+          // No full-cell flash: only small fading stars, beams and rings.
           for(const q of f.particles)sparkle(q.x+q.dx*p,q.y+q.dy*p,Math.max(.5,7*(1-p)),q.color,1-p);
           for(const q of f.hits.slice(0,4)){if(q.power==='lineH'||q.power==='lineV')beam(q.i,q.power,p);else ring(q.i,p,q.power==='color');}
           if(f.type==='lineH'||f.type==='lineV')beam(f.center,f.type,p);
@@ -553,7 +553,7 @@
     // Animate the real final symbols, not a duplicate interactive grid.
     if(typeof Element.prototype.animate==='function'){
       const affected=new Set(frames.flatMap(f=>f.targets));
-      for(const i of [...affected].slice(0,16)){const el=grid.children[i]?.querySelector('.fm-piece');if(el)el.animate([{transform:'translateY(-10%) scale(.88)',opacity:.75},{transform:'translateY(0) scale(1)',opacity:1}],{duration:190,easing:'ease-out'});}
+      for(const i of [...affected].slice(0,16)){const el=grid.children[i]?.querySelector('.fm-piece');if(el)el.animate([{transform:'translateY(-8%) scale(.94)'},{transform:'translateY(0) scale(1)'}],{duration:180,easing:'ease-out'});}
     }
   }
   function safelyReplay(frames,finalBoard,columns){
@@ -623,8 +623,29 @@
     $('gameTip').textContent=`Tu retrouveras le niveau ${state.level} dès qu’une vie sera disponible.`;
     renderBoard();
   }
+  // Keep the 64 buttons alive. Replacing the entire board on every tap causes
+  // image re-rasterization, visible flicker and lost pointer capture on iOS.
   function renderBoard(mark=new Set()) {
-    $('gameBoard').innerHTML=board.map((kind,i)=>`<button type="button" class="fm-cell ${i===selected?'selected':''} ${mark.has(i)?'match':''} ${frozenCells.has(i)?'frozen':''} ${sealedCells.has(i)?'sealed':''}" role="gridcell" aria-label="${LABELS[kindOf(kind)]||'Magie arc-en-ciel'}, case ${i+1}${frozenCells.has(i)?', glacée':''}${sealedCells.has(i)?', sceau de '+sealedCells.get(i)+' couche(s)':''}${timedBombs.has(i)?', bombe '+timedBombs.get(i)+' coups':''}${specialOf(kind)?', bonus spécial':''}" data-index="${i}" aria-disabled="${busy||state.lives<1||moves<=0||sealedCells.has(i)}" ${state.lives<1||moves<=0||sealedCells.has(i)?'disabled':''}>${kind?piece(kind):''}${sealedCells.has(i)?'<span class="fm-seal" aria-hidden="true">'+sealedCells.get(i)+'</span>':''}${timedBombs.has(i)?'<span class="fm-timer" aria-hidden="true">⏱'+timedBombs.get(i)+'</span>':''}</button>`).join('');
+    const grid=$('gameBoard');
+    if(grid.children.length!==64){
+      const frag=document.createDocumentFragment();
+      for(let i=0;i<64;i++){const el=document.createElement('button');el.type='button';el.className='fm-cell';el.setAttribute('role','gridcell');el.dataset.index=i;frag.appendChild(el);}
+      grid.replaceChildren(frag);
+    }
+    for(let i=0;i<64;i++){
+      const el=grid.children[i],kind=board[i],ice=frozenCells.has(i),seal=sealedCells.get(i),timer=timedBombs.get(i),blocked=state.lives<1||moves<=0||!!seal||!!roundResult;
+      const cls='fm-cell'+(i===selected?' selected':'')+(ice?' frozen':'')+(seal?' sealed':'');
+      if(el.className!==cls)el.className=cls;
+      if(el.disabled!==blocked)el.disabled=blocked;
+      const aria=String(busy||blocked);if(el.getAttribute('aria-disabled')!==aria)el.setAttribute('aria-disabled',aria);
+      const label=(LABELS[kindOf(kind)]||'Magie arc-en-ciel')+', case '+(i+1)+(ice?', glacée':'')+(seal?', sceau de '+seal+' couche(s)':'')+(timer!==undefined?', bombe '+timer+' coups':'')+(specialOf(kind)?', bonus spécial':'');
+      if(el.getAttribute('aria-label')!==label)el.setAttribute('aria-label',label);
+      const key=String(kind||'')+':'+String(seal||'')+':'+String(timer??'');
+      if(el.dataset.pieceKey!==key){
+        el.innerHTML=(kind?piece(kind):'')+(seal?'<span class="fm-seal" aria-hidden="true">'+seal+'</span>':'')+(timer!==undefined?'<span class="fm-timer" aria-hidden="true">⏱'+timer+'</span>':'');
+        el.dataset.pieceKey=key;
+      }
+    }
   }
   function renderAll() {
     if(!current)return;
