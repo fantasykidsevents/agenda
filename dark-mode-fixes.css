@@ -1,0 +1,392 @@
+/*
+ * Fantasy App — mode sombre accessible, 25/11/2026.
+ * Chargé APRÈS le style sombre généré. Aucune règle du thème clair n'est modifiée.
+ * Le contraste des actions/statuts est préservé sans neutraliser les couleurs d'état.
+ */
+body.dark{
+  color-scheme:dark;
+  --bg:#140e27;
+  --card:#251b3c;
+  --txt:#f8f3ff;
+  --muted:#cec0e5;
+  --line:#624d80;
+  --ink:#f8f3ff;
+  --violet:#c693ff;
+  --violet-d:#d6b2ff;
+  --fk-dark-card:#251b3c;
+  --fk-dark-raised:#302247;
+  --fk-dark-line:#624d80;
+  --fk-dark-text:#f8f3ff;
+  --fk-dark-muted:#d4c6eb;
+  --fk-dark-accent:#e3c4ff;
+  --fk-dark-gold:#ffe2a2;
+  background:#140e27!important;
+  color:var(--fk-dark-text)!important;
+}
+body.dark #app{color:var(--fk-dark-text)}
+body.dark header{
+  background:#211633!important;
+  box-shadow:0 5px 19px #08041580;
+}
+body.dark #who,body.dark #who .who-l1{color:#fff7ff!important}
+body.dark #who .alias{color:#e4bcff!important}
+body.dark .tab{color:#d6c5e8!important;background:transparent!important}
+body.dark .tab.on{color:#fff0be!important}
+body.dark .icon-btn,body.dark .cal-nav button,body.dark .sheet-x,
+body.dark .tpk-top button{
+  color:#f8e9ff!important;
+  background:#392454!important;
+  border:1px solid #8767ac!important;
+}
+body.dark .group-title,body.dark .day-title,
+body.dark #viewMine .m-section>.group-title,
+body.dark #viewStats .group-title{color:#e6cbff!important}
+body.dark a:not(.btn){color:#c9eefe}
+body.dark .hint,body.dark .meta,body.dark .subtitle,
+body.dark small,body.dark .muted{color:var(--fk-dark-muted)}
+/* Le contour suit les pixels transparents du vrai logo, sans carte blanche. */
+body.dark .logo,body.dark .caisse-logo{
+  content:url("logo.png")!important;
+  opacity:1!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  filter:drop-shadow(1px 0 0 #ffffff)
+         drop-shadow(-1px 0 0 #ffffff)
+         drop-shadow(0 1px 0 #ffffff)
+         drop-shadow(0 -1px 0 #ffffff)
+         drop-shadow(0 0 3px #fff)
+         drop-shadow(0 3px 5px #09031899)!important;
+}
+body.dark .head-row .logo{
+  height:40px!important;
+  max-width:100px!important;
+  width:auto;
+  object-fit:contain;
+}
+body.dark .caisse-logo{max-height:130px;object-fit:contain}
+/* Blocs de base : agenda, fiches, mon espace, statistiques et gestion. */
+body.dark .cal,body.dark .stat,body.dark .ev,body.dark .empty,
+body.dark .mine-head,body.dark .kpi,body.dark .panel,
+body.dark .fold,body.dark .m-card,body.dark .m-section,
+body.dark .anticipations-panel,body.dark .tenue-card,
+body.dark .poll-card,body.dark .regie-block,body.dark .regie-kpi{
+  background:var(--fk-dark-card)!important;
+  color:var(--fk-dark-text)!important;
+  border-color:var(--fk-dark-line)!important;
+  box-shadow:0 5px 18px #09041566!important;
+}
+body.dark .ev.u-frozen,body.dark .ev.u-kpop,
+body.dark .ev.u-halloween,body.dark .ev.u-princess,
+body.dark .ev.u-heroes,body.dark .ev.u-nuit,
+body.dark .ev.u-mascots,body.dark .ev.attente-assign,
+body.dark .ev.demande-anticipee{
+  background:linear-gradient(125deg,#2c2045,#231934)!important;
+}
+body.dark .cal-nav h2,body.dark .sheet h2{
+  color:#f3d8ff!important;
+  background:none!important;
+  -webkit-text-fill-color:#f3d8ff!important;
+}
+body.dark .stat b,body.dark .kpi b,body.dark .pt-pts b{
+  background:none!important;
+  -webkit-text-fill-color:#ffe3aa!important;
+  color:#ffe3aa!important;
+}
+body.dark .ev h3,body.dark .panel h3,body.dark .m-card h3,
+body.dark .mine-head h3,body.dark .fold-t,
+body.dark .poll-card h3{color:#fff5ff!important}
+body.dark .ev-time,body.dark .ev .meta a,
+body.dark .jour .etape,body.dark .jour .blk h4{
+  color:#dcbcff!important;
+}
+body.dark .ev .theme{color:#f8b1dc!important}
+body.dark .ev .meta,body.dark .stat span,body.dark .kpi span,
+body.dark .m-card small,body.dark .anticipations-panel .ant-line small{
+  color:#d4c4e9!important;
+}
+body.dark .anticipations-panel h2,body.dark .anticipations-panel summary{
+  color:#e8caff!important;
+}
+body.dark .anticipations-panel .ant-line,body.dark .pay-row,
+body.dark .cost-row,body.dark .gains-l,body.dark .pt-ligne{
+  border-color:#594372!important;
+}
+/* Calendrier : ne plus laisser des chiffres ou des libellés sombres. */
+body.dark .dow,body.dark .count{color:#d7c8ed!important}
+body.dark .day{
+  background:#2d2146!important;
+  color:#f8f2ff!important;
+}
+body.dark .day.sel{
+  background:#4d2f72!important;
+  outline:2px solid #ddaaff!important;
+}
+body.dark .day.today .n{
+  background:#9149d0!important;
+  color:#fff!important;
+}
+body.dark .day.out{opacity:.45}
+body.dark .day .n{color:#fff5ff}
+body.dark .day.today .n{color:#fff!important}
+/* Formulaires / choix / champs. */
+body.dark .sheet,body.dark .tpk-box,body.dark .login-card{
+  color:#f7f0ff!important;
+  background:linear-gradient(160deg,#251a3e,#1b142c)!important;
+  border-color:#6b5485!important;
+}
+body.dark label,body.dark .sheet label{color:#eee1ff}
+body.dark input:not([type=checkbox]):not([type=radio]),
+body.dark select,body.dark textarea,
+body.dark .filters input,body.dark .filters select,
+body.dark .pick-row input,body.dark .tenue-card input,
+body.dark .tenue-card select,body.dark .tenue-card textarea{
+  background:#1e1630!important;
+  color:#f9f4ff!important;
+  border-color:#80689d!important;
+  -webkit-text-fill-color:#f9f4ff;
+}
+body.dark input::placeholder,body.dark textarea::placeholder{
+  color:#c1acd9!important;
+  opacity:1!important;
+}
+body.dark select option{background:#1e1630;color:#f8f1ff}
+body.dark input:focus-visible,body.dark select:focus-visible,
+body.dark textarea:focus-visible{
+  outline:2px solid #e0b9ff!important;
+  outline-offset:1px;
+  border-color:#e0b9ff!important;
+}
+body.dark input:disabled,body.dark select:disabled,body.dark textarea:disabled{
+  opacity:.68;
+}
+body.dark input[type=checkbox],body.dark input[type=radio]{
+  accent-color:#c38bff;
+  color-scheme:dark;
+}
+/* Boutons et onglets : pas de texte violet sur violet foncé. */
+body.dark .btn.ghost,body.dark .btn.chat-btn,
+body.dark .pay-row button:not(.done),
+body.dark .gains-nav button,body.dark .pt-ligne .x,
+body.dark .cost-row .edit-btn,
+body.dark .tpk-h button,body.dark .tpk-m button,
+body.dark .pin-pad button,body.dark .stepper button{
+  background:#3d2a59!important;
+  color:#f8eaff!important;
+  border-color:#8367a6!important;
+}
+body.dark .btn.primary,body.dark .mode-tabs button[aria-selected="true"],
+body.dark .poll-buttons button.on{
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+}
+body.dark .btn.danger{
+  color:#ffd7e2!important;
+  background:#5a2439!important;
+}
+body.dark .mode-tabs{background:#241a3b!important}
+body.dark .mode-tabs button[aria-selected="false"]{
+  background:#35254e!important;
+  color:#f3ddff!important;
+}
+body.dark .seg span,body.dark .seg label:not(:has(input:checked)) span{
+  background:#382751!important;
+  color:#f4e8ff!important;
+  border-color:#73588e!important;
+}
+body.dark .seg input:checked + span{
+  background:var(--grad)!important;
+  color:#fff!important;
+}
+body.dark #viewMine .m-shortcuts button,
+body.dark #viewMine .m-visible-tools .evt-tile,
+body.dark #viewStats .g-tiles .evt-tile,
+body.dark .evt-tile{
+  background:linear-gradient(155deg,#36254f,#281b40)!important;
+  border-color:#78599e!important;
+  color:#f8f0ff!important;
+  box-shadow:0 4px 12px #0c052355!important;
+}
+body.dark #viewMine .fantasy-game-banner{
+  background:linear-gradient(115deg,#34204f,#50316e)!important;
+  border-color:#b78be0!important;
+}
+body.dark #viewMine .fantasy-game-banner b,
+body.dark #viewMine .fantasy-game-banner small{
+  color:#f8edff!important;
+}
+/* Fiche du jour, suivi, costumes et tâches. */
+body.dark .jour .blk,body.dark .jour .mission,
+body.dark .jour .prep-item,body.dark .jour .go a,
+body.dark .fiche-status,body.dark .cost-edit,
+body.dark .tenue-options label,body.dark .opt-row,
+body.dark .np-row,body.dark .g-sec,
+body.dark .g-sec.conseil,body.dark .g-sec.eviter,
+body.dark .post-actions .post-item,
+body.dark .remises-jordan .remise-group{
+  background:#322447!important;
+  color:#f9f2ff!important;
+  border-color:#765991!important;
+}
+body.dark .jour .mission strong,
+body.dark .tenue-card .tenue-details label,
+body.dark .g-sec h4,body.dark .cp-section,
+body.dark .mine-calendar .group-title{
+  color:#edd4ff!important;
+}
+body.dark .jour .mission p,body.dark .jour .prep-hint,
+body.dark .opt-row .ol small,
+body.dark .tenue-card small,body.dark .np-row small{
+  color:#d6c8e7!important;
+}
+body.dark .jour .prep-item:has(input:checked),
+body.dark .tenue-options label:has(input:checked){
+  background:#254838!important;
+  color:#ccffe5!important;
+  border-color:#6bd9a1!important;
+}
+body.dark .mine-calendar,body.dark .mine-ind,
+body.dark .post-actions,body.dark .photos-jordan,
+body.dark .remises-jordan,body.dark .cost-return,
+body.dark .cp-hero,body.dark .cp-form,
+body.dark .cp-pending,body.dark .cp-row,
+body.dark .cp-kpi,body.dark .sugg,
+body.dark .member,body.dark .pick-row{
+  background:#2d2045!important;
+  color:#f8f2ff!important;
+  border-color:#755d91!important;
+}
+body.dark .cp-hero strong,body.dark .cp-row .cp-main b,
+body.dark .cp-pending b{color:#fff5ff!important}
+body.dark .cp-hero p,body.dark .cp-hero small,
+body.dark .cp-row .cp-main small,body.dark .cp-pending small{
+  color:#d9c8eb!important;
+}
+body.dark .cp-row .cp-val{color:#9ff3bf!important}
+body.dark .cp-row.sortie .cp-val{color:#ffb2c6!important}
+body.dark .post-actions .post-state,body.dark .photos-jordan .post-state,
+body.dark .remises-jordan .remise-line small{color:#d8c7e8!important}
+body.dark .remises-jordan .remise-total{color:#ffdfa3!important}
+body.dark .tenue-status,body.dark .tag,body.dark .badge:not(.st):not(.ok):not(.ko):not(.solde-ok):not(.solde-ko){
+  background:#45315e!important;
+  color:#f9e5ff!important;
+  border-color:#795b9e!important;
+}
+body.dark .tenue-status.resolue,body.dark .tag.ok,
+body.dark .badge.ok,body.dark .badge.solde-ok{
+  background:#1d4736!important;
+  color:#aeffd2!important;
+}
+body.dark .tag.ko,body.dark .badge.ko,body.dark .badge.solde-ko{
+  background:#5a263b!important;
+  color:#ffd1de!important;
+}
+body.dark .tag.or,body.dark .badge.solde,body.dark .tenue-status:not(.resolue):not(.en_cours){
+  background:#543d25!important;
+  color:#ffe0a2!important;
+}
+body.dark .tenue-status.en_cours{background:#253e61!important;color:#b6deff!important}
+/* Alertes et informations de priorité restent nettement distinctes. */
+body.dark .alert-bar,body.dark .missing,
+body.dark .jour .blk.warn{
+  background:#51263b!important;
+  border-color:#a85878!important;
+  color:#ffd8e2!important;
+}
+body.dark .ev .attente-note,body.dark .anticipation-note,
+body.dark .trajet-warn,body.dark .warn-jbl,
+body.dark .courses,body.dark .non-places{
+  background:#493824!important;
+  border-color:#9b783c!important;
+  color:#ffe7b2!important;
+}
+body.dark .alert-cible{
+  background:#332548!important;
+  border-color:#785a9b!important;
+  color:#f7ecff!important;
+}
+body.dark .alert-cible small{color:#d4c3e8!important}
+/* Sondages, listes d'équipe, stocks, réservation et caisse. */
+body.dark .poll-roster,body.dark .poll-opt,
+body.dark .tbl,body.dark .g-list button,
+body.dark .stock-icon-picker,body.dark .stock-icon-picker button,
+body.dark .stk-row .et button,body.dark .cost-row .etat button,
+body.dark .resa-row,body.dark .post-item{
+  background:#332447!important;
+  border-color:#765791!important;
+  color:#f7edff!important;
+}
+body.dark .poll-card h3,body.dark .poll-opt span,
+body.dark .poll-opt small{color:#f1e2ff!important}
+body.dark .poll-buttons button{
+  background:#3d2a59!important;
+  border-color:#9173af!important;
+  color:#fbf5ff!important;
+}
+body.dark .poll-buttons button.on{
+  background:#8144b7!important;
+  color:#fff!important;
+}
+body.dark .tbl.plein{
+  background:#1e4034!important;
+  border-color:#79c9a3!important;
+}
+body.dark .tbl.trop{
+  background:#522738!important;
+  border-color:#f2a0b3!important;
+}
+body.dark .g-sec.eviter h4{color:#ffb8cb!important}
+body.dark .g-sec.conseil h4{color:#a4f1c7!important}
+body.dark .member .info span,body.dark .stk-row .tx small,
+body.dark .gains-l small,body.dark .cost-row .tx small{
+  color:#d6c6e7!important;
+}
+body.dark .cost-row .mine{color:#a9f7c8!important}
+/* Chat : bulles entrantes, recherche, réponses, pièces jointes. */
+body.dark .msgs{background:#160f29!important}
+body.dark .m:not(.me) .bub{
+  background:#36264f!important;
+  color:#f9efff!important;
+  border:1px solid #5e4781!important;
+}
+body.dark .m:not(.me) .bub *,body.dark .m:not(.me) .bub small{
+  color:#f3e6ff;
+}
+body.dark .chat-in,body.dark .chat-prev,
+body.dark .picker,body.dark .ment-list,
+body.dark .chat-online,body.dark .chat-tools,
+body.dark .ment-list button{
+  background:#281b3d!important;
+  border-color:#674e84!important;
+  color:#f6eaff!important;
+}
+body.dark .chat-in textarea{background:#1a132b!important;color:#fff!important}
+body.dark .chat-in .ph{
+  background:#402a5c!important;
+  color:#f8eaff!important;
+}
+body.dark .rxc,body.dark .chat-btn,body.dark .chat-prev button{
+  color:#f5e9ff!important;
+}
+body.dark .ment:not(.moi){background:#493368!important;color:#ffdfef!important}
+/* Les écrans de régie et l'écran clap ont leurs propres codes couleurs :
+   garder le clap volontairement BLANC pour une lecture à distance. */
+body.dark #viewRegie .regie-row,
+body.dark #viewRegie .regie-check{color:#f6eaff!important;border-color:#655084!important}
+body.dark #viewRegie .regie-actions button,
+body.dark #viewRegie .regie-refresh{
+  background:#45335e!important;
+  color:#fff2ff!important;
+  border-color:#8c72a7!important;
+}
+body.dark #clapBig{background:#fff!important;color:#111!important}
+body.dark #clapBig p{color:#333!important}
+body.dark #clapBig small{color:#777!important}
+/* Priorité au contraste et à la lisibilité sans toucher aux états fonctionnels. */
+body.dark :focus-visible{
+  outline:2px solid #f5d4ff;
+  outline-offset:2px;
+}
+@media (prefers-reduced-motion:reduce){
+  body.dark .logo{animation:none!important}
+}
