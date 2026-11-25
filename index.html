@@ -2073,9 +2073,24 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="seg" id="gCategories" style="margin:4px 0 12px;flex-wrap:wrap"><label><input type="radio" name="gCategorie" value="tout" checked><span>✨ Tout</span></label><label><input type="radio" name="gCategorie" value="prestas"><span>🎭 Prestations</span></label><label><input type="radio" name="gCategorie" value="equipe"><span>👥 Équipe</span></label><label><input type="radio" name="gCategorie" value="finances"><span>💰 Finances</span></label><label><input type="radio" name="gCategorie" value="orga"><span>⚙️ Organisation</span></label></div><div class="evt-tiles g-tiles"><button type="button" class="evt-tile" id="gInfos"><span>📣</span>Infos équipe</button><button type="button" class="evt-tile" id="gIdeas"><span>💡</span>Boîte à idées</button><button type="button" class="evt-tile" id="gEvts"><span>🎪</span>Événements</button><button type="button" class="evt-tile" id="gCaisseLibre"><span>🛒</span>Caisse hors événement</button><button type="button" class="evt-tile" id="gCaissePresta"><span>💰</span>Caisse des prestations</button><button type="button" class="evt-tile" id="gClients"><span>👤</span>Clients</button><button type="button" class="evt-tile" id="gBilans"><span>📝</span>Bilans</button><button type="button" class="evt-tile" id="gIncidents"><span>⚠️</span>Incidents</button><button type="button" class="evt-tile" id="gGardien"><span>🛡️</span>Gardien</button><button type="button" class="evt-tile" id="gEmails"><span>📧</span>E-mails</button><button type="button" class="evt-tile" id="gMagiqueMensuel"><span>✨</span>Bilan mensuel</button><button type="button" class="evt-tile" id="gFin"><span>💶</span>Finances</button><button type="button" class="evt-tile" id="gPaies"><span>👛</span>Paiements équipe</button><button type="button" class="evt-tile" id="costBtn"><span>👗</span>Costumes</button><button type="button" class="evt-tile" id="gStock"><span>🎨</span>Stock</button><button type="button" class="evt-tile" id="guideBtn"><span>📖</span>Guide</button><button type="button" class="evt-tile" id="gGrimoire"><span>📖✨</span>Grimoires</button><button type="button" class="evt-tile" id="gEquipe"><span>👥</span>Équipe</button><button type="button" class="evt-tile" id="gPolls"><span>🗳️</span>Sondages</button><button type="button" class="evt-tile" id="gRecap"><span>✨</span>Fantasy en chiffres</button><button type="button" class="evt-tile" id="gHeures"><span>⏱️</span>Heures & points</button><button type="button" class="evt-tile" id="gExport"><span>📥</span>Export compta</button><button type="button" class="evt-tile" id="gReglages"><span>⚙️</span>Réglages</button></div>
       <div class="fk-gestion-quick" aria-label="Accès complémentaires">
       <button type="button" id="gRegie" class="mine-head" style="width:100%;border:1px solid #d5b4f8;text-align:center;color:#653090;font:800 17px Fredoka,sans-serif;cursor:pointer">🎛️ Régie des événements</button>
+      <button type="button" id="gPromo" class="mine-head" style="width:100%;border:1px solid #d5b4f8;text-align:center;color:#653090;font:800 17px Fredoka,sans-serif;cursor:pointer">🎟️ Codes promo · Événements</button>
       <a href="factures.html" class="mine-head" style="display:block;text-decoration:none;color:#653090;font-weight:800;text-align:center">🧾 Factures & devis · Créer, consulter et imprimer</a>
       <button type="button" id="gDevis" class="mine-head" style="width:100%;border:1px solid #d5b4f8;text-align:center;color:#653090;font:800 17px Fredoka,sans-serif;cursor:pointer">📜 Devis clients · Réponses et relances</button>
       </div>
+      <section id="gPromoPanel" class="panel hidden" aria-label="Codes promo">
+        <div class="hc-head"><h3>🎟️ Codes promo</h3><div class="after-btns"><button type="button" class="sig" id="gPromoRefresh">Actualiser</button><button type="button" class="sig" id="gPromoClose">Fermer</button></div></div>
+        <p class="hint">Les offres concernent les réservations d’événements du site. Les réductions déjà accordées restent acquises.</p>
+        <div id="promoListe"></div><form id="promoForm">
+        <h3 id="promoFormTitle">Créer un code</h3><input type="hidden" id="promoId">
+        <div class="row"><div><label for="promoCode">Code</label><input id="promoCode" required maxlength="30" minlength="3" placeholder="NOEL" autocomplete="off"></div><div><label for="promoLibelle">Libellé (facultatif)</label><input id="promoLibelle" maxlength="150"></div></div>
+        <div class="row"><div><label for="promoType">Réduction</label><select id="promoType"><option value="par_place">€ par place</option><option value="total">€ sur la réservation</option><option value="pourcent">Pourcentage</option></select></div><div><label for="promoMontant">Montant</label><input id="promoMontant" required type="number" step="0.01" min="0.01" max="999999.99" inputmode="decimal"></div></div>
+        <label for="promoEvent">Événement</label><select id="promoEvent"><option value="">Tous les événements du site</option></select>
+        <div class="row"><div><label for="promoDebut">Début inclus</label><input id="promoDebut" type="date"></div><div><label for="promoFin">Fin incluse</label><input id="promoFin" type="date"></div></div>
+        <label for="promoNote">Note interne</label><textarea id="promoNote" maxlength="1500"></textarea>
+        <label class="chk"><input type="checkbox" id="promoActif" checked> Actif</label>
+        <div class="actions"><button type="button" class="btn ghost" id="promoReset">Nouveau</button><button class="btn primary" type="submit" id="promoSave">Enregistrer</button></div>
+        </form><p class="err" id="promoErr" role="status"></p>
+      </section>
       <section id="gClientsPanel" class="panel hidden" aria-label="Historique des clients">
         <div class="hc-head"><h3>👤 Historique des clients</h3><div class="after-btns"><button type="button" class="sig" id="gClientsRefresh">🔄 Actualiser</button><button type="button" class="sig" id="gClientsClose">✕ Fermer</button></div></div>
         <p class="hint">Animations, devis et réservations d'événements retrouvés par email ou téléphone. Les homonymes ne sont jamais fusionnés automatiquement.</p>
@@ -9233,7 +9248,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     },
     async tout() {   // pour les avoirs (responsables)
       if (DEMO) return this._all();
-      try { const { data, error } = await sb.from("reservations").select("id,evenement_id,nom,telephone,places,acompte_recu,avoir_utilise,annulations"); if (error) throw error; lsS(RESA_TOUT, data || []); return data || []; }
+      try { const { data, error } = await sb.from("reservations").select("id,evenement_id,nom,telephone,places,acompte_recu,avoir_utilise,annulations,code_promo,code_promo_id,promo_type,promo_montant"); if (error) throw error; lsS(RESA_TOUT, data || []); return data || []; }
       catch (e) { return lsJ(RESA_TOUT, []); }
     },
     _local(r) { const c = lsJ(RESA_CACHE(r.evenement_id), []); const i = c.findIndex(x => x.id === r.id); if (i >= 0) c[i] = r; else c.push(r); lsS(RESA_CACHE(r.evenement_id), c); },
@@ -9335,8 +9350,14 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     placesParEvenement = parEv;
   }
   const evDeResa = (r) => events.find(e => String(e.id) === String(r.evenement_id));
+  function promoResa(r, ev, places = Math.max(0,+r.places||0)) {
+    const brut = Math.max(0,r2(prixPlace(ev)*places)), m = Math.max(0,Number(r.promo_montant)||0);
+    if (!r.code_promo_id || !m || !places || estNM(ev)) return 0;
+    return r2(Math.min(brut, r.promo_type === "par_place" ? m*places : r.promo_type === "total" ? m : r.promo_type === "pourcent" ? brut*m/100 : 0));
+  }
+  function totalResaPromo(r, ev, places = Math.max(0,+r.places||0)) { return Math.max(0,r2(prixPlace(ev)*places-promoResa(r,ev,places))); }
   function calcResa(r, ev) {
-    const P = prixPlace(ev), places = +r.places || 0, acompte = +r.acompte_recu || 0, ppp = places ? acompte / places : 0;
+    const places = +r.places || 0, brut = r2(prixPlace(ev)*places), reduction = promoResa(r,ev,places), total = totalResaPromo(r,ev,places), P = places ? total/places : prixPlace(ev), acompte = +r.acompte_recu || 0, ppp = places ? acompte / places : 0;
     let early = 0, late = 0, exc = 0;
     (r.annulations || []).forEach(a => { const n = +a.n || 0; if (a.excuse) exc += n;
       else { const j = ev && a.le ? Math.round((parseISO(ev.date) - parseISO(a.le)) / 864e5) : 99; if (j >= 7) early += n; else late += n; } });
@@ -9344,7 +9365,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const du = actives * P + late * P + (early + exc) * ppp;          // l'acompte des places excusées part en avoir
     const reste = Math.max(0, r2(du - acompte - (+r.avoir_utilise || 0) - (+r.paye_jour || 0)));
     const place = (r.placement || []).reduce((t, p) => t + (+p.n || 0), 0);
-    return { P, places, actives, early, late, exc, avoir: r2(exc * ppp), du: r2(du), reste, soldePlace: r2(Math.max(0, P - ppp)), place, aPlacer: Math.max(0, actives - place) };
+    return { P, brut, reduction, total, places, actives, early, late, exc, avoir: r2(exc * ppp), du: r2(du), reste, soldePlace: r2(Math.max(0, P - ppp)), place, aPlacer: Math.max(0, actives - place) };
   }
   const telNorm = (t) => String(t || "").replace(/\D/g, "").replace(/^32/, "0").slice(-9);
   function avoirDispo(r) {
@@ -9416,7 +9437,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="after-btns" style="margin:8px 0"><button type="button" class="sig enc" id="resaNew">➕ Nouvelle réservation</button><button type="button" class="sig photo" id="resaColler">📋 Coller un message</button><button type="button" class="sig enc" id="resaMailOpen">💌 Mail aux participants</button></div>
       <input id="resaSearch" type="search" placeholder="🔎 Nom ou téléphone…" value="${esc(resaFiltre)}" />
       ${L.map(({ r, c }) => `<div class="resa-row ${c.actives ? "" : "annul"} ${r.arrives != null ? "arrive" : ""}" data-resa-edit="${esc(r.id)}">
-        <div class="tx"><b>${esc(r.nom || "?")}</b>${r.source && r.source !== "manuel" ? `<span class="tag">${esc({ site: "🌐 site", sms: "💬 SMS", facebook: "📘 Facebook" }[r.source] || r.source)}</span>` : ""}
+        <div class="tx"><b>${esc(r.nom || "?")}</b>${r.source && r.source !== "manuel" ? `<span class="tag">${esc({ site: "🌐 site", sms: "💬 SMS", facebook: "📘 Facebook" }[r.source] || r.source)}</span>` : ""}${r.code_promo ? `<span class="tag ${r.code_promo_id?"ok":"or"}">🎟️ ${esc(r.code_promo)}${r.code_promo_id?" · −"+euro(c.reduction):" · à vérifier"}</span>`:""}
           <small>${c.actives} place${c.actives > 1 ? "s" : ""}${+r.bebes ? ` + ${r.bebes} bébé${r.bebes > 1 ? "s" : ""}` : ""}${c.actives !== c.places ? ` (sur ${c.places})` : ""}${(r.placement || []).length ? " · 🪑 " + r.placement.map(p => "T" + (p.t + 1)).join("+") : c.actives ? " · 🪑 pas placé" : ""}${r.groupe ? " · 👨‍👩‍👧‍👦 groupe" : ""}</small></div>
         <div class="rt">${+r.acompte_recu >= c.places * c.P / 2 - 0.005 && c.places ? `<span class="tag ok">acompte ✓</span>` : +r.acompte_recu ? `<span class="tag or">acompte ${euro(+r.acompte_recu)}</span>` : `<span class="tag ko">pas d'acompte</span>`}<br>
           ${r.arrives != null ? `<span class="tag ok">✅ ${r.arrives} arrivé${r.arrives > 1 ? "s" : ""}</span>` : ""}${c.reste ? ` <b>${euro(c.reste)}</b>` : ` <span class="tag ok">payé</span>`}</div></div>`).join("") || `<p class="hint">Aucune réservation pour l'instant.</p>`}`;
@@ -9701,6 +9722,53 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     if (/facebook|messenger/i.test(txt)) o.source = "facebook";
     return o;
   }
+  // Codes promo : la base impose aussi le rôle responsable par RLS.
+  let promosGestion=[], promoLoadToken=0;
+  function promoOptions(selected="") {
+    const evs=events.filter(e=>e.type_evenement==="evenement"&&!estNM(e)&&e.statut!=="annule").sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    $("promoEvent").innerHTML='<option value="">Tous les événements du site</option>'+evs.map(e=>'<option value="'+esc(e.id)+'">'+esc(e.titre+" · "+e.date)+'</option>').join("");
+    if(selected&&!evs.some(e=>String(e.id)===String(selected))){const opt=document.createElement("option");opt.value=selected;opt.textContent="Événement archivé";$("promoEvent").appendChild(opt);}
+    $("promoEvent").value=selected||"";
+  }
+  function promoEdit(p=null){
+    $("promoFormTitle").textContent=p?"Modifier "+p.code:"Créer un code";
+    $("promoId").value=p?.id||"";$("promoCode").value=p?.code||"";$("promoCode").readOnly=!!p;
+    $("promoLibelle").value=p?.libelle||"";$("promoType").value=p?.type_reduction||"par_place";$("promoMontant").value=p?.montant??"";
+    $("promoDebut").value=p?.debut||"";$("promoFin").value=p?.fin||"";$("promoNote").value=p?.note_interne||"";$("promoActif").checked=p?.actif??true;
+    promoOptions(p?.evenement_id||"");
+  }
+  async function chargerPromos(){
+    if(!isResp()||DEMO){$("gPromoPanel").classList.add("hidden");return;}
+    const token=++promoLoadToken;$("promoErr").textContent="";$("promoListe").textContent="Chargement…";
+    try{
+      const {data,error}=await sb.from("codes_promo").select("*").order("cree_le",{ascending:false});if(error)throw error;
+      const rows=await Promise.all((data||[]).map(async p=>{const {count,error:e}=await sb.from("reservations").select("id",{head:true,count:"exact"}).eq("code_promo_id",p.id).eq("source","site");return {...p,utilisations:e?null:count};}));
+      if(token!==promoLoadToken||!isResp())return;
+      promosGestion=rows;
+      const jour=new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Brussels",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+      $("promoListe").innerHTML=rows.map(p=>{
+        const ev=events.find(e=>String(e.id)===String(p.evenement_id)), reduction=p.type_reduction==="pourcent"?p.montant+" %":euro(+p.montant)+(p.type_reduction==="par_place"?" / place":" / réservation");
+        const statut=!p.actif?"Désactivé":p.debut&&p.debut>jour?"À venir":p.fin&&p.fin<jour?"Expiré":"Actif";
+        return '<div class="resa-row"><div class="tx"><b>🎟️ '+esc(p.code)+'</b> <span class="tag '+(statut==="Actif"?"ok":"or")+'">'+statut+'</span><small>'+esc(reduction+" · "+(p.evenement_id?(ev?.titre||"Événement archivé"):"Tous les événements du site"))+'</small><small>'+esc((p.debut||"Sans début")+" → "+(p.fin||"Sans fin")+" · "+(p.utilisations===null?"Utilisations indisponibles":p.utilisations+" réservation(s) importée(s)"))+'</small></div><div class="rt"><button type="button" class="sig" data-promo-edit="'+esc(p.id)+'">Modifier</button> <button type="button" class="sig" data-promo-toggle="'+esc(p.id)+'">'+(p.actif?"Désactiver":"Activer")+'</button></div></div>';
+      }).join("")||'<p class="hint">Aucun code promo.</p>';
+    }catch(e){if(token===promoLoadToken){$("promoListe").textContent="";$("promoErr").textContent="Erreur : "+(e.message||e);}}
+  }
+  $("gPromo").onclick=()=>{if(!isResp()||DEMO)return;$("gPromoPanel").classList.remove("hidden");promoEdit();chargerPromos();$("gPromoPanel").scrollIntoView({behavior:"smooth",block:"start"});};
+  $("gPromoClose").onclick=()=>{promoLoadToken++;$("gPromoPanel").classList.add("hidden");};
+  $("gPromoRefresh").onclick=chargerPromos;$("promoReset").onclick=()=>promoEdit();
+  $("promoListe").onclick=async e=>{
+    if(!isResp()||DEMO)return;const ed=e.target.closest("[data-promo-edit]"),tg=e.target.closest("[data-promo-toggle]");
+    if(ed){promoEdit(promosGestion.find(p=>p.id===ed.dataset.promoEdit));$("promoForm").scrollIntoView({behavior:"smooth",block:"start"});}
+    if(tg){const p=promosGestion.find(p=>p.id===tg.dataset.promoToggle);if(!p)return;tg.disabled=true;
+      try{const {error}=await sb.from("codes_promo").update({actif:!p.actif,modifie_le:new Date().toISOString()}).eq("id",p.id);if(error)throw error;await chargerPromos();if($("promoId").value===p.id)promoEdit({...p,actif:!p.actif});}catch(e){$("promoErr").textContent="Erreur : "+(e.message||e);tg.disabled=false;}}
+  };
+  $("promoForm").onsubmit=async e=>{
+    e.preventDefault();if(!isResp()||DEMO)return;
+    const id=$("promoId").value, code=$("promoCode").value.trim().toUpperCase(), m=Number($("promoMontant").value), type=$("promoType").value,debut=$("promoDebut").value||null,fin=$("promoFin").value||null;
+    if(code.length<3||code.length>30||!Number.isFinite(m)||m<=0||(type==="pourcent"&&m>100)||(debut&&fin&&debut>fin)){$("promoErr").textContent="Vérifiez le code, le montant et les dates (pourcentage entre 0 et 100).";return;}
+    const o={libelle:$("promoLibelle").value.trim()||null,type_reduction:type,montant:m,evenement_id:$("promoEvent").value||null,actif:$("promoActif").checked,debut,fin,note_interne:$("promoNote").value.trim()||null,modifie_le:new Date().toISOString()};
+    $("promoSave").disabled=true;try{const {error}=id?await sb.from("codes_promo").update(o).eq("id",id):await sb.from("codes_promo").insert({...o,code});if(error)throw error;promoEdit();await chargerPromos();toast("🎟️ Code promo enregistré");}catch(e){$("promoErr").textContent=e.code==="23505"?"Ce code existe déjà.":"Erreur : "+(e.message||e);}finally{$("promoSave").disabled=false;}
+  };
   function openResaForm(r, coller) {
     const nv = !r; r = r ? { ...r } : { evenement_id: resaEv.id, nom: "", places: 2, bebes: 0, acompte_recu: 0, source: "sms", annulations: [], placement: [] };
     resaEditId = r.id || null;
@@ -9712,10 +9780,10 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       <div class="row"><div><label for="rfAd">👨 Adultes</label><input id="rfAd" type="number" min="0" inputmode="numeric" value="${r.adultes != null ? +r.adultes : (r.enfants != null ? 0 : +r.places || 1)}" /></div>
         <div><label for="rfEnf">🧒 Enfants (3 ans et +)</label><input id="rfEnf" type="number" min="0" inputmode="numeric" value="${r.enfants != null ? +r.enfants : 0}" /></div>
         <div><label for="rfBebes">👶 Moins de 3 ans (gratuit)</label><input id="rfBebes" type="number" min="0" inputmode="numeric" value="${+r.bebes || 0}" /></div></div>
-      <input id="rfPlaces" type="hidden" value="${+r.places || 1}" /><p class="hint" id="rfPlTxt" style="margin-top:2px"></p>
+      <input id="rfPlaces" type="hidden" value="${+r.places || 1}" /><p class="hint" id="rfPlTxt" style="margin-top:2px"></p>${r.code_promo?`<div class="alert-bar ${r.code_promo_id?"":"gold"}"><b>🎟️ Code promo : ${esc(r.code_promo)}</b><div id="rfPromoDetail">${r.code_promo_id?"Réduction appliquée":"⚠️ Code non validé à l’import : vérifier avant confirmation."}</div></div>`:""}
       <div class="row"><div><label for="rfSource">Reçue par</label><select id="rfSource">${[["sms", "💬 SMS"], ["facebook", "📘 Facebook"], ["site", "🌐 Site"], ["manuel", "✍️ Autre"]].map(([k, t]) => `<option value="${k}" ${r.source === k ? "selected" : ""}>${t}</option>`).join("")}</select></div>
         <div><label for="rfAcompte">Acompte reçu (€)</label><input id="rfAcompte" type="text" inputmode="decimal" value="${+r.acompte_recu ? String(r.acompte_recu).replace(".", ",") : ""}" placeholder="0,00" /></div></div>
-      <button type="button" class="btn ghost" id="rfAc50" style="width:100%">💶 Acompte 50 % reçu (${euro((+r.places || 1) * prixPlace(resaEv) / 2)})</button>
+      <button type="button" class="btn ghost" id="rfAc50" style="width:100%">💶 Acompte 50 % reçu (${euro(r2(totalResaPromo(r,resaEv)/2))})</button>
       ${avoir ? `<div class="alert-bar gold" style="margin-top:8px">🎟️ Avoir disponible pour ce client : <b>${euro(avoir)}</b> <button type="button" class="tag ok" id="rfAvoir" style="border:0;cursor:pointer">Utiliser</button></div>` : ""}
       ${+r.avoir_utilise ? `<p class="hint">🎟️ Avoir déduit : ${euro(+r.avoir_utilise)} <button type="button" class="tag ko" id="rfAvoirX" style="border:0;cursor:pointer">retirer</button></p>` : ""}
       <div class="resa-conf ${r.confirmee_le ? "ok" : ""}">${r.confirmee_le
@@ -9743,10 +9811,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       toast(Object.keys(o).length ? "✨ Pré-rempli : vérifiez" : "Je n'ai rien trouvé, remplissez à la main"); };
     // places payantes = adultes + enfants de 3 ans et plus (même prix) ; les moins de 3 ans sont gratuits
     function majPl() { const n = (+$("rfAd").value || 0) + (+$("rfEnf").value || 0); $("rfPlaces").value = Math.max(1, n);
-      $("rfPlTxt").textContent = `🎟️ ${n} place${n > 1 ? "s" : ""} payante${n > 1 ? "s" : ""}${prixPlace(resaEv) ? ` · ${euro(n * prixPlace(resaEv))}` : ""}${+$("rfBebes").value ? ` + ${$("rfBebes").value} gratuit(s)` : ""}`;
-      $("rfAc50").textContent = `💶 Acompte 50 % reçu (${euro(Math.max(1, n) * prixPlace(resaEv) / 2)})`; }
+      $("rfPlTxt").textContent = `🎟️ ${n} place${n > 1 ? "s" : ""} payante${n > 1 ? "s" : ""}${prixPlace(resaEv) ? ` · ${euro(totalResaPromo(r,resaEv,n))}` : ""}${+$("rfBebes").value ? ` + ${$("rfBebes").value} gratuit(s)` : ""}`;
+      if ($("rfPromoDetail") && r.code_promo_id) $("rfPromoDetail").textContent = `Prix initial : ${euro(r2(n*prixPlace(resaEv)))} · Code promo ${r.code_promo} : −${euro(promoResa(r,resaEv,n))} · Total : ${euro(totalResaPromo(r,resaEv,n))}`;
+      $("rfAc50").textContent = `💶 Acompte 50 % reçu (${euro(r2(totalResaPromo(r,resaEv,n)/2))})`; }
     ["rfAd", "rfEnf", "rfBebes"].forEach(id => $(id).addEventListener("input", majPl)); majPl();
-    $("rfAc50").onclick = () => { $("rfAcompte").value = String(r2((+$("rfPlaces").value || 1) * prixPlace(resaEv) / 2)).replace(".", ","); };
+    $("rfAc50").onclick = () => { $("rfAcompte").value = String(r2(totalResaPromo(r,resaEv,+$("rfPlaces").value||1)/2)).replace(".", ","); };
     if ($("rfAvoir")) $("rfAvoir").onclick = () => { const o = lire(); o.avoir_utilise = r2((+r.avoir_utilise || 0) + Math.min(avoir, calcResa(o, resaEv).reste || avoir)); openResaForm(o); };
     if ($("rfAvoirX")) $("rfAvoirX").onclick = () => { const o = lire(); o.avoir_utilise = 0; openResaForm(o); };
     $("rfCancel").onclick = () => $("resaFormBg").classList.add("hidden");
@@ -9762,6 +9831,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       return true;
     };
     $("rfSave").onclick = async () => {
+      if ($("rfConf") && $("rfConf").checked && r.code_promo && !r.code_promo_id && !confirm("Le code promo n’a pas été validé. Confirmer au tarif normal ?")) return;
       if ($("rfConf") && $("rfConf").checked && !$("rfMail").value.trim() && !confirm("Pas d'e-mail : la réservation sera confirmée mais le client ne recevra pas de mail. Continuer ?")) return;
       if ($("rfConf") && $("rfConf").checked && !prixPlace(resaEv)) { $("rfErr").textContent = "Indique d'abord le prix par place de l'événement (pour calculer l'acompte)."; return; }
       try { if (await sauver(lire())) { $("resaFormBg").classList.add("hidden"); await resaReload(); renderResa(); toast("🎟️ Réservation enregistrée"); } } catch (err) { $("rfErr").textContent = "Erreur : " + (err.message || err); } };
