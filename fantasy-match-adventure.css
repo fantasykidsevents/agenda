@@ -719,3 +719,37 @@ body .fm-shell[data-world]{
   background-color:transparent;
 }
 .fm-shell .fm-board .fm-cell.match{box-shadow:0 0 14px #fff,inset 0 0 19px #ffe082}
+
+
+/* Relecture visuelle indépendante : aucun événement d'animation ne pilote le jeu. */
+.fm-magic-replay{position:absolute;z-index:8;pointer-events:none;overflow:hidden;border-radius:12px;isolation:isolate;contain:layout paint;}
+.fm-replay-frame{position:absolute;inset:0;visibility:hidden;opacity:0;overflow:hidden;animation:fm-replay-visible var(--duration) linear var(--delay) forwards;}
+.fm-replay-grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));background:#c9b2ed;}
+.fm-replay-grid .fm-replay-tile{position:relative;min-width:0;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.fm-replay-grid .fm-replay-tile .fm-piece{width:100%;height:100%;pointer-events:none;}
+.fm-replay-tile.burst{animation:fm-replay-tile-flash 340ms ease-out var(--delay) both;}
+.fm-replay-tile.burst>.fm-piece{animation:fm-replay-piece-pop 340ms cubic-bezier(.2,.65,.35,1) var(--delay) both;}
+.fm-replay-tile.enchant>.fm-piece{animation:fm-replay-enchant 320ms ease-out var(--delay) both;}
+.fm-replay-final .landing>.fm-piece{animation:fm-replay-fall 210ms cubic-bezier(.18,.8,.35,1) var(--delay) both;}
+.fm-replay-spark{position:absolute;z-index:3;width:8px;height:8px;background:var(--spark);clip-path:polygon(50% 0,62% 37%,100% 50%,62% 63%,50% 100%,38% 63%,0 50%,38% 37%);filter:drop-shadow(0 0 3px #fff);animation:fm-replay-spark 340ms ease-out var(--delay) both;}
+.fm-replay-ring{position:absolute;z-index:2;box-sizing:border-box;width:22%;aspect-ratio:1;border:3px solid #ffeca4;border-radius:50%;box-shadow:0 0 10px #fff7bb,inset 0 0 8px #fff;animation:fm-replay-ring 350ms ease-out var(--delay) both;}
+.fm-replay-ring.blast{width:35%;background:radial-gradient(circle,#fff5adbb 0, #ffb84255 35%,#ff6b2d44 55%,transparent 72%);border-color:#ffcf76;}
+.fm-replay-ring.rainbow{width:49%;border:5px solid transparent;background:linear-gradient(#fff0,#fff0) padding-box,conic-gradient(#ff66bc,#ffdc71,#a8ffed,#6ecaff,#c281ff,#ff66bc) border-box;mask:radial-gradient(circle,transparent 50%,#000 68%);box-shadow:none;}
+.fm-replay-ring.gold{width:28%;}
+.fm-replay-beam{position:absolute;z-index:3;border-radius:999px;animation:fm-replay-beam 330ms ease-out var(--delay) both;background:linear-gradient(180deg,transparent,#ffcaff 22%,#fff 48%,#8cefff 65%,transparent);box-shadow:0 0 8px #d7faff;}
+.fm-replay-beam.horizontal{left:0!important;width:100%;height:8%;transform:translateY(-50%);}
+.fm-replay-beam.vertical{top:0!important;height:100%;width:8%;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#ffcaff 22%,#fff 48%,#8cefff 65%,transparent);}
+.fm-replay-new{position:absolute;z-index:4;width:12.5%;height:12.5%;display:grid;place-items:center;animation:fm-replay-new 350ms ease-out var(--delay) both;}
+.fm-replay-new>.fm-piece{width:100%;height:100%;}
+.fm-replay-caption{position:absolute;z-index:5;top:41%;left:7%;right:7%;text-align:center;font-family:Georgia,serif;font-size:clamp(15px,4.5vw,26px);font-weight:900;letter-spacing:.045em;color:#fff5bc;text-shadow:0 2px 2px #4c176d,0 0 8px #b04ee9,0 0 3px #fff;background:linear-gradient(90deg,transparent,#532178e6 22%,#7137a8ed 50%,#532178e6 78%,transparent);padding:6px 2px;animation:fm-replay-caption 350ms ease-out var(--delay) both;}
+@keyframes fm-replay-visible{0%,99.9%{visibility:visible;opacity:1;}100%{visibility:hidden;opacity:0;}}
+@keyframes fm-replay-tile-flash{0%{box-shadow:inset 0 0 0 transparent;}28%{box-shadow:inset 0 0 19px #fff8b5,inset 0 0 0 2px #fff;}100%{box-shadow:inset 0 0 8px #e5b5ff;}}
+@keyframes fm-replay-piece-pop{0%{transform:scale(1);opacity:1;}33%{transform:scale(1.14);opacity:1;filter:brightness(1.28);}100%{transform:scale(.13) rotate(12deg);opacity:0;}}
+@keyframes fm-replay-enchant{0%{transform:scale(1);opacity:1;}50%{transform:scale(.65);opacity:.2;}100%{transform:scale(.1);opacity:0;}}
+@keyframes fm-replay-fall{0%{transform:translateY(-22%);opacity:.55;}75%{transform:translateY(3%);opacity:1;}100%{transform:translateY(0);opacity:1;}}
+@keyframes fm-replay-spark{0%{opacity:0;transform:translate(-50%,-50%) scale(.3);}22%{opacity:1;}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(110deg) scale(.25);}}
+@keyframes fm-replay-ring{0%{opacity:0;transform:translate(-50%,-50%) scale(.15);}25%{opacity:1;}100%{opacity:0;transform:translate(-50%,-50%) scale(2.7);}}
+@keyframes fm-replay-beam{0%,100%{opacity:0;}25%{opacity:1;}65%{opacity:.85;}}
+@keyframes fm-replay-new{0%{transform:translate(-50%,-50%) scale(.05);opacity:0;}55%{transform:translate(-50%,-50%) scale(1.25);opacity:1;}100%{transform:translate(-50%,-50%) scale(1);opacity:1;}}
+@keyframes fm-replay-caption{0%{opacity:0;transform:scale(.85);}25%,75%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(1.04);}}
+@media(prefers-reduced-motion:reduce){.fm-magic-replay{display:none!important;}}
