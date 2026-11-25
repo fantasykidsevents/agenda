@@ -1,14 +1,13 @@
 // Service worker : permet l'installation et l'ouverture hors connexion.
 // Stratégie « réseau d'abord » : on prend toujours la version la plus
 // récente, et on retombe sur le cache si pas de réseau.
-const CACHE = "fk-agenda-v171";
+const CACHE = "fk-agenda-v172";
 const FICHIERS = [
   "./", "./index.html", "./dark-mode-fixes.css", "./fiche-onglets.js", "./gestion-bilans.js", "./suivi-fantasy.js", "./devis.html", "./anticipation.html", "./attente.html", "./factures.html", "./factures-pdf.js", "./factures-fond-magique.jpg", "./config.js", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./logo.png", "./nuit-magique.png",
   "./lumi-jour.webp", "./lumio-jour.webp", "./lumi-matin.webp", "./lumi-danse.webp", "./lumi-soir.webp", "./lumi-nuit.webp",
   "./lumi-anniversaire.webp", "./lumi-elsa.webp", "./lumi-mira.webp",
   "./fantasy-match-chapitre2-glossy.png", "./fantasy-bubble.html", "./fantasy-bubble.css?v=accueil-4", "./fantasy-bubble.js?v=duree-8", "./fantasy-bubble-logo.svg", "./fantasy-bubble-logo.svg?v=royal-2", "./fantasy-bubble-ornaments.svg", "./fantasy-bubble-chest.svg", "./lumi-costumes/merlin.webp",
-  "./fantasy-kingdom.html", "./fantasy-kingdom.css?v=1", "./fantasy-kingdom.js?v=1", "./fantasy-kingdom-logo.svg", "./fantasy-kingdom-land.svg", "./lumi-costumes/aurore.webp", "./lumi-costumes/merida.webp",
   "./mes-jeux.html", "./fantasy-potions.html", "./fantasy-potions.css?v=visuels-20261125-2",
   "./fantasy-potions-enchanted.css?v=atelier-20261125-4", "./fantasy-potions-enchanted.js?v=atelier-20261125-4",
   "./fp-atelier.svg", "./fp-jardin.svg", "./fp-cristaux.svg", "./fp-etoiles.svg", "./fp-sortileges.svg", "./fp-couronne.svg", "./fp-lumi-accueil.svg", "./fp-lumi-alchimiste.svg", "./fp-lumi-reflexion.svg", "./fp-lumi-indice.svg", "./fp-lumi-victoire.svg", "./fp-lumi-cadeau.svg",
