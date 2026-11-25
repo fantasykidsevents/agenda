@@ -425,8 +425,12 @@
   function magicEffect(indices,label=''){
     const host=document.querySelector('.fm-board-wrap');
     if(!host || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+    // Ne pas saturer le GPU des iPhone avec plusieurs couches animées.
+    const previous=host.querySelectorAll('.fm-fx-layer');
+    if(previous.length>=2)previous[0].remove();
     const layer=document.createElement('div');layer.className='fm-fx-layer';
-    const cells=[...indices].sort(()=>Math.random()-.5).slice(0,Math.min(22,indices.size||22));
+    const limit=isMobileSafari?7:22;
+    const cells=[...indices].sort(()=>Math.random()-.5).slice(0,Math.min(limit,indices.size||limit));
     layer.innerHTML=cells.map(i=>{
       const x=(i%8+.5)/8*100,y=(Math.floor(i/8)+.5)/8*100;
       const dx=(Math.random()*150-75).toFixed(0),dy=(Math.random()*160-80).toFixed(0);
@@ -538,7 +542,10 @@
       seal:'Brise les sceaux en faisant des combinaisons juste à côté !'}[current.mode];
   }
   function isNeighbor(a,b){return a>=0&&a<64&&b>=0&&b<64&&((Math.abs(a-b)===1&&Math.floor(a/8)===Math.floor(b/8))||Math.abs(a-b)===8)}
-  const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  // Safari iOS conserve parfois longtemps des animations retardées : limiter
+  // leur durée sans changer le calcul des points ni la logique des niveaux.
+  const isMobileSafari=/iP(hone|ad|od)/.test(navigator.userAgent||'');
+  const pause=ms=>new Promise(resolve=>setTimeout(resolve,isMobileSafari?Math.min(ms,140):ms));
   function collapse(removed) {
     for(let x=0;x<8;x++){
       const keep=[];
@@ -547,6 +554,8 @@
     }
   }
   async function resolve(initial=null,preferred=-1,createBonus=true) {
+    let completed=false;
+    try {
     let matches=initial || findMatches(board), chain=0;
     while(matches.size && chain<16){
       chain++;
@@ -590,7 +599,18 @@
       preferred=-1;createBonus=true;
     }
     if(!hasPossibleMove(board)){board=freshBoard();toast('Le plateau se mélange ✨');}
-    busy=false;renderAll();checkEnd();
+    completed=true;
+    } catch(err) {
+      // Une erreur d'animation/DOM ne doit jamais laisser toutes les cases
+      // désactivées jusqu'à ce que le joueur ferme l'application.
+      console.error('Fantasy Match : récupération après bonus',err);
+      try { board=freshBoard(); } catch (ignored) { console.warn(ignored); }
+      toast('✨ Le plateau est prêt, tu peux continuer !');
+    } finally {
+      busy=false;
+      try {renderAll();}catch(err){console.error('Fantasy Match : affichage du plateau',err);}
+    }
+    if(completed)checkEnd();
   }
   function checkEnd(){
     if(remaining<=0){winLevel();return;}
@@ -644,6 +664,7 @@
   async function swap(a,b){
     if(busy||state.lives<1||moves<=0||!isNeighbor(a,b)||sealedCells.has(a)||sealedCells.has(b))return;
     busy=true;selected=-1;
+    try {
     [board[a],board[b]]=[board[b],board[a]];
     renderBoard();await pause(180);
     const specialTargets=specialSwapTargets(board,a,b);
@@ -659,6 +680,12 @@
       busy=false;renderAll();toast('Essaie une autre combinaison');return;
     }
     moves--;tickTimers();await resolve(match,b,true);
+    }catch(err){
+      console.error('Fantasy Match : échange interrompu',err);
+      busy=false;
+      try {board=freshBoard();renderAll();} catch(ignored){console.warn(ignored);}
+      toast('✨ Plateau rétabli, retente ton coup !');
+    }
   }
   function bestBombCenter(b,goal){
     let best=27,bestScore=-1;
@@ -678,6 +705,7 @@
     if(!kind||busy||state.lives<1||moves<=0)return;
     if(state.boosters[kind]<=0){toast('Plus de bonus disponible');return;}
     busy=true;selected=-1;state.boosters[kind]--;
+    try {
     if(kind==='shuffle'){
       board=freshBoard();busy=false;save();renderAll();toast('Plateau mélangé !');return;
     }
@@ -694,13 +722,27 @@
       toast('Bombe magique !');
     }
     save();await resolve(chosen,-1,false);
+    }catch(err){
+      console.error('Fantasy Match : booster interrompu',err);
+      state.boosters[kind]++;busy=false;
+      try {board=freshBoard();save();renderAll();} catch(ignored){console.warn(ignored);}
+      toast('✨ Bonus rendu, tu peux continuer !');
+    }
   }
   async function activateSpecial(i){
     if(busy||state.lives<1||moves<=0||!specialOf(board[i]))return;
-    busy=true;selected=-1;moves--;tickTimers();
-    magicEffect(new Set([i]),'✨ Bonus spécial !');
-    toast('Bonus spécial déclenché !');
-    await resolve(new Set([i]),-1,false);
+    busy=true;selected=-1;
+    try {
+      moves--;tickTimers();
+      magicEffect(new Set([i]),'✨ Bonus spécial !');
+      toast('Bonus spécial déclenché !');
+      await resolve(new Set([i]),-1,false);
+    }catch(err){
+      console.error('Fantasy Match : bonus spécial interrompu',err);
+      busy=false;
+      try {board=freshBoard();renderAll();} catch(ignored){console.warn(ignored);}
+      toast('✨ Bonus terminé, le plateau est disponible.');
+    }
   }
   function tileTap(i){
     if(busy||state.lives<1||moves<=0)return;
