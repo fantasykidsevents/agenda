@@ -2,13 +2,13 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const MAX_LEVEL = 200, MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, SIZE = 8, POINTS_PER_UNUSED_MOVE = 50;
-  const WORLD_NAMES = ['Le Royaume des Étoiles', 'Le Jardin Enchanté', 'Le Palais des Neiges', 'La Grotte des Cristaux', 'Le Royaume de la Magie', 'L’Archipel des Comètes', 'Le Labyrinthe des Mirages', 'La Forêt des Ombres', 'La Citadelle des Tempêtes', 'Le Cœur de Lumière'];
+  const MAX_LEVEL = 300, MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, SIZE = 8, POINTS_PER_UNUSED_MOVE = 50;
+  const WORLD_NAMES = ['Le Royaume des Étoiles', 'Le Jardin Enchanté', 'Le Palais des Neiges', 'La Grotte des Cristaux', 'Le Royaume de la Magie', 'L’Archipel des Comètes', 'Le Labyrinthe des Mirages', 'La Forêt des Ombres', 'La Citadelle des Tempêtes', 'Le Cœur de Lumière',"Les Jardins de l’Aurore","La Bibliothèque des Sortilèges","Le Bal des Lucioles","Le Palais des Éclipses","Le Trône des Étoiles"];
 
   // Chaque série de 20 niveaux possède sa propre ambiance, sans modifier les règles du jeu.
-  const WORLD_THEMES = ["etoiles","jardin","neiges","cristaux","magie","cometes","mirages","ombres","tempetes","lumiere"];
-  const WORLD_SYMBOLS = ["✦","🌸","❄️","💎","✨","☄️","🔮","🌙","⚡","💖"];
-  const WORLD_FLAVORS = ["Sous un ciel constellé de magie","Des fleurs, des lucioles et des secrets","Une magie étincelante de givre","Des gemmes aux mille reflets","Le royaume de tous les sortilèges","Des îles flottantes sous les étoiles","Des palais dorés dans les mirages","La forêt murmure à la nuit","La citadelle défie les éclairs","La magie rayonne de toutes parts"];
+  const WORLD_THEMES = ["etoiles","jardin","neiges","cristaux","magie","cometes","mirages","ombres","tempetes","lumiere","aurore","grimoires","bal-lucioles","eclipses","trone"];
+  const WORLD_SYMBOLS = ["✦","🌸","❄️","💎","✨","☄️","🔮","🌙","⚡","💖","🌅","📖","🧚","🌘","👑"];
+  const WORLD_FLAVORS = ["Sous un ciel constellé de magie","Des fleurs, des lucioles et des secrets","Une magie étincelante de givre","Des gemmes aux mille reflets","Le royaume de tous les sortilèges","Des îles flottantes sous les étoiles","Des palais dorés dans les mirages","La forêt murmure à la nuit","La citadelle défie les éclairs","La magie rayonne de toutes parts","Les premiers rayons illuminent le royaume","Des grimoires brillent entre les étagères","Les lucioles dansent sous les étoiles","Les ombres et la lumière se rencontrent","Toutes les magies se rassemblent"];
   const WORLD_INTROS = [
     "Entre dans le royaume des étoiles !", "Explore le jardin enchanté !",
     "Laisse la neige t'entourer !", "Découvre les cristaux étincelants !",
@@ -16,8 +16,7 @@
     "Traverse les mirages et leurs palais mystérieux !",
     "Les ombres cachent une nouvelle aventure !",
     "Résiste aux tempêtes de la citadelle !",
-    "Tu as atteint le cœur de la magie !"
-  ];
+    "Tu as atteint le cœur de la magie !","L’aurore déploie ses premiers rayons sur le jardin enchanté !","Entre dans la bibliothèque et découvre les secrets des grimoires !","Les lucioles t’invitent à un bal étincelant !","Traverse le palais où la lune et les étoiles se rencontrent !","Atteins le trône des étoiles, le défi ultime de Fantasy Match !"];
   const KINDS = ['star', 'rose', 'crystal', 'snow', 'crown', 'wand']; // Chapitre 1 : niveaux 1 à 100.
   // Chapitre 2 : six nouvelles pièces au niveau 101, puis un symbole inédit par nouveau monde.
   // Conserver exactement six types par monde pour ne pas casser l'équilibrage du match-3.
@@ -26,13 +25,19 @@
     ['mirror','moon','lotus','frost','prism','orb'],    // 121–140 : Labyrinthe des Mirages
     ['mirror','moon','firefly','frost','prism','orb'], // 141–160 : Forêt des Ombres
     ['mirror','storm','firefly','frost','prism','orb'],// 161–180 : Citadelle des Tempêtes
-    ['mirror','storm','firefly','frost','prism','heart']// 181–200 : Cœur de Lumière
+    ['mirror','storm','firefly','frost','prism','heart'],// 181–200 : Cœur de Lumière
+    // Chapitre 3 : cinq nouveaux mondes, même famille de symboles illustrés.
+    ['comet','lotus','frost','prism','orb','heart'],      // 201–220 : Aurore
+    ['moon','mirror','prism','orb','heart','firefly'],    // 221–240 : Grimoires
+    ['lotus','firefly','frost','orb','heart','comet'],     // 241–260 : Bal
+    ['moon','mirror','storm','prism','frost','heart'],    // 261–280 : Éclipses
+    ['comet','moon','mirror','firefly','storm','heart']   // 281–300 : Trône
   ];
   const CHAPTER2_KINDS = [...new Set(CHAPTER2_WORLD_KINDS.flat())];
   // Lumi utilise l'illustration originale de Fantasy App : une pièce bonus rare,
   // pour garder six couleurs combinables et préserver la difficulté du match-3.
   const LUMI_BONUS = 'lumi|color';
-  const poolForLevel = n => n > 100 ? CHAPTER2_WORLD_KINDS[Math.min(4,Math.max(0,Math.floor((n-101)/20)))] : KINDS;
+  const poolForLevel = n => n > 100 ? CHAPTER2_WORLD_KINDS[Math.min(CHAPTER2_WORLD_KINDS.length-1,Math.max(0,Math.floor((n-101)/20)))] : KINDS;
   const LABELS = {
     star:'Étoiles',rose:'Roses',crystal:'Cristaux',snow:'Flocons',crown:'Couronnes',wand:'Baguettes',
     comet:'Comètes',moon:'Lunes',lotus:'Fleurs célestes',frost:'Flocons enchantés',prism:'Prismes',
@@ -72,6 +77,27 @@
   const localDefault = () => ({level:1,maxUnlocked:1,lives:5,nextLifeAt:0,score:0,levels:{},bestScores:{},boosters:{color:3,bomb:3,shuffle:3},lastGiftAt:'',worldsSeen:[],updatedAt:0});
   const world = n => Math.floor((n - 1) / 20);
   function levelConfig(n) {
+    // Chapitre 3 (201–300) : nouveaux défis calibrés avec six symboles par niveau.
+    // Les niveaux 1–200 gardent exactement leurs objectifs et leurs nombres de coups.
+    if(n>200){
+      const w=world(n),sub=(n-201)%20,tier=Math.min(4,Math.floor((n-201)/20));
+      const pool=poolForLevel(n),advance=Math.floor(sub/5);
+      const modes=['collect','duo','ice','score','special'];
+      const mode=n%10===0?'combo':n%8===0?'seal':modes[(n-1)%5];
+      const goal=pool[(sub+w*2)%pool.length],goal2=pool[(sub+w*2+2)%pool.length];
+      const boss=n%10===0;
+      const targets=mode==='duo' ? {[goal]:16+tier*2+advance,[goal2]:14+tier*2+advance} : {};
+      const target=mode==='collect'?25+tier*2+advance*2
+        :mode==='duo'?targets[goal]+targets[goal2]
+        :mode==='ice'?18+tier*2+advance
+        :mode==='score'?1800+tier*220+advance*100
+        :mode==='special'?3+(tier>=2?1:0)+(tier===4?1:0)
+        :mode==='seal'?12+tier*2+advance
+        :tier>=3?2:1;
+      const moves=Math.max(15,18-Math.floor(tier/2))+
+        (mode==='ice'?3:mode==='duo'?2:mode==='special'?5:mode==='seal'?6:mode==='combo'?7:0);
+      return {number:n,world:w,mode,goal,goal2,targets,target,moves,boss,difficulty:10+tier};
+    }
     // Chapitre 2 : 100 niveaux inédits, plus corsés, avec des défis de combinaisons.
     if(n>100){
       const w=world(n), sub=(n-101)%20, tier=Math.min(4,Math.floor((n-101)/20));
@@ -141,10 +167,11 @@
     state.maxUnlocked = Math.max(1,Math.min(MAX_LEVEL,Number(state.maxUnlocked || 1)));
     // Un joueur ayant terminé l'ancien niveau 100 reprend directement au 101.
     if(Number(state.levels?.[100]||0)>0 && state.maxUnlocked===100){state.maxUnlocked=101;state.level=101;}
+    if(Number(state.levels?.[200]||0)>0 && state.maxUnlocked===200){state.maxUnlocked=201;state.level=201;}
     state.level = Math.max(1,Math.min(state.maxUnlocked,Number(state.level || 1)));
     state.boosters = {color:3,bomb:3,shuffle:3,...state.boosters};
     state.levels ||= {}; state.bestScores ||= {};
-    state.worldsSeen = Array.isArray(state.worldsSeen) ? [...new Set(state.worldsSeen.filter(n => Number.isInteger(n) && n >= 5 && n <= 9))] : [];
+    state.worldsSeen = Array.isArray(state.worldsSeen) ? [...new Set(state.worldsSeen.filter(n => Number.isInteger(n) && n >= 5 && n <= 14))] : [];
   }
   // Une ancienne sauvegarde cloud (ou une vie offerte depuis un autre appareil)
   // ne doit jamais effacer des niveaux déjà débloqués localement.
@@ -372,7 +399,8 @@
   function sealsForLevel(n,mode){
     if(n<=100 || mode==='ice')return new Map();
     const tier=Math.min(4,Math.floor((n-101)/20));
-    const count=(mode==='seal'?8+tier*3+(n%4):3+tier*2+(n%3));
+    const count=n>200 ? (mode==='seal'?10+Math.floor((n-201)/40)+(n%3):5+Math.floor((n-201)/40)+(n%2))
+      : (mode==='seal'?8+tier*3+(n%4):3+tier*2+(n%3));
     const result=new Map();
     for(let k=0;result.size<count && k<64;k++){
       const i=(k*23+n*11)%64;
@@ -386,7 +414,7 @@
     if(n<151 || n%7!==0 || mode==='seal' || mode==='combo' || mode==='ice')return new Map();
     let i=(n*17+5)%64;
     while(sealedCells.has(i))i=(i+1)%64;
-    return new Map([[i,10]]);
+    return new Map([[i,n>200?13:10]]);
   }
   function tickTimers(){
     for(const [i,turns] of timedBombs)timedBombs.set(i,turns-1);
@@ -459,7 +487,7 @@
     shell.dataset.mode = current.mode;
     shell.dataset.world = WORLD_THEMES[current.world] || 'etoiles';
     document.body.dataset.world = shell.dataset.world;
-    document.body.dataset.chapter = current.number > 100 ? '2' : '1';
+    document.body.dataset.chapter = current.number > 200 ? '3' : current.number > 100 ? '2' : '1';
     $('worldName').textContent = MODE_LABELS[current.mode] + ' · ' + WORLD_NAMES[current.world];
     $('levelValue').textContent=current.number;
     $('goalIcon').classList.toggle('duo',current.mode==='duo'||current.mode==='combo');
@@ -679,9 +707,9 @@
     state.level=Math.min(MAX_LEVEL,n+1);
     save();
     const last=n===MAX_LEVEL;
-    showDialog(last?'200 niveaux terminés !':'Niveau réussi !',
+    showDialog(last?'300 niveaux terminés !':'Niveau réussi !',
       `<div style="font-size:32px;color:#ffc02b">${'★'.repeat(earned)}${'☆'.repeat(3-earned)}</div><p>Bravo ${escapeHtml(playerName)} ! ${n%10===0?'Tu gagnes un bonus de chaque sorte !':''}</p><p>💎 Combinaisons : <b>${roundScore.toLocaleString('fr-BE')} pts</b><br>✨ ${unusedMoves} coup${unusedMoves>1?'s':''} restant${unusedMoves>1?'s':''} × ${POINTS_PER_UNUSED_MOVE} = <b>+${bonus.toLocaleString('fr-BE')} pts</b></p><p><b>Total : ${finalScore.toLocaleString('fr-BE')} points</b></p>`,
-      [{label:last?'Rejouer le niveau 200':'Niveau suivant →',action:()=>{hideDialog();startRound(last?MAX_LEVEL:n+1)}}], '✦');
+      [{label:last?'Rejouer le niveau 300':'Niveau suivant →',action:()=>{hideDialog();startRound(last?MAX_LEVEL:n+1)}}], '✦');
   }
   function loseLevel(reason=''){
     state.lives=Math.max(0,state.lives-1);
@@ -719,7 +747,7 @@
     $('worldPortalSymbol').textContent = WORLD_SYMBOLS[current.world];
     $('worldPortalChapter').textContent = 'MONDE ' + (current.world + 1) + ' · NIVEAU ' + current.number;
     $('worldPortalTitle').textContent = WORLD_NAMES[current.world];
-    $('worldPortalDescription').textContent = WORLD_INTROS[current.world] + (current.number === 101 ? ' Six nouveaux symboles magiques t’attendent !' : ' Un nouveau symbole a rejoint l’aventure !');
+    $('worldPortalDescription').textContent = WORLD_INTROS[current.world] + (current.number === 101 ? ' Six nouveaux symboles magiques t’attendent !' : current.number>200 ? ' De nouveaux défis t’attendent avec tes symboles magiques préférés !' : ' Un nouveau symbole a rejoint l’aventure !');
     $('worldPortalPieces').innerHTML = [...poolForLevel(current.number), LUMI_BONUS].map(piece).join('');
     $('worldPortal').classList.remove('hidden');
     $('worldPortalEnter').focus();
@@ -738,7 +766,7 @@
         return `<button class="${lock?'locked':state.level===n?'current':passed?'passed':''}" data-level="${n}" ${lock?'disabled':''}>${passed?'★ ':lock?'🔒 ':''}${n}</button>`;
       }).join('')}</div></div>`;
     }).join('');
-    showDialog('Les 200 niveaux',cards,[{label:'Retour au jeu',action:hideDialog}],'✦');
+    showDialog('Les 300 niveaux',cards,[{label:'Retour au jeu',action:hideDialog}],'✦');
     $('dialogContent').querySelectorAll('[data-level]').forEach(b=>b.addEventListener('click',()=>{
       hideDialog();startRound(Number(b.dataset.level));
     }));
@@ -782,7 +810,7 @@
     button.disabled=false;
   }
   function showRules(){
-    showDialog('Comment jouer ?',`<p>Échange deux pièces voisines pour aligner <b>3 symboles identiques ou plus</b>.</p><p>✨ <b>4 à la suite</b> : une fusée qui efface une ligne ou une colonne.<br>🌈 <b>5 à la suite</b> : un arc-en-ciel qui reste sur le plateau et efface une couleur entière.<br>💥 <b>En L ou en T</b> : une bombe qui explose sur les cases voisines.</p><p>🌟 <b>Deux bonus spéciaux côte à côte ? Échange-les !</b> Fusée + bombe, deux bombes, double arc-en-ciel : chaque duo déclenche une fusion spectaculaire.</p><p>⛓️ <b>Les nouveaux sceaux</b> bloquent les pièces jusqu’à destruction de toutes leurs couches. Fais des combinaisons sur une case ou juste à côté. ⏱️ Une bombe à retardement doit être désamorcée avant la fin de son compteur.</p><p>Au <b>niveau 101</b>, découvre six nouveaux symboles magiques (dont les nouveaux flocons) et <b>Lumi</b>, un bonus rare ! Elle apparaît à certains niveaux et efface une couleur comme l'arc-en-ciel. Chaque nouveau monde apporte ensuite un nouveau symbole.</p><p>Les 200 niveaux proposent des <b>défis variés</b> : récoltes, glace, score, bonus, sceaux et fusions. Termine l’objectif avant de manquer de coups.</p><p>Tu disposes de <b>5 vies</b> et une vie revient toutes les <b>30 minutes</b>. Tous les dix niveaux, tu gagnes trois bonus. Tu peux aussi offrir <b>une vie par jour</b> à un collègue depuis le classement. La flèche en haut ou le bouton « Quitter le jeu » en bas te ramènent à l’agenda.</p>`,[{label:'Jouer !',action:hideDialog}],'✦');
+    showDialog('Comment jouer ?',`<p>Échange deux pièces voisines pour aligner <b>3 symboles identiques ou plus</b>.</p><p>✨ <b>4 à la suite</b> : une fusée qui efface une ligne ou une colonne.<br>🌈 <b>5 à la suite</b> : un arc-en-ciel qui reste sur le plateau et efface une couleur entière.<br>💥 <b>En L ou en T</b> : une bombe qui explose sur les cases voisines.</p><p>🌟 <b>Deux bonus spéciaux côte à côte ? Échange-les !</b> Fusée + bombe, deux bombes, double arc-en-ciel : chaque duo déclenche une fusion spectaculaire.</p><p>⛓️ <b>Les nouveaux sceaux</b> bloquent les pièces jusqu’à destruction de toutes leurs couches. Fais des combinaisons sur une case ou juste à côté. ⏱️ Une bombe à retardement doit être désamorcée avant la fin de son compteur.</p><p>Au <b>niveau 101</b>, découvre six nouveaux symboles magiques (dont les nouveaux flocons) et <b>Lumi</b>, un bonus rare ! Elle apparaît à certains niveaux et efface une couleur comme l'arc-en-ciel. Après le niveau 200, cinq nouveaux mondes combinent ces pièces dans de nouveaux défis.</p><p>Les 300 niveaux proposent des <b>défis variés</b> : récoltes, glace, score, bonus, sceaux et fusions. Termine l’objectif avant de manquer de coups.</p><p>Tu disposes de <b>5 vies</b> et une vie revient toutes les <b>30 minutes</b>. Tous les dix niveaux, tu gagnes trois bonus. Tu peux aussi offrir <b>une vie par jour</b> à un collègue depuis le classement. La flèche en haut ou le bouton « Quitter le jeu » en bas te ramènent à l’agenda.</p>`,[{label:'Jouer !',action:hideDialog}],'✦');
   }
   function events(){
     $('gameBoard').addEventListener('click',e=>{
