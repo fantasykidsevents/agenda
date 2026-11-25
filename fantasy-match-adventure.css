@@ -515,3 +515,91 @@ body .fm-shell[data-world]{
   .fm-header .fm-home-shortcut{font-size:22px}
   .fm-exit{top:calc(50% - 21px)}
 }
+
+
+/* 25/11 — Direction artistique : royaumes illustrés, or et rubis.
+   Le panoramique contient 15 scènes de même largeur ; conserver son ratio
+   natif avec une hauteur auto, jamais 1500% 100%. */
+body .fm-shell[data-world],.fm-home-stage,.fm-map-track,.fm-world-portal-card{
+  background-size:100% 100%,1500% auto;
+  background-repeat:no-repeat;
+}
+body[data-world="trone"]{--fm-scene-x:28.571429%}
+body .fm-shell[data-world]{
+  background-color:#180b40;
+  background-image:linear-gradient(180deg,#10063355,#190b4777 42%,#130732bb),url('fantasy-match-worlds-15-sprite.webp');
+  background-position:center,var(--fm-scene-x,0%) center;
+}
+.fm-home-screen{background:#10052e}
+.fm-home-stage{
+  position:relative;isolation:isolate;width:min(100%,500px);box-sizing:border-box;
+  min-height:100svh;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 19px calc(14px + env(safe-area-inset-bottom));
+  background-color:#1d0b48;
+  background-image:linear-gradient(180deg,#13063122,#1d0a4522 35%,#1a08486b 75%,#13052cbf),url('fantasy-match-worlds-15-sprite.webp');
+  background-position:center,0% center;
+  box-shadow:0 0 35px #b54bff55;
+}
+.fm-home-logo{width:min(98%,350px);max-height:none;height:clamp(145px,44vw,190px);margin:0 auto;object-fit:contain;filter:drop-shadow(0 0 7px #f3a0ff)}
+.fm-home-top,.fm-home-progress{max-width:390px}
+.fm-home-progress{padding:6px 13px;background:#290c5cdf}
+.fm-home-lumi{order:5;min-height:90px;max-width:350px;margin:2px auto 0}
+.fm-home-lumi img{width:91px;height:100px}
+.fm-home-lumi p,.fm-map-lumi-talk p{color:#fff4e7;background:linear-gradient(135deg,#54249be8,#260c5ae8);box-shadow:0 3px 10px #13052699;border-color:#ffe5a8;font-size:12px;padding:10px}
+.fm-home-actions{display:flex;flex-direction:column;gap:9px;width:min(100%,310px)}
+.fm-home-actions button,.fm-reward-claim{
+  position:relative;display:flex;align-items:center;justify-content:center;gap:10px;
+  min-height:46px;padding:7px 12px;border:3px solid #f9d479;border-radius:30px;
+  background:linear-gradient(180deg,#aa53da,#6c20a8 45%,#3d0e77 95%);
+  color:#fff9f0;text-shadow:0 2px 2px #330654;box-shadow:inset 0 2px 3px #ffeff888,0 3px 0 #a96a2f,0 4px 9px #13032988;
+  font-size:21px;font-weight:900;
+}
+.fm-home-actions button span{display:inline;font-size:17px}
+.fm-home-actions .has-gift:after{content:"!";position:absolute;right:10px;top:-4px;width:22px;height:22px;line-height:21px;border:2px solid #ffe09c;border-radius:50%;background:#d81b8f;color:white;font-size:14px}
+.fm-hero-button{min-height:58px;width:min(100%,310px);border:4px solid #ffdc83;background:linear-gradient(#ff83e3,#ee249b 46%,#a10c79);box-shadow:inset 0 2px 5px #fff9,0 4px 0 #a76830,0 5px 13px #f13aeb88;font-size:25px}
+.fm-home-counters{order:6;gap:7px}
+.fm-home-exit{order:7;padding:5px;color:#fff3d4;text-shadow:0 2px 3px #17052d}
+.fm-map-header{background:linear-gradient(#5c218b,#250c59);border-bottom-color:#ffc978}
+.fm-map-header h2{font-family:Georgia,serif;font-style:italic;color:#fff4d1}
+.fm-map-main{max-width:460px;padding:10px 11px 24px;box-sizing:border-box}
+.fm-map-track{
+  height:clamp(620px,195vw,850px);max-height:none;box-sizing:border-box;border:3px solid #ffdb91;border-radius:24px;
+  background-color:#210b50;background-image:linear-gradient(180deg,#16062d0a,#210e4b12 55%,#210a4d55),url('fantasy-match-worlds-15-sprite.webp');
+  background-position:center,var(--fm-map-x,0%) center;
+}
+.fm-map-track:after{z-index:0;background:radial-gradient(ellipse at center,transparent 45%,#16062e50)}
+.fm-map-route{z-index:1;filter:none}
+.fm-map-route path{fill:none;stroke:#fff5b4;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 3px #fff6b3) drop-shadow(0 0 4px #f39338)}
+.fm-map-nodes{z-index:2;pointer-events:none}
+.fm-map-node{pointer-events:auto;width:36px;height:36px;font-size:12px;border:2px solid #ffdf8e;background:radial-gradient(circle at 35% 20%,#ed8af9,#a22bb8 47%,#56117c);box-shadow:inset 0 2px 3px #fffc,0 3px 0 #a16a36,0 0 7px #ffc1f0}
+.fm-map-node.finished{background:radial-gradient(circle at 35% 20%,#fff9b6,#ffc143 53%,#cb7519);color:#542749;text-shadow:none}
+.fm-map-node.current{background:radial-gradient(circle at 35% 20%,#fff9d4,#ffb52b 50%,#e28114);color:#401866;text-shadow:none}
+.fm-map-node.locked{background:#361e65dc;border-color:#c7b1e9;opacity:.86}
+.fm-map-node small{right:-6px;top:-9px;color:#fff9a8;text-shadow:0 1px 2px #4d255d}
+.fm-map-lumi{width:56px;height:66px;transform:translate(-50%,-86%);z-index:4}
+.fm-map-destination{position:absolute;left:50%;top:3%;transform:translateX(-50%);font-size:24px;color:#fff8bc;text-shadow:0 0 8px #fff,0 0 14px #ffd557;pointer-events:none}
+.fm-final-world .fm-map-destination:after{content:" Château de Fantasy";font-size:12px;background:#341059e8;border:1px solid #ffdb90;border-radius:20px;padding:4px 8px;white-space:nowrap}
+.fm-map-world-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fm-map-world-list button{position:relative;min-width:0;min-height:125px;overflow:hidden;padding:0 0 7px;border:2px solid #ffd78d;border-radius:13px;background:linear-gradient(#53208b,#290b57);gap:3px}
+.fm-map-world-list button .fm-world-thumb{display:block;width:100%;height:76px;background-image:url('fantasy-match-worlds-15-sprite.webp');background-size:1500% auto;background-position:var(--fm-thumb-x,0%) center;background-repeat:no-repeat;border-bottom:1px solid #ffe09c}
+.fm-map-world-list button b{font-size:12px;color:#fff2c0}
+.fm-map-world-list button em{font-size:10px;line-height:1.2;color:#fff;font-style:normal;padding:0 4px}
+.fm-map-world-list button small{position:absolute;right:4px;top:4px;background:#290d55;border-radius:8px;padding:2px}
+.fm-world-portal-card{background-image:linear-gradient(#21083b35,#21083bd9 70%),url('fantasy-match-worlds-15-sprite.webp');background-position:center,var(--fm-scene-x,0%) center;min-height:min(460px,70svh);display:flex;flex-direction:column;justify-content:flex-end}
+.fm-world-portal-card h2{font-family:Georgia,serif;font-style:italic}
+.fm-world-portal-card button{background:linear-gradient(#80d935,#369c29 52%,#186f23);border-color:#ffe397}
+.fm-reward-intro{display:flex;align-items:center;gap:12px;text-align:left}
+.fm-reward-intro img{width:85px;height:95px;object-fit:contain}
+.fm-reward-claim{width:100%;font-size:13px;min-height:43px;margin:5px 0;border-width:2px}
+.fm-reward-claim:disabled{opacity:.65;background:#3d2866;box-shadow:none}
+.fm-reward-list{margin-top:12px;display:grid;gap:4px}
+.fm-objective-label{white-space:normal}
+.fm-objective-label strong{color:#fff9ec;text-shadow:0 2px 3px #26084f}
+.fm-progress-top,.fm-lives small{color:#fff1d1}
+.fm-board{aspect-ratio:1;background:#1f104c}
+.fm-cell,.fm-cell:nth-child(2n){background:linear-gradient(145deg,#342266,#1c1246);border-color:#6643a9}
+.fm-cell:nth-child(2n){background:linear-gradient(145deg,#48317c,#2a1b61)}
+.fm-cell.frozen{background:linear-gradient(145deg,#457aa8,#204b83)!important}
+.fm-cell.frozen::after{background-color:#91dfff35!important;filter:none}
+.fm-cell.frozen::before{filter:none}
+@media(max-width:390px){.fm-home-stage{padding-left:12px;padding-right:12px;gap:8px}.fm-home-logo{height:142px}.fm-home-actions button{min-height:43px}.fm-map-track{height:clamp(620px,198vw,780px)}.fm-map-node{width:33px;height:33px}.fm-map-lumi{width:51px;height:61px}}
+@media(prefers-reduced-motion:reduce){.fm-map-lumi,.fm-map-node.current{transition:none!important;animation:none!important}}
