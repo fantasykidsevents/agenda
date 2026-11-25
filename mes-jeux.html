@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#963de0">
+<meta name="description" content="Mes jeux — Fantasy Kids Events">
+<title>Mes jeux · Fantasy Kids Events</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Trebuchet MS",sans-serif;color:#fff;--a:#ffe7a5;--v:#3a1675}
+*{box-sizing:border-box}
+html{min-height:100%;background:#25104b}
+body{margin:0;min-height:100svh;background:radial-gradient(ellipse at 8% 0%,#d454e2 0%,transparent 40%),radial-gradient(ellipse at 98% 85%,#15bdf099,transparent 45%),linear-gradient(145deg,#281259,#542493 55%,#36156d);overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.65;background-image:radial-gradient(circle,#fff 1.4px,transparent 3px),radial-gradient(circle,#fff8a2 1px,transparent 2px);background-size:89px 116px,151px 157px}
+main{position:relative;width:min(100%,520px);margin:0 auto;min-height:100svh;padding:calc(17px + env(safe-area-inset-top)) 18px calc(32px + env(safe-area-inset-bottom));background:linear-gradient(#ffffff0a,#ffffff0d);box-shadow:0 0 60px #15052966}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.back{border:2px solid #ffe4a8;border-radius:14px;min-width:49px;height:46px;display:grid;place-items:center;text-decoration:none;color:#fff;font-weight:1000;font-size:27px;background:linear-gradient(#843dcc,#411a84);box-shadow:0 3px 0 #b26f4f,0 3px 13px #1d063e}
+.brand{width:132px;height:79px;object-fit:contain;filter:drop-shadow(0 0 1px #fff) drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff) drop-shadow(0 0 4px #fff9)}
+.kicker{text-align:center;font-size:11px;font-weight:1000;letter-spacing:.13em;color:#ffe7aa;margin:11px 0 2px}
+h1{text-align:center;font-size:clamp(32px,9vw,46px);margin:0 0 6px;line-height:1.15;letter-spacing:-.035em;color:#fff;text-shadow:0 3px 1px #6e249e,0 0 12px #e983ff}
+.lead{text-align:center;color:#f6d9ff;font-size:13px;font-weight:780;margin:0 0 23px}
+.games{display:grid;gap:17px}
+.game{position:relative;overflow:hidden;text-decoration:none;color:#fff;display:flex;min-height:218px;align-items:stretch;border:3px solid #ffe7ab;border-radius:25px;background:linear-gradient(160deg,#33116a,#6830b0 75%,#43177f);box-shadow:0 6px 0 #af66aa,0 10px 26px #11042e99;transition:transform .18s,box-shadow .18s;isolation:isolate}
+.game:hover,.game:focus-visible{transform:translateY(-3px);box-shadow:0 10px 0 #a65ca9,0 15px 26px #11042e99;outline:none}
+.game::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.92;background-image:linear-gradient(90deg,#19063fea,#22084ea8 60%,#180434ad),url("fantasy-match-worlds-15-sprite.webp");background-size:100% 100%,1500% 100%;background-position:center,var(--scene,0%) center}
+.game-content{width:100%;padding:16px 17px 15px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:8px}
+.game-headline{width:100%;max-width:320px;margin:0 auto;display:block;object-fit:contain;max-height:100px;filter:drop-shadow(0 0 7px #fbaaff) drop-shadow(0 3px 4px #1d0636)}
+.game strong{color:#fff2c7;font-size:15px;font-weight:1000;display:block;line-height:1.4;text-shadow:0 1px 3px #16052e}
+.game small{display:block;color:#f5e4ff;font-weight:740;font-size:12px;line-height:1.5}
+.game-cta{border:2px solid #fff0bd;padding:9px 17px;border-radius:100px;align-self:flex-end;font-size:14px;font-weight:1000;background:linear-gradient(#fc66d3,#b328ba);box-shadow:inset 0 2px 3px #fff6,0 3px 0 #873b7d}
+.potions{--scene:28.571%}
+.potions::before{background-image:linear-gradient(100deg,#27104ad5,#521b8fc2 60%,#2d0b4fcc),url("fantasy-match-worlds-15-sprite.webp")}
+.potions .game-headline{width:88%;max-height:100px}
+footer{margin:22px auto 0;max-width:380px;text-align:center;color:#ecd2ff;font-size:12px;line-height:1.6}
+footer a{color:#ffebad;font-weight:900}
+@media(max-width:360px){main{padding-left:10px;padding-right:10px}.game{min-height:208px}.game-content{padding:12px 13px}.brand{width:105px}}
+@media(prefers-reduced-motion:reduce){.game{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<a class="back" href="index.html?vue=mine" aria-label="Retour à mon espace">←</a>
+<img class="brand" src="logo.png" alt="Fantasy Kids Events">
+</header>
+<p class="kicker">✦ TON UNIVERS DE JEUX ✦</p>
+<h1>🎮 Mes jeux</h1>
+<p class="lead">Deux aventures magiques, chacune avec sa progression ✨</p>
+<section class="games" aria-label="Choisir un jeu">
+<a class="game" href="fantasy-match.html?v=mes-jeux-20261125-1" style="--scene:0%">
+  <div class="game-content">
+    <img class="game-headline" src="fantasy-match-logo.webp" alt="Fantasy Match">
+    <div><strong>300 niveaux · 15 mondes</strong><small>Retrouve Lumi, ton classement et tes points.</small></div>
+    <span class="game-cta">Jouer ✨</span>
+  </div>
+</a>
+<a class="game potions" href="fantasy-potions.html?v=mes-jeux-20261125-1">
+  <div class="game-content">
+    <img class="game-headline" src="fantasy-potions-logo.svg" alt="Fantasy Potions">
+    <div><strong>150 niveaux · 5 royaumes</strong><small>Tries les potions dans ce jeu de réflexion.</small></div>
+    <span class="game-cta">Jouer 🧪</span>
+  </div>
+</a>
+</section>
+<footer>Chaque jeu conserve ses niveaux, ses scores et son classement indépendamment.<p><a href="index.html?vue=mine">← Retour à mon espace</a></p></footer>
+</main>
+</body>
+</html>
