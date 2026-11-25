@@ -809,6 +809,10 @@
     $('fmMapScreen').classList.add('hidden');
     if(!current || current.number!==state.level)startRound(state.level);
     else if(state.lives<1)lockBoardForLives();
+    if(current && current.number>1 && (current.number-1)%20===0 &&
+      !state.worldsSeen.includes(current.world) && $('worldPortal').classList.contains('hidden')){
+      showWorldPortal();
+    }
   }
   function renderAdventureMap(fromLevel=null){
     if(!state)return;
