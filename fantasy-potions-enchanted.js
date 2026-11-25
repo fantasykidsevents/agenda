@@ -25,7 +25,93 @@ let sb=null,user=null,playerName='Moi',cloudReady=false,storageKey=GUEST_KEY,sta
 const copyBoard=b=>b.map(t=>t.slice());
 const now=()=>Date.now();
 const minMax=(n,a,b)=>Math.min(b,Math.max(a,n));
-const defaultState=()=>({level:1,unlocked:1,wins:{},score:0,current:null,updatedAt:0});
+const BOOSTS={undo:{name:'Retour temporel',icon:'↶'},hint:{name:'Révélation magique',icon:'✦'},extra:{name:'Fiole supplémentaire',icon:'+'},rescue:{name:'Élixir de secours',icon:'✧'}};
+const initialBoosts=()=>({undo:3,hint:3,extra:2,rescue:1});
+const defaultState=()=>({level:1,unlocked:1,wins:{},score:0,current:null,updatedAt:0,boosts:initialBoosts(),lumiGifts:{}});
+const giftDay=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Brussels',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const giftFor=n=>['undo','hint','extra','rescue'][Math.floor(n/10)%4];
+const sceneNames=["jardin","cristaux","etoiles","sortileges","couronne"];
+const LUMI={home:'fp-lumi-accueil.svg',play:'fp-lumi-alchimiste.svg',think:'fp-lumi-reflexion.svg',hint:'fp-lumi-indice.svg',win:'fp-lumi-victoire.svg',gift:'fp-lumi-cadeau.svg'};
+let lumiTimer=null;
+function lumiPose(name,caption,reset=false){
+  const el=$('lumiPose'),text=$('lumiSpeech');
+  if(el)el.src=LUMI[name]||LUMI.play;
+  if(text&&caption)text.textContent=caption;
+  clearTimeout(lumiTimer);
+  if(reset)lumiTimer=setTimeout(()=>lumiPose('play','À toi de jouer, maître des potions !'),4200);
+}
+function updateBoosts(){
+  if(!state)return;
+  for(const k of Object.keys(BOOSTS)){
+    const el=$(k+'Count');if(el)el.textContent=state.boosts[k];
+  }
+  const d=$('homeRewards');if(d)d.classList.toggle('gift-ready',!state.lumiGifts['daily:'+giftDay()]);
+}
+function collectGift(key,k){
+  if(state.lumiGifts[key])return false;
+  state.lumiGifts[key]=true;state.boosts[k]++;
+  return true;
+}
+function rewardCards(){
+  return Object.entries(BOOSTS).map(([key,def])=>'<div class="fp-inventory"><span class="fp-bonus-icon fp-icon-'+key+'">'+def.icon+'</span><b>'+escapeHtml(def.name)+'</b><strong>'+state.boosts[key]+'</strong></div>').join('');
+}
+function showRewards(){
+  const key='daily:'+giftDay(),today=!!state.lumiGifts[key];
+  const levels=Array.from({length:15},(_,i)=>(i+1)*10);
+  const available=levels.filter(n=>state.wins[n]>0&&!state.lumiGifts['level:'+n]);
+  openModal('Les cadeaux de Lumi','✦','<div class="fp-reward-hero"><img src="'+LUMI.gift+'" alt="Lumi offre des cadeaux"><p>Une surprise chaque jour et à chaque dizaine de niveaux réussie.</p></div><div class="fp-inventory-grid">'+rewardCards()+'</div><button class="fp-gift-button" id="claimDaily" '+(today?'disabled':'')+'>'+ (today?'Cadeau du jour reçu':'Ouvrir mon cadeau du jour')+'</button><button class="fp-gift-button" id="claimMilestones" '+(!available.length?'disabled':'')+'>'+ (available.length?'Récupérer '+available.length+' cadeau'+(available.length>1?'x':''):'Aucun trésor de niveau en attente')+'</button><p class="fp-small">Les bonus sont conservés sur cet appareil.</p>',[{label:'Retour',action:closeModal}],'rewards');
+  $('claimDaily').addEventListener('click',()=>{const k='daily:'+giftDay();const type=['undo','hint','extra','rescue'][Number(k.slice(-2))%4];if(collectGift(k,type)){scheduleSave();render();showRewards();}});
+  $('claimMilestones').addEventListener('click',()=>{for(const n of available){collectGift('level:'+n,giftFor(n));if(n%30===0)collectGift('world:'+n,'extra');}scheduleSave();render();showRewards();});
+}
+function completeTube(t){return t.length===CAP&&t.every(c=>c===t[0]);}
+// Recherche bornée d'une vraie suite de coups, pas simplement d'un coup légal.
+function solveBoard(input,limit=16000){
+  const b=copyBoard(input),seen=new Set(),trail=[];let nodes=0;const deadline=Date.now()+170;
+  function dfs(){
+    if(solved(b))return true;
+    if(++nodes>limit||Date.now()>deadline)return false;
+    const key=b.map(t=>t.join(',')).sort().join('|');if(seen.has(key))return false;seen.add(key);
+    const options=[],fromSeen=new Set();
+    for(let a=0;a<b.length;a++){
+      const t=b[a];if(!t.length||completeTube(t))continue;
+      const sig=t.join(',');if(fromSeen.has(sig))continue;fromSeen.add(sig);
+      const c=top(t);let run=1;while(run<t.length&&t[t.length-1-run]===c)run++;
+      const toSeen=new Set();
+      for(let d=0;d<b.length;d++){
+        if(!legal(b,a,d))continue;const u=b[d],us=u.join(',');
+        if(!u.length&&run===t.length||toSeen.has(us))continue;toSeen.add(us);
+        const k=Math.min(run,CAP-u.length),score=(u.length?12:0)+(k===t.length?10:0)+(u.length+k===CAP?8:0)+k;options.push({a,d,k,score});
+      }
+    }
+    options.sort((a,b)=>b.score-a.score);
+    for(const m of options){for(let i=0;i<m.k;i++)b[m.d].push(b[m.a].pop());trail.push(m);if(dfs())return true;trail.pop();for(let i=0;i<m.k;i++)b[m.a].push(b[m.d].pop());if(nodes>limit||Date.now()>deadline)return false;}
+    return false;
+  }
+  return dfs()?trail.slice():null;
+}
+function spend(k){if(!state||state.boosts[k]<=0)return false;state.boosts[k]--;return true;}
+function addTube(){
+  const c=state?.current;if(!c||busy||c.extraUsed||state.boosts.extra<=0)return;
+  if(c.board.length>=13)return;
+  if(!spend('extra'))return;
+  c.board.push([]);c.extraUsed=true;c.undo=[];selected=-1;hintPair=null;
+  lumiPose('hint','Une fiole supplémentaire pour ton mélange !',true);render();scheduleSave();message('Lumi a ajouté une fiole vide.');
+}
+function rescue(){
+  const c=state?.current;if(!c||busy||state.boosts.rescue<=0||c.rescueUsed)return;
+  lumiPose('think','Je cherche un mélange qui peut encore être sauvé…');
+  busy=true;
+  setTimeout(()=>{
+    try{
+      if(state.current!==c)return;
+      let found=null;
+      for(let i=c.undo.length-1;i>=Math.max(0,c.undo.length-7);i--){const prev=c.undo[i];if(solveBoard(prev.board,6000)){found={i,prev};break;}}
+      if(!found){message('Aucun retour sûr trouvé. Ton élixir est conservé.');lumiPose('play','Essaie une fiole supplémentaire ou recommence.');return;}
+      if(!spend('rescue'))return;
+      c.board=copyBoard(found.prev.board);c.moves=Math.max(c.moves,found.prev.moves);c.undo=c.undo.slice(0,found.i);c.rescueUsed=true;selected=-1;hintPair=null;render();scheduleSave();message('Lumi a restauré un état résoluble.');lumiPose('hint','Ton mélange est de nouveau sur la bonne voie !',true);
+    }finally{busy=false;render();}
+  },30);
+}
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>Number(n||0).toLocaleString('fr-BE');
 function readLocal(){
@@ -60,6 +146,8 @@ const legal=(b,a,c)=>a!==c && a>=0 && c>=0 && a<b.length && c<b.length &&
 function ensureState(){
   if(!state||typeof state!=='object')state=defaultState();
   state.wins=state.wins && typeof state.wins==='object'&&!Array.isArray(state.wins)?state.wins:{};
+  const defaults=initialBoosts();state.boosts=Object.fromEntries(Object.keys(defaults).map(k=>[k,Math.max(0,Math.floor(Number(state.boosts?.[k]??defaults[k])||0))]));
+  state.lumiGifts=state.lumiGifts&&typeof state.lumiGifts==='object'&&!Array.isArray(state.lumiGifts)?state.lumiGifts:{};
   state.unlocked=minMax(Number(state.unlocked)||1,1,MAX_LEVEL);
   state.level=minMax(Number(state.level)||state.unlocked,1,state.unlocked);
   state.score=Object.values(state.wins).reduce((sum,v)=>sum+Math.max(0,Number(v||0)),0);
@@ -162,12 +250,12 @@ function potionSvg(tube,i){
   return '<svg class="potion-art" viewBox="0 0 64 207" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><defs><clipPath id="'+p+'clip"><path d="M10 13V168Q10 190 32 190Q54 190 54 168V13Z"/></clipPath><linearGradient id="'+p+'glass"><stop stop-color="#e8f7ff" stop-opacity=".7"/><stop offset=".2" stop-color="#fff" stop-opacity=".15"/><stop offset=".52" stop-color="#d8aaff" stop-opacity=".06"/><stop offset=".85" stop-color="#efc9ff" stop-opacity=".2"/><stop offset="1" stop-color="#fff" stop-opacity=".75"/></linearGradient>'+colors+'</defs><ellipse cx="32" cy="198" rx="26" ry="5" fill="#0c032a" opacity=".65"/><path d="M10 13V168Q10 190 32 190Q54 190 54 168V13Z" fill="url(#'+p+'glass)" stroke="#f9eaff" stroke-width="2.5"/><g clip-path="url(#'+p+'clip)">'+fills+'<rect x="10" y="10" width="44" height="185" fill="url(#'+p+'glass)" opacity=".65"/><path d="M16 23V166Q16 176 23 181" fill="none" stroke="#fff" stroke-width="2.6" opacity=".8" stroke-linecap="round"/><path d="M49 27V164" stroke="#fff" stroke-width="1" opacity=".65"/></g><path d="M10 13V168Q10 190 32 190Q54 190 54 168V13" fill="none" stroke="#f8d7ff" stroke-width="1.4"/><ellipse cx="32" cy="13" rx="25" ry="7.5" fill="#38235c" fill-opacity=".7" stroke="#fff" stroke-width="2.8"/><ellipse cx="32" cy="13" rx="19" ry="3.5" fill="#140923" stroke="#caadf8" stroke-width=".8"/><path d="M14 11Q31 3 50 11" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
 }
 function currentColors(){return state?.current?.board?new Set(state.current.board.flat()).size:colorsFor(state.level)}
-function showHome(){closeModal();$('homeScreen').classList.remove('hidden');$('gameScreen').classList.add('hidden');updateHome();window.scrollTo(0,0)}
+function showHome(){if(busy)return;closeModal();$('homeScreen').classList.remove('hidden');$('gameScreen').classList.add('hidden');updateHome();window.scrollTo(0,0)}
 function showGame(){ $('homeScreen').classList.add('hidden');$('gameScreen').classList.remove('hidden');window.scrollTo(0,0);render(); }
 function updateHome(){if(!state)return;$('homeLevel').textContent=state.level;$('homeScore').textContent=fmt(state.score);$('homeWorld').textContent=WORLDS[worldFor(state.level)].name;}
 function render(){
   if(!state)return;
-  updateHome();
+  updateHome();updateBoosts();
   const c=state.current;
   if(!c)return;
   $('levelValue').textContent=state.level;
@@ -193,7 +281,10 @@ function render(){
   const complete=b.filter(t=>t.length===CAP&&t.every(g=>g===t[0])).length;
   $('brewProgress').style.width=Math.round(100*complete/Math.max(1,currentColors()))+'%';
   $('brewProgressText').textContent=complete+' / '+currentColors()+' fioles';
-  $('undoBtn').disabled=!c.undo?.length;
+  $('undoBtn').disabled=busy||!c.undo?.length||state.boosts.undo<=0;
+  $('hintBtn').disabled=busy||state.boosts.hint<=0;
+  $('extraBtn').disabled=busy||!!c.extraUsed||state.boosts.extra<=0||b.length>=13;
+  $('rescueBtn').disabled=busy||!!c.rescueUsed||state.boosts.rescue<=0||!c.undo?.length;
 }
 function message(s){$('message').textContent=s;}
 function chooseTube(i){
@@ -210,17 +301,18 @@ function chooseTube(i){
     selected=b[i].length?i:-1;
     render();message('Tu peux verser uniquement dans une fiole vide ou de la même couleur.');return;
   }
-  const before=copyBoard(b);
+  const before=copyBoard(b),source=selected,sourceEl=$('bottles').querySelector('[data-tube="'+source+'"]'),targetEl=$('bottles').querySelector('[data-tube="'+i+'"]');
+  if(sourceEl&&targetEl&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){sourceEl.classList.add('fp-pouring');targetEl.classList.add('fp-receiving');const a=sourceEl.getBoundingClientRect(),d=targetEl.getBoundingClientRect();const drop=document.createElement('span');drop.className='fp-pour-drop';drop.style.setProperty('--drop-color',GEMS[top(b[source])].color);drop.style.left=(a.left+a.width/2)+'px';drop.style.top=(a.top+a.height*.18)+'px';drop.style.setProperty('--dx',(d.left+d.width/2-a.left-a.width/2)+'px');drop.style.setProperty('--dy',(d.top+d.height*.15-a.top-a.height*.18)+'px');document.body.append(drop);setTimeout(()=>drop.remove(),380);}
   c.undo.push({board:before,moves:c.moves});
   if(c.undo.length>100)c.undo.shift();
   b[i].push(b[selected].pop());
-  selected=-1;c.moves++;
-  render();scheduleSave();
-  if(solved(b)){win();return}
-  message('Lumi : chaque fiole complète te rapproche de la victoire.');
+  selected=-1;c.moves++;busy=true;scheduleSave();
+  const finish=()=>{busy=false;if(state.current!==c)return;render();if(solved(b)){win();return}message('Lumi : chaque fiole complète te rapproche de la victoire.');};
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)finish();else setTimeout(finish,260);
 }
 function startLevel(n,force=false){
   if(!state||n<1||n>state.unlocked)return;
+  busy=false;lumiPose('play','À toi de jouer, maître des potions !');
   selected=-1;hintPair=null;
   state.level=n;
   if(force||!state.current||state.current.level!==n){
@@ -229,25 +321,24 @@ function startLevel(n,force=false){
   render();scheduleSave();message('À toi de jouer : trie les potions magiques ! 🧪');
 }
 function undo(){
-  if(!state?.current?.undo?.length)return;
+  if(busy||!state?.current?.undo?.length||!spend('undo'))return;
   const prev=state.current.undo.pop();
   state.current.board=prev.board;state.current.moves=prev.moves;
   selected=-1;hintPair=null;render();scheduleSave();message('Un petit retour dans le temps ! ↶');
 }
 function hint(){
-  const b=state.current.board;
-  let matches=[],free=[];
-  for(let a=0;a<b.length;a++)for(let d=0;d<b.length;d++){
-    if(!legal(b,a,d))continue;
-    if(b[d].length){
-      // Les fioles terminées ne doivent pas être défaites.
-      const complete=b[a].length===CAP&&b[a].every(x=>x===b[a][0]);
-      if(!complete)matches.push([a,d]);
-    }else if(b[a].length>1 && new Set(b[a]).size>1)free.push([a,d]);
-  }
-  hintPair=matches[0]||free[0]||null;selected=-1;render();
-  if(hintPair)message('✨ Essaie de verser de la fiole '+(hintPair[0]+1)+' vers la fiole '+(hintPair[1]+1)+'.');
-  else message('✨ Cherche à libérer une fiole : tu peux toujours recommencer ce niveau.');
+  if(busy||!state?.current||state.boosts.hint<=0){message('Lumi : récupère un cadeau pour obtenir de nouveaux indices.');return;}
+  const c=state.current;busy=true;hintPair=null;selected=-1;
+  lumiPose('think','Je consulte mon grimoire…');message('Lumi cherche une solution.');render();
+  setTimeout(()=>{
+    try{
+      if(state.current!==c)return;
+      const result=solveBoard(c.board);
+      if(result&&result.length&&spend('hint')){
+        hintPair=[result[0].a,result[0].d];lumiPose('hint','J’ai trouvé un déplacement utile !',true);message('Verse de la fiole '+(hintPair[0]+1)+' vers la fiole '+(hintPair[1]+1)+'.');scheduleSave();
+      }else{lumiPose('play','Je n’ai pas trouvé de solution dans le temps imparti.');message('Aucun indice sûr trouvé. Ton bonus est conservé.');}
+    }finally{busy=false;render();}
+  },30);
 }
 function pointsFor(n,moves){
   const count=currentColors();
@@ -268,11 +359,15 @@ function win(){
   state.current=null;
   scheduleSave();
   const completed=n===MAX_LEVEL;
-  updateHome();
-  const html='<div class="victory-stars" aria-label="'+answer.stars+' étoiles sur 3">'+('★'.repeat(answer.stars))+('☆'.repeat(3-answer.stars))+'</div><div class="victory-art"><img class="victory-potion" src="fantasy-potions-victory.svg" alt="Potion arc-en-ciel"><img class="victory-lumi" src="lumi-danse.webp" alt="Lumi fête ta réussite"></div>'+
+  const earned=[];
+  if(n%10===0&&collectGift('level:'+n,giftFor(n)))earned.push(BOOSTS[giftFor(n)].name);
+  if(n%30===0&&collectGift('world:'+n,'extra'))earned.push(BOOSTS.extra.name);
+  if(earned.length)scheduleSave();
+  updateHome();updateBoosts();
+  const html='<div class="victory-stars" aria-label="'+answer.stars+' étoiles sur 3">'+('★'.repeat(answer.stars))+('☆'.repeat(3-answer.stars))+'</div><div class="victory-art"><img class="victory-potion" src="fantasy-potions-victory.svg" alt="Potion arc-en-ciel"><img class="victory-lumi" src="fp-lumi-victoire.svg" alt="Lumi fête ta réussite"></div>'+
     '<p>Bravo '+escapeHtml(playerName)+' ! Tu as réussi le niveau <b>'+n+'</b> en '+moves+' coup'+(moves>1?'s':'')+'.</p>'+
     '<p>✨ Score du niveau : <b>'+fmt(answer.points)+'</b> pts<br>🏆 Nouveau bonus ajouté : <b>+'+fmt(gain)+'</b> pts</p>'+
-    '<p>'+ (completed?'Tu as terminé les 150 niveaux ! 👑':'Le prochain défi magique est débloqué !')+'</p>';
+    '<p>'+ (completed?'Tu as terminé les 150 niveaux ! 👑':'Le prochain défi magique est débloqué !')+'</p>'+(earned.length?'<div class="fp-win-gift"><img src="'+LUMI.gift+'" alt="Lumi"><div><b>Récompense de Lumi</b><br>'+earned.map(x=>'+1 '+escapeHtml(x)).join('<br>')+'</div></div>':'');
   openModal(completed?'Maître des potions !':'Potion réussie !','🏆',html,[
     {label:completed?'Rejouer le dernier niveau':'Continuer ▶',action:()=>{
       closeModal();busy=false;startLevel(state.level,true);
@@ -317,8 +412,8 @@ function showLevels(only=null){
   }));
 }
 function showWorlds(){
-  const scenes=[1,2,0,12,4];
-  const body='<div class="world-cards">'+WORLDS.map((w,i)=>{const done=Array.from({length:30},(_,j)=>i*30+j+1).filter(n=>state.wins[n]>0).length;return '<button class="world-card" type="button" data-world="'+i+'"><span class="world-illustration" style="--scene:'+scenes[i]/14*100+'%"></span><span class="world-card-copy"><b>'+escapeHtml(w.name)+'</b><small>'+w.icon+' '+done+' / 30 niveaux</small></span></button>'}).join('')+'</div><p class="world-total">5 Mondes ✦ 150 niveaux</p>';
+  const scenes=sceneNames;
+  const body='<div class="world-cards">'+WORLDS.map((w,i)=>{const done=Array.from({length:30},(_,j)=>i*30+j+1).filter(n=>state.wins[n]>0).length;return '<button class="world-card" type="button" data-world="'+i+'"><span class="world-illustration" data-scene="'+scenes[i]+'"></span><span class="world-card-copy"><b>'+escapeHtml(w.name)+'</b><small>'+w.icon+' '+done+' / 30 niveaux</small></span></button>'}).join('')+'</div><p class="world-total">5 Mondes ✦ 150 niveaux</p>';
   openModal('Les Mondes','✦',body,[{label:'Retour',action:closeModal}],'worlds');
   $('modalBody').querySelectorAll('[data-world]').forEach(b=>b.addEventListener('click',()=>showLevels(Number(b.dataset.world))));
 }
@@ -345,7 +440,7 @@ function rules(){
   openModal('Comment jouer ?','🧪',
     '<p><b>Ton objectif :</b> rassembler quatre gouttes de la même couleur dans chaque fiole.</p>'+
     '<p>1. Choisis une fiole remplie.<br>2. Choisis une fiole vide ou dont la goutte du dessus est identique.<br>3. Continue jusqu’à ce que toutes les fioles soient rangées.</p>'+
-    '<p>↶ <b>Annuler</b> permet de revenir sur un coup. ✨ <b>Indice</b> suggère un déplacement, sans résoudre automatiquement le niveau.</p>'+
+    '<p>Les aides de Lumi sont limitées. Retour temporel : annule un coup. Révélation : cherche un déplacement vers une solution. Fiole : ajoute un tube vide. Élixir : retrouve un état résoluble récent, si possible. Le bonus n’est pas décompté si aucune solution n’est trouvée.</p>'+
     '<p>150 niveaux, cinq royaumes et un classement <b>indépendant</b> de Fantasy Match. Les 150 mélanges sont vérifiés par un solveur. Les défis avancés peuvent comporter jusqu’à dix couleurs.</p>',
     [{label:'Jouer !',action:closeModal}],'rules');
 }
@@ -355,8 +450,12 @@ function events(){
     if(b)chooseTube(Number(b.dataset.tube));
   });
   $('undoBtn').addEventListener('click',undo);
+  $('extraBtn').addEventListener('click',addTube);
+  $('rescueBtn').addEventListener('click',rescue);
+  $('homeRewards').addEventListener('click',showRewards);
+  $('gameRewards').addEventListener('click',showRewards);
   $('hintBtn').addEventListener('click',hint);
-  $('resetBtn').addEventListener('click',()=>{
+  $('resetBtn').addEventListener('click',()=>{if(busy)return;
     openModal('Recommencer ce niveau ?','🔄',
       '<p>La fiole reviendra à son état de départ. Tes niveaux débloqués et tes scores resteront conservés.</p>',[
       {label:'Recommencer',action:()=>{closeModal();startLevel(state.level,true)}},
@@ -372,6 +471,7 @@ function events(){
   $('homeHelp').addEventListener('click',rules);
   $('goHome').addEventListener('click',showHome);
   $('lumiHint').addEventListener('click',hint);
+
   $('rankingBtn').addEventListener('click',showRanking);
   $('playBtn').addEventListener('click',()=>{closeModal();});
   $('modalClose').addEventListener('click',closeModal);
@@ -382,6 +482,7 @@ function events(){
 }
 async function init(){
   state=readLocal();ensureState();events();render();
+  const artFiles=['atelier',...sceneNames];Promise.all(artFiles.map(name=>new Promise(resolve=>{const img=new Image();img.onload=()=>resolve(true);img.onerror=()=>resolve(false);img.src='fp-'+name+'.webp';}))).then(ok=>{if(ok.every(Boolean))document.body.dataset.art='hd';});
   message('Choisis une fiole, puis une autre pour verser ✨');
   await connectCloud();ensureState();render();
 }

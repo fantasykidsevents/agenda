@@ -8,21 +8,22 @@
 <title>Fantasy Potions · Fantasy Kids Events</title>
 <link rel="stylesheet" href="fantasy-potions.css?v=visuels-20261125-2">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@700;800&family=Alegreya+Sans:wght@700;800&display=swap">
-<link rel="stylesheet" href="fantasy-potions-enchanted.css?v=enchante-20261125-3">
+<link rel="stylesheet" href="fantasy-potions-enchanted.css?v=atelier-20261125-4">
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="fantasy-potions-enchanted.js?v=enchante-20261125-1" defer></script>
+<script src="fantasy-potions-enchanted.js?v=atelier-20261125-4" defer></script>
 </head>
 <body>
 <div class="ambient" aria-hidden="true"></div>
 <section id="homeScreen" class="potion-home" aria-label="Accueil Fantasy Potions">
   <div class="home-top"><a href="index.html?vue=mine" class="home-round" aria-label="Retour à Fantasy App">←</a><img src="logo.png" alt="Fantasy Kids Events"><button id="homeHelp" class="home-round" type="button" aria-label="Règles du jeu">?</button></div>
   <img class="home-logo" src="fantasy-potions-logo-glossy.webp" alt="Fantasy Potions">
-  <div class="home-lumi-scene"><img src="lumi-jour.webp" alt="Lumi, ta guide magique"></div>
+  <div class="home-lumi-scene"><img src="fp-lumi-accueil.svg" alt="Lumi, ta guide magique"></div>
   <div class="home-actions">
     <button class="home-action primary" type="button" id="homePlay"><span aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 5Q6 3 6 8v16q0 5 4 2l18-10q3-2 0-4Z" fill="#ffd15e" stroke="#fff1af" stroke-width="1.5"/><path d="M10 7v16l15-8Z" fill="#fff6bd" opacity=".65"/></svg></span><div>Jouer<small>Continuer au niveau <b id="homeLevel">1</b></small></div></button>
     <button class="home-action" type="button" id="homeMap"><span aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 7Q9 2 2 5v21q7-3 14 2 7-5 14-2V5q-7-3-14 2Z" fill="#ffd17c" stroke="#fff0b6" stroke-width="1.5"/><path d="M16 8v19M5 10q5-1 8 1M5 15q5-1 8 1M19 11q5-2 8-1M19 16q5-2 8-1" stroke="#ac6a24" stroke-width="1.5" fill="none"/></svg></span> Les mondes</button>
     <button class="home-action" type="button" id="homeRanking"><span aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 4h18v10q0 7-9 9-9-2-9-9Z" fill="#ffcf62" stroke="#fff0ae" stroke-width="1.4"/><path d="M7 7H2v5q0 6 8 7M25 7h5v5q0 6-8 7M16 23v5M9 29h14" fill="none" stroke="#ffd374" stroke-width="3" stroke-linecap="round"/><path d="M12 6v9q0 3 2 4" stroke="#fff5b8" fill="none" stroke-width="2"/></svg></span> Classement</button>
+    <button class="home-action" type="button" id="homeRewards"><span aria-hidden="true" class="fp-gift-icon">✦</span> Cadeaux de Lumi</button>
   </div>
   <div class="home-points">★ <b id="homeScore">0</b> points</div>
   <div class="home-world" id="homeWorld">Le Jardin des Potions</div>
@@ -62,12 +63,14 @@
     <div id="bottles" class="bottles" role="group" aria-label="Fioles à trier"></div>
     <div id="message" class="game-message" role="status" aria-live="polite">Choisis une fiole, puis une autre pour verser ✨</div>
   </section>
-  <div class="lumi-guide"><button type="button" id="lumiHint" aria-label="Demander un indice à Lumi"><img src="lumi-jour.webp" alt="Lumi"></button><p>Un mélange te résiste ? Demande-moi un indice !</p></div>
+  <div class="lumi-guide"><button type="button" id="lumiHint" aria-label="Demander un indice à Lumi"><img id="lumiPose" src="fp-lumi-alchimiste.svg" alt="Lumi"></button><p id="lumiSpeech">Un mélange te résiste ? Demande-moi un indice !</p></div>
   <div class="actions">
-    <button id="undoBtn" type="button" class="action"><span aria-hidden="true">↶</span> Annuler</button>
-    <button id="hintBtn" type="button" class="action"><span aria-hidden="true">✦</span> Indice</button>
-    <button id="resetBtn" type="button" class="action"><span aria-hidden="true">⟲</span> Recommencer</button>
+    <button id="undoBtn" type="button" class="action" title="Retour temporel"><span class="fp-bonus-icon fp-icon-undo" aria-hidden="true">↶</span><b id="undoCount">3</b> Retour</button>
+    <button id="hintBtn" type="button" class="action" title="Révélation magique"><span class="fp-bonus-icon fp-icon-hint" aria-hidden="true">✦</span><b id="hintCount">3</b> Indice</button>
+    <button id="extraBtn" type="button" class="action" title="Fiole supplémentaire"><span class="fp-bonus-icon fp-icon-extra" aria-hidden="true">+</span><b id="extraCount">2</b> Fiole</button>
+    <button id="rescueBtn" type="button" class="action" title="Élixir de secours"><span class="fp-bonus-icon fp-icon-rescue" aria-hidden="true">✧</span><b id="rescueCount">1</b> Élixir</button>
   </div>
+  <div class="fp-game-utility"><button id="resetBtn" type="button">↻ Recommencer</button><button id="gameRewards" type="button">Cadeaux de Lumi</button></div>
   <div class="tip">🧪 Regroupe les quatre gouttes identiques dans une fiole pour réussir.</div>
   <nav class="bottom-nav" aria-label="Navigation Fantasy Potions">
     <button id="playBtn" class="nav-current" type="button"><span aria-hidden="true">🧪</span> Jouer</button>

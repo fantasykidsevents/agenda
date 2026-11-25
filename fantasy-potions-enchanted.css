@@ -128,3 +128,69 @@ button:focus-visible,a:focus-visible{outline:2px solid #fff8aa;outline-offset:3p
 .home-action.primary>span{width:36px;height:36px}
 .home-lumi-scene:before{border-width:2px;opacity:.8}
 @media(max-width:390px){.home-top img,.topbar .brand img{width:118px;height:51px}.home-logo{height:135px}.home-action>span{width:27px;height:27px}}
+
+/* Atelier — décors originaux autonomes, variantes de Lumi et aides. */
+:root{--fp-scene:url('fp-atelier.svg');--fp-metal:linear-gradient(145deg,#ffffd9,#ffde74 18%,#ca8022 36%,#fff7bb 54%,#aa5916 78%,#ffd469)}
+body[data-chapter="1"]{--fp-scene:url('fp-jardin.svg')}body[data-chapter="2"]{--fp-scene:url('fp-cristaux.svg')}body[data-chapter="3"]{--fp-scene:url('fp-etoiles.svg')}body[data-chapter="4"]{--fp-scene:url('fp-sortileges.svg')}body[data-chapter="5"]{--fp-scene:url('fp-couronne.svg')}
+.potion-home{background-image:linear-gradient(180deg,#14062816,#1d0a3b22 42%,#16062d95 75%,#110524db),url('fp-atelier.svg');background-size:cover,cover;background-position:center,center;background-attachment:scroll}
+.shell{background-image:linear-gradient(#13062e77,#1b0a436e 48%,#14052ac7),var(--fp-scene);background-size:cover,cover;background-position:center,center}
+.game-area:before{background:var(--fp-scene) center/cover no-repeat;opacity:.79}
+.world-illustration{background-size:cover;background-position:center}
+.world-illustration[data-scene="jardin"]{background-image:url('fp-jardin.svg')}
+.world-illustration[data-scene="cristaux"]{background-image:url('fp-cristaux.svg')}
+.world-illustration[data-scene="etoiles"]{background-image:url('fp-etoiles.svg')}
+.world-illustration[data-scene="sortileges"]{background-image:url('fp-sortileges.svg')}
+.world-illustration[data-scene="couronne"]{background-image:url('fp-couronne.svg')}
+.modal[data-type="win"] .dialog{background:linear-gradient(#210a4250,#270b58c9 72%),url('fp-couronne.svg') center/cover no-repeat}
+.modal[data-type="worlds"] .dialog{background:linear-gradient(#1d094d88,#210b55ec),url('fp-etoiles.svg') center/cover no-repeat}
+.home-lumi-scene:before{content:none}
+.home-lumi-scene img{width:min(80%,230px);height:100%;filter:drop-shadow(0 0 8px #e1a8ff)}
+.home-action,.level-pill,.dialog-actions button,.world-card,.world-banner,.status-row,.action{border-color:transparent;background-clip:padding-box,border-box}
+.home-action{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(#ba52e8 0%,#7322be 39%,#410b88 78%,#a645c6) padding-box,var(--fp-metal) border-box;border-width:4px;box-shadow:inset 0 2px 3px #fff9,0 4px 0 #a45c1e,0 0 9px #ed74ed66,0 6px 10px #100222}
+.home-action:before,.dialog-actions button:before{content:"";position:absolute;left:8%;right:8%;top:5%;height:25%;border-radius:50%;background:linear-gradient(#ffffff44,transparent);pointer-events:none}
+.home-action.primary{background:linear-gradient(#ff95e5,#f321a4 45%,#a10a7b 84%,#e247bf) padding-box,var(--fp-metal) border-box}
+.home-action:after{content:"✧";position:absolute;right:10px;top:7px;color:#fff4bb;font-size:16px;opacity:.7}
+.home-action.gift-ready:after{content:"!";background:#ff287c;border:1px solid #ffdd8c;border-radius:50%;width:21px;height:21px;line-height:20px;color:#fff;opacity:1}
+.home-logo{margin:0 auto;height:clamp(130px,42vw,190px)}.home-lumi-scene{height:clamp(145px,44vw,202px)}
+.lumi-guide{min-height:104px;gap:9px}.lumi-guide button{width:108px;height:108px}
+.lumi-guide p{font-size:15px;border:2px solid #e7bc68;background:linear-gradient(130deg,#4c1777eb,#291052f0);box-shadow:0 3px 0 #a06427}
+.actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.action{position:relative;min-height:78px;padding:4px 1px;gap:3px;font-size:14px;border:3px solid transparent;background:var(--violet) padding-box,var(--fp-metal) border-box;box-shadow:inset 0 2px 3px #fff5,0 3px 0 #aa7029}
+.action b{position:absolute;right:2px;top:2px;min-width:21px;height:21px;border:1.5px solid #ffda77;background:linear-gradient(#f64dad,#b41389);border-radius:50%;font:800 13px/19px var(--numbers);color:white;text-shadow:none}
+.fp-bonus-icon{display:grid!important;place-items:center;width:36px;height:36px;border-radius:50%;border:2px solid #f6d78c;background:radial-gradient(circle at 35% 20%,#bd83ed,#6d2fb4 60%,#341069);box-shadow:0 2px 0 #ac702f,inset 0 1px 2px #fff9;color:#ffec9c!important;font:800 24px/1 var(--numbers)!important;text-shadow:0 2px 1px #9e5a20!important}
+.fp-icon-extra{background:radial-gradient(circle at 35% 20%,#f297f9,#9d32d4 60%,#3d167a)}
+.fp-icon-hint{background:radial-gradient(circle at 35% 20%,#a0e6ff,#1b70c9 50%,#2e126e)}
+.fp-icon-rescue{background:radial-gradient(circle at 35% 20%,#ffefa5,#d5942c 35%,#7021a0 73%);color:#fff9b1!important}
+.fp-game-utility{display:flex;gap:7px;margin:13px 0 8px}
+.fp-game-utility button,.fp-gift-button{flex:1;min-height:40px;border:2px solid #eac474;border-radius:15px;background:linear-gradient(#623099,#351263);color:#fff1cf;font:800 15px var(--fairy);padding:6px 4px}
+.fp-gift-button{display:block;width:100%;margin:9px 0;min-height:46px;background:linear-gradient(#e04bc0,#a31996);font-size:17px}
+.fp-gift-button:disabled{background:#382857;color:#d7c5e8;opacity:1;border-color:#9f875a}
+.fp-reward-hero{display:flex;align-items:center;gap:10px;text-align:left}
+.fp-reward-hero img{width:105px;height:110px;object-fit:contain}
+.fp-inventory-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.fp-inventory{display:grid;grid-template-columns:34px minmax(0,1fr);gap:4px 8px;align-items:center;padding:8px;border:1px solid #e2bb78;border-radius:13px;background:#321468}
+.fp-inventory .fp-bonus-icon{grid-row:1/span 2}.fp-inventory b{font-size:12px;line-height:1.15;text-align:left}.fp-inventory strong{color:#ffdf80;text-align:left}
+.fp-small{font-size:11px;color:#d2bce9}
+.fp-win-gift{display:flex;align-items:center;justify-content:center;gap:8px;border:2px solid #efcf7b;border-radius:17px;background:#321563;padding:6px;margin:10px auto}
+.fp-win-gift img{width:76px;height:76px;object-fit:contain}.fp-win-gift b{color:#ffdf8b}
+.fp-pour-drop{position:fixed;z-index:100;width:8px;height:17px;background:var(--drop-color);border-radius:50% 50% 70% 70%;box-shadow:0 0 8px var(--drop-color);pointer-events:none;animation:fp-flow .28s ease-in forwards}
+@keyframes fp-flow{from{transform:translate(0,0);opacity:1}45%{transform:translate(calc(var(--dx)*.5),calc(var(--dy)*.5 - 20px));opacity:1}to{transform:translate(var(--dx),var(--dy));opacity:0}}
+.fp-pouring{animation:fp-pour .27s ease-in-out}.fp-receiving{animation:fp-receive .27s ease-in-out}
+@keyframes fp-pour{50%{transform:translateY(-8px) rotate(-12deg)}}@keyframes fp-receive{50%{filter:drop-shadow(0 0 12px #fff4c0)}}
+@media(max-width:390px){.lumi-guide button{width:88px;height:88px}.lumi-guide{min-height:90px}.home-action{min-height:45px;font-size:21px}.home-action.primary{min-height:59px}.home-lumi-scene{height:145px}.home-logo{height:132px}.action{font-size:12px;min-height:70px}.fp-bonus-icon{width:32px;height:32px}}
+@media(prefers-reduced-motion:reduce){.fp-pour-drop{display:none}.fp-pouring,.fp-receiving{animation:none}}
+
+/* Une fois les six illustrations raster déposées, elles remplacent automatiquement les SVG de secours. */
+body[data-art="hd"] .potion-home{background-image:linear-gradient(180deg,#14062816,#1d0a3b22 42%,#16062d95 75%,#110524db),url('fp-atelier.webp')}
+body[data-art="hd"][data-chapter="1"]{--fp-scene:url('fp-jardin.webp')}
+body[data-art="hd"][data-chapter="2"]{--fp-scene:url('fp-cristaux.webp')}
+body[data-art="hd"][data-chapter="3"]{--fp-scene:url('fp-etoiles.webp')}
+body[data-art="hd"][data-chapter="4"]{--fp-scene:url('fp-sortileges.webp')}
+body[data-art="hd"][data-chapter="5"]{--fp-scene:url('fp-couronne.webp')}
+body[data-art="hd"] .world-illustration[data-scene="jardin"]{background-image:url('fp-jardin.webp')}
+body[data-art="hd"] .world-illustration[data-scene="cristaux"]{background-image:url('fp-cristaux.webp')}
+body[data-art="hd"] .world-illustration[data-scene="etoiles"]{background-image:url('fp-etoiles.webp')}
+body[data-art="hd"] .world-illustration[data-scene="sortileges"]{background-image:url('fp-sortileges.webp')}
+body[data-art="hd"] .world-illustration[data-scene="couronne"]{background-image:url('fp-couronne.webp')}
+body[data-art="hd"] .modal[data-type="win"] .dialog{background-image:linear-gradient(#210a4250,#270b58c9 72%),url('fp-couronne.webp')}
+body[data-art="hd"] .modal[data-type="worlds"] .dialog{background-image:linear-gradient(#1d094d88,#210b55ec),url('fp-etoiles.webp')}
