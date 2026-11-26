@@ -5136,7 +5136,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     st.innerHTML = f && f.recue_le ? `✅ Fiche remplie par le parent le ${fmt(f.recue_le)}`
       : f && f.envoyee_le ? `📨 Envoyée par e-mail à ${esc(ev.email || "")} le ${fmt(f.envoyee_le)} · ⏳ pas encore remplie`
       : f ? `🔗 Lien créé · ⏳ pas encore remplie`
-      : ev.email ? `📨 Sera envoyée automatiquement à <b>${esc(ev.email)}</b> dès que l'animation passe en ✅ Confirmé.`
+      : ev.email ? `📨 Sera envoyée automatiquement à <b>${esc(ev.email)}</b> après confirmation de l'animation et réception de l'acompte, s'il est prévu.`
       : `Pas d'e-mail : créez le lien et envoyez-le par WhatsApp ou Messenger.`;
     if (resp) {
       if (!f) $("ficheActions").innerHTML = `<button type="button" class="sig photo" id="ficheCreate">🔗 Créer le lien de la fiche</button>`;
@@ -5150,11 +5150,25 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
         $("ficheActions").dataset.msg = msg;
       }
     } else $("ficheActions").innerHTML = "";
+    if(resp&&Number(ev.acompte)>0&&!ev.acompte_paye){
+      st.innerHTML="⏳ Acompte de "+esc(euro(+ev.acompte))+" non reçu. La fiche anniversaire sera envoyée après validation du paiement."+(f?.envoyee_le?" ⚠️ Une fiche a déjà été envoyée le "+esc(fmt(f.envoyee_le))+".":"");
+      $("ficheActions").innerHTML=ev.statut==="confirme"&&ev.email?`<button type="button" class="sig enc" id="ficheDemandeAcompte">💳 Envoyer / renvoyer la demande d’acompte</button>`:"";
+    }
     $("ficheAnswers").innerHTML = r ? `<dl class="answers">${LABELS.filter(([k]) => r[k] && (!Array.isArray(r[k]) || r[k].length))
       .map(([k, l]) => `<dt>${l}</dt><dd>${esc(Array.isArray(r[k]) ? r[k].join(", ") : r[k])}${k === "date" && r.date !== ev.date ? " ⚠️ différente !" : ""}</dd>`).join("")}</dl>` : "";
   }
   $("ficheActions").addEventListener("click", async (e) => {
     const ev = events.find(x => x.id === editingId); if (!ev) return;
+    if(e.target.id==="ficheDemandeAcompte"){
+      if(DEMO||!isResp())return;
+      if(!confirm("Envoyer la demande d’acompte à "+ev.email+" ? Le paiement reste non reçu."))return;
+      const btn=e.target;btn.disabled=true;
+      try{const {data,error}=await sb.functions.invoke("notifier",{body:{type:"ACOMPTE_ANIMATION",evId:ev.id}});
+        if(error||!data?.ok)throw new Error(data?.erreur||error?.message||"Envoi non confirmé");
+        toast("💳 Demande d’acompte envoyée !");
+      }catch(err){toast("Erreur : "+(err.message||err));}finally{btn.disabled=false;}
+      return;
+    }
     if (e.target.id === "ficheCreate") {
       try { await store.creerFiche(ev.id); await reload(); const ev2 = events.find(x => x.id === editingId); renderFiche(ev2); toast("🔗 Lien créé !"); magicBurst(); }
       catch (err) { $("formErr").textContent = "Erreur : " + (err.message || err); }
@@ -5165,7 +5179,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       e.target.disabled = true;
       try { const { data, error } = await sb.functions.invoke("notifier", { body: { type: "FICHE", evId: ev.id, email } });
         if (error || !data?.ok) throw error || new Error(data?.erreur || "erreur");
-        toast(data.ficheEnvoi === "envoyée" ? "📨 Fiche envoyée par e-mail !" : "⚠️ " + data.ficheEnvoi); await reload(); renderFiche(events.find(x => x.id === editingId)); }
+        toast(data.ficheEnvoi === "fiche envoyée" ? "📨 Fiche envoyée par e-mail !" : "⚠️ " + data.ficheEnvoi); await reload(); renderFiche(events.find(x => x.id === editingId)); }
       catch (err) { toast("Erreur : " + (err.message || err)); } finally { e.target.disabled = false; }
     }
     if (e.target.id === "ficheCopy") {
