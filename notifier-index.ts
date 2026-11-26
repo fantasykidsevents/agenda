@@ -800,7 +800,7 @@ async function envoyerFicheParent(ev, forcer = false, pvDonne = null) {
     ${recapAnim(ev)}
     ${solde ? boite("#1fa463", "#eefaf3", `<p style="font-size:16px;margin:0">💰 <b>Solde restant : ${euros0(solde)}</b></p><p style="font-size:14px;margin:4px 0 0;color:#3d5a4a">À régler le jour de la fête.</p>`) : ""}
     <p style="font-size:16px">Pour que la fête soit 100 % magique et personnalisée, dites-nous tout sur la star du jour : ses passions, son personnage préféré, les prénoms des copains… 🌟 <b>La petite fiche prend environ 3 minutes.</b></p>
-    <p><a href="${lien}" style="display:inline-block;background:linear-gradient(110deg,#00b4ff,#a020ff,#d63fd0);color:#fff;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:16px">🪄 Remplir la fiche anniversaire</a></p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0"><tr><td bgcolor="#f0e2ff" style="background-color:#f0e2ff;border:2px solid #7934bd;border-radius:12px"><a href="${esc(lien)}" style="display:block;color:#542078;padding:14px 18px;text-decoration:underline;font-weight:bold;font-size:16px">🪄 Remplir la fiche anniversaire</a></td></tr></table><p style="font-size:14px"><a href="${esc(lien)}" style="color:#542078;text-decoration:underline">Ouvrir la fiche anniversaire si le bouton ne s'affiche pas</a>.</p>
     <p style="color:#6b6385;font-size:13px">Si le bouton ne fonctionne pas, copiez ce lien : ${lien}</p>
     <div style="border-radius:14px;padding:12px 16px;margin:16px 0;background:#fff4fb;border:1px solid #f5c6e6">
       <p style="font-size:16px;margin:0 0 6px"><b>💌 Et pour les invités ?</b></p>
@@ -1075,7 +1075,9 @@ async function envoyerDevis(ev, { relance = false } = {}) {
       ${acompte ? `<tr><td style="padding:3px 0;color:#6b6385">dont acompte à la réservation</td><td style="text-align:right;color:#6b6385">${euros0(acompte)}</td></tr>` : ""}
     </table>
     <p style="font-size:16px;margin-top:16px">Vous pouvez nous répondre en quelques clics 👇</p>
-    <p><a href="${lien}" style="display:inline-block;background:linear-gradient(110deg,#00b4ff,#a020ff,#d63fd0);color:#fff;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:16px">📜 Consulter et répondre à mon devis</a></p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0;width:100%;max-width:440px"><tr><td align="center" bgcolor="#f0e2ff" style="background-color:#f0e2ff;border:2px solid #7934bd;border-radius:12px;padding:0"><a href="${esc(lien)}" style="display:block;padding:16px 14px;font-family:Arial,sans-serif;font-size:16px;line-height:1.45;font-weight:bold;color:#542078;text-decoration:underline"><span style="color:#542078">📜 Consulter et répondre à mon devis</span></a></td></tr></table>
+    <p style="font-size:14px;line-height:1.5;color:#514369">Si le bouton ne s'affiche pas, <a href="${esc(lien)}" style="color:#542078;text-decoration:underline;font-weight:bold">cliquez ici pour ouvrir votre devis</a>.</p>
+    <p style="font-size:12px;line-height:1.5;color:#514369;word-break:break-all;overflow-wrap:anywhere">Vous pouvez aussi copier ce lien dans votre navigateur :<br><a href="${esc(lien)}" style="color:#542078;text-decoration:underline">${esc(lien)}</a></p>
     <p style="font-size:14px;color:#6b6385">Vous pouvez <b>accepter</b>, <b>refuser</b> ou <b>demander une modification</b> directement sur cette page. Dès votre accord, nous vous envoyons les infos pour l'acompte afin de bloquer la date 🔒</p>
     ${SIGNATURE}</div>`;
   const detailTexte = [`Formule ${ev.theme || "Animation"} : ${euros0(formule)}`, ...(personnagesChoisis(ev) ? [`Personnage(s) choisi(s) : ${personnagesChoisis(ev)}`] : []), ...Object.entries(ev.options || {}).filter(([k,n]) => +n>0 && OPTIONS_PRIX[k]).map(([k,n]) => `${OPTIONS_PRIX[k][0]}${+n>1 ? " × "+n : ""} : ${k === "tatouage" ? euros0(OPTIONS_PRIX[k][1])+" / enfant (payé sur place)" : euros0(OPTIONS_PRIX[k][1]*n)}`), ...(deplacement ? [`Frais de déplacement : ${euros0(deplacement)}`] : [])].join("\n");
@@ -1149,7 +1151,7 @@ const DIPLOME_URL = "https://www.fantasykidsevents.be/diplome.html";
 async function envoyerPhotosClient(ev) {
   if (!ev.email || !ev.photos_lien) return "pas d'e-mail ou de lien";
   const enfant = ev.enfant ? esc(ev.enfant) : "";
-  const btn = (href, txt, bg) => `<p style="margin:10px 0"><a href="${href}" style="display:inline-block;background:${bg};color:#fff;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:16px">${txt}</a></p>`;
+  const btn = (href, txt, bg) => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:10px 0"><tr><td bgcolor="#f0e2ff" style="background-color:#f0e2ff;border:2px solid #7934bd;border-radius:12px"><a href="${href}" style="display:block;color:#542078;padding:14px 18px;text-decoration:underline;font-weight:bold;font-size:16px">${txt}</a></td></tr></table>`;
   const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1f1735">
     <div style="height:6px;border-radius:3px;background:linear-gradient(90deg,#00b4ff,#a020ff,#d63fd0,#ff7f7f)"></div>
     <h2 style="margin:18px 0 6px">📸 Les photos de la fête sont prêtes !</h2>
