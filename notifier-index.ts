@@ -745,12 +745,20 @@ function blocVirement(montant, comm, titre) {
 const texteVirement = (montant, comm, titre) => { const IBAN = env("IBAN"), BENEF = env("BENEFICIAIRE") || "Fantasy Kids Events";
   return `💳 ${titre} : ${euros0(montant)}\n${IBAN ? `Virement sur ${IBAN} (${BENEF}) – communication : ${comm}` : "Nous vous envoyons les informations de paiement très vite."}`; };
 async function lirePrive(id) {
-  let pv = null;
-  for (let i = 0; i < 3 && !pv; i++) {
-    ({ data: pv } = await sb.from("evenements_prive").select("prix,acompte,acompte_paye,deplacement_client,km_detail,notes_privees").eq("id", id).maybeSingle());
-    if (!pv) await new Promise((r) => setTimeout(r, 1500));
+  let dernier = null;
+  for (let i = 0; i < 3; i++) {
+    const {data,error} = await sb.from("evenements_prive").select("prix,acompte,acompte_paye,deplacement_client,km_detail,notes_privees").eq("id", id).maybeSingle();
+    if(!error&&data)return data;
+    dernier=error;
+    if(i<2)await new Promise(r=>setTimeout(r,1000));
   }
-  return pv || {};
+  throw new Error("Données financières indisponibles : aucun mail client envoyé. "+(dernier?.message||"Fiche financière introuvable."));
+}
+function etatAcompteAnimation(pv:any){
+  if(!pv||pv.acompte==null||pv.prix==null)throw new Error("Montant de l’acompte ou du prix non renseigné : vérification nécessaire.");
+  const acompte=Number(pv.acompte),prix=Number(pv.prix);
+  if(!Number.isFinite(acompte)||!Number.isFinite(prix)||acompte<0||prix<0||acompte>prix)throw new Error("Montants financiers invalides.");
+  return {acompte,prix,enAttente:acompte>0&&pv.acompte_paye!==true};
 }
 const commAnim = (ev) => `${ev.enfant || String(ev.parent || "").split(" ")[0] || "Anniversaire"} ${String(ev.date || "").split("-").reverse().join("/")}`.trim();
 // Le choix commercial vient de la fiche du client, jamais des noms de l'équipe.
@@ -765,8 +773,8 @@ const recapAnim = (ev) => `<table style="font-size:15px;border-collapse:collapse
 // 1️⃣ Animation confirmée : demande d'acompte (sans la fiche). Pas d'acompte à payer → on envoie directement la fiche.
 async function mailConfirmationAnimation(ev) {
   if (!ev.email) return "pas d'e-mail";
-  const pv = await lirePrive(ev.id), acompte = +(pv.acompte || 0), prix = +(pv.prix || 0);
-  if (!(acompte > 0) || pv.acompte_paye) return await envoyerFicheParent(ev, true, pv);
+  const pv = await lirePrive(ev.id), {acompte,prix,enAttente}=etatAcompteAnimation(pv);
+  if (!enAttente) return await envoyerFicheParent(ev, true, pv);
   const enfant = ev.enfant ? ` de ${ev.enfant}` : "", comm = commAnim(ev);
   const solde = prix > acompte ? prix - acompte : 0;
   const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1f1735">${BANDE}
@@ -786,13 +794,15 @@ async function mailConfirmationAnimation(ev) {
 
 // 2️⃣ Acompte reçu (ou rien à verser) : merci + solde + fiche anniversaire + invitations
 async function envoyerFicheParent(ev, forcer = false, pvDonne = null) {
+  // Toujours relire les finances, même lors d’un renvoi manuel ou d’un webhook ancien.
+  const pv = await lirePrive(ev.id), {acompte,prix,enAttente}=etatAcompteAnimation(pv);
+  if(enAttente)return "fiche bloquée : acompte non reçu";
   const f = await assurerFiche(ev.id);
   if (!forcer && (f.envoyee_le || f.recue_le)) return "déjà envoyée";
   if (!ev.email || !APP_URL) return "pas d'e-mail";
   const lien = `${APP_URL}/fiche.html?t=${f.token}`;
   const enfant = ev.enfant ? ` de ${ev.enfant}` : "";
-  const pv = pvDonne || await lirePrive(ev.id), acompte = +(pv.acompte || 0), prix = +(pv.prix || 0);
-  const recu = pv.acompte_paye && acompte > 0, solde = prix > (recu ? acompte : 0) ? prix - (recu ? acompte : 0) : 0;
+  const recu = pv.acompte_paye === true && acompte > 0, solde = prix > (recu ? acompte : 0) ? prix - (recu ? acompte : 0) : 0;
   const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1f1735">${BANDE}
     <h2 style="margin:18px 0 6px">${recu ? "💖 Merci, la magie est en route !" : "✨ Youpi, c'est confirmé !"}</h2>
     ${bonjour(ev.parent)}
@@ -2745,11 +2755,23 @@ Deno.serve(async (req) => {
       const r = await envoyerDevis(e,{relance:p.relance===true});
       return json({ ok: r === "devis envoyé", devis: r, erreur: r === "devis envoyé" ? undefined : r });
     }
+    if (p.type === "ACOMPTE_ANIMATION") {
+      if(!await responsableDepuisRequete(req))return json({ok:false,erreur:"Réservé aux responsables"},403);
+      const {data:e,error}=await sb.from("evenements").select("*").eq("id",p.evId).maybeSingle();
+      if(error||!e||e.type_evenement!=="animation"||e.statut!=="confirme"||e.date<aujourdhuiBelgique()||!e.email)return json({ok:false,erreur:"Animation confirmée avec e-mail requise."},400);
+      const pv=await lirePrive(e.id);
+      if(!etatAcompteAnimation(pv).enAttente)return json({ok:false,erreur:"Aucun acompte restant à demander."},409);
+      if(!env("IBAN"))return json({ok:false,erreur:"IBAN non configuré."},503);
+      const resultat=await mailConfirmationAnimation(e);
+      return json({ok:resultat==="confirmation + acompte envoyés",resultat});
+    }
     if (p.type === "FICHE") {
+      if(!await responsableDepuisRequete(req))return json({ok:false,erreur:"Réservé aux responsables"},403);
       const { data: e } = await sb.from("evenements").select("*").eq("id", p.evId).maybeSingle();
       if (!e) return json({ ok: false, erreur: "animation introuvable" }, 404);
       if (p.email && !e.email) { await sb.from("evenements").update({ email: p.email }).eq("id", e.id); e.email = p.email; }
-      return json({ ok: true, ficheEnvoi: await envoyerFicheParent(e, true) });
+      const resultat=await envoyerFicheParent(e,true);
+      return json({ok:resultat==="fiche envoyée",ficheEnvoi:resultat,erreur:resultat==="fiche envoyée"?undefined:resultat});
     }
 
     const type = p.type;
@@ -2815,7 +2837,7 @@ Deno.serve(async (req) => {
         const { data: dv } = await sb.from("devis").select("accepte_le").eq("evenement_id", ev.id).maybeSingle();
         if (dv?.accepte_le && Date.now() - new Date(dv.accepte_le).getTime() < 5 * 60e3) {
           for (const m of (equipe || []).filter((y) => y.responsable && y.email))
-            await envoyerPush(m.email, { title: `✅ Devis accepté : ${ev.titre || ev.enfant || "animation"}`, body: `${ev.parent || "Le client"} a accepté le devis. La demande d'acompte vient de partir 💳`, url: `./index.html?ev=${ev.id}`, tag: `devis-${ev.id}` });
+            await envoyerPush(m.email, { title: `✅ Devis accepté : ${ev.titre || ev.enfant || "animation"}`, body: `${ev.parent || "Le client"} a accepté le devis. ${ficheEnvoi === "confirmation + acompte envoyés" ? "La demande d'acompte vient de partir 💳" : ficheEnvoi === "fiche envoyée" ? "La fiche anniversaire a été envoyée." : "Vérifie le suivi du mail client."}`, url: `./index.html?ev=${ev.id}`, tag: `devis-${ev.id}` });
           try {
             await mailDecisionDevis(`✅ Devis accepté : ${ev.titre || ev.enfant || "animation"}`,
               `${ev.parent || "Le client"} a accepté votre devis.\n${quand(ev)}\nLa demande d'acompte est prévue dans le mail de confirmation.`,
