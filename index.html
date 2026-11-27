@@ -11532,25 +11532,39 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   const MAGNET_RAPPEL_JOURS=14;
   const magnetMots=s=>normName(String(s||"")).replace(/[^a-z0-9]+/g," ").trim();
   const magnetMention=(texte,nom)=>(" "+magnetMots(texte)+" ").includes(" "+magnetMots(nom)+" ");
+  const MAGNET_PRINCESSES=["Elsa","Anna","Raiponce","Aurore","Belle","Cendrillon","Blanche-Neige","Ariel","Jasmine","Vaiana","Tiana","Mérida","Elena","Mulan","Asha","Mirabel"];
+  function magnetAtelier(e){
+    const t=magnetMots(e.theme), titre=magnetMots(e.titre);
+    const court=s=>magnetMention(s,"flash")||magnetMention(s,"rising star")||/(?:^| )30 (?:min|minutes)(?: |$)/.test(s)&&!/(?:^| )1 h 30(?: |$)/.test(s);
+    if(court(t))return false;
+    if(["magic","fantastic","celebration","surprise","idol party","superstar experience"].some(n=>magnetMention(t,n)))return true;
+    if(court(titre))return false;
+    const d=minOf(e.heure_debut), f=minOf(e.heure_fin);
+    return !(d!=null&&f!=null&&f>d&&f-d<=30);
+  }
   function magnetConcerne(x,e){
     const nom=magnetMots(x.nom);
     if(!nom)return false;
-    const recherche=nom==="mickey arc en ciel"?"mickey":nom;
     const roles=parseTeam(e.animateurs).filter(estRoleCostume).map(p=>p.role);
-    if(roles.some(r=>magnetMention(r,recherche)))return true;
     const theme=e.theme||"";
-    if(magnetMention(theme,recherche))return true;
-    if(roles.length)return false;
-    if(["rumi","mira","zoey"].includes(recherche)&&[theme,e.titre].some(t=>magnetMention(t,"huntrix")||magnetMention(t,"huntr x")))return true;
-    return magnetMention(e.titre,recherche);
+    const textes=[...roles,theme,...(!roles.length?[e.titre]:[])];
+    const a=personnage=>textes.some(t=>magnetMention(t,personnage));
+    const groupeKpop=textes.some(t=>magnetMention(t,"huntrix")||magnetMention(t,"huntr x"));
+    if(nom==="anna")return a("anna")||a("elsa");
+    if(["mickey","minnie","mickey arc en ciel"].includes(nom)){
+      return MAGNET_PRINCESSES.some(a)||a("princesse")||a("princesses")||a("mickey")||a("minnie");
+    }
+    if(nom==="derpy")return a("rumi")||a("derpy")||groupeKpop;
+    if(["rumi","mira","zoey"].includes(nom)&&groupeKpop)return true;
+    return a(nom);
   }
   function animationsMagnet(x,jours=MAGNET_RAPPEL_JOURS){
-    if(x.categorie!=="magnet")return [];
+    if(!stockHasQty(x))return [];
     const debut=todayISO(), d=parseISO(debut);d.setDate(d.getDate()+jours);const fin=iso(d);
-    return events.filter(e=>e.statut==="confirme"&&e.type_evenement==="animation"&&e.date>=debut&&e.date<=fin&&!estNM(e)&&magnetConcerne(x,e)).sort((a,b)=>a.date.localeCompare(b.date));
+    return events.filter(e=>e.statut==="confirme"&&e.type_evenement==="animation"&&e.date>=debut&&e.date<=fin&&!estNM(e)&&magnetAtelier(e)&&(isGlueMagnet(x)||magnetConcerne(x,e))).sort((a,b)=>a.date.localeCompare(b.date));
   }
   function stockARappeler(){
-    return stockAAcheter().filter(x=>x.categorie!=="magnet"||animationsMagnet(x).length>0);
+    return stockAAcheter().filter(x=>!stockHasQty(x)||animationsMagnet(x).length>0);
   }
   function magnetBesoinTxt(x){
     const a=animationsMagnet(x);
@@ -11559,7 +11573,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function stockRappelHtml(){
     const a=stockARappeler();
     if(!a.length)return "";
-    const noms=a.slice(0,3).map(x=>x.nom+(x.categorie==="magnet"?" — "+fmtLong(animationsMagnet(x)[0].date):""));
+    const noms=a.slice(0,3).map(x=>x.nom+(stockHasQty(x)?" — "+fmtLong(animationsMagnet(x)[0].date):""));
     return '<div class="alert-bar gold" data-stock-open>🛒 '+a.length+' consommable'+(a.length>1?"s":"")+' à réapprovisionner ('+esc(noms.join(", "))+(a.length>3?"…":"")+')</div>';
   }
   // Besoins des 14 prochains jours : anniversaires (animations client) et nombre d'enfants (fiche anniversaire)
@@ -11573,7 +11587,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     return { annifs: L.length, enfants, sansFiche, tat, jours };
   }
   function besoinTxt(x) {
-    if(x.categorie==="magnet")return magnetBesoinTxt(x);
+    if(stockHasQty(x))return magnetBesoinTxt(x);
     if (!x.besoin) return "";
     const b = besoinsAnnifs(), s2 = (n) => n > 1 ? "s" : "";
     if (x.besoin === "annif") return b.annifs ? `🎂 ${b.annifs} anniversaire${s2(b.annifs)} dans les ${b.jours} jours → ${b.annifs} à prévoir` : "";
@@ -11587,11 +11601,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const items=stock.filter(x=>x.categorie==="magnet").sort((a,b)=>(a.ordre??999)-(b.ordre??999)||a.nom.localeCompare(b.nom,"fr"));
     const known=items.filter(x=>x.quantite!=null), unknown=items.length-known.length;
     $("stockMagnetSummary").textContent="🧲 Magnets · "+items.length+" modèles"+(known.length?" · "+known.reduce((s,x)=>s+x.quantite,0)+" comptés":"")+(unknown?" · "+unknown+" à compter":"");
-    $("stockMagnetList").innerHTML='<p class="hint">Matériel d’animation · Touchez la quantité pour saisir le stock réel. Stock faible à 10 pièces ou moins. Rappel selon les animations confirmées dans les 14 jours.</p>'+items.map(x=>`<div class="stk-row"><span class="tx"><b>${esc(x.nom)}</b><small>${x.quantite==null?"À compter":x.quantite===0?"🔴 Vide":x.quantite<=stockLowThreshold(x)?"🟠 Stock faible":"✅ Disponible"}</small>${magnetBesoinTxt(x)?`<small style="color:var(--violet-d)">${esc(magnetBesoinTxt(x))}</small>`:""}</span><span class="et"><button type="button" data-magnet-id="${esc(x.id)}" data-magnet-action="minus" aria-label="Retirer un magnet ${esc(x.nom)}" ${x.quantite==null||x.quantite===0?"disabled":""}>−</button><button type="button" class="on" data-magnet-id="${esc(x.id)}" data-magnet-action="set" aria-label="Modifier la quantité de ${esc(x.nom)}">${x.quantite==null?"À saisir":x.quantite}</button><button type="button" data-magnet-id="${esc(x.id)}" data-magnet-action="plus" aria-label="Ajouter un magnet ${esc(x.nom)}" ${x.quantite==null?"disabled":""}>+</button></span>${isResp()?`<button type="button" class="x" data-stk-rm="${esc(x.id)}" aria-label="Retirer le modèle">✕</button>`:""}</div>`).join("")+(isResp()?'<button type="button" class="btn ghost" id="stockMagnetAdd" style="width:100%;margin-top:8px">➕ Ajouter un modèle</button>':"");
+    $("stockMagnetList").innerHTML='<p class="hint">Matériel d’animation · Touchez la quantité pour saisir le stock réel. Stock faible à 10 pièces ou moins. Rappel selon les animations confirmées avec atelier créatif dans les 14 jours (hors Flash et Rising Star).</p>'+items.map(x=>`<div class="stk-row"><span class="tx"><b>${esc(x.nom)}</b><small>${x.quantite==null?"À compter":x.quantite===0?"🔴 Vide":x.quantite<=stockLowThreshold(x)?"🟠 Stock faible":"✅ Disponible"}</small>${magnetBesoinTxt(x)?`<small style="color:var(--violet-d)">${esc(magnetBesoinTxt(x))}</small>`:""}</span><span class="et"><button type="button" data-magnet-id="${esc(x.id)}" data-magnet-action="minus" aria-label="Retirer un magnet ${esc(x.nom)}" ${x.quantite==null||x.quantite===0?"disabled":""}>−</button><button type="button" class="on" data-magnet-id="${esc(x.id)}" data-magnet-action="set" aria-label="Modifier la quantité de ${esc(x.nom)}">${x.quantite==null?"À saisir":x.quantite}</button><button type="button" data-magnet-id="${esc(x.id)}" data-magnet-action="plus" aria-label="Ajouter un magnet ${esc(x.nom)}" ${x.quantite==null?"disabled":""}>+</button></span>${isResp()?`<button type="button" class="x" data-stk-rm="${esc(x.id)}" aria-label="Retirer le modèle">✕</button>`:""}</div>`).join("")+(isResp()?'<button type="button" class="btn ghost" id="stockMagnetAdd" style="width:100%;margin-top:8px">➕ Ajouter un modèle</button>':"");
   }
   function renderStock() {
     renderMagnets();
-    const aa = stockAAcheter().sort((a,b)=>Number(b.categorie==="magnet"&&animationsMagnet(b).length>0)-Number(a.categorie==="magnet"&&animationsMagnet(a).length>0));
+    const aa = stockAAcheter().sort((a,b)=>Number(stockHasQty(b)&&animationsMagnet(b).length>0)-Number(stockHasQty(a)&&animationsMagnet(a).length>0));
     $("stockCourses").innerHTML = isResp() && aa.length ? `<div class="courses"><b>🛒 Liste de courses (${aa.length})</b><br>${aa.map(x => `${x.etat === "vide" ? "🔴" : "🟠"} ${esc(x.nom)}${besoinTxt(x) ? ` <small>(${esc(besoinTxt(x).replace(/^\S+ /, ""))})</small>` : ""}`).join("<br>")}
       <div class="after-btns" style="margin-top:8px"><button type="button" class="sig photo" id="stockCopy">📋 Copier / envoyer la liste</button></div></div>` : "";
     const tri = stock.filter(x=>x.categorie!=="magnet").sort((a, b) => ({ vide: 0, bas: 1, ok: 2 }[a.etat] ?? 2) - ({ vide: 0, bas: 1, ok: 2 }[b.etat] ?? 2) || (a.ordre ?? 0) - (b.ordre ?? 0));
