@@ -11570,11 +11570,22 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const a=animationsMagnet(x);
     return a.length?"📅 "+a.length+" animation"+(a.length>1?"s":"")+" confirmée"+(a.length>1?"s":"")+" · prochaine le "+fmtLong(a[0].date):"";
   }
+  let stockModeRappel=false;
+  function stockEtatDetail(x){
+    const etat=x.etat==="vide"?"🔴 Stock vide":"🟠 Stock faible";
+    return etat+(stockHasQty(x)?(x.quantite==null?" · quantité à compter":" · "+x.quantite+" pièce"+(x.quantite===1?"":"s")+" restante"+(x.quantite===1?"":"s")):"");
+  }
+  function stockRappelLignes(a){
+    return a.map(x=>{
+      const evs=stockHasQty(x)?animationsMagnet(x):[];
+      const details=evs.length?evs.map(e=>'<small>📅 '+esc(fmtLong(e.date))+' · '+esc(e.titre||e.theme||"Animation")+'</small>').join(""):(besoinTxt(x)?'<small>'+esc(besoinTxt(x))+'</small>':"");
+      return '<div class="alert-cible" style="cursor:default"><span><b>'+esc(x.nom)+'</b><small>'+esc(stockEtatDetail(x))+'</small>'+details+'</span></div>';
+    }).join("");
+  }
   function stockRappelHtml(){
     const a=stockARappeler();
     if(!a.length)return "";
-    const noms=a.slice(0,3).map(x=>x.nom+(stockHasQty(x)?" — "+fmtLong(animationsMagnet(x)[0].date):""));
-    return '<div class="alert-bar gold" data-stock-open>🛒 '+a.length+' consommable'+(a.length>1?"s":"")+' à réapprovisionner ('+esc(noms.join(", "))+(a.length>3?"…":"")+')</div>';
+    return '<details class="alert-group"><summary class="alert-bar gold">🛒 '+a.length+' consommable'+(a.length>1?"s":"")+' à réapprovisionner<span class="alert-voir">Afficher ce qui manque</span></summary><div class="alert-cibles">'+stockRappelLignes(a)+'<button type="button" class="btn ghost" data-stock-open>🧲 Ouvrir le stock</button></div></details>';
   }
   // Besoins des 14 prochains jours : anniversaires (animations client) et nombre d'enfants (fiche anniversaire)
   function besoinsAnnifs(jours = 14) {
@@ -11606,7 +11617,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   function renderStock() {
     renderMagnets();
     const aa = stockAAcheter().sort((a,b)=>Number(stockHasQty(b)&&animationsMagnet(b).length>0)-Number(stockHasQty(a)&&animationsMagnet(a).length>0));
-    $("stockCourses").innerHTML = isResp() && aa.length ? `<div class="courses"><b>🛒 Liste de courses (${aa.length})</b><br>${aa.map(x => `${x.etat === "vide" ? "🔴" : "🟠"} ${esc(x.nom)}${besoinTxt(x) ? ` <small>(${esc(besoinTxt(x).replace(/^\S+ /, ""))})</small>` : ""}`).join("<br>")}
+    const rappels=stockARappeler();
+    $("stockCourses").innerHTML = stockModeRappel&&isResp()?'<div class="courses"><b>⚠️ Matériel à réapprovisionner pour les animations</b><div style="display:grid;gap:7px;margin:8px 0">'+(rappels.length?stockRappelLignes(rappels):'<p class="hint">✅ Aucun rappel de stock actuellement.</p>')+'</div><div class="after-btns"><button type="button" class="sig photo" id="stockShowAll">Voir toute la liste de courses</button></div></div>':isResp() && aa.length ? `<div class="courses"><b>🛒 Liste de courses (${aa.length})</b><br>${aa.map(x => `${x.etat === "vide" ? "🔴" : "🟠"} ${esc(x.nom)}${besoinTxt(x) ? ` <small>(${esc(besoinTxt(x).replace(/^\S+ /, ""))})</small>` : ""}`).join("<br>")}
       <div class="after-btns" style="margin-top:8px"><button type="button" class="sig photo" id="stockCopy">📋 Copier / envoyer la liste</button></div></div>` : "";
     const tri = stock.filter(x=>x.categorie!=="magnet").sort((a, b) => ({ vide: 0, bas: 1, ok: 2 }[a.etat] ?? 2) - ({ vide: 0, bas: 1, ok: 2 }[b.etat] ?? 2) || (a.ordre ?? 0) - (b.ordre ?? 0));
     $("stockList").innerHTML = tri.map(x => `<div class="stk-row">${isResp() ? `<button type="button" class="stock-icon-edit" data-stk-icon="${esc(x.id)}" aria-label="Changer l’icône de ${esc(x.nom)}" title="Changer l’icône">${esc(x.emoji || "📦")} ✏️</button>` : `<span class="em">${esc(x.emoji || "📦")}</span>`}<span class="tx"><b>${esc(x.nom)}</b>${isGlueMagnet(x)?`<small>${x.quantite==null?("À compter"+(x.etat==="bas"?" · 🟠 Bientôt vide":x.etat==="vide"?" · 🔴 Vide":"")):x.quantite===0?"🔴 Vide":x.quantite<=stockLowThreshold(x)?"🟠 Stock faible":"✅ Disponible"}</small>`:""}${besoinTxt(x) ? `<small style="color:var(--violet-d)">${esc(besoinTxt(x))}</small>` : ""}${x.etat !== "ok" && x.maj_par ? `<small>signalé par ${esc(x.maj_par)}${x.maj_le ? " · " + new Date(x.maj_le).toLocaleDateString("fr-BE", { day: "numeric", month: "short" }) : ""}</small>` : ""}</span>
@@ -11615,12 +11627,13 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("stockEmojiPaletteAdd").innerHTML=boutonsIcones(null);
     $("stockAdd").classList.toggle("hidden", !isResp());
   }
-  function openStock() { renderStock(); $("stockBg").classList.remove("hidden"); document.body.style.overflow = "hidden"; }
+  function openStock(rappel=false) { stockModeRappel=rappel; renderStock(); $("stockBg").classList.remove("hidden"); $("stockBg").querySelector(".sheet").scrollTop=0; if(rappel)$("stockMagnets").open=true; document.body.style.overflow = "hidden"; }
   const closeStock = () => { $("stockBg").classList.add("hidden"); document.body.style.overflow = ""; };
   $("stockBtn").onclick = () => { closeTeam(); openStock(); };
   $("stockClose").onclick = closeStock;
   $("stockBg").addEventListener("click", async (e) => {
     if (e.target.id === "stockBg") { closeStock(); return; }
+    if(e.target.closest("#stockShowAll")){stockModeRappel=false;renderStock();return;}
     const mb=e.target.closest("[data-magnet-id]");
     if(mb){
       if(magnetBusy)return;
@@ -11695,7 +11708,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const nom = $("stockNom").value.trim(); if (!nom) { toast("Indiquez le nom de l'article"); return; }
     try { await stockStore.add($("stockEm").value.trim(), nom); $("stockNom").value = ""; $("stockEm").value = "📦"; $("stockEmojiPaletteAdd").classList.add("hidden"); await stockReload(); renderStock(); toast("➕ Ajouté"); } catch (err) { toast("Erreur : " + (err.message || err)); }
   };
-  document.addEventListener("click", (e) => { if (e.target.closest("[data-stock-open]")) { e.stopPropagation(); openStock(); } }, true);
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-stock-open]")) { e.stopPropagation(); openStock(true); } }, true);
 
   // ================= 💶 Mes gains (chacun voit seulement les siens) =================
   let mesPaies = [], gY = now.getFullYear(), gM = now.getMonth();
