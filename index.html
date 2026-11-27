@@ -3983,7 +3983,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       + (nbAcompte ? `<div class="alert-bar gold">💰 ${nbAcompte} acompte${nbAcompte>1?"s":""} pas encore reçu${nbAcompte>1?"s":""} à moins de 10 jours</div>` : "")
       + ((nbP = nbPasPrets()) ? `<div class="alert-bar" data-cost-open>🧺 ${nbP} costume${nbP > 1 ? "s" : ""}/perruque${nbP > 1 ? "s" : ""} à préparer (laver, recoiffer, réparer) pour une animation dans les ${+(reglages.costumes_jours ?? 7) || 7} jours</div>` : "")
       + ((nbC = nbConflitsCostumes()) ? `<div class="alert-bar" data-cost-open>⚠️ ${nbC} conflit${nbC > 1 ? "s" : ""} de costume/perruque dans les 30 jours (demandé plus de fois qu'il n'en existe le même jour)</div>` : "")
-      + (isResp() && stockAAcheter().length ? `<div class="alert-bar gold" data-stock-open>🛒 ${stockAAcheter().length} consommable${stockAAcheter().length > 1 ? "s" : ""} à racheter (${esc(stockAAcheter().slice(0, 3).map(x => x.nom).join(", "))}${stockAAcheter().length > 3 ? "…" : ""})</div>` : "")
+      + (isResp() ? stockRappelHtml() : "")
       + (nbPhotos ? alerteCliquable(photosAEnvoyer, "photos", "blue", `📸 ${nbPhotos} animation${nbPhotos>1?"s":""} récente${nbPhotos>1?"s":""} : photos pas encore envoyées au client`) : "");
     const list = $("showPast").checked || $("fStatut").value === "anticipations" ? all : all.filter(e => e.date >= t);
     if (!list.length) { $("list").innerHTML = bar + `<div class="empty">🌙 Aucune animation à afficher.</div>`; return; }
@@ -11529,6 +11529,39 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   };
   async function stockReload() { try { stock = (await stockStore.list()).map(x=>stockHasQty(x)&&x.quantite!=null?{...x,etat:stockQtyState(x,x.quantite)}:x); } catch (e) { console.error(e); stock = []; } }
   const stockAAcheter = () => stock.filter(x => x.etat && x.etat !== "ok" && (x.categorie !== "magnet" || x.quantite != null));
+  const MAGNET_RAPPEL_JOURS=14;
+  const magnetMots=s=>normName(String(s||"")).replace(/[^a-z0-9]+/g," ").trim();
+  const magnetMention=(texte,nom)=>(" "+magnetMots(texte)+" ").includes(" "+magnetMots(nom)+" ");
+  function magnetConcerne(x,e){
+    const nom=magnetMots(x.nom);
+    if(!nom)return false;
+    const recherche=nom==="mickey arc en ciel"?"mickey":nom;
+    const roles=parseTeam(e.animateurs).filter(estRoleCostume).map(p=>p.role);
+    if(roles.some(r=>magnetMention(r,recherche)))return true;
+    const theme=e.theme||"";
+    if(magnetMention(theme,recherche))return true;
+    if(roles.length)return false;
+    if(["rumi","mira","zoey"].includes(recherche)&&[theme,e.titre].some(t=>magnetMention(t,"huntrix")||magnetMention(t,"huntr x")))return true;
+    return magnetMention(e.titre,recherche);
+  }
+  function animationsMagnet(x,jours=MAGNET_RAPPEL_JOURS){
+    if(x.categorie!=="magnet")return [];
+    const debut=todayISO(), d=parseISO(debut);d.setDate(d.getDate()+jours);const fin=iso(d);
+    return events.filter(e=>e.statut==="confirme"&&e.type_evenement==="animation"&&e.date>=debut&&e.date<=fin&&!estNM(e)&&magnetConcerne(x,e)).sort((a,b)=>a.date.localeCompare(b.date));
+  }
+  function stockARappeler(){
+    return stockAAcheter().filter(x=>x.categorie!=="magnet"||animationsMagnet(x).length>0);
+  }
+  function magnetBesoinTxt(x){
+    const a=animationsMagnet(x);
+    return a.length?"📅 "+a.length+" animation"+(a.length>1?"s":"")+" confirmée"+(a.length>1?"s":"")+" · prochaine le "+fmtLong(a[0].date):"";
+  }
+  function stockRappelHtml(){
+    const a=stockARappeler();
+    if(!a.length)return "";
+    const noms=a.slice(0,3).map(x=>x.nom+(x.categorie==="magnet"?" — "+fmtLong(animationsMagnet(x)[0].date):""));
+    return '<div class="alert-bar gold" data-stock-open>🛒 '+a.length+' consommable'+(a.length>1?"s":"")+' à réapprovisionner ('+esc(noms.join(", "))+(a.length>3?"…":"")+')</div>';
+  }
   // Besoins des 14 prochains jours : anniversaires (animations client) et nombre d'enfants (fiche anniversaire)
   function besoinsAnnifs(jours = 14) {
     const t = todayISO(), fin = iso(new Date(Date.now() + jours * 864e5));
@@ -11540,6 +11573,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     return { annifs: L.length, enfants, sansFiche, tat, jours };
   }
   function besoinTxt(x) {
+    if(x.categorie==="magnet")return magnetBesoinTxt(x);
     if (!x.besoin) return "";
     const b = besoinsAnnifs(), s2 = (n) => n > 1 ? "s" : "";
     if (x.besoin === "annif") return b.annifs ? `🎂 ${b.annifs} anniversaire${s2(b.annifs)} dans les ${b.jours} jours → ${b.annifs} à prévoir` : "";
@@ -11553,11 +11587,11 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const items=stock.filter(x=>x.categorie==="magnet").sort((a,b)=>(a.ordre??999)-(b.ordre??999)||a.nom.localeCompare(b.nom,"fr"));
     const known=items.filter(x=>x.quantite!=null), unknown=items.length-known.length;
     $("stockMagnetSummary").textContent="🧲 Magnets · "+items.length+" modèles"+(known.length?" · "+known.reduce((s,x)=>s+x.quantite,0)+" comptés":"")+(unknown?" · "+unknown+" à compter":"");
-    $("stockMagnetList").innerHTML='<p class="hint">Matériel d’animation · Touchez la quantité pour saisir le stock réel. Alerte à 10 pièces ou moins par modèle.</p>'+items.map(x=>`<div class="stk-row"><span class="tx"><b>${esc(x.nom)}</b><small>${x.quantite==null?"À compter":x.quantite===0?"🔴 Vide":x.quantite<=stockLowThreshold(x)?"🟠 Stock faible":"✅ Disponible"}</small></span><span class="et"><button type="button" data-magnet-id="${esc(x.id)}" data-magnet-action="minus" aria-label="Retirer un magnet ${esc(x.nom)}" ${x.quantite==null||x.quantite===0?"disabled":""}>−</button><button type="button" class="on" data-magnet-id="${esc(x.id)}" data-magnet-action="set" aria-label="Modifier la quantité de ${esc(x.nom)}">${x.quantite==null?"À saisir":x.quantite}</button><button type="button" data-magnet-id="${esc(x.id)}" data-magnet-action="plus" aria-label="Ajouter un magnet ${esc(x.nom)}" ${x.quantite==null?"disabled":""}>+</button></span>${isResp()?`<button type="button" class="x" data-stk-rm="${esc(x.id)}" aria-label="Retirer le modèle">✕</button>`:""}</div>`).join("")+(isResp()?'<button type="button" class="btn ghost" id="stockMagnetAdd" style="width:100%;margin-top:8px">➕ Ajouter un modèle</button>':"");
+    $("stockMagnetList").innerHTML='<p class="hint">Matériel d’animation · Touchez la quantité pour saisir le stock réel. Stock faible à 10 pièces ou moins. Rappel selon les animations confirmées dans les 14 jours.</p>'+items.map(x=>`<div class="stk-row"><span class="tx"><b>${esc(x.nom)}</b><small>${x.quantite==null?"À compter":x.quantite===0?"🔴 Vide":x.quantite<=stockLowThreshold(x)?"🟠 Stock faible":"✅ Disponible"}</small>${magnetBesoinTxt(x)?`<small style="color:var(--violet-d)">${esc(magnetBesoinTxt(x))}</small>`:""}</span><span class="et"><button type="button" data-magnet-id="${esc(x.id)}" data-magnet-action="minus" aria-label="Retirer un magnet ${esc(x.nom)}" ${x.quantite==null||x.quantite===0?"disabled":""}>−</button><button type="button" class="on" data-magnet-id="${esc(x.id)}" data-magnet-action="set" aria-label="Modifier la quantité de ${esc(x.nom)}">${x.quantite==null?"À saisir":x.quantite}</button><button type="button" data-magnet-id="${esc(x.id)}" data-magnet-action="plus" aria-label="Ajouter un magnet ${esc(x.nom)}" ${x.quantite==null?"disabled":""}>+</button></span>${isResp()?`<button type="button" class="x" data-stk-rm="${esc(x.id)}" aria-label="Retirer le modèle">✕</button>`:""}</div>`).join("")+(isResp()?'<button type="button" class="btn ghost" id="stockMagnetAdd" style="width:100%;margin-top:8px">➕ Ajouter un modèle</button>':"");
   }
   function renderStock() {
     renderMagnets();
-    const aa = stockAAcheter();
+    const aa = stockAAcheter().sort((a,b)=>Number(b.categorie==="magnet"&&animationsMagnet(b).length>0)-Number(a.categorie==="magnet"&&animationsMagnet(a).length>0));
     $("stockCourses").innerHTML = isResp() && aa.length ? `<div class="courses"><b>🛒 Liste de courses (${aa.length})</b><br>${aa.map(x => `${x.etat === "vide" ? "🔴" : "🟠"} ${esc(x.nom)}${besoinTxt(x) ? ` <small>(${esc(besoinTxt(x).replace(/^\S+ /, ""))})</small>` : ""}`).join("<br>")}
       <div class="after-btns" style="margin-top:8px"><button type="button" class="sig photo" id="stockCopy">📋 Copier / envoyer la liste</button></div></div>` : "";
     const tri = stock.filter(x=>x.categorie!=="magnet").sort((a, b) => ({ vide: 0, bas: 1, ok: 2 }[a.etat] ?? 2) - ({ vide: 0, bas: 1, ok: 2 }[b.etat] ?? 2) || (a.ordre ?? 0) - (b.ordre ?? 0));
