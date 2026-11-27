@@ -11483,6 +11483,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
   let stock = [],stockEditingEmoji=null;
   const MAGNET_MODELES=["Rumi","Mira","Zoey","Derpy","Mickey","Minnie","Mickey arc-en-ciel","Raiponce","Anna","Elsa"];
   let magnetBusy=false;
+  const isGlueMagnet=x=>x.categorie!=="magnet"&&String(x.nom||"").trim().toLowerCase()==="magnets à coller";
+  const stockHasQty=x=>x.categorie==="magnet"||isGlueMagnet(x);
   const STOCK_EMOJIS=["📦","🎨","✨","🎈","💎","💄","🧴","🫧","🪄","👑","🎭","🎤","📷","🎁","🍬","🧸","🧵","🪡","🛠️","🔋","🧹","🧼","🧪","✂️","🎀","🪞","🧦","🎟️","🍭","🧷","🧺","🩰","💇","🌸","🪅","🎶"];
   const boutonsIcones=id=>STOCK_EMOJIS.map(emoji=>'<button type="button" data-stk-choose="'+esc(emoji)+'" '+(id?'data-stk-id="'+esc(id)+'"':'')+' title="Choisir '+esc(emoji)+'">'+esc(emoji)+'</button>').join("");
   const stockStore = {
@@ -11508,7 +11510,9 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
       if(!Number.isSafeInteger(quantite)||quantite<0||quantite>2147483647)throw new Error("Quantité invalide");
       const o={quantite,etat:quantite===0?"vide":quantite<=3?"bas":"ok",maj_par:chatMe(),maj_le:new Date().toISOString()};
       if(DEMO)return this._d(a=>a.map(x=>x.id===item.id?{...x,...o}:x));
-      let q=sb.from("stock").update(o).eq("id",item.id).eq("categorie","magnet");
+      if(!stockHasQty(item))throw new Error("Article non comptabilisé");
+      let q=sb.from("stock").update(o).eq("id",item.id);
+      q=item.categorie==="magnet"?q.eq("categorie","magnet"):q.eq("nom",item.nom);
       q=item.quantite==null?q.is("quantite",null):q.eq("quantite",item.quantite);
       const {data,error}=await q.select("id");if(error)throw error;
       if(!data?.length)throw new Error("Stock modifié par une autre personne. Réessaie.");
@@ -11555,8 +11559,8 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     $("stockCourses").innerHTML = isResp() && aa.length ? `<div class="courses"><b>🛒 Liste de courses (${aa.length})</b><br>${aa.map(x => `${x.etat === "vide" ? "🔴" : "🟠"} ${esc(x.nom)}${besoinTxt(x) ? ` <small>(${esc(besoinTxt(x).replace(/^\S+ /, ""))})</small>` : ""}`).join("<br>")}
       <div class="after-btns" style="margin-top:8px"><button type="button" class="sig photo" id="stockCopy">📋 Copier / envoyer la liste</button></div></div>` : "";
     const tri = stock.filter(x=>x.categorie!=="magnet").sort((a, b) => ({ vide: 0, bas: 1, ok: 2 }[a.etat] ?? 2) - ({ vide: 0, bas: 1, ok: 2 }[b.etat] ?? 2) || (a.ordre ?? 0) - (b.ordre ?? 0));
-    $("stockList").innerHTML = tri.map(x => `<div class="stk-row">${isResp() ? `<button type="button" class="stock-icon-edit" data-stk-icon="${esc(x.id)}" aria-label="Changer l’icône de ${esc(x.nom)}" title="Changer l’icône">${esc(x.emoji || "📦")} ✏️</button>` : `<span class="em">${esc(x.emoji || "📦")}</span>`}<span class="tx"><b>${esc(x.nom)}</b>${besoinTxt(x) ? `<small style="color:var(--violet-d)">${esc(besoinTxt(x))}</small>` : ""}${x.etat !== "ok" && x.maj_par ? `<small>signalé par ${esc(x.maj_par)}${x.maj_le ? " · " + new Date(x.maj_le).toLocaleDateString("fr-BE", { day: "numeric", month: "short" }) : ""}</small>` : ""}</span>
-      <span class="et">${ETATS_STOCK.map(([k, t]) => `<button type="button" class="${(x.etat || "ok") === k ? "on" : ""}" data-stk="${esc(x.id)}" data-et="${k}">${t}</button>`).join("")}</span>
+    $("stockList").innerHTML = tri.map(x => `<div class="stk-row">${isResp() ? `<button type="button" class="stock-icon-edit" data-stk-icon="${esc(x.id)}" aria-label="Changer l’icône de ${esc(x.nom)}" title="Changer l’icône">${esc(x.emoji || "📦")} ✏️</button>` : `<span class="em">${esc(x.emoji || "📦")}</span>`}<span class="tx"><b>${esc(x.nom)}</b>${isGlueMagnet(x)?`<small>${x.quantite==null?("À compter"+(x.etat==="bas"?" · 🟠 Bientôt vide":x.etat==="vide"?" · 🔴 Vide":"")):x.quantite===0?"🔴 Vide":x.quantite<=3?"🟠 Stock faible":"✅ Disponible"}</small>`:""}${besoinTxt(x) ? `<small style="color:var(--violet-d)">${esc(besoinTxt(x))}</small>` : ""}${x.etat !== "ok" && x.maj_par ? `<small>signalé par ${esc(x.maj_par)}${x.maj_le ? " · " + new Date(x.maj_le).toLocaleDateString("fr-BE", { day: "numeric", month: "short" }) : ""}</small>` : ""}</span>
+      <span class="et">${isGlueMagnet(x)?`<button type="button" data-magnet-id="${esc(x.id)}" data-magnet-action="minus" aria-label="Retirer une pièce" ${x.quantite==null||x.quantite===0?"disabled":""}>−</button><button type="button" class="on" data-magnet-id="${esc(x.id)}" data-magnet-action="set" aria-label="Modifier le nombre de pièces">${x.quantite==null?"À saisir":x.quantite+" pièce"+(x.quantite===1?"":"s")}</button><button type="button" data-magnet-id="${esc(x.id)}" data-magnet-action="plus" aria-label="Ajouter une pièce" ${x.quantite==null?"disabled":""}>+</button>`:ETATS_STOCK.map(([k, t]) => `<button type="button" class="${(x.etat || "ok") === k ? "on" : ""}" data-stk="${esc(x.id)}" data-et="${k}">${t}</button>`).join("")}</span>
       ${isResp() ? `<button type="button" class="x" data-stk-rm="${esc(x.id)}" aria-label="Retirer">✕</button>` : ""}${stockEditingEmoji===String(x.id)?`<div class="stock-icon-picker">${boutonsIcones(x.id)}<div style="display:flex;gap:6px;width:100%;align-items:center"><input type="text" data-stk-custom-input maxlength="8" placeholder="Autre emoji…" style="flex:1;min-width:90px" /><button type="button" data-stk-custom-save="${esc(x.id)}" style="font-size:13px;font-weight:800;min-width:100px">💾 Enregistrer</button></div></div>`:""}</div>`).join("") || `<p class="hint">Aucun article.</p>`;
     $("stockEmojiPaletteAdd").innerHTML=boutonsIcones(null);
     $("stockAdd").classList.toggle("hidden", !isResp());
@@ -11570,7 +11574,7 @@ background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shad
     const mb=e.target.closest("[data-magnet-id]");
     if(mb){
       if(magnetBusy)return;
-      const item=stock.find(x=>String(x.id)===mb.dataset.magnetId&&x.categorie==="magnet");if(!item)return;
+      const item=stock.find(x=>String(x.id)===mb.dataset.magnetId&&stockHasQty(x));if(!item)return;
       let n=item.quantite;
       if(mb.dataset.magnetAction==="set"){
         const raw=prompt("Quantité réelle — "+item.nom,n==null?"":String(n));
