@@ -4388,14 +4388,47 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
       </div>`;
     }).join("") : `<p class="hint">Aucune tenue à préparer pour tes prochaines prestations confirmées.</p>`;
   }
-  function renderMemberTodo(recent){
+  let memberTodoRecent=[],memberTodoFuture=[],memberTodoIdentity="",memberTodoFetched=0,memberTodoLoading=false,memberTodoError=false;
+  function refreshMemberTodo(force=false){
+    const who=pollEmail();
+    if(view!=="mine"||!who||apercuMembre||(!currentUser&&!DEMO))return;
+    if(memberTodoIdentity!==who){memberTodoIdentity=who;memberTodoFetched=0;memberTodoError=false;}
+    if(memberTodoLoading||(!force&&Date.now()-memberTodoFetched<60000))return;
+    memberTodoLoading=true;memberTodoFetched=Date.now();
+    Promise.allSettled([pollStore.list(),infoStore.list()]).then(([p,i])=>{
+      if(memberTodoIdentity!==who||pollEmail()!==who)return;
+      if(p.status==="fulfilled"){polls=p.value.polls;pollAnswers=p.value.answers;}
+      if(i.status==="fulfilled"){infosEquipe=i.value.infos;infoLectures=i.value.lectures;}
+      memberTodoError=p.status==="rejected"||i.status==="rejected";
+      if(view==="mine")renderMemberTodo(memberTodoRecent,memberTodoFuture,false);
+    }).finally(()=>{memberTodoLoading=false;});
+  }
+  function renderMemberTodo(recent,futures=[],fetch=true){
     const box=$("memberTodo");if(!box)return;
+    memberTodoRecent=recent;memberTodoFuture=futures;
     const pending=[...new Map(recent.filter(e=>modeDisponible(e)&&prestationACloturer(e)).map(e=>[String(e.id),e])).values()];
-    const notifs=notificationsApp.filter(n=>!n.lue_le&&!notificationsVuesIci.has(String(n.id))&&n.type!=="chat"&&n.type!=="fin"&&/sondage|costume|perruque|tenue|matériel|materiel|action requise|à faire|à remplir/i.test(String(n.titre||"")+" "+String(n.type||"")));
-    const rows=pending.map(e=>'<button type="button" class="cc-action" data-member-open="'+esc(e.id)+'"><span class="cc-icon">📋</span><span><b>'+esc(e.titre||"Prestation")+'</b><small>'+esc(clotureManquante(e).join(" · "))+'</small></span><span class="cc-arrow">›</span></button>')
-      .concat(notifs.length?['<button type="button" class="cc-action" id="memberTodoNotifs"><span class="cc-icon">🔔</span><span><b>'+notifs.length+' action(s) à consulter</b><small>Consignes, sondages et préparatifs</small></span><span class="cc-arrow">›</span></button>']:[]);
-    box.innerHTML='<div class="group-title" style="margin-top:0">🔔 Mes actions à faire</div>'+(rows.join("")||'<p class="hint">Aucune action personnelle signalée actuellement.</p>');
+    const who=pollEmail(),fresh=memberTodoIdentity===who&&memberTodoFetched>0&&!apercuMembre;
+    const invited=p=>!Array.isArray(p.destinataires)||!p.destinataires.length||p.destinataires.some(m=>String(m||"").trim().toLowerCase()===who);
+    const unanswered=fresh?polls.filter(p=>p.statut!=="ferme"&&Date.parse(p.date_limite)>Date.now()&&invited(p)&&!pollAnswers.some(a=>String(a.sondage_id)===String(p.id)&&String(a.email||"").toLowerCase()===who&&((a.reponse==="oui"&&(p.dates||[]).some(opt=>String(opt.id)===String(a.option_id)))||(a.option_id==="__aucune__"&&a.reponse==="non")))):[];
+    const unread=fresh?infosEquipe.filter(i=>!infoLectures.some(l=>String(l.info_id)===String(i.id)&&String(l.email||"").toLowerCase()===who)):[];
+    const row=(icon,title,sub,attrs)=>'<button type="button" class="cc-action" '+attrs+'><span class="cc-icon">'+icon+'</span><span><b>'+esc(title)+'</b><small>'+esc(sub)+'</small></span><span class="cc-arrow">›</span></button>';
+    const rows=pending.map(e=>row("📋",e.titre||"Prestation",clotureManquante(e).join(" · "),'data-member-open="'+esc(e.id)+'"'));
+    if(unanswered.length)rows.push(row("🗳️",unanswered.length+" sondage(s) à répondre",unanswered.map(p=>p.titre).join(" · "),'id="memberTodoPolls"'));
+    if(unread.length)rows.push(row("📣",unread.length+" information(s) à lire",unread.map(i=>i.titre).join(" · "),'id="memberTodoInfos"'));
+    const prenom=mePrenom(),limite=parseISO(todayISO());limite.setDate(limite.getDate()+14);
+    for(const ev of futures.filter(e=>e.date<=iso(limite)&&e.type_evenement!=="repetition")){
+      const p=monRoleMission(ev,prenom);if(!p||!estRoleCostume(p))continue;
+      const manque=["costume","perruque"].filter(type=>{const a=pieceAttribuee(ev,p,type);return a?etatDe(a)!=="ok":costDe(p.role,type).some(c=>utilisable(c,p.nom));});
+      if(manque.length)rows.push(row("👗",p.role+" · "+fmtLong(ev.date),"Tenue à vérifier : "+manque.join(" et "),'data-member-tenue="'+esc(ev.id)+'"'));
+    }
+    const notifs=notificationsApp.filter(n=>!n.lue_le&&!notificationsVuesIci.has(String(n.id))&&n.type!=="chat"&&n.type!=="fin"&&/matériel|materiel|action requise|à faire|à remplir/i.test(String(n.titre||"")+" "+String(n.type||""))&&!/sondage|costume|perruque|tenue|bilan/i.test(String(n.titre||"")+" "+String(n.type||"")));
+    if(notifs.length)rows.push(row("🔔",notifs.length+" autre(s) action(s) à consulter","Notifications personnelles",'id="memberTodoNotifs"'));
+    box.innerHTML='<div class="group-title" style="margin-top:0">🔔 Mes actions à faire</div>'+(rows.join("")||'<p class="hint">'+(apercuMembre?"Aperçu du membre : consignes et sondages non chargés.":!who?"Les tâches liées au compte seront disponibles après connexion.":!fresh?"Vérification des tâches…":memberTodoError?"Certaines tâches n’ont pas pu être vérifiées.":"Aucune action personnelle signalée actuellement.")+'</p>')+(memberTodoError?'<button type="button" class="sig" id="memberTodoRetry">↻ Réessayer</button>':"");
     $("memberTodoNotifs")?.addEventListener("click",()=> $("clocheBtn").click());
+    $("memberTodoPolls")?.addEventListener("click",()=>openSondages());
+    $("memberTodoInfos")?.addEventListener("click",()=>openInfosEquipe());
+    $("memberTodoRetry")?.addEventListener("click",()=>refreshMemberTodo(true));
+    if(fetch)refreshMemberTodo();
   }
   function renderMineFor(prenom) {
     $("postActions").classList.add("hidden");
@@ -4414,7 +4447,7 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
       modeDisponible(e) && animationTerminee(e) && prestationACloturer(e))
       .sort((x, y) => (y.date + (y.heure_debut || "")).localeCompare(x.date + (x.heure_debut || "")));
     renderMemberOverview(prenom, futures, affectationsProvisoires.length);
-    renderMemberTodo([...recent,...aCloturer]);
+    renderMemberTodo([...recent,...aCloturer],futures);
     renderMemberTenues(prenom, futures);
     $("mineList").innerHTML = (futures.length ? futures.map(e => memberCard(e, prenom)).join("") :
       (affectationsProvisoires.length ? "" : '<div class="empty">Aucune prestation confirmée à venir pour le moment.</div>'))
@@ -4683,12 +4716,15 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
       actions.push({ id: String(e.id), date: e.date, icone: "🎟️", nom: "Réservation du site · " + (r.nom || "Client"), detail: (e.titre || "Événement") + " · " + fmtLong(e.date) + " · " + (r.places || 0) + " place(s)", priorite: 0, cible: "resa" });
     });
     actions.sort((a,b) => a.priorite - b.priorite || a.date.localeCompare(b.date) || a.nom.localeCompare(b.nom,"fr"));
+    const stockCount=stockARappeler().length;
+    const paiements=events.filter(e=>["confirme","termine"].includes(e.statut)&&e.date<=auj).flatMap(e=>(e.paies||[]).filter(p=>!p.paye&&totPaie(p)>0)).length;
+    const totalActions=actions.length+stockCount+paiements;
     const ligne = a => `<button class="cc-action" type="button" data-cc-event="${esc(a.id)}" data-cc-cible="${a.cible}"><span class="cc-icon" aria-hidden="true">${a.icone}</span><span><b>${esc(a.nom)}</b><small>${esc(a.detail)}</small></span><span class="cc-arrow" aria-hidden="true">›</span></button>`;
     box.classList.remove("hidden");
-    box.innerHTML = `<div class="cc-head"><h2>📋 À faire <span class="cc-count ${actions.length ? "" : "ok"}">${actions.length ? actions.length + " à traiter" : "Tout est à jour"}</span></h2><button type="button" class="cc-refresh" id="ccRefresh" title="Recharger les données de l'agenda">↻ Actualiser</button></div>
+    box.innerHTML = `<div class="cc-head"><h2>📋 À faire <span class="cc-count ${totalActions ? "" : "ok"}">${totalActions ? totalActions + " à traiter" : "Aucune tâche détectée"}</span></h2><button type="button" class="cc-refresh" id="ccRefresh" title="Recharger les données de l'agenda">↻ Actualiser</button></div>
       <p class="cc-summary">Tes priorités au même endroit. Ouvre une action pour la traiter.</p>
-      ${stockRappelHtml()}<div class="after-btns" style="margin-bottom:8px"><button type="button" class="sig" data-cc-tool="gDevis">📜 Devis et relances</button><button type="button" class="sig" data-cc-tool="gPaies">👛 Paiements équipe</button><button type="button" class="sig" data-cc-tool="gGardien">🛡️ Contrôles</button></div>
-      ${actions.length ? `<div class="cc-items">${actions.slice(0,5).map(ligne).join("")}</div>${actions.length > 5 ? `<details class="cc-more"><summary>Voir les ${actions.length - 5} autres actions</summary><div class="cc-items" style="margin-top:9px">${actions.slice(5).map(ligne).join("")}</div></details>` : ""}` : `<div class="cc-empty"><span class="magic-victory">✦ Tout est prêt ! ✦</span><p style="margin:9px 0 0">Aucune urgence dans les informations enregistrées. Place à la magie !</p></div>`}`;
+      ${stockRappelHtml()}<div class="after-btns" style="margin-bottom:8px"><button type="button" class="sig" data-cc-tool="gDevis">📜 Devis et relances</button><button type="button" class="sig" data-cc-tool="gPaies">👛 Paiements équipe${paiements?" ("+paiements+")":""}</button><button type="button" class="sig" data-cc-tool="gGardien">🛡️ Contrôles</button></div>
+      ${actions.length ? `<div class="cc-items">${actions.slice(0,5).map(ligne).join("")}</div>${actions.length > 5 ? `<details class="cc-more"><summary>Voir les ${actions.length - 5} autres actions</summary><div class="cc-items" style="margin-top:9px">${actions.slice(5).map(ligne).join("")}</div></details>` : ""}` : `<div class="cc-empty"><p style="margin:9px 0 0">Aucune autre action détectée dans les prestations.</p></div>`}`;
   }
   $("centreControle").addEventListener("click", async ev => {
     const tool=ev.target.closest("[data-cc-tool]");if(tool){document.querySelector('.tab[data-view="stats"]').click();$(tool.dataset.ccTool)?.click();return;}
@@ -6412,7 +6448,7 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
     }).join("") : '<p class="hint">Aucun sondage pour le moment.</p>';
   }
   async function refreshPolls() {
-    const data=await pollStore.list();polls=data.polls;pollAnswers=data.answers;renderPolls();
+    const data=await pollStore.list();polls=data.polls;pollAnswers=data.answers;renderPolls();if(view==="mine")renderMemberTodo(memberTodoRecent,memberTodoFuture,false);
   }
   async function openSondages() {
     pollError("");
@@ -6695,7 +6731,7 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
     }).join(""):'<p class="hint">Aucune information pour le moment.</p>';
   }
   async function reloadInfosEquipe(){
-    const value=await infoStore.list();infosEquipe=value.infos;infoLectures=value.lectures;renderInfosEquipe();
+    const value=await infoStore.list();infosEquipe=value.infos;infoLectures=value.lectures;renderInfosEquipe();if(view==="mine")renderMemberTodo(memberTodoRecent,memberTodoFuture,false);
   }
   async function openInfosEquipe(id){
     infoMsgErreur("");
