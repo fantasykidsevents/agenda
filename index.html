@@ -4470,7 +4470,7 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
       <b>${esc(e.titre || e.enfant || "Animation")}</b>
       <p>🕒 ${esc(e.heure_debut ? hhmm(e.heure_debut) + (e.heure_fin ? " – " + hhmm(e.heure_fin) : "") : "Horaire à préciser")}${e.adresse ? ` · 📍 ${esc(e.adresse)}` : ""}</p>
       <p>À terminer : ${clotureManquante(e).map(esc).join(" · ")}</p>
-      <button type="button" class="mode-launch" data-mode-open="${esc(e.id)}">✨ Ouvrir le Mode prestation</button>
+      <button type="button" class="mode-launch" data-mode-open="${esc(e.id)}">📋 Ouvrir ma prestation</button>
     </div>`).join("");
   }
   function renderNext() {
@@ -4676,6 +4676,8 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
       if (estClient(e) && e.statut === "confirme" && e.date <= limiteFiche && !(e.fiche && e.fiche.recue_le)) ajouter(e, "📝", "Fiche client à vérifier · " + titre, date + " · À contrôler avant l'animation", 1);
       if (String(e.materiel_manquant || "").trim()) ajouter(e, "🎒", "Matériel manquant · " + titre, date + " · " + String(e.materiel_manquant).trim().slice(0, 95), 1);
     });
+    const termine=events.filter(e=>e.statut!=="annule"&&estClient(e)&&animationTerminee(e)&&e.date>=iso(new Date(Date.now()-30*864e5)));
+    termine.forEach(e=>{const nom=e.titre||e.enfant||"Animation";if(!bilanAnimation(e.id))ajouter(e,"📝","Bilan à compléter · "+nom,fmtLong(e.date),1);if(!e.photos_envoyees&&peutEnvoyerPhotos())ajouter(e,"📸","Photos à envoyer · "+nom,fmtLong(e.date),1);});
     (resaSite || []).forEach(r => {
       const e = events.find(x => String(x.id) === String(r.evenement_id)); if (!e) return;
       actions.push({ id: String(e.id), date: e.date, icone: "🎟️", nom: "Réservation du site · " + (r.nom || "Client"), detail: (e.titre || "Événement") + " · " + fmtLong(e.date) + " · " + (r.places || 0) + " place(s)", priorite: 0, cible: "resa" });
@@ -4683,13 +4685,15 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
     actions.sort((a,b) => a.priorite - b.priorite || a.date.localeCompare(b.date) || a.nom.localeCompare(b.nom,"fr"));
     const ligne = a => `<button class="cc-action" type="button" data-cc-event="${esc(a.id)}" data-cc-cible="${a.cible}"><span class="cc-icon" aria-hidden="true">${a.icone}</span><span><b>${esc(a.nom)}</b><small>${esc(a.detail)}</small></span><span class="cc-arrow" aria-hidden="true">›</span></button>`;
     box.classList.remove("hidden");
-    box.innerHTML = `<div class="cc-head"><h2>🧭 Mon centre de contrôle <span class="cc-count ${actions.length ? "" : "ok"}">${actions.length ? actions.length + " à traiter" : "Tout est à jour"}</span></h2><button type="button" class="cc-refresh" id="ccRefresh" title="Recharger les données de l'agenda">↻ Actualiser</button></div>
-      <p class="cc-summary">Demandes, équipes, acomptes, fiches clients, matériel et réservations du site · ouvre chaque fiche en un clic.</p>
+    box.innerHTML = `<div class="cc-head"><h2>📋 À faire <span class="cc-count ${actions.length ? "" : "ok"}">${actions.length ? actions.length + " à traiter" : "Tout est à jour"}</span></h2><button type="button" class="cc-refresh" id="ccRefresh" title="Recharger les données de l'agenda">↻ Actualiser</button></div>
+      <p class="cc-summary">Tes priorités au même endroit. Ouvre une action pour la traiter.</p>
+      ${stockRappelHtml()}<div class="after-btns" style="margin-bottom:8px"><button type="button" class="sig" data-cc-tool="gDevis">📜 Devis et relances</button><button type="button" class="sig" data-cc-tool="gPaies">👛 Paiements équipe</button><button type="button" class="sig" data-cc-tool="gGardien">🛡️ Contrôles</button></div>
       ${actions.length ? `<div class="cc-items">${actions.slice(0,5).map(ligne).join("")}</div>${actions.length > 5 ? `<details class="cc-more"><summary>Voir les ${actions.length - 5} autres actions</summary><div class="cc-items" style="margin-top:9px">${actions.slice(5).map(ligne).join("")}</div></details>` : ""}` : `<div class="cc-empty"><span class="magic-victory">✦ Tout est prêt ! ✦</span><p style="margin:9px 0 0">Aucune urgence dans les informations enregistrées. Place à la magie !</p></div>`}`;
   }
   $("centreControle").addEventListener("click", async ev => {
+    const tool=ev.target.closest("[data-cc-tool]");if(tool){document.querySelector('.tab[data-view="stats"]').click();$(tool.dataset.ccTool)?.click();return;}
     const b = ev.target.closest("[data-cc-event]");
-    if (b) { const e = events.find(x => String(x.id) === b.dataset.ccEvent); if (!e) { toast("Cette fiche n'est plus disponible."); return; } b.dataset.ccCible === "resa" ? openResa(e.id) : openForm(e); return; }
+    if (b) { const e = events.find(x => String(x.id) === b.dataset.ccEvent); if (!e) { toast("Cette fiche n'est plus disponible."); return; } if(b.dataset.ccCible==="resa"){openResa(e.id);return;} openForm(e);const label=b.querySelector("b")?.textContent||"";const target=label.startsWith("Photos")?["suivi","fPhotosLien"]:label.startsWith("Bilan")?["suivi","afterBox"]:label.startsWith("Acompte")?["finances","acompte_paye"]:label.startsWith("Équipe")?["animation","addAnim"]:label.startsWith("Matériel")?["animation","materiel_manquant"]:label.startsWith("Fiche client")?["client","ficheBox"]:null;if(target)setTimeout(()=>window.FantasyFicheTabs?.select(...target),100);return; }
     if (ev.target.closest("#ccRefresh")) {
       const btn = $("ccRefresh"); if (btn) { btn.disabled = true; btn.textContent = "Actualisation…"; }
       try { await reload(); toast("🧭 Centre de contrôle actualisé"); }
@@ -5093,6 +5097,7 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
     const id=$("ficheGuideAction").dataset.cible;
     if(id==="gPaies"){closeForm();document.querySelector('.tab[data-view="stats"]').click();$("gPaies").click();return;}
     const cible=$(id);if(!cible)return;
+    const tab=({email:"client",prix:"finances",acompte_paye:"finances",addAnim:"animation",devisBox:"finances",devisBtn:"finances",afterBox:"suivi",evCostAssignBtn:"animation"})[id];if(tab)window.FantasyFicheTabs?.select(tab,id);
     if(id==="devisBtn"){cible.click();return;}
     if(id==="evCostAssignBtn"&&!cible.classList.contains("hidden")){cible.click();return;}
     if(id==="acompte_paye"||id==="prix")$("privSec").querySelector("details").open=true;
@@ -5635,7 +5640,7 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
       return `${ic} ${Math.round(j.hourly.temperature_2m[i])} °C · ${j.hourly.precipitation_probability[i] ?? 0} % de pluie à ${h}h (${g.name})`;
     } catch (e) { return null; }
   }
-  async function openJour(ev) {
+  async function openJour(ev,etapeARestaurer=null) {
     if (ev.statut === "en_attente" && !isGest()) return openForm(ev);
     // La fiche du jour doit afficher l'état réellement commun à toute l'équipe.
     if (!DEMO && ev.type_evenement === "animation" && animationTerminee(ev))
@@ -5722,12 +5727,15 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
     $("jourBg").dataset.id = ev.id;
     $("jourBg").dataset.prepKey = prepKey;
     $("jourBg").classList.remove("hidden"); document.body.style.overflow = "hidden";
+    afficherOngletsJour(ev,etapeARestaurer);
     const days = (parseISO(ev.date) - parseISO(todayISO())) / 864e5;
     if (ev.adresse && days >= 0 && days <= 14) meteo(ev).then(t => { if (t && $("jourBg").dataset.id === ev.id) { $("jourMeteo").querySelector("span").textContent = t; $("jourMeteo").classList.remove("hidden"); } });
   }
-  function openModePrestation(ev, etapeARestaurer = null, retourApresSaisie = false) {
+  async function openModePrestation(ev, etapeARestaurer = null, retourApresSaisie = false) {
     if (!retourApresSaisie && !modeDisponible(ev)) { toast("Le Mode prestation est réservé à l'équipe de cette animation, le jour J ou jusqu'à sa clôture."); return; }
-    openJour(ev); // On réutilise la vraie fiche et ses validations, sans doublons.
+    await openJour(ev,etapeARestaurer); // Une seule fiche, avec les mêmes validations.
+  }
+  function afficherOngletsJour(ev,etapeARestaurer=null){
     const contenu = $("jourBody");
     const etapes = [...contenu.children].filter(el => el.matches("h3.etape"));
     if (etapes.length !== 3) return; // La fiche classique reste utilisable en secours.
@@ -11553,7 +11561,7 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
     if(!nom)return false;
     const roles=parseTeam(e.animateurs).filter(estRoleCostume).map(p=>p.role);
     const theme=e.theme||"";
-    const textes=[...roles,theme,...(!roles.length?[e.titre]:[])];
+    const textes=[...roles,theme,e.options?.personnages_client,...(!roles.length?[e.titre]:[])];
     const a=personnage=>textes.some(t=>magnetMention(t,personnage));
     const groupeKpop=textes.some(t=>magnetMention(t,"huntrix")||magnetMention(t,"huntr x"));
     if(nom==="anna")return a("anna")||a("elsa");
