@@ -4388,17 +4388,18 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
       </div>`;
     }).join("") : `<p class="hint">Aucune tenue à préparer pour tes prochaines prestations confirmées.</p>`;
   }
-  let memberTodoRecent=[],memberTodoFuture=[],memberTodoIdentity="",memberTodoFetched=0,memberTodoLoading=false,memberTodoError=false;
+  let memberTodoRecent=[],memberTodoFuture=[],memberTodoIdentity="",memberTodoFetched=0,memberTodoLoading=false,memberTodoError=false,memberTodoReady=false,memberTodoPollData={polls:[],answers:[]},memberTodoInfoData={infos:[],lectures:[]};
   function refreshMemberTodo(force=false){
     const who=pollEmail();
     if(view!=="mine"||!who||apercuMembre||(!currentUser&&!DEMO))return;
-    if(memberTodoIdentity!==who){memberTodoIdentity=who;memberTodoFetched=0;memberTodoError=false;}
+    if(memberTodoIdentity!==who){memberTodoIdentity=who;memberTodoFetched=0;memberTodoError=false;memberTodoReady=false;memberTodoPollData={polls:[],answers:[]};memberTodoInfoData={infos:[],lectures:[]};}
     if(memberTodoLoading||(!force&&Date.now()-memberTodoFetched<60000))return;
     memberTodoLoading=true;memberTodoFetched=Date.now();
     Promise.allSettled([pollStore.list(),infoStore.list()]).then(([p,i])=>{
       if(memberTodoIdentity!==who||pollEmail()!==who)return;
-      if(p.status==="fulfilled"){polls=p.value.polls;pollAnswers=p.value.answers;}
-      if(i.status==="fulfilled"){infosEquipe=i.value.infos;infoLectures=i.value.lectures;}
+      if(p.status==="fulfilled")memberTodoPollData=p.value;
+      if(i.status==="fulfilled")memberTodoInfoData=i.value;
+      memberTodoReady=true;
       memberTodoError=p.status==="rejected"||i.status==="rejected";
       if(view==="mine")renderMemberTodo(memberTodoRecent,memberTodoFuture,false);
     }).finally(()=>{memberTodoLoading=false;});
@@ -4407,10 +4408,10 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
     const box=$("memberTodo");if(!box)return;
     memberTodoRecent=recent;memberTodoFuture=futures;
     const pending=[...new Map(recent.filter(e=>modeDisponible(e)&&prestationACloturer(e)).map(e=>[String(e.id),e])).values()];
-    const who=pollEmail(),fresh=memberTodoIdentity===who&&memberTodoFetched>0&&!apercuMembre;
+    const who=pollEmail(),fresh=memberTodoIdentity===who&&memberTodoReady&&!apercuMembre;
     const invited=p=>!Array.isArray(p.destinataires)||!p.destinataires.length||p.destinataires.some(m=>String(m||"").trim().toLowerCase()===who);
-    const unanswered=fresh?polls.filter(p=>p.statut!=="ferme"&&Date.parse(p.date_limite)>Date.now()&&invited(p)&&!pollAnswers.some(a=>String(a.sondage_id)===String(p.id)&&String(a.email||"").toLowerCase()===who&&((a.reponse==="oui"&&(p.dates||[]).some(opt=>String(opt.id)===String(a.option_id)))||(a.option_id==="__aucune__"&&a.reponse==="non")))):[];
-    const unread=fresh?infosEquipe.filter(i=>!infoLectures.some(l=>String(l.info_id)===String(i.id)&&String(l.email||"").toLowerCase()===who)):[];
+    const unanswered=fresh?memberTodoPollData.polls.filter(p=>p.statut!=="ferme"&&Date.parse(p.date_limite)>Date.now()&&invited(p)&&!memberTodoPollData.answers.some(a=>String(a.sondage_id)===String(p.id)&&String(a.email||"").toLowerCase()===who&&((a.reponse==="oui"&&(p.dates||[]).some(opt=>String(opt.id)===String(a.option_id)))||(a.option_id==="__aucune__"&&a.reponse==="non")))):[];
+    const unread=fresh?memberTodoInfoData.infos.filter(i=>!memberTodoInfoData.lectures.some(l=>String(l.info_id)===String(i.id)&&String(l.email||"").toLowerCase()===who)):[];
     const row=(icon,title,sub,attrs)=>'<button type="button" class="cc-action" '+attrs+'><span class="cc-icon">'+icon+'</span><span><b>'+esc(title)+'</b><small>'+esc(sub)+'</small></span><span class="cc-arrow">›</span></button>';
     const rows=pending.map(e=>row("📋",e.titre||"Prestation",clotureManquante(e).join(" · "),'data-member-open="'+esc(e.id)+'"'));
     if(unanswered.length)rows.push(row("🗳️",unanswered.length+" sondage(s) à répondre",unanswered.map(p=>p.titre).join(" · "),'id="memberTodoPolls"'));
@@ -6448,7 +6449,7 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
     }).join("") : '<p class="hint">Aucun sondage pour le moment.</p>';
   }
   async function refreshPolls() {
-    const data=await pollStore.list();polls=data.polls;pollAnswers=data.answers;renderPolls();if(view==="mine")renderMemberTodo(memberTodoRecent,memberTodoFuture,false);
+    const data=await pollStore.list();polls=data.polls;pollAnswers=data.answers;renderPolls();if(memberTodoIdentity===pollEmail()){memberTodoPollData=data;if(view==="mine")renderMemberTodo(memberTodoRecent,memberTodoFuture,false);}
   }
   async function openSondages() {
     pollError("");
@@ -6731,7 +6732,7 @@ body.dark .simple-group{background:#211638;border-color:#55406f;color:#f6eeff}
     }).join(""):'<p class="hint">Aucune information pour le moment.</p>';
   }
   async function reloadInfosEquipe(){
-    const value=await infoStore.list();infosEquipe=value.infos;infoLectures=value.lectures;renderInfosEquipe();if(view==="mine")renderMemberTodo(memberTodoRecent,memberTodoFuture,false);
+    const value=await infoStore.list();infosEquipe=value.infos;infoLectures=value.lectures;renderInfosEquipe();if(memberTodoIdentity===infoEmail()){memberTodoInfoData=value;if(view==="mine")renderMemberTodo(memberTodoRecent,memberTodoFuture,false);}
   }
   async function openInfosEquipe(id){
     infoMsgErreur("");
